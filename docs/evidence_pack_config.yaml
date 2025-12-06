@@ -1,0 +1,124 @@
+# Evidence Pack v1 Configuration
+# This file defines all documents included in Evidence Pack v1
+
+metadata:
+  version: "1.0"
+  description: "Evidence Pack v1 - Phase I RFL Infrastructure and Negative Control"
+  date: "2025-12"
+  phase: "Phase I Complete, Phase II Planned"
+
+documents:
+  # Phase I Core Documentation
+  - path: "docs/PHASE2_RFL_UPLIFT_PLAN.md"
+    description: "Phase II uplift experiment plan with four slices (goal, sparse, tree, dependency)"
+    phase: "PHASE II"
+    category: "experiment-plan"
+    tags: ["phase-ii", "uplift", "rfl", "planning"]
+
+  - path: "docs/RFL_EVIDENCE_MANIFEST.md"
+    description: "RFL experiment provenance and evidence manifest system specification"
+    phase: "PHASE I"
+    category: "specification"
+    tags: ["phase-i", "provenance", "manifest", "traceability"]
+
+  - path: "docs/CURSOR_A_EVIDENCE_PACK_V1_SUMMARY.md"
+    description: "Evidence Pack v1 audit summary - manifest verification and attestation"
+    phase: "PHASE I"
+    category: "audit"
+    tags: ["phase-i", "audit", "verification", "attestation"]
+
+  - path: "docs/EVIDENCE_PACK_V1_CONSISTENCY_REPORT.md"
+    description: "Comprehensive consistency audit report for Evidence Pack v1"
+    phase: "PHASE I"
+    category: "audit"
+    tags: ["phase-i", "audit", "consistency"]
+
+  - path: "docs/RFL_PHASE_I_TRUTH_SOURCE.md"
+    description: "Phase I truth source - sober accounting of what was accomplished"
+    phase: "PHASE I"
+    category: "truth-source"
+    tags: ["phase-i", "truth", "accountability"]
+
+  - path: "docs/RFL_EXPERIMENT_PLAN_v1.md"
+    description: "Original RFL experiment plan for Phase I"
+    phase: "PHASE I"
+    category: "experiment-plan"
+    tags: ["phase-i", "rfl", "planning"]
+
+  # Architecture and Design
+  - path: "docs/ARCHITECTURE.md"
+    description: "System architecture documentation"
+    phase: "General"
+    category: "architecture"
+    tags: ["architecture", "design", "system"]
+
+  - path: "docs/API_REFERENCE.md"
+    description: "API reference documentation"
+    phase: "General"
+    category: "api"
+    tags: ["api", "reference", "interface"]
+
+  # Theory and Methods
+  - path: "docs/cognitive_systems_theory.md"
+    description: "Cognitive systems theory underlying MathLedger"
+    phase: "General"
+    category: "theory"
+    tags: ["theory", "cognitive-systems"]
+
+  - path: "RFL_UPLIFT_THEORY.md"
+    description: "RFL uplift theory and theoretical foundations"
+    phase: "PHASE II"
+    category: "theory"
+    tags: ["phase-ii", "theory", "rfl", "uplift"]
+
+  # Risk and Governance
+  - path: "docs/RFL_EXPERIMENT_RISKS.md"
+    description: "RFL experiment risks and mitigation strategies"
+    phase: "PHASE I"
+    category: "risk"
+    tags: ["phase-i", "risk", "governance"]
+
+  - path: "docs/RFL_EXPERIMENT_RISK_AUDIT_PHASE_I_FINAL.md"
+    description: "Final Phase I risk audit report"
+    phase: "PHASE I"
+    category: "audit"
+    tags: ["phase-i", "risk", "audit"]
+
+  # First Organism
+  - path: "docs/FIRST_ORGANISM.md"
+    description: "First Organism closed-loop system documentation"
+    phase: "PHASE I"
+    category: "first-organism"
+    tags: ["phase-i", "first-organism", "closed-loop"]
+
+  - path: "docs/FIRST_ORGANISM_DETERMINISM.md"
+    description: "Determinism requirements and verification for First Organism"
+    phase: "PHASE I"
+    category: "first-organism"
+    tags: ["phase-i", "first-organism", "determinism"]
+
+  # Verification and Attestation
+  - path: "docs/VERIFICATION.md"
+    description: "Verification protocols and procedures"
+    phase: "General"
+    category: "verification"
+    tags: ["verification", "testing", "qa"]
+
+  - path: "docs/ATTESTATION_SPEC.md"
+    description: "Attestation specification for dual-root verification"
+    phase: "PHASE I"
+    category: "specification"
+    tags: ["phase-i", "attestation", "verification"]
+
+  # README and Getting Started
+  - path: "README.md"
+    description: "Main repository README with project overview and getting started guide"
+    phase: "General"
+    category: "readme"
+    tags: ["readme", "introduction", "getting-started"]
+
+  - path: "CLAUDE.md"
+    description: "Development guidelines and instructions for AI assistants"
+    phase: "General"
+    category: "readme"
+    tags: ["development", "guidelines", "ai"]
