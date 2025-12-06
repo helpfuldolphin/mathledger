@@ -37,6 +37,15 @@ from .bootstrap_stats import (
 from .audit import RFLAuditLog, SymbolicDescentGradient, StepIdComputation
 from .experiment_logging import RFLExperimentLogger
 from .provenance import ManifestBuilder
+from .policy_features import (
+    RFLContext,
+    extract_features,
+    compute_feature_score,
+    update_context_from_cycle,
+    create_context_for_slice,
+    get_feature_names,
+    get_default_weights,
+)
 
 # ---------------- Logger ----------------
 logging.basicConfig(
@@ -139,18 +148,23 @@ class RFLRunner:
         self.first_organism_runs_total: int = 0
         self.policy_update_count: int = 0  # Track total number of policy updates applied
         
-        # Policy weights for candidate scoring (simple 3-parameter policy)
+        # Policy weights for candidate scoring (extended feature set)
         # These weights control how candidates are ordered during search
-        self.policy_weights: Dict[str, float] = {
-            "len": 0.0,      # Weight for candidate text length
-            "depth": 0.0,    # Weight for candidate AST depth
-            "success": 0.0,  # Weight for success history (how often this hash appeared in successful cycles)
-        }
+        # For baseline runs, all weights = 0 (random/default ordering)
+        # For RFL runs, weights are updated based on verified outcomes
+        self.policy_weights: Dict[str, float] = get_default_weights()
         
-        # Success history tracking: per candidate hash, track success correlation
-        # This allows the policy to learn which formulas tend to lead to successful cycles
-        self.success_count: Dict[str, int] = {}  # candidate_hash -> number of successful cycles
-        self.attempt_count: Dict[str, int] = {}   # candidate_hash -> number of cycles where it appeared
+        # Feature extraction context for slice-specific features
+        # Tracks success/attempt history and derivation tree structure
+        self.feature_context: RFLContext = create_context_for_slice(
+            slice_name="warmup",  # Initial slice
+            slice_index=0,
+        )
+        
+        # Legacy success history tracking (kept for backward compatibility)
+        # New code should use self.feature_context.success_history/attempt_history
+        self.success_count: Dict[str, int] = self.feature_context.success_history
+        self.attempt_count: Dict[str, int] = self.feature_context.attempt_history
 
         # Audit log for RFL Law compliance (determinism verification)
         self.audit_log = RFLAuditLog(seed=self.config.random_seed)
@@ -221,6 +235,69 @@ class RFLRunner:
             except Exception:
                 pass
 
+    # ===== Feature Extraction Interface =====
+    
+    def score_candidate(self, candidate: str, slice_name: Optional[str] = None) -> float:
+        """
+        Score a candidate formula using feature extraction and policy weights.
+        
+        This is the main interface for derivation code to score candidates.
+        For baseline runs (all weights = 0), returns 0 for all candidates,
+        resulting in random/default ordering.
+        
+        Args:
+            candidate: The candidate formula string
+            slice_name: Optional slice name override (uses current context if None)
+        
+        Returns:
+            Weighted feature score. Higher = more preferred.
+        
+        DETERMINISM: Score is deterministically computed from candidate and weights.
+        """
+        effective_slice = slice_name or self.feature_context.slice_name
+        features = extract_features(candidate, effective_slice, self.feature_context)
+        return compute_feature_score(features, self.policy_weights)
+    
+    def extract_candidate_features(
+        self, candidate: str, slice_name: Optional[str] = None
+    ) -> Dict[str, float]:
+        """
+        Extract features for a candidate formula.
+        
+        Lower-level interface that returns the raw feature dictionary
+        for inspection or custom scoring.
+        
+        Args:
+            candidate: The candidate formula string
+            slice_name: Optional slice name override
+        
+        Returns:
+            Dictionary of feature name -> value
+        """
+        effective_slice = slice_name or self.feature_context.slice_name
+        return extract_features(candidate, effective_slice, self.feature_context)
+    
+    def update_feature_context_for_slice(self, slice_name: str, slice_index: int = 0) -> None:
+        """
+        Update the feature context for a new slice.
+        
+        Preserves history while switching slice-specific configuration.
+        
+        Args:
+            slice_name: Name of the new slice
+            slice_index: Index of the new slice in curriculum
+        """
+        self.feature_context = create_context_for_slice(
+            slice_name=slice_name,
+            slice_index=slice_index,
+            existing_weights=self.policy_weights,
+            existing_success_history=self.feature_context.success_history,
+            existing_attempt_history=self.feature_context.attempt_history,
+        )
+        # Keep legacy references in sync
+        self.success_count = self.feature_context.success_history
+        self.attempt_count = self.feature_context.attempt_history
+
     def run_all(self) -> Dict[str, Any]:
         """
         Execute all experiments and compute metabolism metrics.
@@ -281,6 +358,9 @@ class RFLRunner:
         for i in range(self.config.num_runs):
             run_id = f"rfl_{self.config.experiment_id}_run_{i+1:02d}"
             slice_cfg = self.config.resolve_slice(i + 1)
+            
+            # Update feature context for current slice
+            self.update_feature_context_for_slice(slice_cfg.name, i)
 
             logger.info(
                 f"[{i+1}/{self.config.num_runs}] Executing {run_id} "
@@ -294,7 +374,8 @@ class RFLRunner:
                 "derive_steps": slice_cfg.derive_steps,
                 "max_breadth": slice_cfg.max_breadth,
                 "max_total": slice_cfg.max_total,
-                "depth_max": slice_cfg.depth_max
+                "depth_max": slice_cfg.depth_max,
+                "policy_weights": dict(self.policy_weights),  # Snapshot current weights
             }
 
             result = self.experiment.run(
@@ -523,6 +604,9 @@ class RFLRunner:
 
         slice_cfg = self._resolve_slice(attestation.slice_id)
         policy_id = attestation.policy_id or "default"
+        
+        # Update feature context for current slice
+        self.update_feature_context_for_slice(slice_cfg.name, 0)
 
         step_material = (
             f"{self.config.experiment_id}|{slice_cfg.name}|{policy_id}|{attestation.composite_root}"
@@ -539,6 +623,7 @@ class RFLRunner:
             abs(abstention_mass_delta) > 1e-9 or abs(abstention_rate_delta) > 1e-9
         )
 
+        # Policy reward for ledger entry (per RFL Law formula)
         reward = max(0.0, 1.0 - max(attestation.abstention_rate, 0.0))
         symbolic_descent = -abstention_rate_delta
 
@@ -562,52 +647,55 @@ class RFLRunner:
             candidate_hash = attestation.statement_hash
             cycle_success = (verified_count >= target_verified)
             
-            # Update success/attempt counts for this candidate hash
-            self.attempt_count[candidate_hash] = self.attempt_count.get(candidate_hash, 0) + 1
-            if cycle_success:
-                self.success_count[candidate_hash] = self.success_count.get(candidate_hash, 0) + 1
+            # Update feature context history using the new module
+            update_context_from_cycle(
+                self.feature_context,
+                candidate_hash,
+                cycle_success,
+                verified_count=verified_count,
+            )
             
-            # Graded reward: how far above/below target
-            reward = verified_count - target_verified
+            # Graded reward signal for internal policy update (separate from ledger reward)
+            update_signal = verified_count - target_verified
             
             # Increased learning rate (10x larger) to make policy matter more
             eta = 0.1  # Increased from 0.01 (10x)
             
-            # More aggressive update scaling - use reward directly (not normalized)
+            # More aggressive update scaling - use update_signal directly (not normalized)
             # This makes even small differences in verified count matter more
             # Use simple heuristics: prefer shorter formulas and moderate depth
-            # Positive reward (verified > target): reinforce current strategy
-            # Negative reward (verified < target): try opposite strategy
-            if reward > 0:
+            # Positive update_signal (verified > target): reinforce current strategy
+            # Negative update_signal (verified < target): try opposite strategy
+            if update_signal > 0:
                 # Success: prefer shorter formulas (negative len weight)
                 # and moderate depth (slight positive depth weight)
-                # Scale by reward magnitude (more proofs = bigger update)
-                update_magnitude = min(abs(reward) * 0.5, 2.0)  # Cap at 2.0 for stability
+                # Scale by update_signal magnitude (more proofs = bigger update)
+                update_magnitude = min(abs(update_signal) * 0.5, 2.0)  # Cap at 2.0 for stability
                 self.policy_weights["len"] += eta * (-0.1) * update_magnitude  # Prefer shorter
                 self.policy_weights["depth"] += eta * (+0.05) * update_magnitude  # Slight preference for depth
                 # Strongly reinforce success history feature when we succeed
-                # Use reward magnitude: more proofs above target = bigger boost
-                self.policy_weights["success"] += eta * reward  # Direct scaling by reward
-            elif reward < 0:
+                # Use update_signal magnitude: more proofs above target = bigger boost
+                self.policy_weights["success_count"] += eta * update_signal  # Direct scaling by update_signal
+            elif update_signal < 0:
                 # Failure: push away from current bias
                 # Even small failures should trigger meaningful updates
-                update_magnitude = min(abs(reward) * 0.5, 2.0)  # Cap at 2.0
+                update_magnitude = min(abs(update_signal) * 0.5, 2.0)  # Cap at 2.0
                 self.policy_weights["len"] += eta * (+0.1) * update_magnitude  # Try longer
                 self.policy_weights["depth"] += eta * (-0.05) * update_magnitude  # Try different depth
                 # Gently decrease success weight (10x smaller penalty than success boost)
                 # This allows success weight to grow over time if successes outnumber failures
-                self.policy_weights["success"] += eta * 0.1 * reward  # Small penalty (reward is negative)
-            # If reward == 0, still do a small update to encourage exploration
+                self.policy_weights["success_count"] += eta * 0.1 * update_signal  # Small penalty (update_signal is negative)
+            # If update_signal == 0, still do a small update to encourage exploration
             else:
                 # Exactly at threshold: small random-walk update to explore
                 self.policy_weights["len"] += eta * 0.01 * (-0.1)  # Tiny preference for shorter
                 self.policy_weights["depth"] += eta * 0.01 * (+0.05)  # Tiny preference for depth
                 # Small positive update for success feature (we hit target, even if barely)
-                self.policy_weights["success"] += eta * 0.05  # Small positive boost
+                self.policy_weights["success_count"] += eta * 0.05  # Small positive boost
             
             # CRITICAL: Clamp success weight to non-negative
             # We never want to penalize successful hashes - only prefer them or ignore them
-            self.policy_weights["success"] = max(0.0, self.policy_weights["success"])
+            self.policy_weights["success_count"] = max(0.0, self.policy_weights["success_count"])
 
         self.abstention_fraction = max(self.abstention_fraction, attestation.abstention_rate)
 
