@@ -126,13 +126,67 @@ class ExperimentManifest:
 # Safe Arithmetic Evaluator
 # -----------------------------------------------------------------------------
 
-_SAFE_ARITHMETIC_PATTERN = re.compile(r'^[\d\s\+\-\*\/\(\)\.]+$')
+_SAFE_ARITHMETIC_PATTERN = re.compile(r'^[\d\s+\-*/().]+$')
+
+
+def _eval_ast_node(node: ast.AST) -> float:
+    """Recursively evaluate an AST node for arithmetic expressions.
+
+    This is a custom evaluator that walks the AST directly without using eval().
+    Only supports: numbers, unary +/-, and binary +, -, *, /.
+
+    Args:
+        node: AST node to evaluate.
+
+    Returns:
+        Evaluated result as float.
+
+    Raises:
+        ValueError: If the node type is not supported.
+    """
+    # Handle ast.Constant (Python 3.8+)
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, (int, float)):
+            return float(node.value)
+        raise ValueError(f"Unsupported constant type: {type(node.value)}")
+
+    # Handle unary operators (+, -)
+    if isinstance(node, ast.UnaryOp):
+        operand = _eval_ast_node(node.operand)
+        if isinstance(node.op, ast.UAdd):
+            return +operand
+        if isinstance(node.op, ast.USub):
+            return -operand
+        raise ValueError(f"Unsupported unary operator: {type(node.op)}")
+
+    # Handle binary operators (+, -, *, /)
+    if isinstance(node, ast.BinOp):
+        left = _eval_ast_node(node.left)
+        right = _eval_ast_node(node.right)
+        if isinstance(node.op, ast.Add):
+            return left + right
+        if isinstance(node.op, ast.Sub):
+            return left - right
+        if isinstance(node.op, ast.Mult):
+            return left * right
+        if isinstance(node.op, ast.Div):
+            if right == 0:
+                raise ValueError("Division by zero")
+            return left / right
+        raise ValueError(f"Unsupported binary operator: {type(node.op)}")
+
+    # Handle expression wrapper
+    if isinstance(node, ast.Expression):
+        return _eval_ast_node(node.body)
+
+    raise ValueError(f"Unsupported AST node type: {type(node)}")
 
 
 def safe_eval_arithmetic(expr: str) -> Optional[float]:
     """Safely evaluate a simple arithmetic expression.
 
     Only allows digits, operators (+, -, *, /), parentheses, and whitespace.
+    Uses a custom AST evaluator instead of eval() for security.
     Returns None if the expression is invalid or contains unsafe characters.
 
     Args:
@@ -149,14 +203,21 @@ def safe_eval_arithmetic(expr: str) -> Optional[float]:
         return None
     try:
         tree = ast.parse(expr, mode='eval')
+        # Validate all nodes are allowed types before evaluation
+        # Note: Only ast.Constant is needed for Python 3.8+
+        # ast.Num was deprecated in 3.8 and removed in 3.14
+        allowed_types: tuple = (
+            ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant,
+            ast.Add, ast.Sub, ast.Mult, ast.Div, ast.USub, ast.UAdd
+        )
+
         for node in ast.walk(tree):
-            if not isinstance(node, (
-                ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant,
-                ast.Add, ast.Sub, ast.Mult, ast.Div, ast.USub, ast.UAdd
-            )):
+            if not isinstance(node, allowed_types):
                 logger.debug(f"Rejected expression with disallowed AST node: {type(node).__name__}")
                 return None
-        result = eval(compile(tree, '<expr>', 'eval'), {"__builtins__": {}}, {})
+
+        # Use custom evaluator instead of eval()
+        result = _eval_ast_node(tree)
         return float(result)
     except Exception as e:
         logger.debug(f"Expression evaluation failed: {e}")

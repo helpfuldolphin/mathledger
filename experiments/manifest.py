@@ -75,19 +75,34 @@ class SystemInfo:
 
 
 @dataclass
-class ArtifactEntry:
-    """Single artifact (log or figure) entry."""
+class LogArtifact:
+    """Log artifact entry."""
     path: str
     sha256: str
-    type_or_description: str
+    log_type: str
 
-    def to_dict(self, is_log: bool = True) -> Dict[str, str]:
+    def to_dict(self) -> Dict[str, str]:
         """Convert to dictionary for JSON serialization."""
-        key = "type" if is_log else "description"
         return {
             "path": self.path,
             "sha256": self.sha256,
-            key: self.type_or_description
+            "type": self.log_type
+        }
+
+
+@dataclass
+class FigureArtifact:
+    """Figure artifact entry."""
+    path: str
+    sha256: str
+    description: str
+
+    def to_dict(self) -> Dict[str, str]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "path": self.path,
+            "sha256": self.sha256,
+            "description": self.description
         }
 
 
