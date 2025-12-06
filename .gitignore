@@ -46,3 +46,7 @@ logs/
 
 # Docker volumes (not needed if named volumes)
 # data/
+
+# Test audit data (generated during testing)
+results/uplift_u2/test_failure/
+results/uplift_u2/slice_uplift_goal/audit_report.*
