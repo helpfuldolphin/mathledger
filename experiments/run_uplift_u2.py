@@ -21,6 +21,11 @@ from typing import Any, Callable, Dict, List
 
 import yaml
 
+# Add project root to sys.path for module imports
+_project_root = str(Path(__file__).resolve().parents[1])
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
 # --- Slice-specific Success Metrics ---
 # These are passed as pure functions. In a real scenario, these might be
 # dynamically imported or otherwise more complex. For this standalone script,
@@ -209,30 +214,93 @@ Absolute Safeguards:
 - Do NOT reinterpret Phase I logs as uplift evidence.
 - All Phase II artifacts must be clearly labeled.
 - RFL uses verifiable feedback only.
+
+Calibration Mode (--calibration):
+- Forces cycles=10 (small, cheap sanity runs)
+- Runs both baseline and RFL modes
+- Writes to results/uplift_u2/calibration/<slice>/...
+- Validates schemas, manifests, and determinism
+- Does NOT compute uplift statistics
         """
     )
     parser.add_argument("--slice", required=True, type=str, help="The experiment slice to run (e.g., 'arithmetic_simple').")
-    parser.add_argument("--cycles", required=True, type=int, help="Number of experiment cycles to run.")
+    parser.add_argument("--cycles", type=int, help="Number of experiment cycles to run (required unless --calibration).")
     parser.add_argument("--seed", required=True, type=int, help="Initial random seed for deterministic execution.")
-    parser.add_argument("--mode", required=True, choices=["baseline", "rfl"], help="Execution mode: 'baseline' or 'rfl'.")
-    parser.add_argument("--out", required=True, type=str, help="Output directory for results and manifest files.")
+    parser.add_argument("--mode", choices=["baseline", "rfl"], help="Execution mode: 'baseline' or 'rfl' (required unless --calibration).")
+    parser.add_argument("--out", type=str, help="Output directory for results and manifest files (required unless --calibration).")
     parser.add_argument("--config", default="config/curriculum_uplift_phase2.yaml", type=str, help="Path to the curriculum config file.")
+    parser.add_argument("--calibration", action="store_true", help="Run in calibration mode: forces cycles=10, runs both baseline and RFL, validates schemas and determinism.")
 
     args = parser.parse_args()
 
     config_path = Path(args.config)
-    out_dir = Path(args.out)
 
-    config = get_config(config_path)
+    if args.calibration:
+        # Calibration mode: run both baseline and RFL with validation
+        from experiments.u2_calibration import CALIBRATION_CYCLES, run_calibration
 
-    run_experiment(
-        slice_name=args.slice,
-        cycles=args.cycles,
-        seed=args.seed,
-        mode=args.mode,
-        out_dir=out_dir,
-        config=config,
-    )
+        out_base = Path("results/uplift_u2/calibration")
+        cycles = args.cycles if args.cycles is not None else CALIBRATION_CYCLES
+
+        print("=" * 60)
+        print("CALIBRATION FIRE HARNESS")
+        print("PHASE II — NOT USED IN PHASE I")
+        print("=" * 60)
+        print(f"Slice: {args.slice}")
+        print(f"Cycles: {cycles}")
+        print(f"Seed: {args.seed}")
+        print(f"Output: {out_base / args.slice}")
+        print()
+
+        summary = run_calibration(
+            slice_name=args.slice,
+            seed=args.seed,
+            config_path=config_path,
+            out_base=out_base,
+            cycles=cycles,
+        )
+
+        # Print summary
+        print()
+        print("=" * 60)
+        print("CALIBRATION SUMMARY")
+        print("=" * 60)
+        print(f"Slice: {summary['slice']}")
+        print(f"Cycles: {summary['cycles']}")
+        print(f"Baseline success count: {summary['baseline']['success_count']}")
+        print(f"RFL success count: {summary['rfl']['success_count']}")
+        print(f"Baseline deterministic: {summary['baseline']['determinism'].get('deterministic', 'N/A') if summary['baseline']['determinism'] else 'N/A'}")
+        print(f"RFL deterministic: {summary['rfl']['determinism'].get('deterministic', 'N/A') if summary['rfl']['determinism'] else 'N/A'}")
+        print(f"Overall status: {summary['overall_status']}")
+
+        if summary["errors"]:
+            print(f"\nErrors: {summary['errors']}")
+        if summary["baseline"]["schema_errors"]:
+            print(f"Baseline schema errors: {summary['baseline']['schema_errors']}")
+        if summary["rfl"]["schema_errors"]:
+            print(f"RFL schema errors: {summary['rfl']['schema_errors']}")
+
+        sys.exit(0 if summary["overall_status"] == "passed" else 1)
+    else:
+        # Regular mode: require all arguments
+        if args.cycles is None:
+            parser.error("--cycles is required unless --calibration is specified")
+        if args.mode is None:
+            parser.error("--mode is required unless --calibration is specified")
+        if args.out is None:
+            parser.error("--out is required unless --calibration is specified")
+
+        out_dir = Path(args.out)
+        config = get_config(config_path)
+
+        run_experiment(
+            slice_name=args.slice,
+            cycles=args.cycles,
+            seed=args.seed,
+            mode=args.mode,
+            out_dir=out_dir,
+            config=config,
+        )
 
 if __name__ == "__main__":
     main()
