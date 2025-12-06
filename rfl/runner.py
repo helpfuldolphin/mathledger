@@ -37,6 +37,9 @@ from .bootstrap_stats import (
 from .audit import RFLAuditLog, SymbolicDescentGradient, StepIdComputation
 from .experiment_logging import RFLExperimentLogger
 from .provenance import ManifestBuilder
+from .policy import FeatureVector, PolicyScorer, PolicyUpdater, extract_features
+from .policy.scoring import PolicyWeights
+from .policy.update import SliceFeedback
 
 # ---------------- Logger ----------------
 logging.basicConfig(
@@ -151,6 +154,19 @@ class RFLRunner:
         # This allows the policy to learn which formulas tend to lead to successful cycles
         self.success_count: Dict[str, int] = {}  # candidate_hash -> number of successful cycles
         self.attempt_count: Dict[str, int] = {}   # candidate_hash -> number of cycles where it appeared
+
+        # New policy module components for feature-based scoring
+        self.feature_policy_weights = PolicyWeights.default()
+        self.policy_scorer = PolicyScorer(
+            weights=self.feature_policy_weights,
+            seed=self.config.random_seed,
+            exploration_weight=0.0,  # No UCB exploration by default
+        )
+        self.policy_updater = PolicyUpdater(
+            seed=self.config.random_seed,
+            base_learning_rate=0.01,
+        )
+        self.policy_update_results: List[Dict[str, Any]] = []  # Track update history
 
         # Audit log for RFL Law compliance (determinism verification)
         self.audit_log = RFLAuditLog(seed=self.config.random_seed)
@@ -556,6 +572,7 @@ class RFLRunner:
             # Update policy weights based on verified count (graded reward)
             # Use verified_count as a graded signal instead of binary success
             verified_count = attestation.metadata.get("verified_count", 0)
+            attempted_count = attestation.metadata.get("attempted_count", max(1, verified_count))
             target_verified = 7  # Match the success threshold for slice_uplift_proto
             
             # Track success history for the candidate hash from this cycle
@@ -567,6 +584,35 @@ class RFLRunner:
             if cycle_success:
                 self.success_count[candidate_hash] = self.success_count.get(candidate_hash, 0) + 1
             
+            # --- NEW: Use policy module for feature-based updates ---
+            # Create feedback for the policy updater
+            slice_feedback = SliceFeedback(
+                slice_name=slice_cfg.name,
+                verified_count=verified_count,
+                attempted_count=attempted_count,
+                target_threshold=target_verified,
+            )
+            
+            # Update feature-based policy weights using PolicyUpdater
+            update_result = self.policy_updater.update(
+                weights=self.feature_policy_weights,
+                feedback=slice_feedback,
+            )
+            
+            # Store update result and update weights
+            self.feature_policy_weights = update_result.weights_after
+            self.policy_scorer.weights = self.feature_policy_weights
+            self.policy_update_results.append(update_result.to_dict())
+            
+            # Log update magnitude for observability
+            logger.info(
+                f"[RFL] Feature policy update: slice={slice_cfg.name}, "
+                f"reward={slice_feedback.reward_signal:.1f}, "
+                f"magnitude={update_result.update_magnitude:.6f}"
+            )
+            # --- END NEW ---
+            
+            # --- LEGACY: Keep existing simple 3-parameter policy for backward compat ---
             # Graded reward: how far above/below target
             reward = verified_count - target_verified
             
@@ -679,6 +725,37 @@ class RFLRunner:
         )
 
         return result
+
+    def score_candidates(
+        self,
+        formulas: List[str],
+        target_atoms: Optional[frozenset] = None,
+        goal_formulas: Optional[frozenset] = None,
+    ) -> List[tuple]:
+        """
+        Score and rank candidate formulas using the feature-based policy.
+        
+        Args:
+            formulas: List of candidate formula strings
+            target_atoms: Atoms in the target/goal formula for overlap computation
+            goal_formulas: Set of formulas that are required goals
+            
+        Returns:
+            List of (formula, score) tuples sorted by score descending
+        """
+        from .policy import extract_features_batch
+        
+        # Extract features for all candidates
+        features = extract_features_batch(
+            formulas=formulas,
+            target_atoms=target_atoms,
+            is_goal_set=goal_formulas,
+            success_counts=self.success_count,
+        )
+        
+        # Score and rank using policy scorer
+        ranked = self.policy_scorer.score_and_rank(formulas, features)
+        return [(c.formula, c.total_score) for c in ranked]
 
     def _resolve_slice(self, slice_name: Optional[str]) -> CurriculumSlice:
         if slice_name:
@@ -989,7 +1066,9 @@ class RFLRunner:
             },
             "policy": {
                 "ledger": [asdict(entry) for entry in self.policy_ledger],
-                "summary": self._summarize_policy_ledger()
+                "summary": self._summarize_policy_ledger(),
+                "feature_weights": self.feature_policy_weights.to_dict(),
+                "update_history": self.policy_update_results[-10:] if self.policy_update_results else [],  # Last 10 updates
             },
             "dual_attestation": self.dual_attestation_records,
             "metabolism_verification": {
