@@ -100,7 +100,12 @@ def _count_atoms(text: str) -> int:
     """
     Count atomic propositions in formula text.
     
-    Simple heuristic: count lowercase letters that appear as standalone tokens.
+    Simple heuristic: count unique lowercase letters that appear in the text.
+    This is a basic approximation suitable for simple propositional formulas
+    with single-letter atom names (p, q, r, etc.).
+    
+    Note: This does not handle multi-character atom names like 'p1' or 'atom_x'.
+    For more complex formulas, a proper parser should be used.
     """
     atoms = set()
     for char in text:

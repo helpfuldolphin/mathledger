@@ -18,7 +18,7 @@ Safety Guards:
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import json
 import math
 
@@ -386,7 +386,7 @@ class PolicyUpdater:
     def _apply_safety_guards(
         self,
         weights: Dict[str, float],
-    ) -> tuple[Dict[str, float], bool]:
+    ) -> Tuple[Dict[str, float], bool]:
         """
         Apply safety guards to weight dictionary.
         

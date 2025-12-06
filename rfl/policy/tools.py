@@ -45,8 +45,12 @@ def load_phase2_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
         else:
             return {}
     
-    with open(config_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except yaml.YAMLError as e:
+        print(f"WARNING: Failed to parse config file {config_path}: {e}")
+        return {}
 
 
 def get_learning_schedule_for_slice(

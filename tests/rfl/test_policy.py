@@ -261,8 +261,9 @@ class TestPolicyUpdater:
         )
         updater = PolicyUpdater(schedule, state)
         
-        # Apply large update that would exceed norm
-        new_state = updater.update("a", gradient=10.0)  # Would add 100 to a
+        # Apply large update that would exceed norm (10.0 * 10.0 = 100.0 added to 'a')
+        # After update: a=103.0, b=4.0 → L2 norm ≈ 103.08 > 5.0 → clamped
+        new_state = updater.update("a", gradient=10.0)
         
         # Verify norm is clamped
         weights = new_state.weights
