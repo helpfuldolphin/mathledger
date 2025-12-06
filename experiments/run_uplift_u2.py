@@ -243,9 +243,7 @@ def _execute_item(chosen_item: str, slice_name: str) -> Any:
         The execution result (numeric for arithmetic, string for others).
     """
     if slice_name == "arithmetic_simple":
-        result = safe_eval_arithmetic(chosen_item)
-        # Return the result or None if evaluation failed
-        return result
+        return safe_eval_arithmetic(chosen_item)
     else:
         return f"Expanded({chosen_item})"
 

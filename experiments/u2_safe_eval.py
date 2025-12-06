@@ -118,5 +118,6 @@ def safe_eval_arithmetic(expr: str) -> Optional[NumericType]:
         raise
     except ValueError:
         raise
-    except Exception:
+    except (TypeError, AttributeError, RecursionError):
+        # Handle unexpected but recoverable errors gracefully
         return None
