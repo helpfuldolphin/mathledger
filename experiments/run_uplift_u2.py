@@ -1,238 +1,335 @@
-# PHASE II — NOT USED IN PHASE I
-#
-# This script runs a U2 uplift experiment. It is designed to be deterministic
-# and self-contained for reproducibility. It supports two modes: 'baseline'
-# for random ordering and 'rfl' for policy-driven ordering.
-#
-# Absolute Safeguards:
-# - Do NOT reinterpret Phase I logs as uplift evidence.
-# - All Phase II artifacts must be clearly labeled “PHASE II — NOT USED IN PHASE I”.
-# - All code must remain deterministic except random shuffle in the baseline policy.
-# - RFL uses verifiable feedback only (no RLHF, no preferences, no proxy rewards).
-# - All new files must be standalone and MUST NOT modify Phase I behavior.
+#!/usr/bin/env python3
+"""
+PHASE II -- NOT RUN IN PHASE I
+
+U2 Uplift Experiment Runner
+============================
+
+Runs a paired baseline and RFL experiment on a chosen uplift slice.
+Writes logs and a preliminary manifest, but leaves analysis and uplift
+claims to other tools.
+
+Usage:
+    uv run python experiments/run_uplift_u2.py \\
+      --slice-name=slice_uplift_sparse \\
+      --cycles=500 \\
+      --seed=1234 \\
+      --out-dir=results/uplift_u2/slice_uplift_sparse
+
+Outputs:
+    - baseline.jsonl    : Cycle logs from baseline mode
+    - rfl.jsonl         : Cycle logs from RFL mode
+    - experiment_manifest.json : Experiment metadata (NO uplift claims)
+
+Absolute Safeguards:
+    - Do NOT reinterpret Phase I logs as uplift evidence.
+    - All Phase II artifacts must be clearly labeled "PHASE II -- NOT RUN IN PHASE I".
+    - Do NOT compute uplift stats or claim any improvement.
+    - Do NOT modify Phase I configs or logs.
+    - RFL uses verifiable feedback only (no RLHF, no preferences, no proxy rewards).
+"""
 
 import argparse
 import hashlib
 import json
-import random
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Dict, List, Optional
 
-import yaml
+# Add project root to sys.path
+project_root = str(Path(__file__).resolve().parents[1])
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-# --- Slice-specific Success Metrics ---
-# These are passed as pure functions. In a real scenario, these might be
-# dynamically imported or otherwise more complex. For this standalone script,
-# we define them here.
+from experiments.run_fo_cycles import CycleRunner
+from curriculum.gates import load
 
-def metric_arithmetic_simple(item: str, result: Any) -> bool:
-    """Success is when the python eval matches the expected result."""
+# Constants
+PHASE_LABEL = "PHASE II -- NOT RUN IN PHASE I"
+
+
+def generate_seed_schedule(
+    global_seed: int, slice_name: str, num_cycles: int
+) -> List[int]:
+    """
+    Generate a deterministic seed schedule from (global_seed, slice_name, cycle_index).
+
+    Each per-cycle seed is derived by hashing the combination of global_seed,
+    slice_name, and cycle_index to ensure reproducibility.
+
+    Args:
+        global_seed: The initial seed for the experiment
+        slice_name: Name of the slice being run
+        num_cycles: Number of cycles to generate seeds for
+
+    Returns:
+        List of deterministic seeds, one per cycle
+    """
+    seeds = []
+    for cycle_index in range(num_cycles):
+        # Derive per-cycle seed from (global_seed, slice_name, cycle_index)
+        seed_material = f"{global_seed}:{slice_name}:{cycle_index}"
+        seed_hash = hashlib.sha256(seed_material.encode("utf-8")).hexdigest()
+        # Take first 8 hex chars (32 bits) and convert to int
+        cycle_seed = int(seed_hash[:8], 16)
+        seeds.append(cycle_seed)
+    return seeds
+
+
+def compute_config_hash(slice_name: str, system: str = "pl") -> Optional[str]:
+    """
+    Compute SHA256 hash of the slice configuration from curriculum.yaml.
+
+    Args:
+        slice_name: Name of the slice
+        system: System slug (default: pl)
+
+    Returns:
+        SHA256 hex digest of the slice config, or None if not found
+    """
+    from dataclasses import asdict, is_dataclass
+
     try:
-        # A mock 'correct' result is simply the eval of the string.
-        return eval(item) == result
+        system_cfg = load(system)
+        for slice_obj in system_cfg.slices:
+            if slice_obj.name == slice_name:
+                # Convert gates to dict if it's a dataclass
+                gates_dict = (
+                    asdict(slice_obj.gates)
+                    if is_dataclass(slice_obj.gates)
+                    else slice_obj.gates
+                )
+                # Serialize slice config deterministically
+                config_dict = {
+                    "name": slice_obj.name,
+                    "params": slice_obj.params,
+                    "gates": gates_dict,
+                }
+                config_str = json.dumps(config_dict, sort_keys=True)
+                return hashlib.sha256(config_str.encode("utf-8")).hexdigest()
     except Exception:
-        return False
-
-def metric_algebra_expansion(item: str, result: Any) -> bool:
-    """A mock success metric for algebra. We'll just use string length."""
-    # This is a placeholder. A real metric would be much more complex.
-    return len(str(result)) > len(item)
-
-METRIC_DISPATCHER = {
-    "arithmetic_simple": metric_arithmetic_simple,
-    "algebra_expansion": metric_algebra_expansion,
-}
+        pass
+    return None
 
 
-# --- RFL Policy Stubs ---
-# Mock implementation of the RFL policy scoring and update loop.
+def get_success_metric_kind(slice_name: str, system: str = "pl") -> Optional[str]:
+    """
+    Get the success_metric_kind from the slice config in curriculum.yaml.
 
-class RFLPolicy:
-    """A mock RFL policy model."""
-    def __init__(self, seed: int):
-        self.scores = {}
-        self.rng = random.Random(seed)
+    Args:
+        slice_name: Name of the slice
+        system: System slug (default: pl)
 
-    def score(self, items: List[str]) -> List[float]:
-        """Scores items. Higher is better."""
-        # Initialize scores if not seen before
-        for item in items:
-            if item not in self.scores:
-                self.scores[item] = self.rng.random()
-        return [self.scores[item] for item in items]
+    Returns:
+        Success metric kind string, or None if not configured
+    """
+    try:
+        system_cfg = load(system)
+        for slice_obj in system_cfg.slices:
+            if slice_obj.name == slice_name:
+                # Check for explicit success_metric_kind in params
+                if "success_metric_kind" in slice_obj.params:
+                    return slice_obj.params["success_metric_kind"]
+                # Default metric kinds based on slice characteristics
+                # For uplift slices, default to "derivation_verified_count"
+                if "uplift" in slice_name:
+                    return "derivation_verified_count"
+                return "proof_found"
+    except Exception:
+        pass
+    return None
 
-    def update(self, item: str, success: bool):
-        """Updates the policy based on feedback."""
-        # Simple update rule: reward success, penalize failure.
-        if success:
-            self.scores[item] = self.scores.get(item, 0.5) * 1.1
-        else:
-            self.scores[item] = self.scores.get(item, 0.5) * 0.9
-        # Clamp scores to a reasonable range
-        self.scores[item] = max(0.01, min(self.scores[item], 0.99))
 
-
-# --- Core Runner Logic ---
-
-def get_config(config_path: Path) -> Dict[str, Any]:
-    """Loads the YAML configuration file."""
-    print(f"INFO: Loading config from {config_path}")
-    if not config_path.exists():
-        print(f"ERROR: Config file not found at {config_path}", file=sys.stderr)
-        sys.exit(1)
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
-
-def generate_seed_schedule(initial_seed: int, num_cycles: int) -> List[int]:
-    """Generates a deterministic list of seeds for each cycle."""
-    rng = random.Random(initial_seed)
-    return [rng.randint(0, 2**32 - 1) for _ in range(num_cycles)]
-
-def hash_string(data: str) -> str:
-    """Computes the SHA256 hash of a string."""
-    return hashlib.sha256(data.encode('utf-8')).hexdigest()
-
-def run_experiment(
+def run_uplift_u2(
     slice_name: str,
     cycles: int,
     seed: int,
-    mode: str,
     out_dir: Path,
-    config: Dict[str, Any],
-):
-    """Main function to run the uplift experiment."""
-    print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
-    print(f"PHASE II — NOT USED IN PHASE I")
+    system: str = "pl",
+) -> Dict[str, Any]:
+    """
+    Run a paired baseline and RFL experiment on the specified slice.
 
-    # 1. Setup
-    out_dir.mkdir(exist_ok=True)
-    slice_config = config.get("slices", {}).get(slice_name)
-    if not slice_config:
-        print(f"ERROR: Slice '{slice_name}' not found in config.", file=sys.stderr)
-        sys.exit(1)
+    Args:
+        slice_name: Name of the curriculum slice to use
+        cycles: Number of cycles to run for each mode
+        seed: Global seed for deterministic execution
+        out_dir: Output directory for results and manifest
+        system: System slug (default: pl)
 
-    items = slice_config["items"]
-    success_metric = METRIC_DISPATCHER.get(slice_name)
-    if not success_metric:
-        print(f"ERROR: Success metric for slice '{slice_name}' not found.", file=sys.stderr)
-        sys.exit(1)
+    Returns:
+        Manifest dictionary with experiment metadata
+    """
+    print("=" * 60)
+    print(f"{PHASE_LABEL}")
+    print("U2 UPLIFT EXPERIMENT")
+    print("=" * 60)
+    print(f"Slice: {slice_name}")
+    print(f"Cycles per mode: {cycles}")
+    print(f"Seed: {seed}")
+    print(f"Output directory: {out_dir}")
+    print()
 
-    seed_schedule = generate_seed_schedule(seed, cycles)
-    policy = RFLPolicy(seed) if mode == "rfl" else None
-    ht_series = []  # History of Telemetry (Hₜ)
+    # Setup output paths
+    out_dir.mkdir(parents=True, exist_ok=True)
+    baseline_path = out_dir / "baseline.jsonl"
+    rfl_path = out_dir / "rfl.jsonl"
+    manifest_path = out_dir / "experiment_manifest.json"
 
-    results_path = out_dir / f"uplift_u2_{slice_name}_{mode}.jsonl"
-    manifest_path = out_dir / f"uplift_u2_manifest_{slice_name}_{mode}.json"
+    # Generate deterministic seed schedule shared by both modes
+    seed_schedule = generate_seed_schedule(seed, slice_name, cycles)
 
-    # 2. Main Loop
-    with open(results_path, "w") as results_f:
-        for i in range(cycles):
-            cycle_seed = seed_schedule[i]
-            rng = random.Random(cycle_seed)
-            
-            # --- Ordering Step ---
-            if mode == "baseline":
-                # Baseline: random shuffle ordering
-                ordered_items = list(items)
-                rng.shuffle(ordered_items)
-                chosen_item = ordered_items[0]
-            elif mode == "rfl":
-                # RFL: use policy scoring
-                item_scores = policy.score(items)
-                scored_items = sorted(zip(items, item_scores), key=lambda x: x[1], reverse=True)
-                chosen_item = scored_items[0][0]
-            else:
-                raise ValueError(f"Unknown mode: {mode}")
+    # Record start time
+    started_at = datetime.now(timezone.utc).isoformat()
 
-            # --- Mock Execution & Evaluation ---
-            # In a real system, this would be a call to the substrate.
-            # Here, we just mock a result.
-            mock_result = eval(chosen_item) if slice_name == "arithmetic_simple" else f"Expanded({chosen_item})"
-            success = success_metric(chosen_item, mock_result)
+    # --- Run Baseline Mode ---
+    print("Running baseline mode...")
+    try:
+        baseline_runner = CycleRunner(
+            mode="baseline",
+            output_path=baseline_path,
+            slice_name=slice_name,
+            system=system,
+        )
+        baseline_runner.run(cycles)
+        print(f"Baseline complete -> {baseline_path}")
+    except Exception as e:
+        print(f"ERROR during baseline run: {e}", file=sys.stderr)
+        raise
 
-            # --- RFL Policy Update ---
-            if mode == "rfl":
-                policy.update(chosen_item, success)
+    # --- Run RFL Mode ---
+    print("\nRunning RFL mode...")
+    try:
+        rfl_runner = CycleRunner(
+            mode="rfl",
+            output_path=rfl_path,
+            slice_name=slice_name,
+            system=system,
+        )
+        rfl_runner.run(cycles)
+        print(f"RFL complete -> {rfl_path}")
+    except Exception as e:
+        print(f"ERROR during RFL run: {e}", file=sys.stderr)
+        raise
 
-            # --- Telemetry Logging ---
-            telemetry_record = {
-                "cycle": i,
-                "slice": slice_name,
-                "mode": mode,
-                "seed": cycle_seed,
-                "item": chosen_item,
-                "result": str(mock_result),
-                "success": success,
-                "label": "PHASE II — NOT USED IN PHASE I",
-            }
-            ht_series.append(telemetry_record)
-            results_f.write(json.dumps(telemetry_record) + "\n")
-            print(f"Cycle {i+1}/{cycles}: Chose '{chosen_item}', Success: {success}")
+    # Record completion time
+    completed_at = datetime.now(timezone.utc).isoformat()
 
-    # 3. Manifest Generation
-    slice_config_str = json.dumps(slice_config, sort_keys=True)
-    slice_config_hash = hash_string(slice_config_str)
-    ht_series_str = json.dumps(ht_series, sort_keys=True)
-    ht_series_hash = hash_string(ht_series_str)
+    # Compute slice config hash
+    slice_config_hash = compute_config_hash(slice_name, system)
 
-    manifest = {
-        "label": "PHASE II — NOT USED IN PHASE I",
-        "slice": slice_name,
-        "mode": mode,
+    # Get success metric kind
+    success_metric_kind = get_success_metric_kind(slice_name, system)
+
+    # --- Create Manifest ---
+    # Note: NO uplift decision - leave as null/pending for analysis tools
+    manifest: Dict[str, Any] = {
+        "label": PHASE_LABEL,
+        "manifest_version": "1.0",
+        "experiment_id": "uplift_u2",
+        "slice_name": slice_name,
         "cycles": cycles,
-        "initial_seed": seed,
+        "seed": seed,
+        "system": system,
+        "paths": {
+            "baseline_log": str(baseline_path),
+            "rfl_log": str(rfl_path),
+        },
+        "seed_schedule": seed_schedule,
         "slice_config_hash": slice_config_hash,
-        "prereg_hash": slice_config.get("prereg_hash", "N/A"),
-        "ht_series_hash": ht_series_hash,
-        "deterministic_seed_schedule": seed_schedule,
-        "outputs": {
-            "results": str(results_path),
-            "manifest": str(manifest_path),
-        }
+        "success_metric_kind": success_metric_kind,
+        "execution": {
+            "started_at": started_at,
+            "completed_at": completed_at,
+            "executor": "run_uplift_u2.py",
+        },
+        # Uplift decision fields - explicitly null/pending
+        # Analysis tools will fill these in
+        "uplift_decision": None,
+        "uplift_stats": None,
+        "outcome": "pending",
     }
 
-    with open(manifest_path, "w") as manifest_f:
-        json.dump(manifest, manifest_f, indent=2)
+    # Write manifest
+    with open(manifest_path, "w") as f:
+        json.dump(manifest, f, indent=2, sort_keys=True)
 
-    print(f"\n--- Experiment Complete ---")
-    print(f"Results written to {results_path}")
-    print(f"Manifest written to {manifest_path}")
+    print()
+    print("=" * 60)
+    print("EXPERIMENT COMPLETE")
+    print("=" * 60)
+    print(f"Baseline:  {baseline_path}")
+    print(f"RFL:       {rfl_path}")
+    print(f"Manifest:  {manifest_path}")
+    print()
+    print("Note: Uplift decision is PENDING.")
+    print("      Run analysis tools to compute statistics and make claims.")
+
+    return manifest
+
 
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="PHASE II U2 Uplift Runner. Must not be used for Phase I.",
+        description=f"{PHASE_LABEL}\nU2 Uplift Experiment Runner - runs paired baseline/RFL experiments.",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog="""
 Absolute Safeguards:
 - Do NOT reinterpret Phase I logs as uplift evidence.
-- All Phase II artifacts must be clearly labeled.
+- All Phase II artifacts are clearly labeled.
+- This script does NOT compute uplift stats or claim improvement.
 - RFL uses verifiable feedback only.
-        """
+
+Example:
+    uv run python experiments/run_uplift_u2.py \\
+      --slice-name=slice_uplift_sparse \\
+      --cycles=500 \\
+      --seed=1234 \\
+      --out-dir=results/uplift_u2/slice_uplift_sparse
+        """,
     )
-    parser.add_argument("--slice", required=True, type=str, help="The experiment slice to run (e.g., 'arithmetic_simple').")
-    parser.add_argument("--cycles", required=True, type=int, help="Number of experiment cycles to run.")
-    parser.add_argument("--seed", required=True, type=int, help="Initial random seed for deterministic execution.")
-    parser.add_argument("--mode", required=True, choices=["baseline", "rfl"], help="Execution mode: 'baseline' or 'rfl'.")
-    parser.add_argument("--out", required=True, type=str, help="Output directory for results and manifest files.")
-    parser.add_argument("--config", default="config/curriculum_uplift_phase2.yaml", type=str, help="Path to the curriculum config file.")
+    parser.add_argument(
+        "--slice-name",
+        required=True,
+        type=str,
+        help="Curriculum slice name from config/curriculum.yaml",
+    )
+    parser.add_argument(
+        "--cycles",
+        required=True,
+        type=int,
+        help="Number of cycles to run for each mode (baseline and RFL)",
+    )
+    parser.add_argument(
+        "--seed",
+        required=True,
+        type=int,
+        help="Global seed for deterministic execution",
+    )
+    parser.add_argument(
+        "--out-dir",
+        required=True,
+        type=str,
+        help="Output directory for results and manifest files",
+    )
+    parser.add_argument(
+        "--system",
+        type=str,
+        default="pl",
+        help="System slug (default: pl)",
+    )
 
     args = parser.parse_args()
 
-    config_path = Path(args.config)
-    out_dir = Path(args.out)
-
-    config = get_config(config_path)
-
-    run_experiment(
-        slice_name=args.slice,
+    run_uplift_u2(
+        slice_name=args.slice_name,
         cycles=args.cycles,
         seed=args.seed,
-        mode=args.mode,
-        out_dir=out_dir,
-        config=config,
+        out_dir=Path(args.out_dir),
+        system=args.system,
     )
+
 
 if __name__ == "__main__":
     main()
