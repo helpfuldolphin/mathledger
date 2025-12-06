@@ -17,9 +17,12 @@ import json
 import random
 import sys
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import yaml
+
+# Global verbose flag for per-cycle logging
+_VERBOSE_CYCLES: bool = False
 
 # --- Slice-specific Success Metrics ---
 # These are passed as pure functions. In a real scenario, these might be
@@ -100,13 +103,14 @@ def run_experiment(
     mode: str,
     out_dir: Path,
     config: Dict[str, Any],
+    verbose_cycles: bool = False,
 ):
     """Main function to run the uplift experiment."""
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
     print(f"PHASE II — NOT USED IN PHASE I")
 
     # 1. Setup
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(exist_ok=True, parents=True)
     slice_config = config.get("slices", {}).get(slice_name)
     if not slice_config:
         print(f"ERROR: Slice '{slice_name}' not found in config.", file=sys.stderr)
@@ -137,11 +141,15 @@ def run_experiment(
                 ordered_items = list(items)
                 rng.shuffle(ordered_items)
                 chosen_item = ordered_items[0]
+                abstained = 0
+                verified = len(items)
             elif mode == "rfl":
                 # RFL: use policy scoring
                 item_scores = policy.score(items)
                 scored_items = sorted(zip(items, item_scores), key=lambda x: x[1], reverse=True)
                 chosen_item = scored_items[0][0]
+                abstained = 0
+                verified = len(items)
             else:
                 raise ValueError(f"Unknown mode: {mode}")
 
@@ -168,7 +176,16 @@ def run_experiment(
             }
             ht_series.append(telemetry_record)
             results_f.write(json.dumps(telemetry_record) + "\n")
-            print(f"Cycle {i+1}/{cycles}: Chose '{chosen_item}', Success: {success}")
+            
+            # --- Verbose Cycle Logging ---
+            # When --verbose-cycles is enabled, print per-cycle details
+            # Must not modify JSONL or manifest output
+            if verbose_cycles:
+                item_hash_prefix = hash_string(chosen_item)[:8]
+                print(
+                    f"[cycle={i}] mode={mode} success={success} "
+                    f"verified={verified} abstained={abstained} item={item_hash_prefix}"
+                )
 
     # 3. Manifest Generation
     slice_config_str = json.dumps(slice_config, sort_keys=True)
@@ -214,9 +231,14 @@ Absolute Safeguards:
     parser.add_argument("--slice", required=True, type=str, help="The experiment slice to run (e.g., 'arithmetic_simple').")
     parser.add_argument("--cycles", required=True, type=int, help="Number of experiment cycles to run.")
     parser.add_argument("--seed", required=True, type=int, help="Initial random seed for deterministic execution.")
-    parser.add_argument("--mode", required=True, choices=["baseline", "rfl"], help="Execution mode: 'baseline' or 'rfl'.")
+    parser.add_argument("--mode", required=True, choices=["baseline", "rfl", "calibrate"], help="Execution mode: 'baseline', 'rfl', or 'calibrate'.")
     parser.add_argument("--out", required=True, type=str, help="Output directory for results and manifest files.")
     parser.add_argument("--config", default="config/curriculum_uplift_phase2.yaml", type=str, help="Path to the curriculum config file.")
+    parser.add_argument(
+        "--verbose-cycles",
+        action="store_true",
+        help="Print per-cycle logs: [cycle=N] mode=X success=Y verified=Z abstained=W item=<hash_prefix>",
+    )
 
     args = parser.parse_args()
 
@@ -225,14 +247,36 @@ Absolute Safeguards:
 
     config = get_config(config_path)
 
-    run_experiment(
-        slice_name=args.slice,
-        cycles=args.cycles,
-        seed=args.seed,
-        mode=args.mode,
-        out_dir=out_dir,
-        config=config,
-    )
+    if args.mode == "calibrate":
+        # Run calibration mode using u2_calibration module
+        # Use dynamic import to avoid import issues when running as script
+        import importlib.util
+        import os
+        
+        u2_cal_path = os.path.join(os.path.dirname(__file__), "u2_calibration.py")
+        spec = importlib.util.spec_from_file_location("u2_calibration", u2_cal_path)
+        u2_cal_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(u2_cal_module)
+        
+        summary = u2_cal_module.run_calibration(
+            slice_name=args.slice,
+            config_path=config_path,
+            output_dir=out_dir,
+            cycles=args.cycles,
+            seed=args.seed,
+            verbose_cycles=args.verbose_cycles,
+        )
+        print(f"\nCalibration Summary: {json.dumps(summary, indent=2)}")
+    else:
+        run_experiment(
+            slice_name=args.slice,
+            cycles=args.cycles,
+            seed=args.seed,
+            mode=args.mode,
+            out_dir=out_dir,
+            config=config,
+            verbose_cycles=args.verbose_cycles,
+        )
 
 if __name__ == "__main__":
     main()
