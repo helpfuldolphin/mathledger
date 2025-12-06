@@ -454,7 +454,9 @@ class ManifestVerifier:
             )
             return False
         
-        # Extract Hₜ values (support multiple field names)
+        # Extract Hₜ values (support multiple field names for future compatibility)
+        # Current run_uplift_u2.py hashes the full record set directly, but future
+        # implementations may use dedicated h_t fields (roots.h_t, h_t, or ht).
         ht_values = []
         for record in records:
             # Try different field names for Hₜ
@@ -470,8 +472,8 @@ class ManifestVerifier:
                 ht_values.append(str(h_t))
         
         if not ht_values:
-            # If no h_t field, compute hash over full records for integrity
-            # This matches the pattern in run_uplift_u2.py which hashes ht_series
+            # No h_t fields found - compute hash over full record set.
+            # This matches run_uplift_u2.py which hashes the full ht_series array.
             ht_series_str = json.dumps(records, sort_keys=True)
             actual_hash = compute_sha256_string(ht_series_str)
         else:
