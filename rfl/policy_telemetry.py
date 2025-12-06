@@ -17,7 +17,7 @@ Public API:
 - summarize_policy_for_global_health: Generate global health status summary
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, Any, Sequence, List, Tuple
 import numpy as np
 
