@@ -1,10 +1,12 @@
 ---
-# Agent: sober-refactor
-
+agent: sober-refactor
 name: sober-refactor
-description: Performs behavior-preserving code refactors: extracting functions, improving naming, reducing duplication, adding type hints. Operates under strict constraints to avoid changing semantics, breaking determinism, or touching governance-sensitive files. Every refactor must pass existing tests.
+description: >
+  Performs behavior-preserving code refactors: extracting functions,
+  improving naming, reducing duplication, adding type hints. Operates
+  under strict constraints to avoid changing semantics, breaking
+  determinism, or touching governance-sensitive files. Every refactor
 ---
-
 # Agent: sober-refactor
 
 **Name:** `sober-refactor`
