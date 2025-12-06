@@ -16,6 +16,9 @@
 #   3. slice_uplift_tree       - Chain depth (multi-step derivation required)
 #   4. slice_uplift_dependency - Multiple subgoals (coordination required)
 
+# Schema version for curriculum structure (used by curriculum-architect drift guard)
+schema_version: "phase2-v1"
+
 version: 2.1.0
 
 slices:
