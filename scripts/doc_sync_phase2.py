@@ -535,7 +535,6 @@ def process_markdown_doc(path: Path, curriculum: Dict[str, Any],
         return False
 
     content = path.read_text(encoding="utf-8")
-    original_content = content
     changed = False
 
     # Generate and update each block type
@@ -570,7 +569,6 @@ def process_tex_doc(path: Path, curriculum: Dict[str, Any],
         return False
 
     content = path.read_text(encoding="utf-8")
-    original_content = content
     changed = False
 
     # Generate and update each block type

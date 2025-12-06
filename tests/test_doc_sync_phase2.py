@@ -101,8 +101,12 @@ class TestPythonParsing(unittest.TestCase):
             result = parse_runner_cli(Path(f.name))
             self.assertEqual(len(result["args"]), 2)
             
-            # Find the --name arg
-            name_arg = next(a for a in result["args"] if "--name" in a.get("names", []))
+            # Find the --name arg with proper error handling
+            name_arg = next(
+                (a for a in result["args"] if "--name" in a.get("names", [])),
+                None
+            )
+            self.assertIsNotNone(name_arg, "Expected --name argument to be parsed")
             self.assertTrue(name_arg["required"])
             self.assertEqual(name_arg["help"], "The name")
 
