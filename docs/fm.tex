@@ -1,0 +1,158 @@
+% MathLedger Field Manual
+% Operations Guide for RFL Infrastructure and Phase II Experiments
+%
+% USAGE: \input{docs/fm.tex} or compile standalone
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{framed}
+\usepackage{enumitem}
+
+\title{\textbf{MathLedger Field Manual}\\
+\large Operations Guide for RFL Infrastructure}
+\author{MathLedger Research Fleet}
+\date{Version 1.0 --- \today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\newpage
+
+%% ============================================================
+%% PHASE II STATUS PARAGRAPH
+%% ============================================================
+\section{Phase Status Summary}
+
+\begin{framed}
+\textbf{Phase I} established the core RFL infrastructure and validated it
+through a negative control experiment. The First Organism closed-loop test
+demonstrated deterministic execution and dual-root attestation, but produced
+\emph{no measurable uplift}---as expected for a symmetric (path-invariant)
+environment.
+
+\textbf{Phase II U2} defines a family of preregistered experiments on four
+asymmetric uplift slices (goal-conditioned, sparse-reward, chain-depth,
+multi-subgoal). These experiments are designed to test whether learned policies
+can reduce epistemic risk relative to random baselines.
+
+\textbf{As of Evidence Pack v1 and the current commit, no uplift claims are made.}
+All uplift-related content in this manual and companion documents represents
+\emph{design}, \emph{theory}, or \emph{preregistration}---not empirical results.
+\end{framed}
+
+%% ============================================================
+%% WHERE TO LOOK BOX
+%% ============================================================
+\section{Where to Look}
+
+\begin{framed}
+\textbf{Key Resources for Phase II Operations}
+\begin{description}[leftmargin=!, labelwidth=3cm]
+  \item[U2 Runner] \texttt{experiments/run\_uplift\_u2.py} (to be implemented)
+  \item[Phase II Curriculum] \texttt{config/curriculum\_uplift\_phase2.yaml}
+  \item[Preregistration] \texttt{experiments/prereg/PREREG\_UPLIFT\_U2.yaml}
+  \item[Manifest/Audit Tools] \texttt{scripts/verify\_config\_hashes.py}, \texttt{rfl\_gate.py}
+  \item[Theory (U2 Slices)] \texttt{RFL\_UPLIFT\_THEORY.md} Sections 9--11
+  \item[Uplift Plan] \texttt{docs/PHASE2\_RFL\_UPLIFT\_PLAN.md}
+  \item[VSD Phase 2] \texttt{docs/VSD\_PHASE\_2.md} Section 0.5 (Uplift Evidence Gate)
+\end{description}
+\end{framed}
+
+%% ============================================================
+%% OPERATIONAL PROCEDURES
+%% ============================================================
+\section{Operational Procedures}
+
+\subsection{Running Phase I Tests}
+
+Phase I infrastructure can be exercised via:
+
+\begin{verbatim}
+# First Organism closed-loop test
+pytest tests/integration/test_first_organism.py -v
+
+# Determinism verification
+pytest tests/integration/test_first_organism_determinism.py -v
+\end{verbatim}
+
+\subsection{Phase II Experiment Execution (Planned)}
+
+Once Phase II tooling is implemented, the U2 experiment family will follow this protocol:
+
+\begin{enumerate}
+  \item Ensure preregistration document is finalized and hashed.
+  \item Run baseline mode with random candidate ordering.
+  \item Run RFL mode with learned policy ordering (same seed).
+  \item Generate statistical summary and manifest.
+  \item Archive results to Evidence Pack v2 structure.
+\end{enumerate}
+
+\textbf{Note:} As of this writing, the U2 runner (\texttt{run\_uplift\_u2.py})
+is not yet implemented. Phase II experiments have not been executed.
+
+\subsection{Audit and Verification}
+
+\begin{itemize}
+  \item \textbf{Config Hash Verification:} \texttt{python verify\_config\_hashes.py}
+  \item \textbf{RFL Gate Check:} \texttt{python rfl\_gate.py --check}
+  \item \textbf{Mirror Audit:} See \texttt{docs/VSD\_PHASE\_2.md} Section 0.5
+\end{itemize}
+
+%% ============================================================
+%% SLICE REFERENCE
+%% ============================================================
+\section{Phase II Uplift Slices (Reference)}
+
+The four Phase II slices are designed to create asymmetric environments where
+policy-based ordering \emph{should} outperform random baselines. These are
+\textbf{planned experiments, not yet executed}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Slice} & \textbf{Objective} & \textbf{Status} \\
+\midrule
+\texttt{slice\_uplift\_goal} & Goal-conditioned target & Designed \\
+\texttt{slice\_uplift\_sparse} & Sparse reward environment & Designed \\
+\texttt{slice\_uplift\_tree} & Chain depth derivations & Designed \\
+\texttt{slice\_uplift\_dependency} & Multiple subgoals & Designed \\
+\bottomrule
+\end{tabular}
+\caption{Phase II uplift slices (preregistered, not yet run).}
+\end{table}
+
+%% ============================================================
+%% GLOSSARY
+%% ============================================================
+\section{Glossary}
+
+\begin{description}
+  \item[RFL] Reflexive Formal Learning --- the feedback loop that updates
+    policy based on verifiable outcomes.
+  \item[$H_t$] Composite attestation root at cycle $t$.
+  \item[U2] Phase II uplift experiment family on asymmetric slices.
+  \item[Negative Control] Phase I experiment on symmetric slice (no expected uplift).
+  \item[Evidence Pack v1] Phase I artifacts with sealed attestations.
+\end{description}
+
+%% ============================================================
+%% DOCUMENT HISTORY
+%% ============================================================
+\section*{Document History}
+
+\begin{tabular}{lll}
+\toprule
+\textbf{Date} & \textbf{Version} & \textbf{Notes} \\
+\midrule
+\today & 1.0 & Initial field manual creation \\
+\bottomrule
+\end{tabular}
+
+\end{document}

@@ -32,6 +32,16 @@ This document derives the *expected* dynamics of the abstention rate under the R
 
 ---
 
+## Phase Status Summary
+
+**Phase I** established the core RFL infrastructure and validated it through a negative control experiment. The First Organism closed-loop test demonstrated deterministic execution and dual-root attestation, but produced *no measurable uplift*—as expected for a symmetric (path-invariant) environment.
+
+**Phase II U2** defines a family of preregistered experiments on four asymmetric uplift slices (goal-conditioned, sparse-reward, chain-depth, multi-subgoal). These experiments are designed to test whether learned policies can reduce epistemic risk relative to random baselines.
+
+**As of Evidence Pack v1 and the current commit, no uplift claims are made.** All content in this document represents *theoretical conjecture* or *preregistration*—not empirical results.
+
+---
+
 ## 1. Preliminaries and Definitions
 
 ### 1.1 State Space
@@ -582,10 +592,10 @@ $$ G_i(\pi, T) = A_i(\pi_0, T) - A_i(\pi, T) $$
 $$ \frac{1}{N} \sum_{t=1}^{N} G_i(\pi, t) > \tau_i \quad \text{and} \quad p\text{-value}(\text{H}_0: \mathbb{E}[G_i] \leq 0) < 0.05 $$ 
 
 The thresholds $\{\tau_i\}$ are set based on the hypothesized difficulty of each slice:
-- **$\tau_{U2}$ (Tautology Enrichment):** High expected uplift. $\tau_{U2} = 0.20$. The enriched density of tautologies should be easily exploited.
-- **$\tau_{U3}$ (Contradiction Enrichment):** Medium expected uplift. $\tau_{U3} = 0.15$. Identifying contradictions is harder than tautologies.
-- **$\tau_{U4}$ (Conjecture Depletion):** Low expected uplift. $\tau_{U4} = 0.05$. A sparse environment offers fewer learning opportunities.
-- **$\tau_{U5}$ (Axiom Expansion):** High but variable uplift. $\tau_{U5} = 0.10$. Success depends on the discovery of a few key lemmas.
+- **$\tau_{U2}$ (Tautology Enrichment):** Hypothesized high uplift. $\tau_{U2} = 0.20$. The enriched density of tautologies should be easily exploited.
+- **$\tau_{U3}$ (Contradiction Enrichment):** Hypothesized medium uplift. $\tau_{U3} = 0.15$. Identifying contradictions is harder than tautologies.
+- **$\tau_{U4}$ (Conjecture Depletion):** Hypothesized low uplift. $\tau_{U4} = 0.05$. A sparse environment offers fewer learning opportunities.
+- **$\tau_{U5}$ (Axiom Expansion):** Hypothesized high but variable uplift. $\tau_{U5} = 0.10$. Success depends on the discovery of a few key lemmas.
 
 ---
 
@@ -644,14 +654,14 @@ The introduction of asymmetric slices and more complex verification (e.g., Lean-
 
 ---
 
-### 11.5 Expected Behavior Under Asymmetric Slices
+### 11.5 Hypothesized Behavior Under Asymmetric Slices (Not Yet Tested)
 
-The four uplift slices are designed to probe different aspects of the RFL process.
+The four uplift slices are designed to probe different aspects of the RFL process. The following predictions are *hypotheses to be tested in Phase II*, not empirical observations.
 
-- **U2 (Tautology-Enriched):** We expect a rapid and significant decrease in the abstention rate. This slice is "easy" and serves as a positive control. The learning curve for $A_{U2}(t)$ should resemble the idealized logistic decay (Conjecture 4.1) most closely.
+- **U2 (Tautology-Enriched):** We hypothesize a rapid and significant decrease in the abstention rate. This slice is "easy" and serves as a positive control. The learning curve for $A_{U2}(t)$ should resemble the idealized logistic decay (Conjecture 4.1) most closely.
 
-- **U3 (Contradiction-Enriched):** We expect a slower decrease in abstention compared to U2. Proving a contradiction $`\neg P`$ is equivalent to proving $`P \rightarrow false`$, which can be harder. The uplift gain $G_{U3}$ should be positive but smaller than $G_{U2}$.
+- **U3 (Contradiction-Enriched):** We hypothesize a slower decrease in abstention compared to U2. Proving a contradiction $`\neg P`$ is equivalent to proving $`P \rightarrow false`$, which can be harder. The uplift gain $G_{U3}$ is predicted to be positive but smaller than $G_{U2}$.
 
-- **U4 (Conjecture-Depleted):** We expect a very small, possibly zero, uplift gain. With few provable statements, there is little learning signal. The abstention rate $A_{U4}(t)$ should remain high and flat. This slice acts as a negative control for the learning process itself. A significant drop in $A_{U4}(t)$ would be anomalous and suggest the policy is learning a spurious correlation.
+- **U4 (Conjecture-Depleted):** We hypothesize a very small, possibly zero, uplift gain. With few provable statements, there is little learning signal. The abstention rate $A_{U4}(t)$ should remain high and flat. This slice acts as a negative control for the learning process itself. A significant drop in $A_{U4}(t)$ would be anomalous and suggest the policy is learning a spurious correlation.
 
-- **U5 (Axiom-Expansion):** We expect a "step-function" behavior in the abstention rate. The rate $A_{U5}(t)$ should remain high until the RFL policy discovers how to use the new axiom to prove a key lemma. Upon discovery, the abstention rate should drop sharply as many previously unprovable statements become derivable. The timing and magnitude of this drop are stochastic.
+- **U5 (Axiom-Expansion):** We hypothesize a "step-function" behavior in the abstention rate. The rate $A_{U5}(t)$ should remain high until the RFL policy discovers how to use the new axiom to prove a key lemma. Upon discovery, the abstention rate should drop sharply as many previously unprovable statements become derivable. The timing and magnitude of this drop are stochastic.

@@ -2,6 +2,31 @@
 
 > **STATUS: PHASE II — NOT YET RUN. NO UPLIFT CLAIMS MAY BE MADE.**
 
+---
+
+## Phase Status Summary
+
+**Phase I** established the core RFL infrastructure and validated it through a negative control experiment. The First Organism closed-loop test demonstrated deterministic execution and dual-root attestation, but produced *no measurable uplift*—as expected for a symmetric (path-invariant) environment.
+
+**Phase II U2** defines a family of preregistered experiments on four asymmetric uplift slices (goal-conditioned, sparse-reward, chain-depth, multi-subgoal). These experiments are designed to test whether learned policies can reduce epistemic risk relative to random baselines.
+
+**As of Evidence Pack v1 and the current commit, no uplift claims are made.** All uplift-related content in this document represents *design*, *theory*, or *preregistration*—not empirical results.
+
+---
+
+## Where to Look
+
+| Resource | Location |
+|----------|----------|
+| U2 Runner | `experiments/run_uplift_u2.py` (to be implemented) |
+| Phase II Curriculum | `config/curriculum_uplift_phase2.yaml` |
+| Preregistration | `experiments/prereg/PREREG_UPLIFT_U2.yaml` |
+| Manifest/Audit Tools | `scripts/verify_config_hashes.py`, `rfl_gate.py` |
+| Theory (U2 Slices) | `RFL_UPLIFT_THEORY.md` Sections 9–11 |
+| VSD Phase 2 | `docs/VSD_PHASE_2.md` Section 0.5 (Uplift Evidence Gate) |
+
+---
+
 ## Overview
 
 Phase II introduces four uplift slices designed for environments where policy-based
@@ -38,7 +63,7 @@ success = (
 - Depth: 2–5
 - Budget: max 40 candidates/cycle
 
-**Expected Uplift**:
+**Hypothesized Uplift (to be tested)**
 - Baseline: 10–30% goal hit rate
 - RFL Target: 40–70% goal hit rate
 
@@ -59,7 +84,7 @@ density = verified / candidates_tried
 - Depth: 3–7
 - Budget: max 40 candidates/cycle
 
-**Expected Uplift**:
+**Hypothesized Uplift (to be tested)**
 - Baseline: 20–50% success
 - RFL Target: 50–80% success
 
@@ -82,7 +107,7 @@ success = (
 - Depth: 2–6
 - Budget: max 30 candidates/cycle
 
-**Expected Uplift**:
+**Hypothesized Uplift (to be tested)**
 - Baseline: 10–30% chain success
 - RFL Target: 40–70% chain success
 
@@ -105,7 +130,7 @@ success = all(
 - Depth: 2–6
 - Budget: max 40 candidates/cycle
 
-**Expected Uplift**:
+**Hypothesized Uplift (to be tested)**
 - Baseline: 5–20% joint success
 - RFL Target: 30–60% joint success
 

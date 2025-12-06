@@ -1,6 +1,18 @@
 # MathLedger Phase II Decomposition Plan
 
-This document outlines the Work Breakdown Structure (WBS) for Phase II of the MathLedger project, focusing on the uplift experiments.
+This document outlines the Work Breakdown Structure (WBS) for Phase II of the MathLedger project, focusing on the planned uplift experiments.
+
+---
+
+## Phase Status Summary
+
+**Phase I** established the core RFL infrastructure and validated it through a negative control experiment. The First Organism closed-loop test demonstrated deterministic execution and dual-root attestation, but produced *no measurable uplift*—as expected for a symmetric (path-invariant) environment.
+
+**Phase II U2** defines a family of preregistered experiments on four asymmetric uplift slices (goal-conditioned, sparse-reward, chain-depth, multi-subgoal). These experiments are designed to test whether learned policies can reduce epistemic risk relative to random baselines.
+
+**As of Evidence Pack v1 and the current commit, no uplift claims are made.** All tasks and artifacts described below represent *planned work*—not completed experiments.
+
+---
 
 ## PHASE II — UPLIFT WORK BREAKDOWN STRUCTURE
 
