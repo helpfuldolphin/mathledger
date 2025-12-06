@@ -24,6 +24,7 @@
 import argparse
 import hashlib
 import json
+import os
 import sys
 import subprocess
 from pathlib import Path
@@ -42,6 +43,28 @@ from backend.verification.budget_loader import (
     load_budget_for_slice,
     is_phase2_slice,
     DEFAULT_CONFIG_PATH,
+)
+
+# Phase II Curriculum Loading (curriculum_loader_v2)
+from experiments.curriculum_loader_v2 import (
+    CurriculumLoader,
+    CurriculumLoaderError,
+    CurriculumNotFoundError,
+)
+
+# Phase II Calibration (u2_calibration)
+from experiments.u2_calibration import (
+    validate_calibration,
+    CalibrationNotFoundError as CalibNotFoundError,
+    CalibrationInvalidError,
+    check_calibration_exists,
+)
+
+# Phase II Verbose Formatter (verbose_formatter)
+from experiments.verbose_formatter import (
+    format_verbose_cycle,
+    parse_verbose_fields,
+    DEFAULT_VERBOSE_FIELDS,
 )
 
 from experiments.u2.runner import (
@@ -180,6 +203,10 @@ def run_experiment(
     trace_ctx: Optional[TracedExperimentContext] = None,
     snapshot_keep: int = 5,
     trace_events: Optional[set] = None,
+    require_calibration: bool = False,
+    calibration_dir: Optional[Path] = None,
+    verbose_cycles: bool = False,
+    verbose_fields: Optional[List[str]] = None,
 ):
     """
     Main function to run the uplift experiment with snapshot support.
@@ -198,9 +225,38 @@ def run_experiment(
         trace_ctx: TracedExperimentContext for per-cycle logging (internal use)
         trace_events: Set of event types to log (None = all events)
         snapshot_keep: Number of snapshots to keep (rotation policy, 0 = no rotation)
+        require_calibration: If True, require valid calibration before running
+        calibration_dir: Directory containing calibration results (default: results/uplift_u2/calibration)
+        verbose_cycles: If True, enable enhanced cycle-by-cycle logging
+        verbose_fields: List of fields to include in verbose output (None = default fields)
     """
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
     print(f"PHASE II — NOT USED IN PHASE I")
+    
+    # Phase II Calibration Guardrail
+    if require_calibration:
+        if calibration_dir is None:
+            calibration_dir = Path("results/uplift_u2/calibration")
+        
+        print(f"INFO: Calibration check enabled for slice '{slice_name}'")
+        try:
+            summary = validate_calibration(calibration_dir, slice_name, require_valid=True)
+            print(f"INFO: Calibration valid:")
+            print(f"      determinism_verified = {summary.determinism_verified}")
+            print(f"      schema_valid = {summary.schema_valid}")
+            if summary.replay_hash:
+                print(f"      replay_hash = {summary.replay_hash[:16]}...")
+        except CalibNotFoundError as e:
+            print(f"ERROR: Calibration not found for slice '{slice_name}'", file=sys.stderr)
+            print(f"       {e}", file=sys.stderr)
+            print(f"       Run calibration first before main uplift experiment.", file=sys.stderr)
+            print(f"       Expected location: {calibration_dir / slice_name / 'calibration_summary.json'}", file=sys.stderr)
+            sys.exit(2)  # Exit code 2 = calibration missing
+        except CalibrationInvalidError as e:
+            print(f"ERROR: Calibration invalid for slice '{slice_name}'", file=sys.stderr)
+            print(f"       {e}", file=sys.stderr)
+            print(f"       Re-run calibration to fix.", file=sys.stderr)
+            sys.exit(2)  # Exit code 2 = calibration invalid
     
     # Phase II Budget Enforcement (Agent B1)
     # Load budget for Phase II slices; fail fast if missing
@@ -241,19 +297,24 @@ def run_experiment(
         snapshot_dir = out_dir / "snapshots"
     snapshot_dir.mkdir(parents=True, exist_ok=True)
     
-    slice_config = config.get("slices", {}).get(slice_name, {})
-    if not slice_config:
-        # Try alternative config structure
-        for item in config.get("slices", []):
-            if isinstance(item, dict) and item.get("name") == slice_name:
-                slice_config = item
-                break
-    
-    if not slice_config:
-        print(f"WARNING: Slice '{slice_name}' not found in config, using empty config.", file=sys.stderr)
+    # Load slice config and items using CurriculumLoader
+    try:
+        curriculum_loader = CurriculumLoader(config_path)
+        curriculum_items = curriculum_loader.load_for_slice(slice_name)
+        slice_config = curriculum_loader.get_slice_config(slice_name)
+        
+        # Convert CurriculumItem objects to strings for compatibility
+        items = [item.formula for item in curriculum_items]
+        print(f"INFO: Loaded {len(items)} curriculum items for slice '{slice_name}'")
+        
+    except CurriculumNotFoundError as e:
+        print(f"WARNING: {e}", file=sys.stderr)
+        print(f"         Using fallback items for testing.", file=sys.stderr)
         slice_config = {"items": [f"item_{i}" for i in range(10)]}
-    
-    items = slice_config.get("items", [f"item_{i}" for i in range(10)])
+        items = slice_config.get("items", [f"item_{i}" for i in range(10)])
+    except CurriculumLoaderError as e:
+        print(f"ERROR: Failed to load curriculum: {e}", file=sys.stderr)
+        sys.exit(1)
     
     # 2. Create U2 runner with config
     u2_config = U2Config(
@@ -354,7 +415,36 @@ def run_experiment(
                     local_trace_ctx.end_cycle(i)
                 
                 # Progress output
-                print(f"Cycle {i+1}/{cycles}: Chose '{result.item}', Success: {result.success}")
+                if verbose_cycles:
+                    # Enhanced verbose output with configurable fields
+                    if verbose_fields is None:
+                        # Default fields
+                        verbose_fields_to_use = DEFAULT_VERBOSE_FIELDS
+                    else:
+                        verbose_fields_to_use = verbose_fields
+                    
+                    # Prepare data dict for formatter
+                    verbose_data = {
+                        "cycle": i + 1,
+                        "mode": result.mode,
+                        "success": result.success,
+                        "item": result.item,
+                        "label": "PHASE_II",
+                        "slice": result.slice_name,
+                        "seed": result.seed,
+                        "result": str(result.result),
+                    }
+                    
+                    # Add item hash prefix if item is long
+                    if len(result.item) > 8:
+                        item_hash = hashlib.sha256(result.item.encode()).hexdigest()
+                        verbose_data["item_hash_prefix"] = item_hash[:8]
+                    
+                    verbose_line = format_verbose_cycle(verbose_fields_to_use, verbose_data)
+                    print(f"VERBOSE: {verbose_line}")
+                else:
+                    # Default concise output
+                    print(f"Cycle {i+1}/{cycles}: Chose '{result.item}', Success: {result.success}")
                 
                 # Maybe save snapshot (handled internally by runner)
                 snapshot_path = runner.maybe_save_snapshot()
@@ -457,7 +547,7 @@ Snapshot Support:
 Exit Codes:
 - 0: Success
 - 1: General error
-- 2: No snapshot found for --resume
+- 2: Calibration missing/invalid (with --require-calibration) or no snapshot found (with --resume)
         """
     )
     parser.add_argument(
@@ -546,6 +636,35 @@ Exit Codes:
             f"{','.join(sorted(CORE_EVENTS))}."
         )
     )
+    
+    # Calibration arguments (PHASE II)
+    parser.add_argument(
+        "--require-calibration",
+        action="store_true",
+        help=(
+            "Require valid calibration before running experiment. "
+            "Checks for calibration_summary.json in results/uplift_u2/calibration/<slice>/. "
+            "Exits with code 2 if calibration missing or invalid."
+        )
+    )
+    parser.add_argument(
+        "--calibration-dir",
+        type=str,
+        default=None,
+        help="Directory containing calibration results (default: results/uplift_u2/calibration)."
+    )
+    
+    # Verbose cycles (developer mode)
+    parser.add_argument(
+        "--verbose-cycles",
+        action="store_true",
+        help=(
+            "Enable enhanced cycle-by-cycle logging with configurable fields. "
+            "Fields can be customized via U2_VERBOSE_FIELDS environment variable "
+            "(comma-separated, e.g., 'cycle,mode,success,item,label,item_hash_prefix'). "
+            "Default fields: cycle,mode,success,item"
+        )
+    )
 
     args = parser.parse_args()
 
@@ -590,6 +709,18 @@ Exit Codes:
         restore_from = Path(args.restore_from)
 
     config = get_config(config_path)
+    
+    # Parse calibration directory
+    calibration_dir = Path(args.calibration_dir) if args.calibration_dir else None
+    
+    # Parse verbose fields from environment
+    verbose_fields = None
+    if args.verbose_cycles:
+        verbose_fields = parse_verbose_fields()
+        if verbose_fields:
+            print(f"INFO: Verbose fields configured: {', '.join(verbose_fields)}")
+        else:
+            print(f"INFO: Verbose cycles enabled with default fields")
 
     run_experiment(
         slice_name=args.slice,
@@ -604,6 +735,10 @@ Exit Codes:
         trace_log_path=trace_log_path,
         snapshot_keep=args.snapshot_keep,
         trace_events=trace_events,
+        require_calibration=args.require_calibration,
+        calibration_dir=calibration_dir,
+        verbose_cycles=args.verbose_cycles,
+        verbose_fields=verbose_fields,
     )
 
 if __name__ == "__main__":
