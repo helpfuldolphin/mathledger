@@ -15,6 +15,7 @@ Examples:
 """
 
 import argparse
+import glob
 import re
 import sys
 from pathlib import Path
@@ -238,7 +239,6 @@ class PhaseMarkerLinter:
         
         for pattern, rules in rules_by_file.items():
             # Find matching files
-            import glob
             matches = glob.glob(str(self.root_dir / pattern), recursive=True)
             
             if not matches:

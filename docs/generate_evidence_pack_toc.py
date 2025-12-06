@@ -95,7 +95,7 @@ class EvidencePackTOCGenerator:
     def generate_json(self, entries: List[Dict[str, Any]], metadata: Dict[str, Any]) -> Dict[str, Any]:
         """Generate JSON TOC."""
         return {
-            'format_version': '1.0',
+            'format_version': metadata.get('format_version', '1.0'),
             'generated_at': datetime.now().astimezone().replace(microsecond=0).isoformat(),
             'metadata': metadata,
             'documents': entries

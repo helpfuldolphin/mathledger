@@ -16,6 +16,7 @@ Examples:
 """
 
 import argparse
+import glob
 import re
 import sys
 from pathlib import Path
@@ -213,8 +214,6 @@ class SnippetChecker:
         Check documentation files matching the pattern.
         Returns exit code: 0 if all valid, 1 otherwise.
         """
-        import glob
-        
         # Find matching files
         files = glob.glob(str(self.root_dir / pattern))
         
