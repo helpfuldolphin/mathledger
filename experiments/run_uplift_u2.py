@@ -20,13 +20,15 @@
 # - Zero interpretation of uplift -- only raw data and placeholders.
 
 import argparse
+import ast
 import hashlib
 import json
+import operator
 import random
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 # Add project root to sys.path for direct script execution
 _project_root = str(Path(__file__).resolve().parents[1])
@@ -70,16 +72,72 @@ from experiments.u2_pipeline import (
 )
 
 
+# --- Safe Arithmetic Evaluation ---
+# Using AST-based evaluation to avoid security risks of eval()
+
+# Supported operators for safe arithmetic evaluation
+_SAFE_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
+
+
+def safe_eval_arithmetic(expr: str) -> Union[int, float, None]:
+    """
+    Safely evaluate a simple arithmetic expression.
+    
+    Only supports basic operators: +, -, *, /
+    Returns None if the expression is invalid or uses unsupported operations.
+    
+    This avoids the security risks of Python's eval().
+    """
+    try:
+        tree = ast.parse(expr, mode='eval')
+        return _eval_node(tree.body)
+    except (SyntaxError, TypeError, ValueError, ZeroDivisionError):
+        return None
+
+
+def _eval_node(node: ast.expr) -> Union[int, float]:
+    """Recursively evaluate an AST node."""
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, (int, float)):
+            return node.value
+        raise TypeError(f"Unsupported constant type: {type(node.value)}")
+    elif isinstance(node, ast.BinOp):
+        op_func = _SAFE_OPERATORS.get(type(node.op))
+        if op_func is None:
+            raise ValueError(f"Unsupported binary operator: {type(node.op).__name__}")
+        left = _eval_node(node.left)
+        right = _eval_node(node.right)
+        return op_func(left, right)
+    elif isinstance(node, ast.UnaryOp):
+        op_func = _SAFE_OPERATORS.get(type(node.op))
+        if op_func is None:
+            raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
+        operand = _eval_node(node.operand)
+        return op_func(operand)
+    else:
+        raise TypeError(f"Unsupported AST node type: {type(node).__name__}")
+
+
 # --- Slice-specific Success Metrics ---
 # These are passed as pure functions. In a real scenario, these might be
 # dynamically imported or otherwise more complex. For this standalone script,
 # we define them here.
 
 def metric_arithmetic_simple(item: str, result: Any) -> bool:
-    """Success is when the python eval matches the expected result."""
+    """Success is when the safe arithmetic eval matches the expected result."""
     try:
-        # A mock 'correct' result is simply the eval of the string.
-        return eval(item) == result
+        # Use safe_eval_arithmetic instead of eval()
+        evaluated = safe_eval_arithmetic(item)
+        if evaluated is None:
+            return False
+        return evaluated == result
     except Exception:
         return False
 
@@ -271,7 +329,13 @@ def run_experiment(
 
             # --- Mock Execution & Evaluation ---
             # In a real system, this would be a call to the substrate.
-            mock_result = eval(chosen_item) if slice_name == "arithmetic_simple" else f"Expanded({chosen_item})"
+            # Use safe_eval_arithmetic instead of eval() to avoid security risks
+            if slice_name == "arithmetic_simple":
+                mock_result = safe_eval_arithmetic(chosen_item)
+                if mock_result is None:
+                    mock_result = "ERROR"
+            else:
+                mock_result = f"Expanded({chosen_item})"
             success = success_metric(chosen_item, mock_result)
 
             # --- Success Metric Evaluation (using pipeline) ---
