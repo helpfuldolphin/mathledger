@@ -1,11 +1,25 @@
 # Phase II: RFL Uplift Plan
 
 > **STATUS: PHASE II — NOT YET RUN. NO UPLIFT CLAIMS MAY BE MADE.**
+>
+> **No uplift claims are made as of Evidence Pack v1.**
 
 ## Overview
 
 Phase II introduces four uplift slices designed for environments where policy-based
 candidate ordering should produce measurable improvements over random baseline exploration.
+
+### RLVF: RL with Verifiable Feedback
+
+Industry is moving from **RLHF → RLPF → RL with Verifiable Feedback (RLVF)**.
+
+| Paradigm | Feedback Source | Limitations |
+|----------|-----------------|-------------|
+| RLHF | Human preferences | Noisy, expensive, biased |
+| RLPF | Process feedback | Proxy rewards, heuristic |
+| **RLVF** | Formal verification | Ground truth, no proxy |
+
+MathLedger's RFL implements RLVF: all feedback is kernel-verifiable (e.g., Lean proofs, truth tables), with no human labels, preferences, or proxy rewards.
 
 ### Phase I Recap (Completed)
 
@@ -184,27 +198,38 @@ score(φ) = (
 
 ### U2 Experiment Family
 
+> **PHASE II — Preregistered, NOT YET EXECUTED**
+>
+> The U2 experiment family is governed by the preregistration at `experiments/prereg/PREREG_UPLIFT_U2.yaml`.
+
+**Files**:
+- Config: `config/curriculum_uplift_phase2.yaml`
+- Runner: `experiments/run_uplift_u2.py`
+- Preregistration: `experiments/prereg/PREREG_UPLIFT_U2.yaml`
+
+**CLI Examples**:
+
 ```bash
 # 1. Baseline run
 uv run python experiments/run_uplift_u2.py \
-  --slice-name=slice_uplift_goal \
+  --slice=slice_uplift_goal \
   --mode=baseline \
   --cycles=500 \
   --seed=<MDAP_SEED> \
-  --out=results/uplift_u2_goal_baseline.jsonl
+  --out=results/
 
 # 2. RFL run (same seed)
 uv run python experiments/run_uplift_u2.py \
-  --slice-name=slice_uplift_goal \
+  --slice=slice_uplift_goal \
   --mode=rfl \
   --cycles=500 \
   --seed=<MDAP_SEED> \
-  --out=results/uplift_u2_goal_rfl.jsonl
+  --out=results/
 
 # 3. Summarize
 uv run python experiments/summarize_uplift.py \
-  --baseline=results/uplift_u2_goal_baseline.jsonl \
-  --rfl=results/uplift_u2_goal_rfl.jsonl \
+  --baseline=results/uplift_u2_slice_uplift_goal_baseline.jsonl \
+  --rfl=results/uplift_u2_slice_uplift_goal_rfl.jsonl \
   --metric=goal_hit
 ```
 
@@ -223,10 +248,12 @@ uv run python experiments/summarize_uplift.py \
 
 ## Files
 
-- `config/curriculum_uplift_phase2.yaml` — Slice definitions
-- `experiments/run_uplift_u2.py` — U2 experiment runner (TO BE IMPLEMENTED)
-- `experiments/summarize_uplift.py` — Uplift summarizer (TO BE IMPLEMENTED)
-- `experiments/prereg/PREREG_UPLIFT_U2.yaml` — Preregistration template (TO BE IMPLEMENTED)
+| File | Description | Status |
+|------|-------------|--------|
+| `config/curriculum_uplift_phase2.yaml` | Slice definitions | ✅ Complete |
+| `experiments/run_uplift_u2.py` | U2 experiment runner | ✅ Implemented |
+| `experiments/summarize_uplift.py` | Uplift summarizer | ⏳ To Be Implemented |
+| `experiments/prereg/PREREG_UPLIFT_U2.yaml` | Preregistration template | ✅ Template Ready |
 
 ---
 
@@ -237,8 +264,20 @@ uv run python experiments/summarize_uplift.py \
 | Phase I Infrastructure | ✅ Complete |
 | Phase I Negative Control | ✅ Documented |
 | Phase II Slice Definitions | ✅ Designed |
-| Phase II Runner (U2) | ⏳ Not Implemented |
-| Phase II Preregistration | ⏳ Not Implemented |
+| Phase II Runner (U2) | ✅ Implemented |
+| Phase II Preregistration | ✅ Template Ready |
 | Phase II Experiments | ❌ Not Run |
 | Uplift Claims | ❌ None (blocked until U2 completes) |
+
+---
+
+## Absolute Safeguards
+
+1. Do **NOT** reinterpret Phase I logs as uplift evidence.
+2. All Phase II artifacts must be clearly labeled "PHASE II — NOT USED IN PHASE I".
+3. RFL uses verifiable feedback only (no RLHF, no preferences, no proxy rewards).
+4. No existing logs (`fo_rfl_*`, `fo_baseline_*`) satisfy the uplift gate.
+5. Any uplift claim must reference a completed U2 experiment that passes the gate.
+
+> **No uplift claims are made as of Evidence Pack v1.**
 

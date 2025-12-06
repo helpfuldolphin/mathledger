@@ -1,0 +1,211 @@
+% Field Manual: MathLedger RFL Operations
+% PHASE II — NOT YET RUN. NO UPLIFT CLAIMS MAY BE MADE.
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{xcolor}
+
+\title{\textbf{MathLedger Field Manual}\\[0.5em]
+\large RFL Operations and Phase II Uplift Experiments}
+\author{The MathLedger Research Fleet}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\colorbox{yellow!30}{\parbox{0.9\textwidth}{
+\textbf{STATUS: PHASE II — NOT YET RUN.}\\
+No uplift claims are made as of Evidence Pack v1.\\
+Phase I = Infrastructure + Negative Control only.
+}}
+\end{center}
+
+\tableofcontents
+
+\newpage
+
+\section{Overview}
+
+This field manual documents operational procedures for the MathLedger Reflexive Formal Learning (RFL) system, including the Phase II uplift experiments.
+
+\subsection{Phase I Recap}
+
+Phase I established:
+\begin{itemize}
+    \item \textbf{RFL Infrastructure}: Working loop with baseline vs learned modes
+    \item \textbf{Negative Control}: No uplift on \texttt{slice\_uplift\_proto} (symmetric environment)
+    \item \textbf{Validation}: Different orderings → different candidates, but same outcomes
+\end{itemize}
+
+Phase I result: The system correctly shows no uplift when the environment is path-invariant. This is the expected behavior for a negative control.
+
+\section{RLVF: RL with Verifiable Feedback}
+\label{sec:rlvf}
+
+\subsection{Positioning: RLVF vs RLHF vs RLPF}
+
+Industry is moving from RLHF → RLPF → \textbf{RL with Verifiable Feedback (RLVF)}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Paradigm} & \textbf{Feedback Source} & \textbf{Limitations} \\
+\midrule
+RLHF & Human preferences & Noisy, expensive, biased \\
+RLPF & Process feedback & Proxy rewards, heuristic \\
+\textbf{RLVF} & Formal verification & Ground truth, no proxy \\
+\bottomrule
+\end{tabular}
+\caption{Comparison of reinforcement learning feedback paradigms.}
+\end{table}
+
+\textbf{RLVF Key Properties}:
+\begin{itemize}
+    \item All feedback is kernel-verifiable (e.g., Lean proofs, truth tables)
+    \item No human labels or preferences required
+    \item Ground-truth rewards with no proxy
+    \item Deterministic and reproducible
+\end{itemize}
+
+\subsection{Phase II Uplift Experiments}
+\label{sec:phase2-uplift}
+
+\begin{center}
+\colorbox{red!10}{\parbox{0.85\textwidth}{
+\textbf{PHASE II — NOT RUN IN PHASE I}\\[0.5em]
+Phase II uplift experiments are now \textbf{configured but not yet run}.\\
+No uplift claims may be made until U2 experiments complete and pass gates.
+}}
+\end{center}
+
+\subsubsection{Configuration Files}
+
+The Phase II uplift experiments are defined in:
+\begin{itemize}
+    \item \texttt{config/curriculum\_uplift\_phase2.yaml} — Slice definitions
+    \item \texttt{experiments/prereg/PREREG\_UPLIFT\_U2.yaml} — Preregistration template
+\end{itemize}
+
+\subsubsection{Experiment Runner}
+
+The U2 experiment runner is located at:
+\begin{verbatim}
+experiments/run_uplift_u2.py
+\end{verbatim}
+
+\textbf{CLI Usage}:
+\begin{verbatim}
+# Baseline run
+uv run python experiments/run_uplift_u2.py \
+  --slice=slice_uplift_goal \
+  --mode=baseline \
+  --cycles=500 \
+  --seed=<MDAP_SEED> \
+  --out=results/
+
+# RFL run (same seed)
+uv run python experiments/run_uplift_u2.py \
+  --slice=slice_uplift_goal \
+  --mode=rfl \
+  --cycles=500 \
+  --seed=<MDAP_SEED> \
+  --out=results/
+\end{verbatim}
+
+\subsubsection{The Four Uplift Slices}
+
+Phase II introduces four uplift slices designed for environments where policy-based candidate ordering should produce measurable improvements:
+
+\begin{enumerate}
+    \item \textbf{slice\_uplift\_goal} — Goal-Conditioned Target\\
+    Success requires hitting specific target formulas among distractors.
+    
+    \item \textbf{slice\_uplift\_sparse} — Sparse Reward\\
+    Many candidates, few provable. RFL learns to avoid dead zones.
+    
+    \item \textbf{slice\_uplift\_tree} — Chain Depth\\
+    Target requires chain of k intermediate lemmas.
+    
+    \item \textbf{slice\_uplift\_dependency} — Multiple Subgoals\\
+    Success requires ALL k sub-goals proved in same cycle.
+\end{enumerate}
+
+\section{Uplift Evidence Gate}
+\label{sec:uplift-gate}
+
+\subsection{Eligibility Requirements}
+
+For any uplift claim to be valid, the following must be satisfied:
+
+\begin{enumerate}
+    \item \textbf{Non-degenerate slice}: Must be a Phase II slice (not Phase I negative control)
+    \item \textbf{Preregistration}: \texttt{PREREG\_UPLIFT\_U2.yaml} completed before run
+    \item \textbf{Paired runs}: Identical seed schedule for baseline and RFL
+    \item \textbf{Deterministic protocol}: Hermetic, reproducible execution
+\end{enumerate}
+
+\subsection{Required Outputs}
+
+\begin{itemize}
+    \item \texttt{results/uplift\_u2\_<slice>\_baseline.jsonl}
+    \item \texttt{results/uplift\_u2\_<slice>\_rfl.jsonl}
+    \item \texttt{experiment\_manifest.json} with config hash and $H_t$ sequence
+    \item \texttt{statistical\_summary.json} with $\Delta p$, CIs, test results
+\end{itemize}
+
+\subsection{Statistical Criteria}
+
+\begin{itemize}
+    \item \textbf{Primary}: $\Delta p = p_{\text{rfl}} - p_{\text{base}}$
+    \item \textbf{Confidence Intervals}: 95\% Wilson CIs for $p_{\text{base}}$ and $p_{\text{rfl}}$
+    \item \textbf{Hypothesis Test}: Two-proportion z-test or bootstrap
+    \item \textbf{Minimum Effect}: $\Delta p \geq 0.05$ with CI excluding 0
+\end{itemize}
+
+\section{Absolute Safeguards}
+
+\begin{enumerate}
+    \item Do \textbf{NOT} reinterpret Phase I logs as uplift evidence.
+    \item All Phase II artifacts must be clearly labeled ``PHASE II — NOT USED IN PHASE I''.
+    \item RFL uses verifiable feedback only (no RLHF, no preferences, no proxy rewards).
+    \item All new files must be standalone and MUST NOT modify Phase I behavior.
+    \item \textbf{No existing logs} (\texttt{fo\_rfl\_*}, \texttt{fo\_baseline\_*}) satisfy the uplift gate.
+    \item Any uplift claim must reference a completed U2 experiment that passes the gate.
+\end{enumerate}
+
+\section{Current Status}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Component} & \textbf{Status} \\
+\midrule
+Phase I Infrastructure & \checkmark\ Complete \\
+Phase I Negative Control & \checkmark\ Documented \\
+Phase II Slice Definitions & \checkmark\ Designed \\
+Phase II Runner (U2) & \checkmark\ Implemented \\
+Phase II Preregistration & $\circ$\ Template Ready \\
+Phase II Experiments & $\times$\ Not Run \\
+Uplift Claims & $\times$\ None (blocked until U2 completes) \\
+\bottomrule
+\end{tabular}
+\caption{Current implementation status.}
+\end{table}
+
+\vspace{1em}
+\begin{center}
+\colorbox{yellow!30}{\parbox{0.9\textwidth}{
+\textbf{No uplift claims are made as of Evidence Pack v1.}\\[0.5em]
+Phase I demonstrated working infrastructure with negative control.\\
+Phase II U2 will test whether policies can actually lower epistemic risk on non-degenerate slices, under a preregistered, statistically sound protocol.
+}}
+\end{center}
+
+\end{document}
