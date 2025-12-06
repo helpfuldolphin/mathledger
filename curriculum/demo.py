@@ -148,7 +148,8 @@ def demo_drift_history():
         for path in temp_files:
             try:
                 os.unlink(path)
-            except:
+            except (OSError, FileNotFoundError):
+                # Ignore file deletion errors
                 pass
 
 

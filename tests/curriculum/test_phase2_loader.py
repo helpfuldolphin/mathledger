@@ -20,7 +20,17 @@ from curriculum.phase2_loader import (
 
 @pytest.fixture
 def sample_slice_data():
-    """Sample slice configuration."""
+    """
+    Sample slice configuration for testing UpliftSlice parsing.
+    
+    Provides a complete slice definition including:
+    - Basic parameters (atoms, depth_max, breadth_max)
+    - Success metric specification (goal_hit)
+    - Phase II uplift metadata
+    - Budget constraints
+    
+    Used to test slice creation, validation, and serialization.
+    """
     return {
         "description": "Test goal-conditioned slice",
         "parameters": {

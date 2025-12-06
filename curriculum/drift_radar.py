@@ -8,6 +8,7 @@ Implements Phase III drift detection features:
 - Global health summary for dashboards
 """
 
+import json
 from typing import Any, Dict, List, Optional, Sequence
 
 from curriculum.phase2_loader import CurriculumFingerprint
@@ -51,8 +52,9 @@ def build_curriculum_drift_history(fingerprint_paths: Sequence[str]) -> Dict[str
         try:
             fp = CurriculumFingerprint.load_from_file(path)
             fingerprints.append(fp)
-        except Exception as e:
-            # Skip invalid files but don't fail the whole operation
+        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+            # Skip invalid or missing files but don't fail the whole operation
+            # This allows partial history builds when some files are corrupted
             continue
     
     if not fingerprints:
