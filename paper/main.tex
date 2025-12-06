@@ -22,9 +22,11 @@
 
     We present \projectname, a novel substrate for verifiable machine cognition integrating Reflexive Formal Learning (\RFL) and Dual-Attestation.
 
-    Phase I experiments were conducted to establish baseline operational characteristics.
+    Phase I experiments were conducted to establish baseline operational characteristics and validate the infrastructure through a negative control.
 
     The system's integrity was validated through a \valMirrorCoverage\% coverage mirror audit.
+
+    \textbf{No uplift claims are made as of Evidence Pack v1.} Phase I serves as infrastructure validation; Phase II uplift experiments (U2) are preregistered but not yet run.
 
 \end{abstract}
 
@@ -48,7 +50,24 @@ Phase I experiments aimed to characterize the behavior of the \projectname{} sub
 
 \label{sec:future_work}
 
-Future work will focus on integrating RFL for measurable uplift in stability and performance. Specifically, the objective is to observe if reflexive feedback can dampen oscillatory states in the decision boundary and achieve measurable reductions in abstention rates and improvements in convergence latency.
+\subsection{Phase II Uplift Experiments}
+
+Phase II introduces four uplift slices designed for environments where policy-based candidate ordering should produce measurable improvements:
+
+\begin{enumerate}
+    \item \textbf{slice\_uplift\_goal} --- Goal-Conditioned Target: Success requires hitting specific target formulas.
+    \item \textbf{slice\_uplift\_sparse} --- Sparse Reward: Many candidates, few provable; RFL learns to avoid dead zones.
+    \item \textbf{slice\_uplift\_tree} --- Chain Depth: Target requires chain of k intermediate lemmas.
+    \item \textbf{slice\_uplift\_dependency} --- Multiple Subgoals: Success requires all k sub-goals proved in same cycle.
+\end{enumerate}
+
+Phase II U2 experiments are preregistered but \textbf{not yet run}. No uplift claims are made as of Evidence Pack v1.
+
+\subsection{RLVF Positioning}
+
+Industry is moving from RLHF (Reinforcement Learning from Human Feedback) to RLPF (Process Feedback) to \textbf{RLVF (RL with Verifiable Feedback)}. The \projectname{} RFL mechanism implements RLVF: all feedback is kernel-verifiable (e.g., Lean proofs, truth tables), with no human labels, preferences, or proxy rewards.
+
+Phase I demonstrated that the RFL infrastructure behaves correctly on a symmetric negative control. Phase II will test whether policies can actually lower epistemic risk on non-degenerate slices, under a preregistered, statistically sound protocol.
 
 
 
@@ -56,7 +75,9 @@ Future work will focus on integrating RFL for measurable uplift in stability and
 
 \label{sec:conclusion}
 
-Phase I successfully established baseline operational parameters for the \projectname{} system.
+Phase I successfully established baseline operational parameters for the \projectname{} system and validated the RFL infrastructure through a negative control experiment. The system correctly shows no uplift when the environment is path-invariant, which is the expected behavior for a well-designed negative control.
+
+\textbf{No uplift claims are made as of Evidence Pack v1.} Phase II U2 experiments on four uplift slices are preregistered but not yet executed.
 
 
 
