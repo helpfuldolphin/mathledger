@@ -59,7 +59,8 @@ def audit_experiment(
     
     Args:
         experiment_dir: Path to experiment directory
-        repo_root: Repository root (defaults to experiment_dir parent's parent)
+        repo_root: Repository root (defaults to experiment_dir.parent.parent,
+                   assuming structure: repo_root/experiments/EXP_ID/)
         prereg_hash: Optional preregistration hash to verify against manifest
         
     Returns:

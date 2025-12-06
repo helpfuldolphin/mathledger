@@ -102,7 +102,7 @@ def evaluate_evidence_chain_for_ci(ledger: Dict[str, Any]) -> int:
         Exit code:
         - 0 if global_status == "PASS"
         - 1 if global_status == "PARTIAL"
-        - 2 if global_status == "FAIL"
+        - 2 if global_status == "FAIL" or any unknown/unexpected status
     """
     global_status = ledger.get("global_status", "FAIL")
     

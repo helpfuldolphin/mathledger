@@ -122,7 +122,7 @@ python3 -m attestation.audit_ci_entry \
 **Exit Codes:**
 - `0` - All experiments PASS (global_status == "PASS")
 - `1` - Partial success (global_status == "PARTIAL")
-- `2` - Failures detected (global_status == "FAIL")
+- `2` - Failures detected (global_status == "FAIL" or any unknown/unexpected status)
 
 ## CI Integration
 
