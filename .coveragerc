@@ -1,0 +1,12 @@
+[run]
+omit =
+    backend/orchestrator/app.py
+    backend/orchestrator/parents_routes.py
+    backend/worker.py
+    test_integration_v05.py
+    test_v05_integration.py
+    test_runner.py
+    tests/integration/*
+    tests/test_derive.py
+    tests/test_derive_cli.py
+    tests/test_derives_id.py

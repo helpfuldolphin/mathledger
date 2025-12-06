@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - MathLedger{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">MathLedger Dashboard</h1>
+        <p class="mt-2 text-gray-600">Real-time view of propositional logic derivation progress</p>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Statements -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                            <span class="text-white font-bold">S</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Statements</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ metrics.statements.total }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Axioms -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                            <span class="text-white font-bold">A</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Axioms</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ metrics.statements.axioms }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Derived Statements -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                            <span class="text-white font-bold">D</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Derived</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ metrics.statements.derived }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Max Depth -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center">
+                            <span class="text-white font-bold">M</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Max Depth</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ metrics.statements.max_depth }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Depth Histogram -->
+    <div class="bg-white shadow rounded-lg mb-8">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Derivation Depth Distribution</h3>
+            <div class="space-y-2">
+                {% for depth, count in depth_histogram.items() %}
+                <div class="flex items-center">
+                    <span class="w-12 text-sm text-gray-600">Depth {{ depth }}</span>
+                    <div class="flex-1 mx-4">
+                        <div class="bg-gray-200 rounded-full h-4">
+                            <div class="depth-bar rounded-full h-4" style="width: {{ (count / max_count * 100) if max_count > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    <span class="w-16 text-sm text-gray-600 text-right">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Proof Status -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Proof Status</h3>
+                <div class="space-y-2">
+                    {% for status, count in metrics.proofs.by_status.items() %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">{{ status.title() }}</span>
+                        <span class="text-sm font-medium text-gray-900">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Derivation Rules</h3>
+                <div class="space-y-2">
+                    {% for rule, count in metrics.derivation_rules.items() %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">{{ rule }}</span>
+                        <span class="text-sm font-medium text-gray-900">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Activity</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">{{ metrics.proofs.recent_hour }}</div>
+                    <div class="text-sm text-gray-600">Proofs (Last Hour)</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ metrics.proofs.success_rate }}%</div>
+                    <div class="text-sm text-gray-600">Success Rate</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">{{ metrics.queue.length }}</div>
+                    <div class="text-sm text-gray-600">Queue Length</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auto-refresh -->
+    <div class="mt-6 text-center">
+        <button hx-get="/ui" hx-trigger="every 5s" hx-target="body" class="text-sm text-gray-500">
+            Auto-refresh every 5s
+        </button>
+    </div>
+</div>
+{% endblock %}

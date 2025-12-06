@@ -1,0 +1,33 @@
+{
+  "experiment_id": "rfl_wide_slice",
+  "num_runs": 30,
+  "random_seed": 42,
+  "system_id": 1,
+  "derive_steps": 50,
+  "max_breadth": 100,
+  "max_total": 500,
+  "depth_max": 4,
+  "bootstrap_replicates": 10000,
+  "confidence_level": 0.95,
+  "coverage_threshold": 0.92,
+  "uplift_threshold": 1.0,
+  "database_url": "",
+  "dual_attestation": false,
+  "abstention_tolerance": 0.25,
+  "curriculum": [
+    {
+      "name": "slice_medium",
+      "start_run": 1,
+      "end_run": 30,
+      "derive_steps": 50,
+      "max_breadth": 100,
+      "max_total": 500,
+      "depth_max": 4
+    }
+  ],
+  "artifacts_dir": "artifacts/rfl_wide_slice",
+  "results_file": "rfl_wide_slice_results.json",
+  "coverage_file": "rfl_wide_slice_coverage.json",
+  "curves_file": "rfl_wide_slice_curves.png"
+}
+

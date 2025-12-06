@@ -1,0 +1,1 @@
+-- MathLedger namespace root

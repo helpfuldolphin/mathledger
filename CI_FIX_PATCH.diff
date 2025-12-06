@@ -1,0 +1,13 @@
+diff --git a/.github/workflows/performance-sanity.yml b/.github/workflows/performance-sanity.yml
+index d005f3d..f616628 100644
+--- a/.github/workflows/performance-sanity.yml
++++ b/.github/workflows/performance-sanity.yml
+@@ -43,7 +43,7 @@ jobs:
+ 
+     - name: Archive Performance Artifacts
+       if: always()
+-      uses: actions/upload-artifact@v3
++      uses: actions/upload-artifact@v4
+       with:
+         name: performance-passport-${{ github.run_number }}
+         path: |

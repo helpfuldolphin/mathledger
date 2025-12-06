@@ -1,0 +1,43 @@
+{
+  "U_t": {
+    "status": "PASS",
+    "uplift_ratio": 3.0,
+    "p_value": 0.0,
+    "baseline_mean": 44.0,
+    "guided_mean": 132.0,
+    "threshold": ">=1.30x, p<0.05"
+  },
+  "R_t": {
+    "status": "PASS",
+    "onepager_fol": true,
+    "onepager_pl2": true,
+    "message": "Onepagers verified"
+  },
+  "H_t": {
+    "status": "PASS",
+    "message": "6/6 unique merkle roots, 0 overlap",
+    "baseline_unique": 3,
+    "guided_unique": 3,
+    "overlap": 0,
+    "baseline_roots": [
+      "f0c2a2b9d8c54c7d56d7a5f5e8ddaa98c1df42cb8bc87db69af24aef3fb26bbd",
+      "c50d19bbdf79da2168dbfc340a1ac87354bcb3967902f854196a193e1ff4bf66",
+      "f5a9ae73a8fd828db5e83f84d602067eceeaada1ff6cad9c2658fd9150a5acb8"
+    ],
+    "guided_roots": [
+      "49e8e636d603b88328b91a729064d7d303ea6959a24bb4b112c82b7d173e14a7",
+      "7fd2e05e470f7d853eed59e5ef8cc0a5bb88cd1b0a4c5445e46b8381aba6ebe0",
+      "96562cf546b17878ed0b53a66cd1e980874b60621d9f3d59c61caddda7210c84"
+    ]
+  },
+  "overall_status": "PASS",
+  "composite_attestation": "f722983ada94ab763ace3ae9504d70212a2bc71bc591819fc3bf6d455cb23d1e",
+  "da_attestations": {
+    "da_ui": null,
+    "da_reasoning": null,
+    "da_composite": null
+  },
+  "timestamp": "2025-10-31T20:54:26.340851Z",
+  "sprint_duration_hours": 72,
+  "conductor": "Devin J"
+}

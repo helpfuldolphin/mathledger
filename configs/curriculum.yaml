@@ -1,0 +1,24 @@
+curriculum:
+  - name: slice_easy_fo
+    start_run: 1
+    end_run: 10
+    derive_steps: 20
+    max_breadth: 50
+    max_total: 200
+    depth_max: 3
+
+  - name: slice_medium
+    start_run: 11
+    end_run: 30
+    derive_steps: 50
+    max_breadth: 100
+    max_total: 500
+    depth_max: 4
+
+  - name: slice_hard
+    start_run: 31
+    end_run: 40
+    derive_steps: 100
+    max_breadth: 200
+    max_total: 1000
+    depth_max: 6

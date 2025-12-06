@@ -1,0 +1,113 @@
+{
+  "version": "1.0",
+  "description": "Dynamic lane configuration for AllBlue Gate verification",
+  "lanes": [
+    {
+      "id": "triple_hash",
+      "name": "Triple-Hash Verification",
+      "type": "verification",
+      "required": true,
+      "artifacts": [
+        "ci_verification/triple_hash_summary.json"
+      ],
+      "verification": {
+        "method": "composite_attestation",
+        "fields": ["U_t", "R_t", "H_t"],
+        "pass_criteria": {
+          "overall_status": "PASS"
+        }
+      }
+    },
+    {
+      "id": "dual_attestation",
+      "name": "Dual-Attestation Composite Seal",
+      "type": "ci_workflow",
+      "required": true,
+      "workflow": "dual-attestation.yml",
+      "jobs": ["browsermcp", "reasoning", "dual-attestation"],
+      "artifacts": [
+        "ui_root",
+        "reasoning_root",
+        "composite_root",
+        "stream_hash"
+      ],
+      "verification": {
+        "method": "ci_log_extraction",
+        "pass_criteria": {
+          "all_jobs": "success"
+        }
+      }
+    },
+    {
+      "id": "unit_tests",
+      "name": "Unit Tests",
+      "type": "ci_workflow",
+      "required": true,
+      "workflow": "ci.yml",
+      "jobs": ["test"],
+      "verification": {
+        "method": "ci_status",
+        "pass_criteria": {
+          "conclusion": "success"
+        }
+      }
+    },
+    {
+      "id": "uplift_omega",
+      "name": "Uplift Omega Validation",
+      "type": "ci_workflow",
+      "required": true,
+      "workflow": "ci.yml",
+      "jobs": ["uplift-omega"],
+      "verification": {
+        "method": "ci_status",
+        "pass_criteria": {
+          "conclusion": "success"
+        }
+      }
+    },
+    {
+      "id": "uplift_evaluation",
+      "name": "Uplift Statistics Computation",
+      "type": "ci_workflow",
+      "required": true,
+      "workflow": "uplift-evaluation.yml",
+      "jobs": ["Compute Uplift Statistics"],
+      "verification": {
+        "method": "ci_status",
+        "pass_criteria": {
+          "conclusion": "success"
+        }
+      }
+    },
+    {
+      "id": "hygiene",
+      "name": "Code Hygiene",
+      "type": "ci_workflow",
+      "required": false,
+      "workflow": "ci.yml",
+      "jobs": ["hygiene"],
+      "verification": {
+        "method": "ci_status",
+        "pass_criteria": {
+          "conclusion": "success"
+        }
+      }
+    }
+  ],
+  "epoch_seal": {
+    "algorithm": "sha256",
+    "canonicalization": "RFC8785",
+    "components": [
+      "lanes",
+      "H_t",
+      "hygiene_state_hash",
+      "verification_signature"
+    ]
+  },
+  "archive": {
+    "retention_days": 90,
+    "format": "RFC8785",
+    "location": "artifacts/allblue/fleet_state.json"
+  }
+}

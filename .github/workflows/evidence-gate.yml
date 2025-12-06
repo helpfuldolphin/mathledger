@@ -1,0 +1,84 @@
+name: Evidence Gate
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '**.md'
+  push:
+    branches:
+      - integrate/ledger-v0.1
+    paths:
+      - 'docs/**'
+      - '**.md'
+
+jobs:
+  evidence-lint:
+    name: Evidence Gate Linter
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Need full history for git diff
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Run Evidence Gate Linter
+        id: lint
+        run: |
+          python3 tools/ci/docs_lint.py --base origin/${{ github.base_ref || 'integrate/ledger-v0.1' }}
+        continue-on-error: true
+      
+      - name: Generate Fix Suggestions
+        if: steps.lint.outcome == 'failure'
+        run: |
+          python3 tools/ci/docs_fix.py --base origin/${{ github.base_ref || 'integrate/ledger-v0.1' }} --export evidence-patches.json
+      
+      - name: Upload Patch Suggestions
+        if: steps.lint.outcome == 'failure'
+        uses: actions/upload-artifact@v3
+        with:
+          name: evidence-patches
+          path: evidence-patches.json
+      
+      - name: Comment on PR with Violations
+        if: steps.lint.outcome == 'failure' && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const patches = JSON.parse(fs.readFileSync('evidence-patches.json', 'utf8'));
+            
+            let comment = '## Evidence Gate Violations\n\n';
+            comment += `Found ${patches.total_patches} claim(s) lacking hash citations.\n\n`;
+            comment += '### Suggested Fixes\n\n';
+            
+            patches.patches.forEach((patch, i) => {
+              comment += `**${i + 1}. ${patch.file}:${patch.line}** (Confidence: ${patch.confidence})\n`;
+              comment += '```diff\n';
+              comment += `- ${patch.original}\n`;
+              comment += `+ ${patch.patched}\n`;
+              comment += '```\n\n';
+            });
+            
+            comment += '### How to Fix\n\n';
+            comment += '1. Add `[hash:xxxxxxxx]` citations to empirical claims\n';
+            comment += '2. Refer to `docs/methods/EVIDENCE_GRAPH.md` for hash mappings\n';
+            comment += '3. Run `python3 tools/ci/docs_fix.py` locally for suggestions\n';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      
+      - name: Fail if violations found
+        if: steps.lint.outcome == 'failure'
+        run: exit 1
+

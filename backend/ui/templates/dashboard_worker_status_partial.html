@@ -1,0 +1,68 @@
+<!-- Live Worker Status -->
+<div class="bg-white rounded-lg shadow p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-gray-900">Live Worker Status</h2>
+        <div class="flex items-center space-x-2">
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span class="text-sm text-gray-600">Live</span>
+        </div>
+    </div>
+
+    <!-- Queue Status -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="text-center">
+            <div class="text-2xl font-bold text-blue-600">{{ worker_status.queue_length }}</div>
+            <div class="text-sm text-gray-600">Jobs in Queue</div>
+        </div>
+        <div class="text-center">
+            <div class="text-2xl font-bold text-green-600">{{ worker_status.active_jobs|length }}</div>
+            <div class="text-sm text-gray-600">Active Jobs</div>
+        </div>
+        <div class="text-center">
+            <div class="text-2xl font-bold text-purple-600">{{ worker_status.total_workers }}</div>
+            <div class="text-sm text-gray-600">Total Workers</div>
+        </div>
+    </div>
+
+    <!-- Active Jobs List -->
+    <div class="space-y-3">
+        <h3 class="text-sm font-medium text-gray-600">Active Proof Attempts</h3>
+        {% if worker_status.active_jobs %}
+            {% for job in worker_status.active_jobs %}
+            <div class="border border-gray-200 rounded-lg p-3">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-3">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {{ job.prover }}
+                        </span>
+                        {% if job.method %}
+                        <span class="text-xs text-gray-500">({{ job.method }})</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-xs text-gray-500">
+                        {{ job.started_at.strftime('%H:%M:%S') if job.started_at else 'Unknown' }}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-gray-500 font-mono">{{ job.statement_hash[:16] }}...</span>
+                    {% if job.estimated_duration %}
+                    <span class="text-xs text-gray-500">{{ job.estimated_duration }}ms est.</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center text-gray-500 py-4">
+                <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-sm">No active jobs</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Last Updated -->
+    <div class="mt-4 pt-3 border-t border-gray-200 text-xs text-gray-500 text-center">
+        Last updated: {{ worker_status.last_updated.strftime('%H:%M:%S') if worker_status.last_updated else 'Unknown' }}
+    </div>
+</div>

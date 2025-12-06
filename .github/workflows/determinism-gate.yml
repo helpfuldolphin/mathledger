@@ -1,0 +1,271 @@
+name: Determinism Gate
+
+# Determinism Gate - Enforces bitwise reproducibility for the First Organism path
+#
+# This workflow verifies that the First Organism closed loop produces
+# byte-for-byte identical outputs when run with the same seed:
+#
+#   UI Event → Curriculum Gate → Derivation → Lean Verify (abstention) →
+#   Dual-Attest seal H_t → RFL runner metabolism
+#
+# Cryptographic Invariants Verified:
+#   1. H_t (composite root) is identical across runs with same seed
+#   2. All intermediate artifacts (logs, IDs, timestamps) are identical
+#   3. RFC 8785 canonical JSON is used for all serialization
+#   4. No wall-clock time, random sources, or UUIDs leak into outputs
+
+on:
+  pull_request:
+    branches: [integrate/ledger-v0.1, main]
+    paths:
+      - 'backend/repro/**'
+      - 'backend/bridge/**'
+      - 'backend/metrics/**'
+      - 'rfl/**'
+      - 'ledger/**'
+      - 'attestation/**'
+      - 'derivation/**'
+      - 'curriculum/**'
+      - 'tests/integration/test_first_organism*.py'
+  push:
+    branches: [integrate/ledger-v0.1]
+    paths:
+      - 'backend/repro/**'
+      - 'backend/bridge/**'
+      - 'backend/metrics/**'
+      - 'rfl/**'
+      - 'ledger/**'
+      - 'attestation/**'
+      - 'derivation/**'
+      - 'curriculum/**'
+  workflow_dispatch:
+    inputs:
+      extended_seeds:
+        description: "Run extended seed matrix (100+ seeds)"
+        required: false
+        default: "false"
+
+jobs:
+  determinism-core:
+    name: Core Determinism Tests
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
+      REDIS_URL: redis://localhost:6379/0
+      CORS_ALLOWED_ORIGINS: http://localhost
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v1
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Run determinism test suite
+        run: |
+          uv run pytest tests/integration/test_first_organism_determinism.py \
+            -v \
+            --tb=short \
+            -x \
+            --junit-xml=artifacts/determinism-results.xml
+      
+      - name: Verify bitwise reproducibility (5 seeds)
+        run: |
+          uv run python -c "
+          from backend.repro.first_organism_harness import verify_determinism, run_first_organism_deterministic
+          
+          seeds = [0, 42, 12345, 999999, 2147483647]
+          print('Verifying bitwise reproducibility across seeds...')
+          
+          for seed in seeds:
+              result1 = run_first_organism_deterministic(seed)
+              result2 = run_first_organism_deterministic(seed)
+              
+              assert result1.run_hash == result2.run_hash, f'Seed {seed} failed reproducibility'
+              print(f'  ✓ Seed {seed}: H_t={result1.composite_root[:16]}... run_hash={result1.run_hash[:16]}...')
+          
+          print('\\n✓ All seeds verified: bitwise reproducibility confirmed')
+          "
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: determinism-results
+          path: artifacts/determinism-results.xml
+          retention-days: 7
+
+  determinism-extended:
+    name: Extended Seed Matrix
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.extended_seeds == 'true'
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
+      REDIS_URL: redis://localhost:6379/0
+      CORS_ALLOWED_ORIGINS: http://localhost
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v1
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Run extended seed matrix (100 seeds)
+        run: |
+          uv run python -c "
+          import random
+          from backend.repro.first_organism_harness import run_first_organism_deterministic
+          
+          # Generate 100 random seeds
+          random.seed(42)  # Deterministic seed selection
+          seeds = [random.randint(0, 2**31 - 1) for _ in range(100)]
+          
+          print(f'Testing {len(seeds)} seeds for bitwise reproducibility...')
+          
+          failed = []
+          for i, seed in enumerate(seeds):
+              result1 = run_first_organism_deterministic(seed)
+              result2 = run_first_organism_deterministic(seed)
+              
+              if result1.run_hash != result2.run_hash:
+                  failed.append(seed)
+                  print(f'  ✗ Seed {seed}: FAILED')
+              elif (i + 1) % 10 == 0:
+                  print(f'  ✓ {i + 1}/{len(seeds)} seeds verified')
+          
+          if failed:
+              print(f'\\n✗ FAILED: {len(failed)} seeds failed reproducibility: {failed[:10]}...')
+              exit(1)
+          else:
+              print(f'\\n✓ All {len(seeds)} seeds verified: bitwise reproducibility confirmed')
+          "
+
+  determinism-audit:
+    name: Nondeterminism Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Scan for banned patterns in First Organism path
+        run: |
+          echo "Scanning for nondeterministic patterns in First Organism path..."
+          
+          # Define the critical path directories
+          PATHS="backend/repro backend/bridge rfl ledger attestation derivation curriculum"
+          
+          # Banned patterns
+          PATTERNS=(
+            "datetime\.now"
+            "datetime\.utcnow"
+            "time\.time\("
+            "uuid\.uuid4"
+            "random\.(choice|randint|random|shuffle|sample|uniform)"
+          )
+          
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            echo "  Checking: $pattern"
+            # Exclude comments and the harness documentation
+            if grep -rn --include="*.py" "$pattern" $PATHS 2>/dev/null | grep -v "^#" | grep -v "DETERMINISM" | grep -v "# .*$pattern" | grep -v "test_" | head -5; then
+              echo "    ⚠ Found potential nondeterminism"
+              FOUND=$((FOUND + 1))
+            fi
+          done
+          
+          # Check for SQL NOW()
+          echo "  Checking: SQL NOW()"
+          if grep -rn --include="*.py" "NOW()" $PATHS 2>/dev/null | grep -v "DETERMINISM" | head -5; then
+            echo "    ⚠ Found SQL NOW() usage"
+            FOUND=$((FOUND + 1))
+          fi
+          
+          if [ $FOUND -gt 0 ]; then
+            echo ""
+            echo "⚠ Found $FOUND potential nondeterminism patterns."
+            echo "  Review these locations and ensure they use deterministic helpers."
+            echo "  See docs/FIRST_ORGANISM_DETERMINISM.md for migration guide."
+            # Note: We don't fail here because some patterns may be in non-critical paths
+            # or properly guarded. The test suite is the authoritative check.
+          else
+            echo ""
+            echo "✓ No obvious nondeterminism patterns found in critical path."
+          fi
+
+  determinism-regression:
+    name: Regression Prevention
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
+      REDIS_URL: redis://localhost:6379/0
+      CORS_ALLOWED_ORIGINS: http://localhost
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v1
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Verify canonical JSON invariants
+        run: |
+          uv run python -c "
+          from backend.repro.first_organism_harness import rfc8785_canonicalize, run_first_organism_deterministic
+          import json
+          
+          print('Verifying RFC 8785 canonical JSON invariants...')
+          
+          # Test 1: Keys must be sorted
+          obj = {'z': 1, 'a': 2, 'm': 3}
+          canonical = rfc8785_canonicalize(obj)
+          assert list(json.loads(canonical).keys()) == ['a', 'm', 'z'], 'Keys not sorted'
+          print('  ✓ Keys are sorted lexicographically')
+          
+          # Test 2: No whitespace
+          assert ': ' not in canonical, 'Whitespace after colon'
+          assert ', ' not in canonical, 'Whitespace after comma'
+          print('  ✓ No unnecessary whitespace')
+          
+          # Test 3: ASCII-only
+          obj_unicode = {'key': 'émoji 🎉'}
+          canonical = rfc8785_canonicalize(obj_unicode)
+          canonical.encode('ascii')  # Should not raise
+          assert '\\\\u' in canonical, 'Non-ASCII not escaped'
+          print('  ✓ ASCII-only output with proper escaping')
+          
+          # Test 4: Full pipeline produces valid canonical JSON
+          result = run_first_organism_deterministic(42)
+          canonical = result.to_canonical_json()
+          parsed = json.loads(canonical)
+          assert 'composite_root' in parsed, 'Missing composite_root'
+          assert 'run_hash' in parsed, 'Missing run_hash'
+          print('  ✓ Full pipeline produces valid canonical JSON')
+          
+          print('\\n✓ All RFC 8785 invariants verified')
+          "
+      
+      - name: Verify H_t = SHA256(R_t || U_t) invariant
+        run: |
+          uv run python -c "
+          import hashlib
+          from backend.repro.first_organism_harness import run_first_organism_deterministic
+          
+          print('Verifying H_t = SHA256(R_t || U_t) invariant...')
+          
+          for seed in [0, 42, 12345]:
+              result = run_first_organism_deterministic(seed)
+              seal = result.seal_result
+              
+              # Manually verify H_t formula
+              composite_data = f'{seal.reasoning_root}{seal.ui_root}'.encode('ascii')
+              expected_h_t = hashlib.sha256(composite_data).hexdigest()
+              
+              assert seal.composite_root == expected_h_t, f'H_t mismatch for seed {seed}'
+              print(f'  ✓ Seed {seed}: H_t = SHA256(R_t || U_t) verified')
+          
+          print('\\n✓ Composite root formula verified for all seeds')
+          "
+

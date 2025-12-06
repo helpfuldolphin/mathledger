@@ -1,0 +1,31 @@
+\section{Methodology}
+\label{sec:methodology}
+
+This section details the experimental methodology employed to evaluate the \projectname{} system. Our primary focus is on assessing the operational characteristics of the system under various configurations, particularly concerning the RFL (Reflective Feedback Loop) mechanism and the PL (Ponderation Layer) slicing.
+
+\subsection{Test Harness}
+Experiments are conducted within a dedicated FO (Feedback-Optimized) cycle harness. This harness simulates realistic operating conditions, allowing for precise control over input parameters and comprehensive capture of output metrics. The harness is designed to ensure reproducibility and provide a consistent environment for comparative analysis.
+
+\begin{figure}[htbp]
+    \centering
+    % Placeholder for actual file
+    % \includegraphics[width=0.9\linewidth]{figures/static/fo_cycle_harness.pdf}
+    \framebox[0.9\linewidth]{\rule{0pt}{100pt}FO Cycle Harness Diagram}
+    \caption{Architectural overview of the FO cycle harness, illustrating the injection points for synthetic transaction loads and the telemetry collection pipeline.}
+    \label{fig:harness_architecture}
+\end{figure}
+
+\subsection{Configurations Under Test}
+We evaluate several key configurations:
+\begin{enumerate}
+    \item \textbf{RFL vs. Baseline:} We compare the performance of the \projectname{} system with the RFL mechanism enabled against a baseline configuration where RFL is disabled or replaced with a static control mechanism. This comparison aims to characterize the behavior of feedback mechanisms on system stability and output.
+    \item \textbf{PL Slice Analysis:} The system's behavior is further investigated by varying the slicing of the Ponderation Layer. Different PL slice configurations are tested to understand their influence on computational efficiency, decision-making latency, and overall ledger integrity.
+\end{enumerate}
+
+\subsection{Measurement Metrics}
+The following key metrics are recorded and analyzed during the experimental runs:
+\begin{itemize}
+    \item \textbf{Abstention Rate:} The frequency at which the system abstains from making a definitive judgment.
+    \item \textbf{\Ht{} Dynamics:} We meticulously track the evolution and stability of the \Ht{} (Hypothesis Trajectory) dynamics over time, providing insights into the system's state processes.
+    \item \textbf{Simple Capability Metrics:} A suite of fundamental performance indicators, including transaction processing speed, error rates, and resource utilization, are measured to establish a foundational understanding of system capabilities.
+\end{itemize}

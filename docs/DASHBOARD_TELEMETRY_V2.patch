@@ -1,0 +1,71 @@
+# =============================================================================
+# PHASE II — NOT DEPLOYED / NOT USED IN PHASE I EVIDENCE
+#
+# This patch file describes PROPOSED changes that have NOT been applied.
+# The Dashboard.tsx in production still uses V1 telemetry:
+#   - event_type: "dashboard_mount", "select_statement", "refresh_statements"
+#   - No session_id or tracing_id fields
+#
+# Evidence Pack v1 does NOT depend on any V2 telemetry fields.
+# The Dyno Chart analysis uses JSONL logs and attestation.json, not UI events.
+#
+# Phase I note: RFL runs write no UI telemetry; only JSONL logs exist.
+# V2 telemetry is unaffected by the volume or content of RFL logs.
+# UI telemetry and RFL execution are completely independent systems.
+#
+# DO NOT APPLY this patch until Phase II implementation is approved.
+# =============================================================================
+
+--- a/apps/ui/src/components/Dashboard.tsx
++++ b/apps/ui/src/components/Dashboard.tsx
+@@ -1,5 +1,6 @@
+ "use client";
+
++import { getOrCreateSessionId, generateTracingId } from "@/lib/session";
+ import {
+   fetchHeartbeat,
+   fetchLatestAttestation,
+@@ -151,10 +152,13 @@ export default function Dashboard({
+   }, [refreshAttestation]);
+
+   useEffect(() => {
+     postUiEvent({
+       event_type: "dashboard_mount",
+       timestamp: Date.now(),
++      session_id: getOrCreateSessionId(),
++      initial_heartbeat_present: initialHeartbeat !== null,
++      initial_statements_count: initialStatements.length,
++      initial_detail_present: initialDetail !== null,
+     }).catch(() => undefined);
+   }, []);
+
+@@ -162,9 +166,11 @@ export default function Dashboard({
+     setListLoading(true);
+     try {
+       const latest = await fetchRecentStatements(32);
+       setStatements(latest);
+       postUiEvent({
+-        event_type: "refresh_statements",
++        event_type: "refresh",
+         timestamp: Date.now(),
+-        statement_count: latest.length,
++        session_id: getOrCreateSessionId(),
++        target: "statements",
++        result_count: latest.length,
+       }).catch(() => undefined);
+     } catch (err) {
+       setDetailError(
+@@ -213,9 +219,11 @@ export default function Dashboard({
+     (hash: string) => {
+       setSelectedHash(hash);
+       void ensureDetail(hash);
+       postUiEvent({
+-        event_type: "select_statement",
++        event_type: "statement_select",
+         timestamp: Date.now(),
++        session_id: getOrCreateSessionId(),
+         statement_hash: hash,
++        source: "list",
+       }).catch(() => undefined);
+     },
+     [ensureDetail]

@@ -1,0 +1,224 @@
+{
+  "generated_at_utc": "2025-11-26T00:00:00Z",
+  "wave_1_status": "PENDING - awaiting First Organism integration test",
+  "wave_1_gating_test": "tests/integration/test_first_organism.py::test_first_organism_closed_loop",
+  "wave_1_modules": {
+    "law": [
+      {"source": "ledger/ingest.py", "target": "ledger/ingest.py", "whitepaper": "§4.2, §5.1"},
+      {"source": "ledger/blocking.py", "target": "ledger/blocking.py", "whitepaper": "§4.1"},
+      {"source": "ledger/ui_events.py", "target": "ledger/ui_events.py", "whitepaper": "§4.3"},
+      {"source": "attestation/dual_root.py", "target": "attestation/dual_root.py", "whitepaper": "§4.2, §4.3"},
+      {"source": "attestation/__init__.py", "target": "attestation/__init__.py", "whitepaper": "§4.2"}
+    ],
+    "economy": [
+      {"source": "curriculum/gates.py", "target": "curriculum/gates.py", "whitepaper": "§5.2"},
+      {"source": "curriculum/config.py", "target": "curriculum/config.py", "whitepaper": "§5.2"},
+      {"source": "curriculum/__init__.py", "target": "curriculum/__init__.py", "whitepaper": "§5.2"},
+      {"source": "backend/axiom_engine/derive_core.py", "target": "derivation/derive_core.py", "whitepaper": "§3.1"},
+      {"source": "backend/axiom_engine/axioms.py", "target": "derivation/axioms.py", "whitepaper": "§3.1"},
+      {"source": "backend/lean_interface.py", "target": "verification/lean_interface.py", "whitepaper": "§3.3"}
+    ],
+    "metabolism": [
+      {"source": "rfl/runner.py", "target": "rfl/runner.py", "whitepaper": "§6.1"},
+      {"source": "rfl/config.py", "target": "rfl/config.py", "whitepaper": "§6.1"},
+      {"source": "rfl/bootstrap_stats.py", "target": "rfl/bootstrap_stats.py", "whitepaper": "§6.2"},
+      {"source": "rfl/__init__.py", "target": "rfl/__init__.py", "whitepaper": "§6.1"}
+    ]
+  },
+  "entries": [
+    {
+      "artifact": "backend/crypto/core.py",
+      "category": "module",
+      "target": "ledger/attestation/crypto_core.py",
+      "refactor_tasks": [
+        "Replace runtime key generation with injected deterministic seed material.",
+        "Extract RFC8785 canonicalization helpers into shared substrate component."
+      ],
+      "requires_transitional_shim": true,
+      "tests_to_update": [
+        "Create deterministic hashing and Merkle proofs suite under tests/determinism/test_crypto_core.py."
+      ],
+      "docs_action": "Document domain separation constants inside docs/ATTESTATION_SPEC.md.",
+      "attestation_implications": "Establishes canonical hashing and signing primitives; dual attestation ledgers must pin digest version v1."
+    },
+    {
+      "artifact": "backend/crypto/dual_root.py",
+      "category": "module",
+      "target": "ledger/dual_root/dual_root.py",
+      "refactor_tasks": [
+        "Align dual-root computation with new block sealing interface.",
+        "Add explicit proof objects returned to orchestrator layer."
+      ],
+      "requires_transitional_shim": true,
+      "tests_to_update": [
+        "Port dual-root regression tests into tests/attestation/test_dual_root.py."
+      ],
+      "docs_action": "Expand docs/ATTESTATION_SPEC.md with dual-root walk-through referencing this module.",
+      "attestation_implications": "Primary dual attestation verifier; promotion demands synchronized roots across redundant attestators."
+    },
+    {
+      "artifact": "backend/logic/canon.py",
+      "category": "module",
+      "target": "substrate/normalization/canon.py",
+      "refactor_tasks": [
+        "Remove .bak residues and expose minimal normalization API.",
+        "Add typing annotations for all public functions."
+      ],
+      "requires_transitional_shim": false,
+      "tests_to_update": [
+        "Strengthen truth-table equivalence checks in tests/determinism/test_canon.py."
+      ],
+      "docs_action": "Mirror normalization rules in docs/RFL_SPEC.md.",
+      "attestation_implications": "Provides canonical byte encoding consumed by ledger hashes; any change requires manifest version bump."
+    },
+    {
+      "artifact": "backend/logic/taut.py",
+      "category": "module",
+      "target": "substrate/logic/taut.py",
+      "refactor_tasks": [
+        "Harden tautology checks against floating-point drift by enforcing integer truth tables."
+      ],
+      "requires_transitional_shim": false,
+      "tests_to_update": [
+        "Author deterministic unit tests validating propositional completeness."
+      ],
+      "docs_action": "Reference tautology validation in docs/ARCHITECTURE.md under logic substrate.",
+      "attestation_implications": "Impacts proof validation pipeline; attestations must record inference rule version."
+    },
+    {
+      "artifact": "backend/logic/truthtab.py",
+      "category": "module",
+      "target": "substrate/logic/truthtab.py",
+      "refactor_tasks": [
+        "Ensure sorted variable ordering and exported canonical table schema."
+      ],
+      "requires_transitional_shim": false,
+      "tests_to_update": [
+        "Add regression tests covering variable ordering invariants."
+      ],
+      "docs_action": "Mention truth-table serialization format in docs/PROTOCOL.md.",
+      "attestation_implications": "Truth tables underpin ledger validation receipts; attestors rely on deterministic ordering."
+    },
+    {
+      "artifact": "backend/repro/determinism.py",
+      "category": "module",
+      "target": "tests/determinism/determinism_harness.py",
+      "refactor_tasks": [
+        "Convert procedural script into importable library with CLI front-end.",
+        "Emit JSON schema-validated results for CI ingestion."
+      ],
+      "requires_transitional_shim": true,
+      "tests_to_update": [
+        "Backfill meta-test ensuring the harness detects intentional nondeterminism."
+      ],
+      "docs_action": "Describe determinism gate workflow in docs/OPS.md (new).",
+      "attestation_implications": "Forms deterministic attestation heartbeat; results feed dual auditor comparisons."
+    },
+    {
+      "artifact": "backend/ledger/blockchain.py",
+      "category": "module",
+      "target": "ledger/blocks/blockchain.py",
+      "refactor_tasks": [
+        "Remove legacy V4 branching and align with dual-root attestation flow.",
+        "Externalize state persistence through canonical schema layer."
+      ],
+      "requires_transitional_shim": true,
+      "tests_to_update": [
+        "Refactor block sealing tests into tests/attestation/test_blockchain.py."
+      ],
+      "docs_action": "Update docs/PROTOCOL.md with new block lifecycle diagrams.",
+      "attestation_implications": "Defines block commitments; attestation ledger must cross-verify resulting Merkle roots."
+    },
+    {
+      "artifact": "config/curriculum.yaml",
+      "category": "configuration",
+      "target": "rfl/curriculum/curriculum.yaml",
+      "refactor_tasks": [
+        "Prune obsolete lanes and document each curriculum tier.",
+        "Introduce hash-locked version field referenced by attestation manifest."
+      ],
+      "requires_transitional_shim": false,
+      "tests_to_update": [
+        "Validate schema via tests/curriculum/test_curriculum_schema.py."
+      ],
+      "docs_action": "Reference finalized ladder in docs/RFL_SPEC.md.",
+      "attestation_implications": "Curriculum hash embedded in attestation receipts; changes require dual approval."
+    },
+    {
+      "artifact": "migrations/",
+      "category": "directory",
+      "target": "ledger/migrations/",
+      "refactor_tasks": [
+        "Audit each SQL migration for deterministic ordering and idempotence.",
+        "Generate consolidated migration manifest with SHA-256 digests."
+      ],
+      "requires_transitional_shim": true,
+      "tests_to_update": [
+        "Run database smoke suite under tests/integration/test_migrations.py."
+      ],
+      "docs_action": "Document schema evolution in docs/PROTOCOL.md appendix.",
+      "attestation_implications": "Schema version anchors ledger attestations; manifest must be dual-signed."
+    },
+    {
+      "artifact": "scripts/run-migrations.py",
+      "category": "script",
+      "target": "ops/scripts/run_migrations.py",
+      "refactor_tasks": [
+        "Ensure deterministic logging and exit codes.",
+        "Remove environment discovery; accept explicit manifest inputs."
+      ],
+      "requires_transitional_shim": false,
+      "tests_to_update": [
+        "Add CLI contract tests under tests/ops/test_run_migrations.py."
+      ],
+      "docs_action": "Describe usage in docs/OPS.md alongside migration manifest.",
+      "attestation_implications": "Migration execution must emit attestation events capturing applied digests."
+    },
+    {
+      "artifact": "run_tests.py",
+      "category": "script",
+      "target": "ops/scripts/run_tests.py",
+      "refactor_tasks": [
+        "Pin pytest invocation to deterministic markers.",
+        "Emit machine-readable summary for dual auditor comparison."
+      ],
+      "requires_transitional_shim": false,
+      "tests_to_update": [
+        "Meta-test verifying deterministic ordering of collected tests."
+      ],
+      "docs_action": "Explain test gating workflow in docs/OPS.md.",
+      "attestation_implications": "Test attestations must log suite digest and fixture hashes."
+    },
+    {
+      "artifact": "Makefile",
+      "category": "build",
+      "target": "Makefile",
+      "refactor_tasks": [
+        "Restrict targets to deterministic workflows (build, test, attest).",
+        "Embed manifest-aware dependencies."
+      ],
+      "requires_transitional_shim": false,
+      "tests_to_update": [
+        "Add smoke check ensuring `make api` and `make worker` respect hermetic env."
+      ],
+      "docs_action": "Reference canonical targets in docs/ARCHITECTURE.md tooling section.",
+      "attestation_implications": "Defines reproducible build graph; attestors rely on declared targets."
+    },
+    {
+      "artifact": "pyproject.toml",
+      "category": "build",
+      "target": "pyproject.toml",
+      "refactor_tasks": [
+        "Lock dependency versions and enforce hashes via uv sync.",
+        "Separate optional extras for experimental tooling."
+      ],
+      "requires_transitional_shim": false,
+      "tests_to_update": [
+        "Add environment reproducibility check in tests/ops/test_dependency_lock.py."
+      ],
+      "docs_action": "Document dependency policy in docs/ARCHITECTURE.md.",
+      "attestation_implications": "Dependency hashes funnel into manifest.json for dual attestors."
+    }
+  ]
+}
+

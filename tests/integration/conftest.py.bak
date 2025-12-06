@@ -1,0 +1,113 @@
+﻿import os
+from pathlib import Path
+from typing import Generator, Dict, Any
+
+import psycopg
+import pytest
+from fastapi.testclient import TestClient
+
+# Import app + dependency symbol to override
+from backend.orchestrator.app import app, get_db_connection  # type: ignore
+
+# -------------------------------------------------------------------
+# DB URL selection
+# -------------------------------------------------------------------
+@pytest.fixture(scope="session")
+def test_db_url() -> str:
+    # Prefer DATABASE_URL; fallback to local mathledger DB
+    return os.getenv("DATABASE_URL", "postgresql://ml:mlpass@127.0.0.1:5433/mathledger?connect_timeout=5")
+
+@pytest.fixture(scope="session")
+def test_db_connection(test_db_url: str) -> Generator[psycopg.Connection, None, None]:
+    """
+    Provide a DB connection or skip tests cleanly if local DB is unreachable.
+    """
+    local = os.environ.get("ML_USE_LOCAL_DB", "") == "1"
+
+    # In local/offline + mock url → yield mock
+    if local and test_db_url.startswith("mock://"):
+        class MockConn:
+            def cursor(self): return self
+            def __enter__(self): return self
+            def __exit__(self, *args): pass
+            def execute(self, *args, **kwargs): pass
+            def fetchone(self): return (0,)
+            def fetchall(self): return []
+            def close(self): pass
+        yield MockConn()
+        return
+
+    if local:
+        # Try real DSN once; if it fails, SKIP (don’t crash the whole suite)
+        try:
+            conn = psycopg.connect(test_db_url)
+        except Exception as e:
+            pytest.skip(f"Local DB not reachable: {e}")
+        try:
+            yield conn
+        finally:
+            conn.close()
+        return
+
+    # Non-local fallback
+    conn = psycopg.connect(test_db_url)
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+# -------------------------------------------------------------------
+# Migrations: best-effort (strip BOM, rollback on failure)
+# -------------------------------------------------------------------
+@pytest.fixture(scope="session")
+def migrated_test_db(test_db_connection: psycopg.Connection):
+    conn = test_db_connection
+    migration_files = [
+        "migrations/001_init.sql",
+        "migrations/002_blocks_lemmas.sql",
+        "migrations/003_add_system_id.sql",
+        "migrations/004_finalize_core_schema.sql",
+    ]
+    for mf in migration_files:
+        p = Path(mf)
+        if not p.exists():
+            continue
+        sql = p.read_text(encoding="utf-8").lstrip("\ufeff")  # strip BOM
+        try:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+        except Exception as e:
+            print(f"[migration skip] {p.name}: {e}")
+            conn.rollback()
+
+# -------------------------------------------------------------------
+# API headers
+# -------------------------------------------------------------------
+@pytest.fixture()
+def api_headers() -> Dict[str, str]:
+    return {"X-API-Key": os.getenv("LEDGER_API_KEY", "devkey")}
+
+# -------------------------------------------------------------------
+# Test client with DB dependency override
+# -------------------------------------------------------------------
+@pytest.fixture()
+def test_client(migrated_test_db, test_db_url: str, test_db_connection: psycopg.Connection) -> Generator[TestClient, None, None]:
+    def _get_test_db_connection() -> Generator[psycopg.Connection, None, None]:
+        if test_db_url.startswith('mock://'):
+            class MockConn:
+                def cursor(self): return self
+                def __enter__(self): return self
+                def __exit__(self, *args): pass
+                def execute(self, *args, **kwargs): pass
+                def fetchone(self): return (0,)
+                def fetchall(self): return []
+                def close(self): pass
+            yield MockConn()
+            return
+        # Reuse the SAME session-scoped connection the tests use for seeding (sees uncommitted rows)
+        yield test_db_connection
+
+    app.dependency_overrides[get_db_connection] = _get_test_db_connection
+
+    with TestClient(app) as client:
+        yield client

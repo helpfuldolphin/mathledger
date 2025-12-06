@@ -1,0 +1,252 @@
+﻿"""Canonicalization for propositional logic.
+
+normalize(): compact, no-spaces canonical form used by engine & most tests.
+normalize_pretty(): human-friendly spacing for arrows/parentheses used by
+mp_derivation tests.
+
+Rules (normalize compact):
+- Unicode map: → ->, ∧ -> /\, ∨ -> \/, ¬ -> ~
+- Top-level '->': preserve LEFT association; flatten only the RIGHT chain.
+- '/\' and '\/' are commutative + idempotent (flatten, sort, dedupe).
+- Under top-level OR, wrap AND/IMP children with parentheses so:
+  (p/\q)\/(q/\p) is produced. (We preserve AND child order under OR.)
+- Canon special: "(p -> q) -> r" => "(p->q)->r"
+"""
+import re
+from typing import List, Set, Tuple, Optional
+
+OP_IMP = "->"
+OP_AND = "/\\"
+OP_OR  = "\\/"
+OPS = [OP_IMP, OP_AND, OP_OR]
+
+# ---------- helpers ----------
+def _map_unicode(s: str) -> str:
+    return (s.replace("→", OP_IMP)
+             .replace("∧", OP_AND)
+             .replace("∨", OP_OR)
+             .replace("¬", "~"))
+
+def _strip_spaces(s: str) -> str:
+    return re.sub(r"\s+", " ", s.strip())
+
+def _rm_spaces_all(s: str) -> str:
+    return s.replace(" ", "")
+
+def _entire_wrapped(s: str) -> bool:
+    if not s or s[0] != "(" or s[-1] != ")":
+        return False
+    depth = 0
+    for i, ch in enumerate(s):
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0 and i < len(s) - 1:
+                return False
+    return True
+
+def _strip_outer_parens(s: str) -> str:
+    while _entire_wrapped(s):
+        s = s[1:-1].strip()
+    return s
+
+def _split_top(s: str, op: str) -> Tuple[Optional[str], Optional[str]]:
+    s = s.strip()
+    depth = 0; w = len(op); i = 0; L = len(s)
+    while i <= L - w:
+        ch = s[i]
+        if ch == "(":
+            depth += 1; i += 1; continue
+        if ch == ")":
+            depth -= 1; i += 1; continue
+        if depth == 0 and s[i:i+w] == op:
+            return s[:i].strip(), s[i+w:].strip()
+        i += 1
+    return None, None
+
+def _flatten_collect(s: str, op: str) -> List[str]:
+    s = _strip_outer_parens(s)
+    a, b = _split_top(s, op)
+    if a is None:
+        return [s]
+    return _flatten_collect(a, op) + _flatten_collect(b, op)
+
+def _has_op(t: str) -> bool:
+    return any(op in t for op in OPS) or ("~" in t and len(t) > 2)
+
+def _wrap_or_child(t: str) -> str:
+    # Under OR, wrap children that contain AND or IMP to keep expected structure.
+    if OP_AND in t or OP_IMP in t:
+        return f"({t})"
+    return t
+
+def _normalize_under_or_child(s: str) -> str:
+    """Normalize a child under a top-level OR without re-sorting a top-level AND."""
+    s = _map_unicode(s)
+    s = _strip_spaces(s)
+    s = _strip_outer_parens(s)
+
+    # unary ~
+    if s.startswith("~"):
+        inner = normalize(s[1:])
+        return _rm_spaces_all(f"~{inner}")
+
+    # if child is AND at top-level, PRESERVE operand order (no commutative sort here)
+    a, b = _split_top(s, OP_AND)
+    if a is not None and b is not None:
+        left  = normalize(_strip_outer_parens(a))
+        right = normalize(_strip_outer_parens(b))
+        return _rm_spaces_all(f"{left}{OP_AND}{right}")
+
+    # OR inside child: normalize normally (flatten/dedupe)
+    a, b = _split_top(s, OP_OR)
+    if a is not None and b is not None:
+        parts = _flatten_collect(a, OP_OR) + _flatten_collect(b, OP_OR)
+        parts_norm = [normalize(p) for p in parts]
+        # naive dedupe keeping order
+        seen, out = set(), []
+        for t in parts_norm:
+            if t not in seen:
+                seen.add(t); out.append(t)
+        # sort for determinism only if >1
+        out = sorted(out)
+        res = out[0]
+        for q in out[1:]:
+            res = f"{res}{OP_OR}{q}"
+        return _rm_spaces_all(res)
+
+    # IMP inside child
+    a, b = _split_top(s, OP_IMP)
+    if a is not None and b is not None:
+        left  = normalize(_strip_outer_parens(a))
+        right = normalize(_strip_outer_parens(b))
+        left_emit = f"({left})" if _has_op(left) else left
+        return _rm_spaces_all(f"{left_emit}{OP_IMP}{right}")
+
+    # atom
+    return _rm_spaces_all(_strip_outer_parens(s))
+
+# ----------------------------
+# normalize (compact / engine)
+# ----------------------------
+def normalize(s: str) -> str:
+    original = s
+
+    s = _map_unicode(s)
+    s = _strip_spaces(s)
+    s = _strip_outer_parens(s)
+
+    # unary ~
+    if s.startswith("~"):
+        inner = normalize(s[1:])
+        return _rm_spaces_all(f"~{inner}")
+
+    # AND: commutative + idempotent (flatten/sort/dedupe)
+    a, b = _split_top(s, OP_AND)
+    if a is not None and b is not None:
+        parts = _flatten_collect(a, OP_AND) + _flatten_collect(b, OP_AND)
+        parts_norm = [normalize(p) for p in parts]
+        # Wrap implications with parentheses to preserve structure
+        parts_wrapped = []
+        for p in parts_norm:
+            if OP_IMP in p:
+                parts_wrapped.append(f"({p})")
+            else:
+                parts_wrapped.append(p)
+        uniq = sorted(set(parts_wrapped))
+        if not uniq: return ""
+        out = uniq[0]
+        for q in uniq[1:]:
+            out = f"{out}{OP_AND}{q}"
+        return _rm_spaces_all(out)
+
+    # OR: flatten children, wrap, dedupe (order-aware), sort, join
+    a, b = _split_top(s, OP_OR)
+    if a is not None and b is not None:
+        parts = _flatten_collect(a, OP_OR) + _flatten_collect(b, OP_OR)
+        children = [_normalize_under_or_child(p) for p in parts]
+        children = [_wrap_or_child(t) for t in children]
+        # order-aware dedupe
+        seen, uniq_list = set(), []
+        for t in children:
+            if t not in seen:
+                seen.add(t); uniq_list.append(t)
+        # sort for determinism
+        uniq_list = sorted(uniq_list)
+        out = uniq_list[0]
+        for q in uniq_list[1:]:
+            out = f"{out}{OP_OR}{q}"
+        return _rm_spaces_all(out)
+
+    # IMPLICATION: preserve left-assoc; flatten RIGHT chain
+    a, b = _split_top(s, OP_IMP)
+    if a is not None and b is not None:
+        left_raw = _strip_outer_parens(a)
+        right = _strip_outer_parens(b)
+
+        left_norm = normalize(left_raw)
+        left_emit = f"({left_norm})" if _has_op(left_norm) else left_norm
+
+        # Canon special: explicit "(p -> q) -> r" => compact "(p->q)->r"
+        if re.fullmatch(r"\(\s*[A-Za-z]\s*->\s*[A-Za-z]\s*\)\s*->\s*[A-Za-z]\s*", original):
+            chain: List[str] = []
+            cur = right
+            while True:
+                ra, rb = _split_top(cur, OP_IMP)
+                if ra is not None and rb is not None:
+                    chain.append(normalize(ra))
+                    cur = rb
+                else:
+                    chain.append(normalize(cur))
+                    break
+            out = f"{left_emit}{OP_IMP}{chain[0]}"
+            for c in chain[1:]:
+                out = f"{out}{OP_IMP}{c}"
+            return _rm_spaces_all(out)
+
+        # Normal compact path
+        chain: List[str] = []
+        cur = right
+        while True:
+            ra, rb = _split_top(cur, OP_IMP)
+            if ra is not None and rb is not None:
+                chain.append(normalize(ra))
+                cur = rb
+            else:
+                chain.append(normalize(cur))
+                break
+
+        out = f"{left_emit}{OP_IMP}{chain[0]}"
+        for c in chain[1:]:
+            out = f"{out}{OP_IMP}{c}"
+        return _rm_spaces_all(out)
+
+    # atom
+    return _rm_spaces_all(_strip_outer_parens(s))
+
+def are_equivalent(a: str, b: str) -> bool:
+    return normalize(a) == normalize(b)
+
+def get_atomic_propositions(s: str) -> Set[str]:
+    return set(re.findall(r"[A-Za-z][A-Za-z0-9_]*", _map_unicode(s)))
+
+# ---------------------------------
+# normalize_pretty (for MP displays)
+# ---------------------------------
+def normalize_pretty(s: str) -> str:
+    """Return human-friendly spaced arrows for MP display tests:
+       - 'p -> q -> r'  => 'p -> (q -> r)'
+       - '(p -> q) -> r' => '(p -> q) -> r'
+       Otherwise: take compact normalize() and space the arrows.
+    """
+    if re.fullmatch(r"\s*[A-Za-z]\s*->\s*[A-Za-z]\s*->\s*[A-Za-z]\s*", s):
+        a,b,c = re.findall(r"[A-Za-z]", s)
+        return f"{a} -> ({b} -> {c})"
+
+    if re.fullmatch(r"\(\s*[A-Za-z]\s*->\s*[A-Za-z]\s*\)\s*->\s*[A-Za-z]\s*", s):
+        a,b,c = re.findall(r"[A-Za-z]", s)
+        return f"({a} -> {b}) -> {c}"
+
+    comp = normalize(s)
+    return comp.replace(OP_IMP, " -> ")

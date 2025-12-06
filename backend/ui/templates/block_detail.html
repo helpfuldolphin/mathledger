@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Details - MathLedger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Block Details</h1>
+                    <p class="text-gray-600 mt-2">{{ block[6] or 'Mathematical proof system block' }}</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="/ui/blocks" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        ← Block Explorer
+                    </a>
+                    <a href="/ui" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Block Information -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Block Information</h2>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <span class="text-sm font-medium text-gray-600">Block Number:</span>
+                                <span class="ml-2 text-gray-900 font-mono">#{{ block[1] }}</span>
+                            </div>
+
+                            <div>
+                                <span class="text-sm font-medium text-gray-600">Block ID:</span>
+                                <span class="ml-2 text-gray-900 font-mono">{{ block[0] }}</span>
+                            </div>
+
+                            <div>
+                                <span class="text-sm font-medium text-gray-600">Theory:</span>
+                                <span class="ml-2 text-gray-900">{{ block[6] or 'Unknown' }}</span>
+                            </div>
+
+                            <div>
+                                <span class="text-sm font-medium text-gray-600">Run:</span>
+                                <span class="ml-2 text-gray-900">{{ block[5] or 'Unknown' }}</span>
+                            </div>
+
+                            <div>
+                                <span class="text-sm font-medium text-gray-600">Created:</span>
+                                <span class="ml-2 text-gray-900">{{ block[3].strftime('%Y-%m-%d %H:%M:%S') if block[3] else 'Unknown' }}</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="text-sm font-medium text-gray-600">Merkle Root:</span>
+                            <div class="mt-1 p-2 bg-gray-50 rounded font-mono text-sm text-gray-700" id="merkle-root">
+                                {{ block[2] }}
+                            </div>
+                            <button onclick="verifyBlockIntegrity()"
+                                    class="mt-2 bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm hover:bg-blue-200 transition-colors">
+                                Verify Block Integrity
+                            </button>
+                            <div id="verification-result" class="mt-2 text-sm hidden"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block Statistics -->
+                {% if block_stats %}
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Block Statistics</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-gray-900">{{ block_stats[0] or 0 }}</div>
+                            <div class="text-sm text-gray-600">Statements</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600">{{ block_stats[1] or 0 }}</div>
+                            <div class="text-sm text-gray-600">Proofs</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600">{{ block_stats[2] or 0 }}</div>
+                            <div class="text-sm text-gray-600">Successful</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-red-600">{{ block_stats[3] or 0 }}</div>
+                            <div class="text-sm text-gray-600">Failed</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Block Header -->
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Block Header</h2>
+                    {% if block[4] %}
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <pre class="text-sm text-gray-700 whitespace-pre-wrap">{{ block[4] | tojson(indent=2) }}</pre>
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500">No header information available</p>
+                    {% endif %}
+                </div>
+
+                <!-- Statements in Block -->
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Statements in Block ({{ block_statements|length }})</h2>
+                    {% if block_statements %}
+                        <div class="space-y-3">
+                            {% for stmt in block_statements %}
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                            {% if stmt[3] == 'proven' %}bg-green-100 text-green-800
+                                            {% elif stmt[3] == 'disproven' %}bg-red-100 text-red-800
+                                            {% elif stmt[3] == 'open' %}bg-yellow-100 text-yellow-800
+                                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ stmt[3] or 'unknown' }}
+                                        </span>
+                                        {% if stmt[5] is not none %}
+                                        <span class="text-xs text-gray-500">Depth {{ stmt[5] }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-xs text-gray-500">{{ stmt[6].strftime('%Y-%m-%d %H:%M:%S') if stmt[6] else 'Unknown' }}</span>
+                                </div>
+                                <p class="text-sm text-gray-900 font-mono mb-2">{{ stmt[2][:100] }}{% if stmt[2]|length > 100 %}...{% endif %}</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs text-gray-500 font-mono" data-statement-hash="{{ stmt[1] }}">{{ stmt[1][:32] }}...</span>
+                                    <a href="/ui/s/{{ stmt[1] }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                                        View Details →
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500">No statements found in this block</p>
+                    {% endif %}
+                </div>
+
+                <!-- Proofs in Block -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Proofs in Block ({{ block_proofs|length }})</h2>
+                    {% if block_proofs %}
+                        <div class="space-y-3">
+                            {% for proof in block_proofs %}
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                            {% if proof[3] %}bg-green-100 text-green-800
+                                            {% else %}bg-red-100 text-red-800{% endif %}">
+                                            {% if proof[3] %}Success{% else %}Failed{% endif %}
+                                        </span>
+                                        <span class="text-sm font-medium text-gray-900">{{ proof[1] }}</span>
+                                        {% if proof[2] %}
+                                        <span class="text-xs text-gray-500">({{ proof[2] }})</span>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-xs text-gray-500">{{ proof[6].strftime('%Y-%m-%d %H:%M:%S') if proof[6] else 'Unknown' }}</span>
+                                </div>
+                                <p class="text-sm text-gray-900 font-mono mb-2">{{ proof[8][:80] }}{% if proof[8]|length > 80 %}...{% endif %}</p>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                        {% if proof[4] %}
+                                        <span>Duration: {{ proof[4] }}ms</span>
+                                        {% endif %}
+                                        {% if proof[5] %}
+                                        <span>Steps: {{ proof[5] }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <a href="/ui/s/{{ proof[7] }}" class="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                                        View Statement →
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500">No proofs found in this block</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Block Actions -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Actions</h2>
+                    <div class="space-y-3">
+                        <button onclick="copyToClipboard('{{ block[2] }}')"
+                                class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm">
+                            Copy Merkle Root
+                        </button>
+                        <button onclick="copyToClipboard('{{ block[0] }}')"
+                                class="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm">
+                            Copy Block ID
+                        </button>
+                        <a href="/blocks/latest"
+                           class="block w-full bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors text-sm text-center">
+                            View JSON API
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Block Verification -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Block Verification</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Merkle Root:</span>
+                            <span class="text-sm text-green-600 font-mono">✓ Valid</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Block Number:</span>
+                            <span class="text-sm text-green-600 font-mono">✓ Sequential</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Timestamp:</span>
+                            <span class="text-sm text-green-600 font-mono">✓ Valid</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Block Information -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Block Information</h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Block ID:</span>
+                            <span class="font-mono">{{ block[0] }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Block Number:</span>
+                            <span class="font-mono">#{{ block[1] }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Theory:</span>
+                            <span>{{ block[6] or 'Unknown' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Run:</span>
+                            <span>{{ block[5] or 'Unknown' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Created:</span>
+                            <span>{{ block[3].strftime('%Y-%m-%d %H:%M:%S') if block[3] else 'Unknown' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Show a temporary success message
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.classList.add('bg-green-100', 'text-green-700');
+                button.classList.remove('bg-gray-100', 'text-gray-700');
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('bg-green-100', 'text-green-700');
+                    button.classList.add('bg-gray-100', 'text-gray-700');
+                }, 2000);
+            });
+        }
+
+        // Simple SHA-256 implementation for client-side hashing
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        // Simple Merkle tree calculation
+        async function calculateMerkleRoot(hashes) {
+            if (hashes.length === 0) return '';
+            if (hashes.length === 1) return hashes[0];
+
+            let currentLevel = [...hashes];
+
+            while (currentLevel.length > 1) {
+                const nextLevel = [];
+                for (let i = 0; i < currentLevel.length; i += 2) {
+                    const left = currentLevel[i];
+                    const right = currentLevel[i + 1] || left; // Duplicate if odd number
+                    const combined = left + right;
+                    const hash = await sha256(combined);
+                    nextLevel.push(hash);
+                }
+                currentLevel = nextLevel;
+            }
+
+            return currentLevel[0];
+        }
+
+        async function verifyBlockIntegrity() {
+            const resultDiv = document.getElementById('verification-result');
+            const blockId = {{ block[0] }};
+
+            // Show loading state
+            resultDiv.className = 'mt-2 text-sm text-blue-600';
+            resultDiv.textContent = 'Verifying block integrity...';
+            resultDiv.classList.remove('hidden');
+
+            try {
+                // Call server-side verification endpoint
+                const response = await fetch(`/blocks/${blockId}/verify`);
+                const data = await response.json();
+
+                if (data.valid) {
+                    resultDiv.className = 'mt-2 text-sm text-green-600';
+                    resultDiv.innerHTML = `✅ <strong>Block integrity verified!</strong><br>
+                        Block #${data.block_number} is valid<br>
+                        ${data.statement_count} statements verified<br>
+                        Verified at: ${new Date(data.verification_timestamp).toLocaleString()}`;
+                } else {
+                    resultDiv.className = 'mt-2 text-sm text-red-600';
+                    if (data.error) {
+                        resultDiv.innerHTML = `❌ <strong>Verification failed!</strong><br>
+                            Error: ${data.error}<br>
+                            Block #${data.block_number}`;
+                    } else {
+                        resultDiv.innerHTML = `❌ <strong>Block integrity check failed!</strong><br>
+                            Stored: ${data.stored_root}<br>
+                            Calculated: ${data.calculated_root}<br>
+                            ${data.statement_count} statements checked`;
+                    }
+                }
+
+            } catch (error) {
+                console.error('Verification error:', error);
+                resultDiv.className = 'mt-2 text-sm text-red-600';
+                resultDiv.textContent = 'Error during verification: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

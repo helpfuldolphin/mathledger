@@ -1,0 +1,115 @@
+# Preregistration Template: U2 Uplift Experiments
+# STATUS: PREREGISTERED — NOT YET EXECUTED
+#
+# This preregistration covers Phase II uplift experiments on the four
+# non-degenerate slices defined in curriculum_uplift_phase2.yaml.
+#
+# Phase II only; cannot be satisfied by Phase I logs.
+
+preregistration:
+  experiment_family: "uplift_u2"
+  version: 1
+  status: "NOT_YET_EXECUTED"
+  
+  # To be filled per-experiment
+  experiment_id: "<EXPERIMENT_ID>"           # e.g., "uplift_u2_goal_001"
+  slice_name: "<SLICE_NAME>"                 # One of: slice_uplift_goal, slice_uplift_sparse,
+                                             #         slice_uplift_tree, slice_uplift_dependency
+  
+  # Protocol parameters
+  protocol:
+    cycles: 500                              # Number of cycles per run
+    seed_schedule: "MDAP_SEED + cycle_index" # Deterministic seeding
+    baseline_mode: "random_shuffle"          # Seeded random ordering
+    rfl_mode: "policy_score"                 # Score-based ordering
+    
+  # Success metric (slice-dependent)
+  success_metric:
+    kind: "<goal_hit|density|chain_length|multi_goal>"
+    parameters: {}                           # Slice-specific parameters
+    
+  # Hypothesis
+  hypothesis:
+    null: "p_rfl = p_base"                   # RFL no better than baseline
+    alternative: "p_rfl > p_base"            # RFL improves success rate
+    target_effect_size: 0.10                 # Minimum meaningful Δp
+    
+  # Analysis protocol
+  analysis:
+    primary_metric: "success_rate"           # P[success]
+    secondary_metrics:
+      - "verified_per_cycle"
+      - "efficiency"                         # verified / candidates_tried
+    confidence_level: 0.95
+    ci_method: "wilson"                      # Wilson score interval
+    test_method: "two_proportion_z"          # Or bootstrap
+    
+  # Required outputs
+  outputs:
+    baseline_log: "results/uplift_u2_<slice>_baseline.jsonl"
+    rfl_log: "results/uplift_u2_<slice>_rfl.jsonl"
+    manifest: "experiment_manifest.json"
+    summary: "statistical_summary.json"
+    
+  # Governance
+  governance:
+    phase: "II"
+    blocked_by: []                           # No Phase I dependencies
+    cannot_reference: 
+      - "Phase I logs"
+      - "fo_rfl_*.jsonl"
+      - "fo_baseline_*.jsonl"
+    requires:
+      - "curriculum_uplift_phase2.yaml slice definition"
+      - "Completed baseline + RFL runs with same seed"
+      - "Statistical summary with Δp and CIs"
+
+---
+# Per-Slice Preregistration Templates
+# Copy and fill one of these for each experiment
+
+slice_uplift_goal:
+  experiment_id: "uplift_u2_goal_<NNN>"
+  slice_name: "slice_uplift_goal"
+  success_metric:
+    kind: "goal_hit"
+    parameters:
+      target_hashes: []                      # FILL: specific target formula hashes
+      min_goal_hits: 1
+      min_total_verified: 3
+  hypothesis:
+    target_effect_size: 0.15                 # Goal hit: expect larger effect
+
+slice_uplift_sparse:
+  experiment_id: "uplift_u2_sparse_<NNN>"
+  slice_name: "slice_uplift_sparse"
+  success_metric:
+    kind: "density"
+    parameters:
+      min_verified: 5
+      max_candidates: 40
+  hypothesis:
+    target_effect_size: 0.10
+
+slice_uplift_tree:
+  experiment_id: "uplift_u2_tree_<NNN>"
+  slice_name: "slice_uplift_tree"
+  success_metric:
+    kind: "chain_length"
+    parameters:
+      min_chain_length: 3
+      chain_target_hash: ""                  # FILL: specific target hash
+  hypothesis:
+    target_effect_size: 0.15
+
+slice_uplift_dependency:
+  experiment_id: "uplift_u2_dependency_<NNN>"
+  slice_name: "slice_uplift_dependency"
+  success_metric:
+    kind: "multi_goal"
+    parameters:
+      required_goal_hashes: []               # FILL: list of required goals
+      min_each_goal: 1
+  hypothesis:
+    target_effect_size: 0.20                 # Joint goal: harder, expect larger effect
+

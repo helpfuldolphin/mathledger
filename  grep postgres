@@ -1,0 +1,111 @@
+[1mdiff --git a/backend/tools/progress.py b/backend/tools/progress.py[m
+[1mindex c174804..1da8a07 100644[m
+[1m--- a/backend/tools/progress.py[m
+[1m+++ b/backend/tools/progress.py[m
+[36m@@ -60,17 +60,17 @@[m [mdef get_latest_run_data(db_url: str) -> Dict[str, Any]:[m
+     """[m
+     with psycopg.connect(db_url) as conn:[m
+         with conn.cursor() as cur:[m
+[31m-            # Get latest block[m
+[32m+[m[32m            # Get latest block (using current schema from migrations/002_blocks_lemmas.sql)[m
+             cur.execute("""[m
+[31m-                SELECT block_number, merkle_root, created_at, header [m
+[32m+[m[32m                SELECT id, run_id, root_hash, counts, created_at, system_id[m
+                 FROM blocks [m
+[31m-                ORDER BY block_number DESC [m
+[32m+[m[32m                ORDER BY id DESC[m[41m [m
+                 LIMIT 1[m
+             """)[m
+             latest_block = cur.fetchone()[m
+             [m
+             # Get max block height[m
+[31m-            cur.execute("SELECT COALESCE(MAX(block_number),0) FROM blocks")[m
+[32m+[m[32m            cur.execute("SELECT COALESCE(MAX(id),0) FROM blocks")[m
+             max_height = cur.fetchone()[0][m
+             [m
+             # Get statement counts[m
+[36m@@ -95,7 +95,7 @@[m [mdef get_latest_run_data(db_url: str) -> Dict[str, Any]:[m
+                 cur.execute("SELECT COUNT(*) FROM proofs")[m
+                 proofs_total = cur.fetchone()[0][m
+                 [m
+[31m-                cur.execute("SELECT COUNT(*) FROM proofs WHERE status='success'")[m
+[32m+[m[32m                cur.execute("SELECT COUNT(*) FROM proofs WHERE success = true")[m
+                 proofs_success = cur.fetchone()[0][m
+             except Exception:[m
+                 # Proofs table doesn't exist or has issues - treat as 0 gracefully[m
+[36m@@ -104,10 +104,12 @@[m [mdef get_latest_run_data(db_url: str) -> Dict[str, Any]:[m
+             [m
+             return {[m
+                 'latest_block': {[m
+[31m-                    'block_number': latest_block[0] if latest_block else None,[m
+[31m-                    'merkle_root': latest_block[1] if latest_block else None,[m
+[31m-                    'created_at': latest_block[2] if latest_block else None,[m
+[31m-                    'header': latest_block[3] if latest_block else None,[m
+[32m+[m[32m                    'block_id': latest_block[0] if latest_block else None,[m
+[32m+[m[32m                    'run_id': latest_block[1] if latest_block else None,[m
+[32m+[m[32m                    'merkle_root': latest_block[2] if latest_block else None,[m
+[32m+[m[32m                    'counts': latest_block[3] if latest_block else None,[m
+[32m+[m[32m                    'created_at': latest_block[4] if latest_block else None,[m
+[32m+[m[32m                    'system_id': latest_block[5] if latest_block else None,[m
+                     'block_height': max_height[m
+                 },[m
+                 'statements': {[m
+[36m@@ -135,13 +137,21 @@[m [mdef append_latest_to_progress(md_path: str, db_url: str) -> None:[m
+         data = get_latest_run_data(db_url)[m
+         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")[m
+         [m
+[31m-        # Format the entry[m
+[31m-        entry = f"""## [{timestamp}] Golden Run[m
+[31m-- Block: {data['latest_block']['block_number'] or 'None'}[m
+[31m-- Merkle: {data['latest_block']['merkle_root'] or 'None'}[m
+[31m-- Statements: {data['statements']['total']:,}[m
+[31m-- Proofs: {data['proofs']['total']}/{data['proofs']['success']}[m
+[31m-- Block height: {data['latest_block']['block_height']}[m
+[32m+[m[32m        # Check if this block was already logged (idempotent)[m
+[32m+[m[32m        if _is_block_already_logged(md_path, data['latest_block']['block_id']):[m
+[32m+[m[32m            print(f"Block {data['latest_block']['block_id']} already logged, skipping")[m
+[32m+[m[32m            return[m
+[32m+[m[41m        [m
+[32m+[m[32m        # Calculate success rate[m
+[32m+[m[32m        success_rate = 0.0[m
+[32m+[m[32m        if data['proofs']['total'] > 0:[m
+[32m+[m[32m            success_rate = (data['proofs']['success'] / data['proofs']['total']) * 100.0[m
+[32m+[m[41m        [m
+[32m+[m[32m        # Format the entry according to requirements[m
+[32m+[m[32m        entry = f"""## [{timestamp}] Block {data['latest_block']['block_id'] or 'None'}[m
+[32m+[m[32m- merkle_root={data['latest_block']['merkle_root'] or 'None'}[m
+[32m+[m[32m- proofs: {data['proofs']['success']}/{data['proofs']['total']} success/failure counts[m
+[32m+[m[32m- depth_max: {data['statements']['max_depth']}, success rate: {success_rate:.1f}%[m
+ [m
+ """[m
+         [m
+[36m@@ -156,6 +166,29 @@[m [mdef append_latest_to_progress(md_path: str, db_url: str) -> None:[m
+         raise[m
+ [m
+ [m
+[32m+[m[32mdef _is_block_already_logged(md_path: str, block_id: Optional[int]) -> bool:[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Check if a block was already logged to avoid duplicate entries.[m
+[32m+[m[41m    [m
+[32m+[m[32m    Args:[m
+[32m+[m[32m        md_path: Path to the progress.md file[m
+[32m+[m[32m        block_id: Block ID to check for[m
+[32m+[m[41m        [m
+[32m+[m[32m    Returns:[m
+[32m+[m[32m        True if block was already logged, False otherwise[m
+[32m+[m[32m    """[m
+[32m+[m[32m    if not block_id or not os.path.exists(md_path):[m
+[32m+[m[32m        return False[m
+[32m+[m[41m    [m
+[32m+[m[32m    try:[m
+[32m+[m[32m        with open(md_path, 'r', encoding='utf-8') as f:[m
+[32m+[m[32m            content = f.read()[m
+[32m+[m[32m            # Look for existing entry with this block ID[m
+[32m+[m[32m            return f"Block {block_id}" in content[m
+[32m+[m[32m    except Exception:[m
+[32m+[m[32m        return False[m
+[32m+[m
+[32m+[m
+ def main():[m
+     """CLI entry point."""[m
+     parser = argparse.ArgumentParser(description="MathLedger progress tracking utilities")[m

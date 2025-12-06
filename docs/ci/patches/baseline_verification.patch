@@ -1,0 +1,78 @@
+--- a/.github/workflows/docs-manifest.yml
++++ b/.github/workflows/docs-manifest.yml
+@@ -175,3 +175,48 @@ jobs:
+               echo "Baseline unchanged, skipping commit"
+             fi
+           fi
++  
++  verify-baseline:
++    runs-on: ubuntu-latest
++    needs: docs-delta
++    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
++    steps:
++      - uses: actions/checkout@v4
++        with:
++          fetch-depth: 0
++      
++      - name: Set up Python
++        uses: actions/setup-python@v5
++        with:
++          python-version: '3.11'
++      
++      - name: Download current delta artifacts
++        uses: actions/download-artifact@v4
++        with:
++          name: docs-delta-${{ github.run_number }}
++          path: artifacts/docs/current/
++      
++      - name: Download previous delta artifacts
++        id: download-previous
++        continue-on-error: true
++        uses: actions/download-artifact@v4
++        with:
++          name: docs-delta-${{ github.run_number - 1 }}
++          path: artifacts/docs/previous/
++      
++      - name: Primer - seed previous if missing
++        if: steps.download-previous.outcome == 'failure'
++        run: |
++          echo "First run detected - seeding current delta as previous for next run"
++          mkdir -p artifacts/docs/previous/
++          cp artifacts/docs/current/docs_delta.json artifacts/docs/previous/docs_delta.json
++      
++      - name: Verify baseline stability
++        run: |
++          if [ -f artifacts/docs/previous/docs_delta.json ] && [ -f artifacts/docs/current/docs_delta.json ]; then
++            echo "Verifying baseline stability between runs..."
++            python tools/docs/verify_baseline_ci.py \
++              --run1 artifacts/docs/previous/docs_delta.json \
++              --run2 artifacts/docs/current/docs_delta.json \
++              --auto-detect-baselines \
++              --json-only artifacts/docs/baseline_verification.json
++            
++            cat artifacts/docs/baseline_verification.json | python -m json.tool
++            
++            if grep -q '"result":"PASS"' artifacts/docs/baseline_verification.json; then
++              echo "[PASS] Baseline Stable Δ=0"
++            elif grep -q '"result":"FAIL"' artifacts/docs/baseline_verification.json; then
++              ADD=$(cat artifacts/docs/baseline_verification.json | python -c "import sys, json; print(json.load(sys.stdin)['drift']['added'])")
++              RM=$(cat artifacts/docs/baseline_verification.json | python -c "import sys, json; print(json.load(sys.stdin)['drift']['removed'])")
++              MOD=$(cat artifacts/docs/baseline_verification.json | python -c "import sys, json; print(json.load(sys.stdin)['drift']['modified'])")
++              echo "[FAIL] Baseline Drift Detected add=$ADD rm=$RM mod=$MOD"
++              exit 1
++            fi
++          else
++            echo "Skipping baseline verification (previous run not available)"
++            echo "This is expected for first CI run or after artifact expiration"
++          fi
++      
++      - name: Upload verification report
++        if: always()
++        uses: actions/upload-artifact@v4
++        with:
++          name: baseline-verification-${{ github.run_number }}
++          path: |
++            artifacts/docs/baseline_verification.json
++            artifacts/docs/current/
++            artifacts/docs/previous/
++          retention-days: 90

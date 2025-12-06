@@ -1,0 +1,80 @@
+# ============================================================================
+# RFL Config: R0 (Bootstrap / Early Curriculum)
+# ============================================================================
+# Context: Integrated from Gemini-J 'atoms4-depth4' profile.
+# Purpose: Verification of early-stage curriculum stability.
+# Mode: Baseline (Fast Feedback)
+# ============================================================================
+
+experiment_name: "RFL-R0: PL Atoms4-Depth4"
+metrologist: "GEMINI-F (Integration)"
+version: "2.0.0"
+
+# ----------------------------------------------------------------------------
+# Curriculum Context (from Gemini-J)
+# ----------------------------------------------------------------------------
+curriculum_context:
+  slice_name: "atoms4-depth4"
+  params:
+    atoms: 4
+    depth_max: 4
+    breadth_max: 500
+    total_max: 2000
+  gate_intent:
+    min_pph: 140
+    max_abstention_pct: 15.0
+
+# ----------------------------------------------------------------------------
+# RFL Experiment Settings
+# ----------------------------------------------------------------------------
+bootstrap_config:
+  method: "percentile"      # Fast for R0
+  n_experiments: 10
+  n_replicates: 1000
+  confidence_level: 0.95
+  seed: 42
+
+pass_criteria:
+  # Aligned with curriculum 'coverage.ci_lower_min: 0.92'
+  coverage_lower_bound: 0.92
+  uplift_lower_bound: 1.0
+  description: "PASS iff coverage₉₅lower ≥ 0.92 (Curriculum Req)"
+
+data_source:
+  mode: "historical"
+  path: "docs/progress.md"
+  fallback_to_db: false
+  db_config:
+    host: "localhost"
+    port: 5432
+    database: "mathledger"
+    user: "ml"
+    password: null
+
+metrics:
+  - name: "success_rate"
+    baseline: 0.5
+    weight: 1.0
+    experiments: 5
+  
+  - name: "proof_velocity"
+    # Target: 140 pph ~ 2.3 ppm. Setting baseline to 1.0 for relative uplift checks.
+    baseline: 1.0
+    weight: 1.0
+    experiments: 5
+
+  - name: "statement_growth"
+    baseline: 1.0
+    weight: 1.0
+    experiments: 5
+
+output:
+  artifacts_dir: "artifacts/rfl_r0"
+  results_file: "results.json"
+  coverage_file: "coverage.json"
+  visualization_file: "curves.png"
+
+commit_template:
+  pass: "[PASS] RFL-R0 (Atoms4): coverage≥{coverage:.3f}"
+  fail: "[FAIL] RFL-R0 (Atoms4): coverage={coverage:.3f}"
+  abstain: "[ABSTAIN] RFL-R0: Insufficient data"

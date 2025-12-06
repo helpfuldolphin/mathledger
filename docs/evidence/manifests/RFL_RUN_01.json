@@ -1,0 +1,96 @@
+{
+  "manifest_version": "1.0",
+  "experiment_id": "R0_BASELINE",
+  "run_index": 1,
+  "timestamp_utc": "2025-01-01T00:00:43+00:00Z",
+  "provenance": {
+    "git_commit": "unknown",
+    "git_branch": "unknown",
+    "user": "iaa72",
+    "machine": "HP_Envy"
+  },
+  "configuration": {
+    "snapshot": {
+      "experiment_id": "R0_BASELINE",
+      "num_runs": 10,
+      "random_seed": 42,
+      "system_id": 1,
+      "derive_steps": 10,
+      "max_breadth": 50,
+      "max_total": 200,
+      "depth_max": 4,
+      "bootstrap_replicates": 1000,
+      "confidence_level": 0.95,
+      "coverage_threshold": 0.92,
+      "uplift_threshold": 1.0,
+      "database_url": "postgresql://first_organism_admin:f1rst_0rg4n1sm_l0c4l_s3cur3_k3y!@127.0.0.1:5432/mathledger_first_organism?sslmode=disable",
+      "redis_url": "redis://:r3d1s_f1rst_0rg_s3cur3!@127.0.0.1:6380/0",
+      "lean_project_dir": "C:\\dev\\mathledger\\backend\\lean_proj",
+      "artifacts_dir": "artifacts/experiments/rfl/R0",
+      "results_file": "rfl_results.json",
+      "coverage_file": "rfl_coverage.json",
+      "curves_file": "rfl_curves.png",
+      "curriculum": [
+        {
+          "name": "baseline",
+          "start_run": 1,
+          "end_run": 10,
+          "derive_steps": 10,
+          "max_breadth": 50,
+          "max_total": 200,
+          "depth_max": 4
+        }
+      ],
+      "dual_attestation": false,
+      "dual_attestation_tolerance": 0.005,
+      "abstention_tolerance": 0.25,
+      "baseline_run_id": null,
+      "parallel_runs": false,
+      "max_workers": 4
+    }
+  },
+  "execution": {
+    "command": "python rfl/runner.py",
+    "effective_seed": 42,
+    "python_version": "3.11.9"
+  },
+  "artifacts": {
+    "logs": [],
+    "data": []
+  },
+  "results": {
+    "run_id": "rfl_R0_BASELINE_run_01",
+    "system_id": 1,
+    "start_time": "2025-01-01T00:00:42+00:00Z",
+    "end_time": "2025-01-01T00:00:43+00:00Z",
+    "duration_seconds": 1.0,
+    "total_statements": 0,
+    "successful_proofs": 0,
+    "failed_proofs": 0,
+    "abstentions": 0,
+    "throughput_proofs_per_hour": 0.0,
+    "mean_depth": 0.0,
+    "max_depth": 0,
+    "distinct_statements": 0,
+    "derive_steps": 10,
+    "max_breadth": 50,
+    "max_total": 200,
+    "status": "failed",
+    "error_message": "Unexpected error: cannot access local variable 'error_msg' where it is not associated with a value",
+    "policy_context": {
+      "slice": "baseline",
+      "slice_index": 0,
+      "slice_bounds": [
+        1,
+        10
+      ],
+      "derive_steps": 10,
+      "max_breadth": 50,
+      "max_total": 200,
+      "depth_max": 4
+    },
+    "abstention_breakdown": {
+      "unexpected_error": 1
+    }
+  }
+}

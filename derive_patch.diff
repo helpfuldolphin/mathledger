@@ -1,0 +1,214 @@
+--- a/backend/axiom_engine/derive.py
++++ b/backend/axiom_engine/derive.py
+@@ -261,6 +261,7 @@ def main() -> int:
+     import argparse
+     import sys
+     import os
++    import hashlib
+     import psycopg
+     import json
+     import time
+@@ -284,6 +285,7 @@ def main() -> int:
+     # Use DATABASE_URL from environment if not provided
+     db_url = args.db_url or os.environ.get("DATABASE_URL", "postgresql://ml:mlpass@localhost:5432/mathledger")
+
++    # Connect via psycopg directly
+     try:
+         with psycopg.connect(db_url) as conn:
+             with conn.cursor() as cur:
+@@ -291,6 +293,7 @@ def main() -> int:
+                 cur.execute("""
+                     CREATE TABLE IF NOT EXISTS systems (
+                         id SERIAL PRIMARY KEY,
++                        slug VARCHAR(255) UNIQUE,
+                         name VARCHAR(255) UNIQUE NOT NULL,
+                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                     )
+@@ -300,6 +303,7 @@ def main() -> int:
+                 cur.execute("""
+                     CREATE TABLE IF NOT EXISTS statements (
+                         id SERIAL PRIMARY KEY,
++                        hash VARCHAR(64) UNIQUE,
+                         text TEXT NOT NULL,
+                         content_norm TEXT NOT NULL,
+                         system_id INTEGER REFERENCES systems(id),
+@@ -315,6 +319,7 @@ def main() -> int:
+                 cur.execute("""
+                     CREATE TABLE IF NOT EXISTS proofs (
+                         id SERIAL PRIMARY KEY,
++                        hash VARCHAR(64) UNIQUE,
+                         statement_id INTEGER REFERENCES statements(id),
+                         status VARCHAR(50) DEFAULT 'pending',
+                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+@@ -325,6 +330,7 @@ def main() -> int:
+                 cur.execute("""
+                     CREATE TABLE IF NOT EXISTS blocks (
+                         block_number INTEGER PRIMARY KEY,
++                        system_id INTEGER REFERENCES systems(id),
+                         prev_hash TEXT,
+                         merkle_root TEXT NOT NULL,
+                         header JSONB,
+@@ -333,7 +339,7 @@ def main() -> int:
+                     )
+                 """)
+
+-                # Get or create system_id
++                # Get or create system_id (using slug for lookup)
+                 cur.execute("SELECT id FROM systems WHERE name = %s", (args.system,))
+                 row = cur.fetchone()
+                 if row:
+@@ -341,6 +347,7 @@ def main() -> int:
+                 else:
+                     cur.execute("INSERT INTO systems (name) VALUES (%s) RETURNING id", (args.system,))
+                     system_id = cur.fetchone()[0]
++                    cur.execute("UPDATE systems SET slug = %s WHERE id = %s", (args.system, system_id))
+
+                 # Insert PL axioms if they don't exist
+                 pl_axioms = [
+@@ -350,10 +357,12 @@ def main() -> int:
+                 ]
+
+                 for axiom in pl_axioms:
+                     content_norm = normalize(axiom)
++                    axiom_hash = hashlib.sha256(content_norm.encode('utf-8')).hexdigest()
+                     cur.execute("""
+-                        SELECT id FROM statements WHERE content_norm = %s AND system_id = %s
++                        SELECT id FROM statements WHERE hash = %s AND system_id = %s
+                     """, (content_norm, system_id))
+                     if not cur.fetchone():
++                        # UPSERT by hash for idempotency
+                         cur.execute("""
+-                            INSERT INTO statements (text, content_norm, system_id, is_axiom, derivation_depth)
+-                            VALUES (%s, %s, %s, TRUE, 0)
+-                        """, (axiom, content_norm, system_id))
++                            INSERT INTO statements (hash, text, content_norm, system_id, is_axiom, derivation_depth)
++                            VALUES (%s, %s, %s, %s, TRUE, 0)
++                            ON CONFLICT (hash) DO NOTHING
++                        """, (axiom_hash, axiom, content_norm, system_id))
+
+                 conn.commit()
+
+@@ -365,6 +374,7 @@ def main() -> int:
+                     if n_new >= args.max_total:
+                         break
+
++                    # Get current statements with hashes
+                     cur.execute("""
+                         SELECT id, text, content_norm FROM statements
+                         WHERE system_id = %s ORDER BY id
+@@ -378,6 +388,7 @@ def main() -> int:
+                     implications = cur.fetchall()
+
+                     step_new = 0
++                    new_statement_hashes = []
+                     for stmt_id, stmt_text, stmt_norm in current_statements:
+                         if step_new >= args.max_breadth or n_new >= args.max_total:
+                             break
+@@ -390,6 +401,7 @@ def main() -> int:
+                                 if len(parts) == 2:
+                                     a, c = parts[0].strip(), parts[1].strip()
+                                     if a == stmt_norm:
++                                        # Check if conclusion already exists by hash
++                                        c_hash = hashlib.sha256(c.encode('utf-8')).hexdigest()
+                                         cur.execute("""
+-                                            SELECT id FROM statements
+-                                            WHERE content_norm = %s AND system_id = %s
++                                            SELECT id FROM statements
++                                            WHERE hash = %s AND system_id = %s
+                                         """, (c, system_id))
+                                         if not cur.fetchone():
++                                            # Insert new derived statement with hash
+                                             cur.execute("""
+-                                                INSERT INTO statements (text, content_norm, system_id, is_axiom, derivation_depth)
+-                                                VALUES (%s, %s, %s, FALSE, 1)
++                                                INSERT INTO statements (hash, text, content_norm, system_id, is_axiom, derivation_depth)
++                                                VALUES (%s, %s, %s, %s, FALSE, 1)
+                                                 RETURNING id
+-                                            """, (c, c, system_id))
++                                            """, (c_hash, c, c, system_id))
+                                             new_id = cur.fetchone()[0]
+
+-                                            # Insert proof record
++                                            # Insert proof record with hash
++                                            proof_hash = hashlib.sha256(f"{new_id}:{c}".encode('utf-8')).hexdigest()
+                                             cur.execute("""
+-                                                INSERT INTO proofs (statement_id, status)
+-                                                VALUES (%s, 'success')
+-                                            """, (new_id,))
++                                                INSERT INTO proofs (hash, statement_id, status)
++                                                VALUES (%s, %s, 'success')
++                                                ON CONFLICT (hash) DO NOTHING
++                                            """, (proof_hash, new_id))
+
++                                            new_statement_hashes.append(c_hash)
+                                             step_new += 1
+                                             n_new += 1
+
+                     if step_new == 0:
+                         break
+
+                 conn.commit()
+
+                 # Seal block if requested
+                 if args.seal:
+-                    # Get all statement IDs for this system (sorted ascending)
+-                    cur.execute("""
+-                        SELECT id FROM statements WHERE system_id = %s ORDER BY id
+-                    """, (system_id,))
+-                    statement_ids = [row[0] for row in cur.fetchall()]
++                    # Get all statement hashes for this system (sorted ascending)
++                    cur.execute("""
++                        SELECT hash FROM statements WHERE system_id = %s ORDER BY hash
++                    """, (system_id,))
++                    statement_hashes = [row[0] for row in cur.fetchall()]
+
+-                    if statement_ids:
++                    if statement_hashes:
+                         # Get last block info
+                         cur.execute("""
+                             SELECT block_number, merkle_root FROM blocks
+-                            ORDER BY block_number DESC LIMIT 1
++                            WHERE system_id = %s ORDER BY block_number DESC LIMIT 1
+                         """)
+                         row = cur.fetchone()
+                         if row:
+                             prev_hash = row[1]
+                             block_number = row[0] + 1
+                         else:
+                             prev_hash = "GENESIS"
+                             block_number = 1
+
+-                        # Create Merkle root from statement IDs
++                        # Create Merkle root from statement hashes
+                         from backend.ledger.blockchain import seal_block
+-                        block_info = seal_block(statement_ids, prev_hash, block_number, time.time(), version="v1")
++                        block_info = seal_block(statement_hashes, prev_hash, block_number, time.time(), version="v1")
+
+                         # Insert block
+                         h = block_info["header"]
+                         cur.execute("""
+-                            INSERT INTO blocks (block_number, prev_hash, merkle_root, header, statements)
+-                            VALUES (%s, %s, %s, %s, %s)
++                            INSERT INTO blocks (block_number, system_id, prev_hash, merkle_root, header, statements)
++                            VALUES (%s, %s, %s, %s, %s, %s)
+                         """, (
+                             h["block_number"],
++                            system_id,
+                             h["prev_hash"],
+                             h["merkle_root"],
+                             json.dumps(h),
+                             json.dumps(block_info["statements"])
+                         ))
+
+                         conn.commit()
+
+-                        # Print the required output
+-                        print(f"BLOCK number={block_number} merkle={h['merkle_root']}")
++                        # Print the required output and flush
++                        print(f"BLOCK number={block_number} merkle={h['merkle_root']}")
+                         sys.stdout.flush()
+
+         return 0
+     except Exception as e:
+         print(f"Error: {e}")
+         return 1

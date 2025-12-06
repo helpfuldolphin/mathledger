@@ -1,0 +1,396 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RFL Uplift Curve Specification",
+  "description": "Configuration for abstention rate uplift curve analysis under Wide Slice entropy injection",
+  "version": "1.0.0",
+
+  "_STATUS": "PHASE II — THEORETICAL SPECIFICATION ONLY",
+  "_WARNING": [
+    "This specification has NOT been implemented or used in Evidence Pack v1.",
+    "No curve fitting, smoothing, or bootstrap analysis has been performed.",
+    "The logistic decay model is UNVERIFIED conjecture.",
+    "Phase I evidence consists only of: FO closed-loop test, 1000-cycle abstention counts, sealed manifests.",
+    "This file exists as future work for Phase II experimentation."
+  ],
+  "_PHASE_I_FACTS": [
+    "No parametric model was fit to the data.",
+    "No goodness-of-fit metrics were computed.",
+    "No confidence intervals were generated."
+  ],
+
+  "_PHASE_I_RFL_EMPIRICAL_REALITY": {
+    "summary": "The actual RFL logs do not demonstrate uplift.",
+    "logs": [
+      {
+        "file": "fo_rfl_50.jsonl",
+        "cycles": 50,
+        "outcome": "Partial, small exploratory run",
+        "uplift_evidence": "NONE"
+      },
+      {
+        "file": "fo_rfl.jsonl",
+        "cycles": 330,
+        "outcome": "All-abstain (100% abstention throughout)",
+        "uplift_evidence": "NONE"
+      }
+    ],
+    "critical_clarification": "None of these logs constitute empirical uplift.",
+    "details": [
+      "fo_rfl_50.jsonl: Short exploratory run, insufficient sample size for any statistical claim.",
+      "fo_rfl.jsonl: 330 cycles with ZERO successful derivations — system abstained on every candidate."
+    ],
+    "implication": "All conjectures in RFL_UPLIFT_THEORY.md (logistic decay, supermartingale drift, convergence) have NO empirical support in Phase I evidence."
+  },
+
+  "window_size": {
+    "value": 50,
+    "unit": "steps",
+    "description": "Rolling window size for smoothed abstention rate calculation",
+    "constraints": {
+      "min": 10,
+      "max": 500,
+      "recommended_range": [30, 100]
+    },
+    "rationale": "Window should span Phase II descent for maximum signal; too small increases noise, too large obscures transitions"
+  },
+
+  "smoothing": {
+    "method": "exponential_weighted_mean",
+    "parameters": {
+      "alpha": 0.1,
+      "min_periods": 10,
+      "adjust": true
+    },
+    "alternatives": [
+      {
+        "method": "simple_moving_average",
+        "window": 50
+      },
+      {
+        "method": "savitzky_golay",
+        "window_length": 51,
+        "polyorder": 3
+      },
+      {
+        "method": "lowess",
+        "frac": 0.1,
+        "it": 3
+      }
+    ],
+    "description": "Smoothing method to reduce observation noise while preserving trend"
+  },
+
+  "metric": {
+    "name": "abstention",
+    "definition": "Fraction of candidate statements that cannot be derived at step t",
+    "formula": "A(t) = |A_t ∩ C_t| / |C_t|",
+    "range": [0, 1],
+    "interpretation": {
+      "high": "System lacks derivation pathways; needs frontier expansion",
+      "low": "Strong coverage; derivation engine effective",
+      "zero": "Complete coverage of candidate space (theoretical limit)"
+    }
+  },
+
+  "expected_monotonicity": {
+    "direction": "descending",
+    "strictness": "weak",
+    "description": "Abstention rate should decrease over time under entropy injection",
+    "theoretical_basis": "Conjecture 3.1: Supermartingale with negative drift [UNVERIFIED]",
+    "_status": "CONJECTURE — not validated against Phase I data",
+    "exceptions": [
+      "Policy changes (slice expansion) may cause temporary increases",
+      "Axiom system transitions introduce new candidate spaces",
+      "Stochastic fluctuations in Phase I plateau"
+    ],
+    "test": {
+      "method": "mann_kendall",
+      "alternative": "decreasing",
+      "alpha": 0.05
+    }
+  },
+
+  "noise_model": {
+    "type": "heteroskedastic",
+    "distribution": "binomial_approximation",
+    "variance_formula": "σ²(t) = A(t)(1 - A(t)) / n(t)",
+    "description": "Observation variance depends on true abstention rate",
+    "phases": {
+      "plateau": {
+        "variance": "low",
+        "reason": "A(t) ≈ 1 implies σ² ≈ 0"
+      },
+      "descent": {
+        "variance": "high",
+        "reason": "A(t) ≈ 0.5 maximizes σ²"
+      },
+      "tail": {
+        "variance": "low",
+        "reason": "A(t) ≈ 0 implies σ² ≈ 0"
+      }
+    },
+    "implications": [
+      "Use weighted least squares for regression",
+      "Bootstrap samples should be phase-stratified",
+      "Confidence intervals vary in width across phases"
+    ]
+  },
+
+  "confidence_interval_method": {
+    "primary": "bootstrap",
+    "parameters": {
+      "n_bootstrap": 1000,
+      "confidence_level": 0.95,
+      "method": "percentile",
+      "stratified": true,
+      "block_size": 10
+    },
+    "alternatives": [
+      {
+        "method": "wilson_score",
+        "description": "For single-point binomial CI"
+      },
+      {
+        "method": "bayesian_credible",
+        "prior": "beta(1, 1)",
+        "description": "Bayesian interval with uniform prior"
+      }
+    ],
+    "description": "Bootstrap accounts for heteroskedasticity and autocorrelation",
+    "rationale": "Block bootstrap preserves temporal dependence; stratification respects phase structure"
+  },
+
+  "curve_fitting": {
+    "_status": "PHASE II — NO FITTING HAS BEEN PERFORMED",
+    "model": "logistic_decay",
+    "formula": "A(t) = A_0 * exp(-λt) / (1 - A_0 + A_0 * exp(-λt))",
+    "_note": "This model is CONJECTURED, not validated. No residual analysis exists.",
+    "parameters": {
+      "A_0": {
+        "description": "Initial abstention rate",
+        "bounds": [0.5, 1.0]
+      },
+      "lambda": {
+        "description": "Decay rate (proportional to slice variance)",
+        "bounds": [0.001, 1.0],
+        "unit": "per_step"
+      }
+    },
+    "fitting_method": "weighted_nonlinear_least_squares",
+    "weights": "inverse_variance"
+  },
+
+  "phase_detection": {
+    "enabled": true,
+    "method": "changepoint",
+    "algorithm": "pelt",
+    "parameters": {
+      "penalty": "bic",
+      "min_segment_length": 20
+    },
+    "expected_phases": [
+      {
+        "name": "plateau",
+        "characteristic": "A(t) ≈ constant, high"
+      },
+      {
+        "name": "descent",
+        "characteristic": "A(t) decreasing rapidly"
+      },
+      {
+        "name": "tail",
+        "characteristic": "A(t) ≈ constant, low"
+      }
+    ]
+  },
+
+  "diagnostics": {
+    "stationarity_test": {
+      "method": "augmented_dickey_fuller",
+      "on": "first_difference",
+      "alpha": 0.05
+    },
+    "trend_significance": {
+      "method": "mann_kendall",
+      "alpha": 0.05
+    },
+    "autocorrelation": {
+      "method": "ljung_box",
+      "lags": 10,
+      "alpha": 0.05
+    },
+    "goodness_of_fit": {
+      "metrics": ["r_squared", "rmse", "aic", "bic"]
+    }
+  },
+
+  "visualization": {
+    "plot_type": "time_series",
+    "components": [
+      {
+        "name": "raw_data",
+        "style": "scatter",
+        "alpha": 0.3
+      },
+      {
+        "name": "smoothed_curve",
+        "style": "line",
+        "linewidth": 2
+      },
+      {
+        "name": "confidence_band",
+        "style": "fill_between",
+        "alpha": 0.2
+      },
+      {
+        "name": "phase_boundaries",
+        "style": "vline",
+        "linestyle": "dashed"
+      },
+      {
+        "name": "fitted_model",
+        "style": "line",
+        "linestyle": "dotted"
+      }
+    ],
+    "labels": {
+      "x_axis": "Derivation Step (t)",
+      "y_axis": "Abstention Rate A(t)",
+      "title": "RFL Uplift Curve: Abstention Decay Under Wide Slice"
+    }
+  },
+
+  "alerts": {
+    "monotonicity_violation": {
+      "trigger": "A(t+w) > A(t) + 2σ for w > window_size",
+      "severity": "warning",
+      "action": "Check policy configuration and slice parameters"
+    },
+    "stagnation": {
+      "trigger": "No significant decrease over 100 steps",
+      "severity": "warning",
+      "action": "Consider expanding slice or increasing entropy"
+    },
+    "convergence_failure": {
+      "trigger": "A(t) > 0.1 after 1000 steps",
+      "severity": "error",
+      "action": "Review axiom system completeness"
+    }
+  },
+
+  "_PHASE_II_UPLIFT_PROTOCOLS": {
+    "_FIREWALL": "Phase I = negative control (all-abstain, Lean-disabled). Phase II protocols below = NOT YET RUN.",
+    "status": "PREREGISTRATION — No experiments executed",
+    "requires_non_degenerate_data": true,
+    "depends_on_phase": "Phase II uplift runs",
+
+    "why_phase_1_is_degenerate": {
+      "verifier": "Truth-table only, Lean disabled",
+      "slice": "First-organism PL (atoms ≤ 2, depth ≤ 3) — epistemically closed",
+      "policy": "Static, no learnable parameters",
+      "result": "100% abstention across all runs (fo_rfl_50, fo_rfl, fo_rfl_1000)",
+      "implication": "No uplift measurable; Phase I is a necessary negative control"
+    },
+
+    "candidate_curve_models": [
+      {
+        "name": "logistic_decay",
+        "formula": "A(t) = A_0 * exp(-λt) / (1 - A_0 + A_0 * exp(-λt))",
+        "parameters": ["A_0", "lambda"],
+        "expected_when": "Smooth frontier expansion with learnable policy",
+        "status": "CONJECTURE — requires non-degenerate data to fit"
+      },
+      {
+        "name": "power_law_decay",
+        "formula": "A(t) = A_0 * t^(-β)",
+        "parameters": ["A_0", "beta"],
+        "expected_when": "Heavy-tailed difficulty distribution in candidate space",
+        "status": "CONJECTURE — requires non-degenerate data to fit"
+      },
+      {
+        "name": "stepwise_plateau",
+        "formula": "A(t) = A_k for t in [t_k, t_{k+1}), with discrete drops",
+        "parameters": ["A_k", "t_k"],
+        "expected_when": "Lemma discovery unlocks clusters of derivations",
+        "status": "CONJECTURE — requires non-degenerate data to fit"
+      }
+    ],
+
+    "required_jsonl_fields": {
+      "description": "Fields required in future Phase II JSONL logs to enable curve fitting",
+      "per_cycle_fields": [
+        {"field": "cycle", "type": "int", "description": "Cycle number (0-indexed)"},
+        {"field": "timestamp_utc", "type": "string", "description": "ISO 8601 timestamp"},
+        {"field": "candidates_presented", "type": "int", "description": "Number of candidates in this cycle"},
+        {"field": "derivations_attempted", "type": "int", "description": "Number of derivation attempts"},
+        {"field": "derivations_succeeded", "type": "int", "description": "Successful Lean-verified derivations"},
+        {"field": "abstentions", "type": "int", "description": "Candidates on which system abstained"},
+        {"field": "abstention_rate", "type": "float", "description": "abstentions / candidates_presented"},
+        {"field": "false_positives", "type": "int", "description": "Claims that failed Lean verification (should be 0)"},
+        {"field": "policy_version", "type": "string", "description": "Hash or version ID of current policy"},
+        {"field": "slice_id", "type": "string", "description": "Identifier for the formula slice"},
+        {"field": "verifier_mode", "type": "string", "description": "lean_enabled | truth_table_only"},
+        {"field": "compute_budget_ms", "type": "int", "description": "Time budget for this cycle"}
+      ],
+      "per_derivation_fields": [
+        {"field": "statement_hash", "type": "string", "description": "SHA-256 of normalized statement"},
+        {"field": "proof_depth", "type": "int", "description": "Number of inference steps"},
+        {"field": "search_nodes", "type": "int", "description": "Nodes explored in proof search"},
+        {"field": "tactic_sequence", "type": "array", "description": "Sequence of tactics applied"},
+        {"field": "parent_hashes", "type": "array", "description": "Hashes of parent statements"}
+      ]
+    },
+
+    "experimental_regimes": {
+      "regime_A": {
+        "name": "Lean-Enabled PL with Derivation Depth",
+        "logic": "Propositional Logic",
+        "verifier": "Lean-enabled (truth-table fallback)",
+        "slice": "atoms ≤ 4, depth ≤ 6",
+        "axioms": "Łukasiewicz 3-axiom system",
+        "policy_space": ["tactic_prior", "depth_budget", "candidate_ranking"],
+        "risk_functional": "α·Abstention + β·FalsePositive + γ·ComputeCost",
+        "expected_uplift": "Abstention α₀ ≈ 0.7 → α₁ ≈ 0.3 over T = 500 cycles",
+        "status": "NOT YET RUN"
+      },
+      "regime_B": {
+        "name": "Equational Theory (Group Axioms)",
+        "logic": "Equational logic with equality",
+        "verifier": "Lean-enabled (equational rewriting)",
+        "slice": "term depth ≤ 5, variables ≤ 3",
+        "theory": "Group axioms (associativity, identity, inverse)",
+        "policy_space": ["rewrite_ordering", "orientation_heuristic", "search_strategy"],
+        "risk_functional": "α·Abstention + β·ProofLength + γ·SearchNodes",
+        "expected_uplift": "Proof length reduction 30-50% over T = 1000 cycles",
+        "status": "NOT YET RUN"
+      }
+    },
+
+    "minimum_viable_uplift_criteria": {
+      "non_degenerate_baseline": "Lean-enabled verifier must verify ≥ 10% of candidates in control condition",
+      "measurable_improvement": "RFL must show p < 0.05 reduction in abstention (Mann-Whitney U)",
+      "no_false_positives": "Zero Lean verification failures in RFL condition",
+      "reproducibility": "Effect replicates across ≥ 3 runs with different seeds",
+      "phase_1_failed": "Criterion #1 (0% verification rate made uplift unmeasurable)"
+    },
+
+    "analysis_pipeline": {
+      "step_1": "Load JSONL with required fields",
+      "step_2": "Validate verifier_mode == 'lean_enabled'",
+      "step_3": "Compute per-cycle abstention_rate time series",
+      "step_4": "Test for non-degeneracy: mean(derivations_succeeded) > 0.1 * mean(candidates_presented)",
+      "step_5": "If non-degenerate, fit candidate curve models",
+      "step_6": "Select best model by AIC/BIC",
+      "step_7": "Compute bootstrap confidence intervals",
+      "step_8": "Test monotonicity via Mann-Kendall",
+      "step_9": "Report uplift if minimum viable criteria met"
+    }
+  },
+
+  "_FOOTER": {
+    "status": "PHASE II — NOT PART OF EVIDENCE PACK v1",
+    "implemented": false,
+    "validated": false,
+    "used_in_phase_1": false
+  }
+}

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>MathLedger — Heartbeat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;margin:0;background:#0b0f17;color:#e6edf3}
+    header{padding:16px 20px;border-bottom:1px solid #1f2633;background:#0e1420;position:sticky;top:0}
+    .brand{font-weight:700;letter-spacing:.3px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;padding:16px 20px}
+    .card{background:#111827;border:1px solid #1f2937;border-radius:12px;padding:16px}
+    .k{font-size:12px;color:#9aa4b2;text-transform:uppercase;letter-spacing:.4px}
+    .v{font-size:22px;margin-top:6px;word-break:break-all}
+    .ok{display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:8px}
+    .warn{background:#f59e0b}
+    .bad{background:#ef4444}
+    .mono{font-family:ui-monospace,SFMono-Regular,Consolas,Menlo,monospace}
+    .row{display:flex;align-items:center;gap:10px}
+    .foot{padding:10px 20px;color:#9aa4b2;font-size:12px}
+    a{color:#93c5fd;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .muted{color:#9aa4b2;font-size:13px}
+  </style>
+</head>
+<body>
+  <header class="row">
+    <span id="statusDot" class="ok"></span>
+    <div class="brand">MathLedger — Heartbeat</div>
+    <div class="muted" id="asOf" style="margin-left:auto">—</div>
+  </header>
+
+  <main class="grid">
+    <div class="card">
+      <div class="k">Proofs (success)</div>
+      <div class="v mono" id="proofsSuccess">—</div>
+      <div class="muted" id="pps">—</div>
+    </div>
+
+    <div class="card">
+      <div class="k">Block Height</div>
+      <div class="v mono" id="blockHeight">—</div>
+      <div class="muted">Latest Merkle: <span class="mono" id="merkleShort">—</span></div>
+    </div>
+
+    <div class="card">
+      <div class="k">Redis Queue</div>
+      <div class="v mono" id="redisLen">—</div>
+      <div class="muted">ml:jobs</div>
+    </div>
+
+    <div class="card">
+      <div class="k">Policy Hash</div>
+      <div class="v mono" id="policyShort">—</div>
+      <div class="muted" id="policyFull">—</div>
+    </div>
+  </main>
+
+  <div class="foot">
+    Auto-refreshing every 2s · <a href="/heartbeat.json" target="_blank" rel="noopener">/heartbeat.json</a>
+  </div>
+
+  <script>
+    const $ = (id)=>document.getElementById(id);
+    function short(h, n=12){ if(!h) return "—"; return h.slice(0,n); }
+    async function tick(){
+      try{
+        const res = await fetch('/heartbeat.json', {cache:'no-store'});
+        const j = await res.json();
+        const ok = !!j.ok;
+        $('statusDot').className = ok ? 'ok' : 'bad';
+
+        $('proofsSuccess').textContent = (j.proofs?.success ?? 0).toLocaleString();
+        const pps = j.proofs_per_sec ?? 0;
+        $('pps').textContent = `~${(pps*3600).toFixed(0)} / hour`;
+        $('blockHeight').textContent = (j.blocks?.height ?? 0).toLocaleString();
+        const m = j.blocks?.latest?.merkle || '';
+        $('merkleShort').textContent = short(m);
+        const rl = j.redis?.ml_jobs_len ?? -1;
+        $('redisLen').textContent = rl;
+
+        const ph = j.policy?.hash || '';
+        $('policyShort').textContent = short(ph, 8);
+        $('policyFull').textContent  = ph ? `…${ph.slice(-8)}` : '—';
+
+        const ts = j.ts ? new Date(j.ts).toLocaleTimeString() : new Date().toLocaleTimeString();
+        $('asOf').textContent = `as of ${ts}`;
+      }catch(e){
+        $('statusDot').className = 'bad';
+        $('asOf').textContent = 'connection error';
+      }
+    }
+    tick();
+    setInterval(tick, 2000);
+  </script>
+</body>
+</html>

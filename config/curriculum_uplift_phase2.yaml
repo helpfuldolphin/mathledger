@@ -1,0 +1,28 @@
+# PHASE II — NOT USED IN PHASE I
+# Config for U2 Uplift Experiments
+version: 2.0
+
+slices:
+  arithmetic_simple:
+    description: "Focuses on basic arithmetic."
+    items:
+      - "1 + 1"
+      - "2 - 1"
+      - "3 * 2"
+      - "4 / 2"
+      - "5 + 3"
+      - "6 - 4"
+      - "8 * 1"
+      - "9 / 3"
+    prereg_hash: "d8e8fca2dc0f896fd7cb4cb0031ba249" # Dummy hash for preregistered data
+
+  algebra_expansion:
+    description: "Focuses on algebraic expansion."
+    items:
+      - "2 * (x + 1)"
+      - "a * (b - c)"
+      - "(x + y) * (x - y)"
+      - "3 * (a + b + c)"
+      - "-(x - y)"
+      - "(a+b)**2"
+    prereg_hash: "c157a79031e1c40f85931829bc5fc552" # Dummy hash

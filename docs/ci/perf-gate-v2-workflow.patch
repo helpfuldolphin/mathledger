@@ -1,0 +1,108 @@
+diff --git a/.github/workflows/perf-gate.yml b/.github/workflows/perf-gate.yml
+new file mode 100644
+index 0000000..a1b2c3d
+--- /dev/null
++++ b/.github/workflows/perf-gate.yml
+@@ -0,0 +1,85 @@
++name: Performance Gate v2
++
++on:
++  pull_request:
++    branches: [main, integrate/*]
++    paths:
++      - 'backend/**'
++      - 'tools/perf/**'
++      - '.github/workflows/perf-gate.yml'
++  push:
++    branches: [main, integrate/*]
++
++jobs:
++  perf-gate-sealed:
++    runs-on: ubuntu-latest
++    timeout-minutes: 10
++    
++    steps:
++      - name: Checkout code
++        uses: actions/checkout@v4
++      
++      - uses: astral-sh/setup-uv@v1
++      - run: uv sync
++      
++      - name: Run Performance Gate with 3x benchmarks
++        run: |
++          uv run python tools/perf/perf_gate.py \
++            --baseline-ms 227.29 \
++            --dataset-size 5000 \
++            --output-dir artifacts/perf
++      
++      - name: Upload perf pack artifacts
++        uses: actions/upload-artifact@v4
++        if: always()
++        with:
++          name: perf-pack-sealed-${{ github.run_number }}
++          path: |
++            artifacts/perf/perf_pack.json
++            artifacts/perf/perf_diagnostic.json
++          retention-days: 30
++      
++      - name: Generate Job Summary
++        if: always()
++        run: |
++          python -c "
++          import json
++          import os
++          import hashlib
++          
++          if not os.path.exists('artifacts/perf/perf_pack.json'):
++              print('ERROR: perf_pack.json not found')
++              exit(1)
++          
++          with open('artifacts/perf/perf_pack.json', 'r') as f:
++              content = f.read()
++              perf_pack = json.loads(content)
++          
++          pack_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
++          
++          uplift = perf_pack['perf_uplift']
++          cache = perf_pack['cache_diagnostics']
++          
++          speedup = uplift['speedup']
++          speedup_var = uplift['speedup_variance']
++          cache_hit = cache['hit_rate']
++          
++          summary = f'''# Perf Gate v2 Results
++          
++          ## Performance Uplift
++          
++          | Metric | Value | Status |
++          |--------|-------|--------|
++          | Speedup | {speedup:.2f}x ±{speedup_var:.2f} | {'✅ PASS' if speedup >= 3.0 else '❌ FAIL'} |
++          | Baseline | {uplift['baseline_ms']:.2f}ms | - |
++          | Optimized | {uplift['optimized_avg_ms']:.2f}ms ±{uplift['optimized_stddev_ms']:.2f}ms | - |
++          
++          ## Cache Effectiveness
++          
++          | Metric | Value | Status |
++          |--------|-------|--------|
++          | Hit Rate | {cache_hit * 100:.2f}% | {'✅ PASS' if cache_hit >= 0.2 else '⚠️ ABSTAIN'} |
++          | Hits | {cache['final_cache_state']['hits']} | - |
++          | Misses | {cache['final_cache_state']['misses']} | - |
++          
++          ## Perf Pack Seal
++          
++          - **SHA256**: \`{pack_hash}\`
++          - **Timestamp**: {perf_pack['timestamp']}
++          - **Git SHA**: \`{perf_pack['git_sha']}\`
++          
++          ## Pass-Lines
++          
++          \`\`\`
++          [{'PASS' if speedup >= 3.0 else 'FAIL'}] Perf Uplift {speedup:.2f}x (±{speedup_var:.2f})
++          [{'PASS' if cache_hit >= 0.2 else 'ABSTAIN'}] Cache Hit {cache_hit * 100:.2f}%
++          [PASS] Perf Pack: {pack_hash}
++          \`\`\`
++          '''
++          
++          with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
++              f.write(summary)
++          "

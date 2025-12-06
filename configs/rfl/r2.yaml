@@ -1,0 +1,92 @@
+# ============================================================================
+# RFL Config: R2 (Next Frontier / Hard Curriculum)
+# ============================================================================
+# Context: Integrated from Gemini-J 'first_organism_pl2_hard' profile.
+# Purpose: Gating for the next complexity leap.
+# Mode: High Abstention (High Rigor / Experimental)
+# ============================================================================
+
+experiment_name: "RFL-R2: PL Organism Hard"
+metrologist: "GEMINI-F (Integration)"
+version: "2.0.0"
+
+# ----------------------------------------------------------------------------
+# Curriculum Context (from Gemini-J)
+# ----------------------------------------------------------------------------
+curriculum_context:
+  slice_name: "first_organism_pl2_hard"
+  params:
+    atoms: 6
+    depth_max: 8
+    breadth_max: 2000
+    total_max: 10000
+  gate_intent:
+    min_pph: 120
+    max_abstention_pct: 20.0
+
+# ----------------------------------------------------------------------------
+# RFL Experiment Settings
+# ----------------------------------------------------------------------------
+bootstrap_config:
+  method: "bca"
+  n_experiments: 60
+  n_replicates: 20000     # High replication for stability
+  confidence_level: 0.99  # High confidence required for frontier
+  seed: 42
+
+pass_criteria:
+  # Note: Curriculum profile has 0.90 coverage min for this hard slice.
+  # However, RFL "High Abstention" policy defaults to 0.95. 
+  # compromise: We use the specific curriculum limit (0.90) as the *hard* gate,
+  # but the high confidence level (0.99) makes the interval wider, effectively stricter on variance.
+  coverage_lower_bound: 0.90
+  uplift_lower_bound: 1.1 # Demanding distinct uplift
+  description: "PASS iff coverage₉₉lower ≥ 0.90 AND uplift₉₉lower > 1.1"
+
+data_source:
+  mode: "historical"
+  path: "docs/progress.md"
+  fallback_to_db: true
+  db_config:
+    host: "localhost"
+    port: 5432
+    database: "mathledger"
+    user: "ml"
+    password: null
+
+metrics:
+  - name: "success_rate"
+    baseline: 0.6
+    weight: 1.0
+    experiments: 15
+  
+  - name: "proof_velocity"
+    baseline: 1.2
+    weight: 2.0
+    experiments: 15
+
+  - name: "statement_growth"
+    baseline: 1.2
+    weight: 2.0
+    experiments: 15
+    
+  - name: "efficiency"
+    baseline: 0.6
+    weight: 1.0
+    experiments: 10
+    
+  - name: "density"
+    baseline: 0.2
+    weight: 1.5
+    experiments: 10
+
+output:
+  artifacts_dir: "artifacts/rfl_r2"
+  results_file: "results.json"
+  coverage_file: "coverage.json"
+  visualization_file: "curves.png"
+
+commit_template:
+  pass: "[PASS-CRITICAL] RFL-R2 (Hard): Verified coverage≥{coverage:.3f}"
+  fail: "[FAIL-CRITICAL] RFL-R2 (Hard): coverage={coverage:.3f}"
+  abstain: "[ABSTAIN] RFL-R2 (Hard): Signal insufficient"

@@ -1,0 +1,431 @@
+#!/usr/bin/env python3
+"""
+MathLedger Toolbox (ml) - Single-command utilities for MathLedger operations
+
+Usage:
+    ml env check                    # Check environment setup
+    ml db stats                     # Show database statistics
+    ml derive smoke                 # Run smoke test derivation
+    ml test unit                    # Run unit tests
+    ml check all                    # Run all sanity checks
+    ml scaffold test my_module      # Generate test boilerplate
+    ml metrics show                 # Show current metrics
+    ml metrics diff --last 10       # Compare last 10 runs
+    ml export statements            # Export statements
+    ml build deterministic          # Deterministic build with hash verification
+    ml replay seed 42               # Replay derivation with specific seed
+    ml verify artifacts             # Verify artifact integrity
+    ml audit sync                   # Synchronize audit trail
+    ml audit verify                 # Verify audit chain integrity
+    ml velocity seal                # Measure CI velocity and seal artifact
+    ml audit chain                  # Run audit sync+verify and seal chain
+    ml allblue freeze               # Freeze all-blue CI state with signature
+    ml flightdeck                   # Run all operator flows and generate consolidated report
+    ml flightdeck --preflight       # Run preflight checks only
+    ml flightdeck --dry-run         # Dry-run mode with NO_NETWORK
+    ml flightdeck --parallel        # Run operations in parallel
+    ml flightdeck --sign            # Sign evidence bundle
+    ml flightdeck --force-preflight # Force preflight checks (bypass cache)
+    ml flightdeck --verify          # Verify sealed report
+    ml flightdeck --verify-signature # Verify bundle signature
+
+For detailed help:
+    ml --help
+"""
+
+import sys
+import os
+import subprocess
+from pathlib import Path
+
+# Add backend to path
+REPO_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT))
+
+def set_default_env():
+    """Set default environment variables if not present"""
+    defaults = {
+        'DATABASE_URL': 'postgresql://ml:mlpass@localhost:5432/mathledger',
+        'REDIS_URL': 'redis://localhost:6379/0',
+        'QUEUE_KEY': 'ml:jobs',
+        'PYTHONPATH': str(REPO_ROOT)
+    }
+    for key, value in defaults.items():
+        if key not in os.environ:
+            os.environ[key] = value
+
+def run_cmd(cmd, check=True):
+    """Run shell command"""
+    result = subprocess.run(cmd, shell=True, cwd=REPO_ROOT, capture_output=True, text=True)
+    # Print output
+    if result.stdout:
+        print(result.stdout, end='')
+    if result.stderr:
+        print(result.stderr, end='', file=sys.stderr)
+    if check and result.returncode != 0:
+        sys.exit(result.returncode)
+    return result
+
+def banner(title):
+    """Print ASCII banner"""
+    line = '=' * (len(title) + 4)
+    print(line)
+    print(f"| {title} |")
+    print(line)
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        sys.exit(1)
+    
+    cmd = sys.argv[1]
+    
+    if cmd == 'env':
+        banner('ENVIRONMENT')
+        if len(sys.argv) < 3:
+            print("Usage: ml env <check|setup>")
+            sys.exit(1)
+        action = sys.argv[2]
+        if action == 'check':
+            print("Checking environment...")
+            run_cmd("python --version", check=False)
+            run_cmd("docker --version", check=False)
+            run_cmd("docker ps --filter name=postgres", check=False)
+            run_cmd("docker ps --filter name=redis", check=False)
+        elif action == 'setup':
+            set_default_env()
+            print("Environment variables set")
+    
+    elif cmd == 'db':
+        banner('DATABASE')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml db <stats|backup|maintenance|connect>")
+            sys.exit(1)
+        action = sys.argv[2]
+        if action == 'stats':
+            run_cmd("python backend/tools/db_stats.py")
+        elif action == 'backup':
+            run_cmd("python scripts/backup-db.py")
+        elif action == 'maintenance':
+            run_cmd("python scripts/db-maintenance.py")
+        elif action == 'connect':
+            os.system("docker exec -it infra-postgres-1 psql -U ml -d mathledger")
+    
+    elif cmd == 'derive':
+        banner('DERIVATION')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml derive <smoke|smoke-fol|quick|nightly|guided>")
+            sys.exit(1)
+        preset = sys.argv[2]
+        presets = {
+            'smoke': '--system pl --mode baseline --steps 10 --seal',
+            'smoke-fol': '--system fol --mode baseline --steps 50 --seal',
+            'quick': '--system pl --mode baseline --steps 100 --seal',
+            'nightly': '--system pl --mode baseline --steps 300 --seal',
+            'guided': '--system fol --mode guided --steps 3600 --herbrand-depth 2 --topk 64 --epsilon 0.05 --seal'
+        }
+        if preset in presets:
+            run_cmd(f"python -m backend.axiom_engine.derive {presets[preset]}")
+        else:
+            print(f"Unknown preset: {preset}")
+            sys.exit(1)
+    
+    elif cmd == 'test':
+        banner('TESTS')
+        set_default_env()
+        os.environ['NO_NETWORK'] = 'true'
+        if len(sys.argv) < 3:
+            print("Usage: ml test <unit|integration|all|coverage|fast|smoke>")
+            sys.exit(1)
+        config = sys.argv[2]
+        configs = {
+            'unit': 'pytest -q -k "not integration and not derive_cli"',
+            'integration': 'pytest -q -k integration',
+            'all': 'pytest -q',
+            'coverage': 'coverage run -m unittest && coverage report',
+            'fast': 'pytest -q -m "not slow"',
+            'smoke': 'pytest -q tests/test_canon.py tests/test_taut.py'
+        }
+        if config in configs:
+            run_cmd(configs[config])
+        else:
+            print(f"Unknown config: {config}")
+            sys.exit(1)
+    
+    elif cmd == 'check':
+        banner('CHECKS')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml check <ascii|branch|metrics|sanity|all>")
+            sys.exit(1)
+        check = sys.argv[2]
+        if check == 'all':
+            print("Running all checks...")
+            run_cmd("python tools/check_ascii.py", check=False)
+            run_cmd("python tools/ci-local/branch_guard.py", check=False)
+            run_cmd("python tools/metrics_lint_v1.py artifacts/wpv5/run_metrics.jsonl", check=False)
+        elif check == 'ascii':
+            run_cmd("python tools/check_ascii.py")
+        elif check == 'branch':
+            run_cmd("python tools/ci-local/branch_guard.py")
+        elif check == 'metrics':
+            run_cmd("python tools/metrics_lint_v1.py artifacts/wpv5/run_metrics.jsonl")
+        elif check == 'sanity':
+            run_cmd("python scripts/sanity.py")
+        else:
+            print(f"Unknown check: {check}")
+            sys.exit(1)
+    
+    elif cmd == 'scaffold':
+        banner('SCAFFOLD')
+        if len(sys.argv) < 4:
+            print("Usage: ml scaffold <test|script> <name>")
+            sys.exit(1)
+        stype = sys.argv[2]
+        name = sys.argv[3]
+        if stype == 'test':
+            test_file = REPO_ROOT / 'tests' / f'test_{name}.py'
+            content = f'''"""Tests for {name} module"""
+import pytest
+
+class Test{name.title().replace("_", "")}:
+    def test_basic(self):
+        pass
+'''
+            test_file.write_text(content)
+            print(f"Created: {test_file}")
+        elif stype == 'script':
+            script_file = REPO_ROOT / 'scripts' / f'{name}.py'
+            content = f'''#!/usr/bin/env python3
+"""
+{name} script
+"""
+
+def main():
+    pass
+
+if __name__ == '__main__':
+    main()
+'''
+            script_file.write_text(content)
+            script_file.chmod(0o755)
+            print(f"Created: {script_file}")
+        else:
+            print(f"Unknown type: {stype}")
+            sys.exit(1)
+    
+    elif cmd == 'metrics':
+        banner('METRICS')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml metrics <show|lint|export|diff>")
+            sys.exit(1)
+        action = sys.argv[2]
+        if action == 'show':
+            run_cmd('curl -s -H "X-API-Key: devkey" "http://localhost:8000/metrics" | python -m json.tool')
+        elif action == 'lint':
+            run_cmd("python tools/metrics_lint_v1.py artifacts/wpv5/run_metrics.jsonl")
+        elif action == 'export':
+            run_cmd("python backend/tools/export_fol_ab.py --out artifacts/wpv5/fol_ab.csv --stats artifacts/wpv5/fol_stats.json")
+        elif action == 'diff':
+            # Pass remaining args to metrics_diff.py
+            remaining_args = ' '.join(sys.argv[3:]) if len(sys.argv) > 3 else '--last 10'
+            run_cmd(f"python tools/devin_e_toolbox/metrics_diff.py {remaining_args}")
+        else:
+            print(f"Unknown action: {action}")
+            sys.exit(1)
+    
+    elif cmd == 'export':
+        banner('EXPORT')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml export <statements|metrics>")
+            sys.exit(1)
+        etype = sys.argv[2]
+        if etype == 'statements':
+            run_cmd("python scripts/export-snapshot.py")
+        elif etype == 'metrics':
+            run_cmd("python backend/tools/export_fol_ab.py --out artifacts/wpv5/fol_ab.csv")
+        else:
+            print(f"Unknown type: {etype}")
+            sys.exit(1)
+    
+    elif cmd == 'build':
+        banner('BUILD')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml build <deterministic|clean>")
+            sys.exit(1)
+        action = sys.argv[2]
+        if action == 'deterministic':
+            print("Running deterministic build with hash verification...")
+            run_cmd("python tools/devin_e_toolbox/deterministic_build.py")
+        elif action == 'clean':
+            print("Cleaning build artifacts...")
+            run_cmd("rm -rf dist/ build/ *.egg-info __pycache__ .pytest_cache .coverage")
+            print("Build artifacts cleaned")
+        else:
+            print(f"Unknown action: {action}")
+            sys.exit(1)
+    
+    elif cmd == 'replay':
+        banner('REPLAY')
+        set_default_env()
+        if len(sys.argv) < 4:
+            print("Usage: ml replay <seed|block> <value>")
+            sys.exit(1)
+        rtype = sys.argv[2]
+        value = sys.argv[3]
+        if rtype == 'seed':
+            print(f"Replaying derivation with seed {value}...")
+            run_cmd(f"python tools/devin_e_toolbox/seed_replay.py --seed {value}")
+        elif rtype == 'block':
+            print(f"Replaying block {value}...")
+            run_cmd(f"python tools/devin_e_toolbox/seed_replay.py --block {value}")
+        else:
+            print(f"Unknown replay type: {rtype}")
+            sys.exit(1)
+    
+    elif cmd == 'verify':
+        banner('VERIFY')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml verify <artifacts|merkle|proofs>")
+            sys.exit(1)
+        vtype = sys.argv[2]
+        if vtype == 'artifacts':
+            print("Verifying artifact integrity...")
+            run_cmd("python tools/devin_e_toolbox/artifact_verifier.py --all")
+        elif vtype == 'merkle':
+            print("Verifying Merkle roots...")
+            run_cmd("python tools/devin_e_toolbox/artifact_verifier.py --merkle")
+        elif vtype == 'proofs':
+            print("Verifying proof integrity...")
+            run_cmd("python tools/devin_e_toolbox/artifact_verifier.py --proofs")
+        else:
+            print(f"Unknown verification type: {vtype}")
+            sys.exit(1)
+    
+    elif cmd == 'audit':
+        banner('AUDIT')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml audit <sync|verify|export|init|chain>")
+            sys.exit(1)
+        action = sys.argv[2]
+        if action == 'sync':
+            print("Synchronizing audit trail...")
+            run_cmd("python tools/devin_e_toolbox/audit_sync.py --collect")
+        elif action == 'verify':
+            print("Verifying audit chain...")
+            run_cmd("python tools/devin_e_toolbox/audit_sync.py --verify")
+        elif action == 'export':
+            output = sys.argv[3] if len(sys.argv) > 3 else 'artifacts/audit_export.json'
+            print(f"Exporting audit log to {output}...")
+            run_cmd(f"python tools/devin_e_toolbox/audit_sync.py --export {output}")
+        elif action == 'init':
+            print("Initializing audit log...")
+            run_cmd("python tools/devin_e_toolbox/audit_sync.py --init")
+        elif action == 'chain':
+            print("Running audit chain (sync + verify)...")
+            result_sync = run_cmd("python tools/devin_e_toolbox/audit_sync.py --collect", check=False)
+            result_verify = run_cmd("python tools/devin_e_toolbox/audit_sync.py --verify", check=False)
+            if result_verify.returncode == 0:
+                # Extract hash from verify output
+                import re
+                match = re.search(r'Latest hash: ([a-f0-9]{64})', result_verify.stdout)
+                if match:
+                    hash_val = match.group(1)
+                    print(f"\n[PASS] Audit Chain Sealed {hash_val}")
+                else:
+                    print("\n[PASS] Audit Chain Sealed")
+            else:
+                print("\n[FAIL] Audit Chain Verification Failed")
+                sys.exit(1)
+        else:
+            print(f"Unknown action: {action}")
+            sys.exit(1)
+    
+    elif cmd == 'velocity':
+        banner('VELOCITY')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml velocity <seal>")
+            sys.exit(1)
+        action = sys.argv[2]
+        if action == 'seal':
+            run_cmd("python tools/devin_e_toolbox/ci_velocity.py --measure")
+        else:
+            print(f"Unknown action: {action}")
+            sys.exit(1)
+    
+    elif cmd == 'allblue':
+        banner('ALL BLUE')
+        set_default_env()
+        if len(sys.argv) < 3:
+            print("Usage: ml allblue <freeze>")
+            sys.exit(1)
+        action = sys.argv[2]
+        if action == 'freeze':
+            result = run_cmd("python tools/devin_e_toolbox/allblue_archive.py --archive --force", check=False)
+            if result.returncode == 0:
+                # Extract hash from output
+                import re
+                match = re.search(r'Signature: ([a-f0-9]{64})', result.stdout)
+                if match:
+                    hash_val = match.group(1)
+                    print(f"\n[PASS] ALL BLUE: sha256={hash_val}")
+                else:
+                    print("\n[PASS] ALL BLUE: State frozen and signed")
+            else:
+                print("\n[FAIL] All-blue archival failed")
+                sys.exit(1)
+        else:
+            print(f"Unknown action: {action}")
+            sys.exit(1)
+    
+    elif cmd == 'flightdeck':
+        banner('FLIGHT DECK')
+        set_default_env()
+        
+        # Parse additional flags
+        dry_run = '--dry-run' in sys.argv
+        preflight = '--preflight' in sys.argv
+        force_preflight = '--force-preflight' in sys.argv
+        parallel = '--parallel' in sys.argv
+        sign = '--sign' in sys.argv
+        verify = '--verify' in sys.argv
+        verify_sig = '--verify-signature' in sys.argv
+        
+        cmd_parts = ["python tools/devin_e_toolbox/flightdeck.py"]
+        
+        if verify_sig:
+            cmd_parts.append("--verify-signature")
+        elif verify:
+            cmd_parts.append("--verify")
+        elif preflight:
+            cmd_parts.append("--preflight")
+            if force_preflight:
+                cmd_parts.append("--force-preflight")
+        else:
+            cmd_parts.append("--run")
+            if dry_run:
+                cmd_parts.append("--dry-run")
+            if parallel:
+                cmd_parts.append("--parallel")
+            if sign:
+                cmd_parts.append("--sign")
+            if force_preflight:
+                cmd_parts.append("--force-preflight")
+        
+        run_cmd(" ".join(cmd_parts))
+    
+    else:
+        print(f"Unknown command: {cmd}")
+        print(__doc__)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()

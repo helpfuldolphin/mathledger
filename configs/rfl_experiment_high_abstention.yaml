@@ -1,0 +1,73 @@
+# ============================================================================
+# RFL Experiment: High Abstention (High Rigor)
+# ============================================================================
+# Purpose: Stricter gating for critical releases or high-stakes validations.
+# - Higher confidence level (99%).
+# - Stricter pass criteria (Coverage ≥ 0.95).
+# - More replicates (20000) to reduce sampling noise.
+# - "High Abstention" implies it will likely abstain/fail if signals are weak.
+# ============================================================================
+
+experiment_name: "Reflexive Metabolism - High Abstention"
+metrologist: "GEMINI-F (High Rigor Mode)"
+version: "1.0.0"
+
+bootstrap_config:
+  method: "bca"
+  n_experiments: 60
+  n_replicates: 20000
+  confidence_level: 0.99
+  seed: 42
+
+pass_criteria:
+  coverage_lower_bound: 0.95
+  uplift_lower_bound: 1.1
+  description: "PASS iff coverage₉₉lower ≥ 0.95 AND uplift₉₉lower > 1.1"
+
+data_source:
+  mode: "historical"
+  path: "docs/progress.md"
+  fallback_to_db: true
+  db_config:
+    host: "localhost"
+    port: 5432
+    database: "mathledger"
+    user: "ml"
+    password: null
+
+metrics:
+  - name: "success_rate"
+    baseline: 0.6
+    weight: 1.0
+    experiments: 15
+  
+  - name: "proof_velocity"
+    baseline: 1.2
+    weight: 2.0
+    experiments: 15
+
+  - name: "statement_growth"
+    baseline: 1.2
+    weight: 2.0
+    experiments: 15
+    
+  - name: "efficiency"
+    baseline: 0.6
+    weight: 1.0
+    experiments: 10
+    
+  - name: "density"
+    baseline: 0.2
+    weight: 1.5
+    experiments: 10
+
+output:
+  artifacts_dir: "artifacts/rfl_high_abstention"
+  results_file: "results.json"
+  coverage_file: "coverage.json"
+  visualization_file: "curves.png"
+
+commit_template:
+  pass: "[PASS-CRITICAL] RFL Verified (High Rigor) coverage≥{coverage:.3f}"
+  fail: "[FAIL-CRITICAL] RFL Failed (High Rigor) coverage={coverage:.3f}"
+  abstain: "[ABSTAIN] RFL Gate (High Rigor) — Signal insufficient"

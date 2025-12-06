@@ -1,0 +1,29 @@
+﻿from backend.axiom_engine.rules import (
+    _strip_outer, _split_top_impl, _is_implication, _parse_implication, apply_modus_ponens
+)
+from backend.logic.canon import normalize
+
+def test_strip_outer_basic():
+    assert _strip_outer("(p)") == "p"
+    assert _strip_outer("((p))") == "(p)"
+    assert _strip_outer("p") == "p"
+    assert _strip_outer("(p -> q)") == "p -> q"
+
+def test_split_top_impl_basic():
+    a, c = _split_top_impl("p -> q")
+    assert a == "p" and c == "q"
+
+def test_is_implication_basic():
+    assert _is_implication("p -> q")
+    assert not _is_implication("p /\\ q")
+
+def test_parse_implication_basic():
+    a, c = _parse_implication("p -> q")
+    assert a == "p" and c == "q"
+
+def test_mp_basic():
+    assert "q" in apply_modus_ponens({"p", "p -> q"})
+
+def test_normalize_implications():
+    assert normalize("p -> q -> r") == "p -> (q -> r)"
+    assert normalize("(p -> q) -> r") == "(p -> q) -> r"

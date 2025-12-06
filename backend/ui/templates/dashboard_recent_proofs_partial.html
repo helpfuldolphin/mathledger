@@ -1,0 +1,54 @@
+<!-- Recent Proofs -->
+<div class="mt-8 bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-900">Recent Proofs</h2>
+        <p class="text-sm text-gray-600 mt-1">Latest proof attempts across all statements</p>
+    </div>
+    <div class="divide-y divide-gray-200">
+        {% if recent_proofs %}
+            {% for proof in recent_proofs %}
+            <div class="px-6 py-4 hover:bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                {% if proof[3] %}bg-green-100 text-green-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if proof[3] %}Success{% else %}Failed{% endif %}
+                            </span>
+                            <span class="text-sm font-medium text-gray-900">{{ proof[1] }}</span>
+                            {% if proof[2] %}
+                            <span class="text-xs text-gray-500">({{ proof[2] }})</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-900 font-mono mb-1">
+                            {{ proof[7][:80] }}{% if proof[7]|length > 80 %}...{% endif %}
+                        </p>
+                        <div class="flex items-center space-x-4 text-xs text-gray-500">
+                            {% if proof[4] %}
+                            <span>Duration: {{ proof[4] }}ms</span>
+                            {% endif %}
+                            <span>{{ proof[5].strftime('%Y-%m-%d %H:%M:%S') if proof[5] else 'Unknown' }}</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <a href="/ui/s/{{ proof[6] }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            View Statement
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="px-6 py-8 text-center text-gray-500">
+                <div class="flex flex-col items-center">
+                    <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-lg font-medium">No proofs found</p>
+                    <p class="text-sm">Proofs will appear here as they are generated</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>

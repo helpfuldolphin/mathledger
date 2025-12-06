@@ -1,0 +1,19 @@
+# PHASE II - NOT USED IN PHASE I
+# Preregistration for U2 Uplift Experiments
+
+- experiment_id: U2_EXP_001
+  description: "Experiment to measure uplift in slice A."
+  slice_config: "configs/slice_a.json"
+  slice_config_hash: "sha256-abcde..." # Replace with actual hash
+  seed: 12345
+  success_metrics:
+    - goal_hit
+    - sparse_density
+- experiment_id: U2_EXP_002
+  description: "Experiment to measure uplift in slice B."
+  slice_config: "configs/slice_b.json"
+  slice_config_hash: "sha256-fghij..." # Replace with actual hash
+  seed: 67890
+  success_metrics:
+    - chain_success
+    - joint_goal

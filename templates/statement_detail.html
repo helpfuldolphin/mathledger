@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}{{ statement.content_norm }} - MathLedger{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Statement Detail</h1>
+                <p class="mt-2 text-gray-600">Hash: {{ statement.hash }}</p>
+            </div>
+            <a href="/ui" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Statement Info -->
+    <div class="bg-white shadow rounded-lg mb-8">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Statement Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Content</label>
+                    <div class="mt-1 p-3 bg-gray-50 rounded-md font-mono text-lg">
+                        {{ statement.content_norm }}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Hash</label>
+                    <div class="mt-1 p-3 bg-gray-50 rounded-md font-mono text-sm break-all">
+                        {{ statement.hash }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                    <div class="mt-1">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if statement.status == 'success' %}bg-green-100 text-green-800
+                            {% elif statement.status == 'failed' %}bg-red-100 text-red-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ statement.status }}
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Is Axiom</label>
+                    <div class="mt-1">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if statement.is_axiom %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ 'Yes' if statement.is_axiom else 'No' }}
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Derivation Depth</label>
+                    <div class="mt-1 text-lg font-medium text-gray-900">
+                        {{ statement.derivation_depth or 'N/A' }}
+                    </div>
+                </div>
+            </div>
+
+            {% if statement.derivation_rule %}
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700">Derivation Rule</label>
+                <div class="mt-1">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                        {{ statement.derivation_rule }}
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Proof Information -->
+    {% if proof %}
+    <div class="bg-white shadow rounded-lg mb-8">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Proof Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Prover</label>
+                    <div class="mt-1 text-lg font-medium text-gray-900">{{ proof.prover }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Success</label>
+                    <div class="mt-1">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if proof.success %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ 'Yes' if proof.success else 'No' }}
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Time (ms)</label>
+                    <div class="mt-1 text-lg font-medium text-gray-900">{{ proof.time_ms or 'N/A' }}</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Steps</label>
+                    <div class="mt-1 text-lg font-medium text-gray-900">{{ proof.steps or 'N/A' }}</div>
+                </div>
+            </div>
+
+            {% if proof.body %}
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700">Proof Body</label>
+                <div class="mt-1 p-3 bg-gray-50 rounded-md">
+                    <pre class="text-sm whitespace-pre-wrap">{{ proof.body }}</pre>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Dependencies -->
+    {% if dependencies %}
+    <div class="bg-white shadow rounded-lg mb-8">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Dependencies</h3>
+            <div class="space-y-2">
+                {% for dep in dependencies %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                    <div class="flex-1">
+                        <div class="font-mono text-sm">{{ dep.content_norm }}</div>
+                        <div class="text-xs text-gray-500">Hash: {{ dep.hash }}</div>
+                    </div>
+                    <div class="ml-4">
+                        <a href="/ui/s/{{ dep.hash }}" class="text-blue-600 hover:text-blue-800 text-sm">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Dependents -->
+    {% if dependents %}
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Dependents</h3>
+            <div class="space-y-2">
+                {% for dep in dependents %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                    <div class="flex-1">
+                        <div class="font-mono text-sm">{{ dep.content_norm }}</div>
+                        <div class="text-xs text-gray-500">Hash: {{ dep.hash }}</div>
+                    </div>
+                    <div class="ml-4">
+                        <a href="/ui/s/{{ dep.hash }}" class="text-blue-600 hover:text-blue-800 text-sm">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

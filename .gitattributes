@@ -1,0 +1,39 @@
+﻿# Ensure consistent line endings
+* text=auto eol=lf
+
+# Explicitly mark text files
+*.md text
+*.txt text
+*.py text
+*.yaml text
+*.yml text
+*.json text
+*.sql text
+*.html text
+*.css text
+*.js text
+*.ts text
+*.lean text
+*.toml text
+*.lock text
+
+# Mark binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.bin binary
+*.pdf binary
+
+# Scripts should be executable
+*.ps1 text eol=crlf
+*.sh text eol=lf
+*.bat text eol=crlf
+
+# Documentation and scripts
+docs/** text
+scripts/** text

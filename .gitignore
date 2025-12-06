@@ -1,0 +1,48 @@
+﻿# OS/editor
+.DS_Store
+Thumbs.db
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+.env.*
+
+# Crypto keys (sensitive)
+.api_keys.json
+
+# Artifacts / local packs
+artifacts/**/metrics*.json
+artifacts/**/block_latest*.json
+artifacts/**/MVDP_*.zip
+artifacts/**/EVAL_API_KEY.txt
+artifacts/policy/policy.bin
+
+# Optional: keep memo public but ignore raw CSV/plot (remove these 3 if you want them public)
+artifacts/wpv5/throughput_vs_depth.png
+artifacts/wpv5/baseline_runs.csv
+artifacts/wpv5/guided_runs.csv
+
+# Node
+node_modules/
+pnpm-lock.yaml
+
+# Lean/Lake build
+backend/lean_proj/.lake/
+backend/lean_proj/build/
+backend/lean_proj/lake-packages/
+
+# IDE
+.vscode/
+.idea/
+
+# Build artifacts and generated files
+dist/
+artifacts/
+logs/
+*.backup.py
+
+# Docker volumes (not needed if named volumes)
+# data/

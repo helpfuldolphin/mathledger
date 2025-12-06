@@ -1,0 +1,159 @@
+--- a/backend/axiom_engine/derive.py
++++ b/backend/axiom_engine/derive.py
+@@ -333,13 +333,18 @@ def main() -> int:
+                     )
+                 """)
+
+-                # Get or create system_id
+-                cur.execute("SELECT id FROM systems WHERE name = %s", (args.system,))
+-                row = cur.fetchone()
+-                if row:
+-                    system_id = row[0]
+-                else:
+-                    cur.execute("INSERT INTO systems (name) VALUES (%s) RETURNING id", (args.system,))
+-                    system_id = cur.fetchone()[0]
++                # Get or create system_id using UPSERT pattern
++                if args.system == 'pl':
++                    # Skip touching systems if id='pl' already exists
++                    cur.execute("SELECT id FROM systems WHERE id = %s", (args.system,))
++                    row = cur.fetchone()
++                    if row:
++                        system_id = row[0]
++                    else:
++                        cur.execute("INSERT INTO systems(id,name) VALUES (%s,%s) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name", (args.system, args.system))
++                        system_id = args.system
++                else:
++                    cur.execute("INSERT INTO systems(id,name) VALUES (%s,%s) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name", (args.system, args.system))
++                    system_id = args.system
+
+                 # Insert PL axioms if they don't exist
+                 pl_axioms = [
+@@ -350,8 +355,9 @@ def main() -> int:
+                 ]
+
+                 for axiom in pl_axioms:
+                     content_norm = normalize(axiom)
+                     cur.execute("""
+                         SELECT id FROM statements WHERE content_norm = %s AND system_id = %s
+                     """, (content_norm, system_id))
+                     if not cur.fetchone():
++                        # Idempotent insert by content_norm
+                         cur.execute("""
+                             INSERT INTO statements (text, content_norm, system_id, is_axiom, derivation_depth)
+                             VALUES (%s, %s, %s, TRUE, 0)
+@@ -385,6 +391,7 @@ def main() -> int:
+                                 if len(parts) == 2:
+                                     a, c = parts[0].strip(), parts[1].strip()
+                                     if a == stmt_norm:
++                                        # Check if conclusion already exists by content_norm
+                                         cur.execute("""
+                                             SELECT id FROM statements
+                                             WHERE content_norm = %s AND system_id = %s
+                                         """, (c, system_id))
+                                         if not cur.fetchone():
++                                            # Insert new derived statement
+                                             cur.execute("""
+                                                 INSERT INTO statements (text, content_norm, system_id, is_axiom, derivation_depth)
+                                                 VALUES (%s, %s, %s, FALSE, 1)
+                                                 RETURNING id
+                                             """, (c, c, system_id))
+                                             new_id = cur.fetchone()[0]
+
+                                             # Insert proof record
+                                             cur.execute("""
+                                                 INSERT INTO proofs (statement_id, status)
+                                                 VALUES (%s, 'success')
+                                             """, (new_id,))
+
+                                             step_new += 1
+                                             n_new += 1
+
+                     if step_new == 0:
+                         break
+
+                 conn.commit()
+
+                 # Seal block if requested
+                 if args.seal:
+-                    # Get all statement IDs for this system (sorted ascending)
++                    # Get all statement content_norm for merkle computation (deterministic order)
+                     cur.execute("""
+-                        SELECT id FROM statements WHERE system_id = %s ORDER BY id
++                        SELECT content_norm FROM statements WHERE system_id = %s ORDER BY content_norm
+                     """, (system_id,))
+-                    statement_ids = [row[0] for row in cur.fetchall()]
++                    content_norms = [row[0] for row in cur.fetchall()]
+
+-                    if statement_ids:
++                    if content_norms:
++                        # Compute sha256 hashes from content_norm at runtime (not stored)
++                        import hashlib
++                        statement_hashes = [hashlib.sha256(norm.encode('utf-8')).hexdigest() for norm in content_norms]
++
+                         # Get last block info
+                         cur.execute("""
+-                            SELECT block_number, merkle_root FROM blocks
+-                            ORDER BY block_number DESC LIMIT 1
++                            SELECT COALESCE(MAX(block_number), 0) AS max_block,
++                                   (SELECT merkle_root FROM blocks WHERE block_number = COALESCE(MAX(block_number), 0)) AS prev_merkle
++                            FROM blocks
+                         """)
+                         row = cur.fetchone()
+                         if row:
+-                            prev_hash = row[1]
+-                            block_number = row[0] + 1
++                            prev_hash = row[1] or "GENESIS"
++                            block_number = row[0] + 1
+                         else:
+                             prev_hash = "GENESIS"
+                             block_number = 1
+
+-                        # Create Merkle root from statement IDs
++                        # Create Merkle root from statement hashes
+                         from backend.ledger.blockchain import seal_block
+-                        block_info = seal_block(statement_ids, prev_hash, block_number, time.time(), version="v1")
++                        block_info = seal_block(statement_hashes, prev_hash, block_number, time.time(), version="v1")
+
+                         # Insert block
+                         h = block_info["header"]
+                         cur.execute("""
+                             INSERT INTO blocks (block_number, prev_hash, merkle_root, header, statements)
+                             VALUES (%s, %s, %s, %s, %s)
+                         """, (
+                             h["block_number"],
+                             h["prev_hash"],
+                             h["merkle_root"],
+                             json.dumps(h),
+                             json.dumps(block_info["statements"])
+                         ))
+
+                         conn.commit()
+
+-                        # Print the required output
+-                        print(f"BLOCK number={block_number} merkle={h['merkle_root']}")
++                        # Print the required output and flush
++                        print(f"BLOCK number={block_number} merkle={h['merkle_root']}")
+                         sys.stdout.flush()
+
+         return 0
+     except Exception as e:
+         print(f"Error: {e}")
+         return 1
+--- a/backend/logic/canon.py
++++ b/backend/logic/canon.py
+@@ -295,6 +295,7 @@ def normalize_pretty(s: str) -> str:
+ # --- Back-compat for tests expecting _parse ---
+ try:
+     _parse
+ except NameError:
+     try:
++        # Test-compatible _parse function
+         def _parse(s: str):  # wire to your real parser if present
+             return parse(s)  # or: return parse_expr(s) / return _parse_expr(s)
+     except NameError:
+@@ -302,4 +303,5 @@ except NameError:
+         # Fallback: treat normalize as parse surrogate (keeps tests unblocked)
+         def _parse(s: str):
+             from backend.logic.canon import normalize
++            # Test-compatible: return normalized form
+             return normalize(s)

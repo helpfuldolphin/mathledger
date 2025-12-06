@@ -1,0 +1,63 @@
+{
+  "manifest_version": "1.0",
+  "experiment_id": "rfl_production_run_001",
+  "run_index": 1,
+  "timestamp_utc": "2025-11-27T10:00:00Z",
+  "provenance": {
+    "git_commit": "7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6",
+    "git_branch": "main",
+    "user": "gemini-i",
+    "machine": "build-agent-04"
+  },
+  "configuration": {
+    "config_path": "config/rfl/production_v1.json",
+    "snapshot": {
+      "experiment_id": "rfl_production",
+      "num_runs": 40,
+      "system_id": 1,
+      "derive_steps": 100,
+      "max_breadth": 500,
+      "max_total": 2000,
+      "depth_max": 4,
+      "random_seed": 42,
+      "curriculum_slice": {
+        "name": "core",
+        "start_run": 1,
+        "end_run": 40
+      }
+    }
+  },
+  "execution": {
+    "command": "python rfl/runner.py --run-index 1",
+    "effective_seed": 123456789,
+    "python_version": "3.12.0",
+    "dependencies": {
+      "numpy": "1.26.0",
+      "psycopg": "3.1.10"
+    }
+  },
+  "artifacts": {
+    "logs": [
+      "artifacts/rfl/logs/run_001.log",
+      "artifacts/rfl/logs/run_001_stderr.log"
+    ],
+    "data": [
+      "artifacts/rfl/results/run_001_metrics.json",
+      "artifacts/rfl/results/run_001_statements.csv"
+    ],
+    "plots": [
+      "artifacts/rfl/plots/run_001_depth_dist.png"
+    ]
+  },
+  "results": {
+    "status": "success",
+    "duration_seconds": 3600.5,
+    "total_statements": 1500,
+    "successful_proofs": 1450,
+    "failed_proofs": 50,
+    "abstentions": 0,
+    "throughput_proofs_per_hour": 1450.0,
+    "mean_depth": 3.2,
+    "max_depth": 4
+  }
+}

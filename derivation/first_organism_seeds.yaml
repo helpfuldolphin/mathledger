@@ -1,0 +1,434 @@
+# ============================================================================
+# First Organism Seed Statements - Deterministic Derivation Seeds
+# ============================================================================
+#
+# STATUS: SPEC / CONFIG DOCUMENTATION ONLY
+#
+# IMPORTANT: The live FO experiment currently uses the Python-config path
+# make_first_organism_seed_statements() in derivation/pipeline.py.
+# YAML loading is NOT YET WIRED into the runtime.
+#
+# PHASE-I RFL NOTE:
+# All RFL runs (50-cycle baseline, 330-cycle experiments) use Python-only
+# configuration. Neither the baseline nor RFL experiments read this YAML file.
+# This file is documentation only and is NOT used in Phase-I Evidence Pack.
+#
+# This file documents the intended seed configuration and serves as the
+# canonical reference. The actual seeds are constructed in Python code.
+#
+# ============================================================================
+#
+# Purpose: Pre-seeded statements that trigger MP derivation of non-tautologies
+# Version: 1.0.0
+# Created: 2025-11-29
+#
+# These seeds work in conjunction with first_organism_slice.yaml to produce
+# a GUARANTEED abstention via Modus Ponens derivation.
+#
+# ============================================================================
+
+seeds:
+  version: "1.0.0"
+  description: >
+    Deterministic seed statements for First Organism abstention experiment.
+    These statements are injected into the derivation pipeline before any
+    axiom instantiation or MP rounds occur.
+
+# ---------------------------------------------------------------------------
+# Seed Statement Definitions
+# ---------------------------------------------------------------------------
+
+statements:
+  # Seed 1: Propositional atom 'p'
+  # This serves as the antecedent for Modus Ponens
+  - id: "seed-p"
+    expression: "p"
+    normalized: "p"
+    rule: "seed:atom"
+    is_axiom: false
+    mp_depth: 0
+    parents: []
+    verification_method: "seed"
+    rationale: >
+      Bare propositional atom seeded as a "given" for the MP derivation.
+      In a real derivation context, this might be an axiom instance or
+      a previously derived theorem. For FO, we treat it as a premise.
+
+  # Seed 2: Implication 'p -> q'
+  # This is the major premise for Modus Ponens
+  - id: "seed-p-implies-q"
+    expression: "(p -> q)"
+    normalized: "(p->(q))"
+    rule: "seed:implication"
+    is_axiom: false
+    mp_depth: 0
+    parents: []
+    verification_method: "seed"
+    rationale: >
+      Simple implication seeded as a conditional for MP application.
+      Together with seed-p, this enables derivation of 'q' via MP.
+
+# ---------------------------------------------------------------------------
+# Expected Derivations
+# ---------------------------------------------------------------------------
+# Documenting what the pipeline will derive from these seeds
+
+expected_derivations:
+  # The key derivation: q from {p, p -> q}
+  - expression: "q"
+    normalized: "q"
+    rule: "mp"
+    mp_depth: 1
+    parents:
+      - "seed-p"
+      - "seed-p-implies-q"
+    expected_verification_outcome: "abstain"
+    expected_verification_method: "lean-disabled"
+    is_tautology: false
+    rationale: >
+      Modus Ponens: from p and (p -> q), derive q.
+
+      The formula 'q' is a bare propositional atom. It is NOT a tautology
+      because it can be assigned False: when q=F, the formula evaluates to F.
+
+      Verification cascade:
+        1. Pattern matching: 'q' matches no known tautology patterns (K, S, etc.)
+        2. Truth-table: q is satisfiable but not a tautology (fails verification)
+        3. Lean fallback: disabled (timeout=0.001s) -> returns "lean-disabled"
+
+      Result: Statement is recorded as abstained with method="lean-disabled"
+
+# ---------------------------------------------------------------------------
+# Abstention Cases
+# ---------------------------------------------------------------------------
+# Explicit documentation of expected abstention behavior
+
+abstention_cases:
+  # Primary abstention: the derived 'q'
+  - formula: "q"
+    normalized: "q"
+    reason: "bare_atom_not_tautology"
+    method: "lean-disabled"
+    guaranteed: true
+    proof: >
+      A bare propositional atom 'q' is never a tautology. By definition,
+      a tautology must be true under ALL valuations. But for q:
+        - Valuation {q=T}: formula evaluates to T
+        - Valuation {q=F}: formula evaluates to F
+
+      Since there exists a valuation where the formula is false, it is
+      not a tautology. The truth-table verifier will reject it.
+
+      With Lean fallback disabled (timeout=0.001s), the verifier has no
+      further recourse and must abstain with method="lean-disabled".
+
+# ---------------------------------------------------------------------------
+# Deterministic Seed Values
+# ---------------------------------------------------------------------------
+# These are the exact values used for reproducibility
+
+determinism:
+  # RNG seed for any stochastic operations (none in current impl, but reserved)
+  rng_seed: 42
+
+  # Hash salt for statement hash computation (deterministic)
+  hash_algorithm: "sha256"
+
+  # Normalized form generation uses normalization.canon.normalize()
+  normalization_strategy: "propositional"
+
+  # Timestamp generation (for hermetic runs)
+  # When FIRST_ORGANISM_TESTS=true, use deterministic timestamp from content
+  timestamp_mode: "deterministic_from_content"
+
+  # Expected hashes for seed statements (pre-computed)
+  # These allow assertions to verify no normalization drift
+  expected_hashes:
+    "p": "computed_at_runtime"  # SHA256(normalize("p"))
+    "(p->(q))": "computed_at_runtime"  # SHA256(normalize("(p -> q)"))
+
+# ---------------------------------------------------------------------------
+# Validation Assertions
+# ---------------------------------------------------------------------------
+# Tests can use these to validate correct behavior
+
+assertions:
+  # Minimum number of statements that must be abstained
+  min_abstain_count: 1
+
+  # Maximum abstention count (sanity check)
+  max_abstain_count: 10
+
+  # Specific formula that MUST appear in abstained list
+  required_abstained_formula: "q"
+
+  # Verification method for the required abstention
+  required_abstention_method: "lean-disabled"
+
+  # The abstention must be from MP derivation, not axiom rejection
+  required_abstention_rule: "mp"
+
+# ---------------------------------------------------------------------------
+# IMPLEMENTATION STATUS: Current Python vs YAML Config
+# ---------------------------------------------------------------------------
+#
+# | Seed         | Python FO Run (ACTIVE)           | YAML Value        | Status                          |
+# |--------------|----------------------------------|-------------------|---------------------------------|
+# | seed-p       | "p" via make_first_organism_...  | "p"               | MATCH - Not used in Phase-I RFL |
+# | seed-p->q    | "(p->(q))" via Python            | "(p->(q))"        | MATCH - Not used in Phase-I RFL |
+# | rule (p)     | "seed:atom"                      | "seed:atom"       | MATCH - Not used in Phase-I RFL |
+# | rule (p->q)  | "seed:implication"               | "seed:implication"| MATCH - Not used in Phase-I RFL |
+# | mp_depth     | 0                                | 0                 | MATCH - Not used in Phase-I RFL |
+# | parents      | ()                               | []                | MATCH - Not used in Phase-I RFL |
+# | verif_method | "seed"                           | "seed"            | MATCH - Not used in Phase-I RFL |
+#
+# The Python implementation in make_first_organism_seed_statements()
+# (derivation/pipeline.py lines 739-772) defines these seeds directly.
+# This YAML documents the same values but is NOT parsed at runtime.
+#
+# Phase II Work: Wire YAML loading into the FO harness.
+#
+# ---------------------------------------------------------------------------
+# Integration with Pipeline (Phase II - Not Yet Implemented)
+# ---------------------------------------------------------------------------
+# How these seeds WOULD be loaded when YAML parsing is wired:
+
+integration:
+  # Function that CURRENTLY loads seeds (Python, not YAML)
+  loader_function: "derivation.pipeline.make_first_organism_seed_statements"
+  loader_status: "ACTIVE - uses hardcoded Python, not this YAML"
+
+  # Alternative: direct YAML parsing via pyyaml (Phase II)
+  yaml_parser: "yaml.safe_load"
+  yaml_parser_status: "NOT IMPLEMENTED"
+
+  # Test fixture that uses these seeds
+  test_fixture: "tests/integration/test_first_organism.py::test_first_organism_closed_loop_happy_path"
+
+  # Env var that enables First Organism tests
+  enable_env_var: "FIRST_ORGANISM_TESTS=true"
+
+# ===========================================================================
+# PHASE II: UPLIFT-CAPABLE SEED STATEMENTS
+# ===========================================================================
+#
+# STATUS: PHASE-II DESIGN ONLY - NOT IMPLEMENTED
+#
+# This section defines seed statements designed to produce MIXED success/abstain
+# patterns when combined with the phase_ii_uplift_slice configuration.
+#
+# Unlike Phase I seeds (which only produce abstentions), these seeds include
+# tautologies that will be VERIFIED, creating the variance needed for RFL uplift.
+#
+# IMPORTANT:
+#   - These seeds are NOT used in Phase I Evidence Pack
+#   - These seeds are NOT read by any current Python code
+#   - This is a DESIGN TARGET for future implementation
+#
+# ===========================================================================
+
+phase_ii_uplift_seeds:
+  # Metadata for this config section
+  status: "phase-ii-design-only"
+  used_in_phase_i_rfl: false
+  requires_ml_enable_lean_fallback: false
+
+  version: "2.0.0-design"
+  description: >
+    Uplift-capable seed statements for Phase II RFL experiments.
+    Mix of tautologies (K/S axiom instances) and non-tautologies (atoms, contingent implications).
+    Designed to produce 20-70% abstention rate with measurable variance.
+
+  # ---------------------------------------------------------------------------
+  # Seed Statement Definitions for Phase II
+  # ---------------------------------------------------------------------------
+
+  statements:
+    # TAUTOLOGY SEEDS - These will be VERIFIED
+    # -----------------------------------------
+
+    # K Axiom instance: p -> (q -> p)
+    # This is a tautology (always true regardless of p, q values)
+    - id: "seed-axiom-k-pq"
+      expression: "p -> (q -> p)"
+      normalized: "(p->((q)->(p)))"
+      rule: "seed:axiom-k"
+      is_axiom: true
+      mp_depth: 0
+      parents: []
+      verification_method: "seed"
+      is_tautology: true
+      expected_outcome: "VERIFIED"
+      rationale: >
+        K axiom instance. Tautology by definition of Hilbert system.
+        Truth-table: true for all 4 valuations of {p, q}.
+        Will be VERIFIED via truth-table, contributing to success count.
+
+    # K Axiom instance: q -> (p -> q)
+    - id: "seed-axiom-k-qp"
+      expression: "q -> (p -> q)"
+      normalized: "(q->((p)->(q)))"
+      rule: "seed:axiom-k"
+      is_axiom: true
+      mp_depth: 0
+      parents: []
+      verification_method: "seed"
+      is_tautology: true
+      expected_outcome: "VERIFIED"
+      rationale: >
+        K axiom instance with swapped variables.
+        Tautology: true for all valuations.
+
+    # K Axiom instance with r: p -> (r -> p)
+    - id: "seed-axiom-k-pr"
+      expression: "p -> (r -> p)"
+      normalized: "(p->((r)->(p)))"
+      rule: "seed:axiom-k"
+      is_axiom: true
+      mp_depth: 0
+      parents: []
+      verification_method: "seed"
+      is_tautology: true
+      expected_outcome: "VERIFIED"
+      rationale: >
+        K axiom with third atom r. Tautology.
+
+    # NON-TAUTOLOGY SEEDS - These will be ABSTAINED
+    # ----------------------------------------------
+
+    # Bare atom p
+    - id: "seed-atom-p"
+      expression: "p"
+      normalized: "p"
+      rule: "seed:atom"
+      is_axiom: false
+      mp_depth: 0
+      parents: []
+      verification_method: "seed"
+      is_tautology: false
+      expected_outcome: "GIVEN (not verified)"
+      rationale: >
+        Bare atom. Not a tautology (false when p=F).
+        Serves as antecedent for MP derivations.
+
+    # Bare atom q
+    - id: "seed-atom-q"
+      expression: "q"
+      normalized: "q"
+      rule: "seed:atom"
+      is_axiom: false
+      mp_depth: 0
+      parents: []
+      verification_method: "seed"
+      is_tautology: false
+      expected_outcome: "GIVEN (not verified)"
+      rationale: >
+        Bare atom. Not a tautology.
+
+    # Contingent implication p -> q
+    - id: "seed-impl-pq"
+      expression: "(p -> q)"
+      normalized: "(p->(q))"
+      rule: "seed:implication"
+      is_axiom: false
+      mp_depth: 0
+      parents: []
+      verification_method: "seed"
+      is_tautology: false
+      expected_outcome: "GIVEN (not verified)"
+      rationale: >
+        Contingent implication. Not a tautology (false when p=T, q=F).
+        Enables MP derivation of q (which is also not a tautology).
+
+  # ---------------------------------------------------------------------------
+  # Expected Derivations from Phase II Seeds
+  # ---------------------------------------------------------------------------
+
+  expected_derivations:
+    # MP from p and K axiom: p, (p -> (q -> p)) ⊢ (q -> p)
+    - expression: "(q -> p)"
+      normalized: "((q)->(p))"
+      rule: "mp"
+      mp_depth: 1
+      parents: ["seed-atom-p", "seed-axiom-k-pq"]
+      is_tautology: false
+      expected_outcome: "ABSTAINED"
+      rationale: >
+        (q -> p) is NOT a tautology: false when q=T, p=F.
+        Truth-table rejects it, Lean disabled → ABSTAINED.
+
+    # MP from q and K axiom: q, (q -> (p -> q)) ⊢ (p -> q)
+    - expression: "(p -> q)"
+      normalized: "((p)->(q))"
+      rule: "mp"
+      mp_depth: 1
+      parents: ["seed-atom-q", "seed-axiom-k-qp"]
+      is_tautology: false
+      expected_outcome: "ABSTAINED"
+      rationale: >
+        (p -> q) is NOT a tautology: false when p=T, q=F.
+        ABSTAINED via truth-table rejection.
+
+    # MP from p and (p -> q): p, (p -> q) ⊢ q
+    - expression: "q"
+      normalized: "q"
+      rule: "mp"
+      mp_depth: 1
+      parents: ["seed-atom-p", "seed-impl-pq"]
+      is_tautology: false
+      expected_outcome: "ABSTAINED"
+      rationale: >
+        Bare atom q is not a tautology. ABSTAINED.
+
+  # ---------------------------------------------------------------------------
+  # Expected Outcome Summary
+  # ---------------------------------------------------------------------------
+
+  outcome_summary:
+    total_seeds: 6
+    tautology_seeds: 3
+    non_tautology_seeds: 3
+
+    expected_verified_count: "3+ (axiom seeds plus any derived tautologies)"
+    expected_abstained_count: "3+ (non-tautology derivations)"
+
+    target_abstention_rate: "30-50%"
+    rationale: >
+      With 3 tautology seeds (K axioms) that pass verification, and MP derivations
+      that produce non-tautologies from non-tautology seeds, we expect roughly
+      equal verified vs abstained counts, yielding ~30-50% abstention rate.
+
+      This is a significant improvement over Phase I (100% abstention) and
+      provides the variance needed to measure RFL uplift.
+
+  # ---------------------------------------------------------------------------
+  # Validation Assertions for Phase II
+  # ---------------------------------------------------------------------------
+
+  assertions:
+    # Mixed outcomes required
+    min_verified_count: 1
+    min_abstain_count: 1
+
+    # Abstention rate band
+    min_abstention_rate: 0.20
+    max_abstention_rate: 0.70
+
+    # Must have variance (not degenerate)
+    require_mixed_outcomes: true
+
+  # ---------------------------------------------------------------------------
+  # Implementation Notes for Code Agents
+  # ---------------------------------------------------------------------------
+
+  implementation_notes:
+    env_toggle: "FO_CONFIG_SOURCE=yaml"
+    yaml_section: "phase_ii_uplift_seeds"
+    loader_function: "load_seeds_from_yaml() - TO BE IMPLEMENTED"
+    test_fixture: "test_phase_ii_uplift_mixed_outcomes() - TO BE IMPLEMENTED"
+    migration_steps:
+      - "Implement load_seeds_from_yaml() in derivation/pipeline.py"
+      - "Add FO_CONFIG_SOURCE env toggle"
+      - "Wire toggle into make_first_organism_seed_statements()"
+      - "Add integration test for mixed outcomes"
+      - "Validate abstention rate is in target band"

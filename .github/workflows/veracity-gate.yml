@@ -1,0 +1,64 @@
+name: Veracity Gate
+
+# Enforce PASS-STABLE veracity on every commit
+# Claude A — Veracity Engineer
+
+on:
+  push:
+    branches: ["*"]
+    paths:
+      - "backend/lean_proj/ML/Jobs/**/*.lean"
+      - "backend/worker.py"
+      - "backend/generator/**/*.py"
+      - "tools/preflight_lean_jobs.py"
+  pull_request:
+    branches: ["*"]
+    paths:
+      - "backend/lean_proj/ML/Jobs/**/*.lean"
+      - "backend/worker.py"
+      - "backend/generator/**/*.py"
+      - "tools/preflight_lean_jobs.py"
+  workflow_dispatch:
+
+jobs:
+  veracity-check:
+    name: Veracity Stability Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Add any required dependencies here
+
+      - name: Run Veracity Stability Test
+        run: |
+          python tests/test_veracity_stability.py
+
+      - name: Run Preflight Scan (Direct)
+        if: always()
+        run: |
+          python tools/preflight_lean_jobs.py --json artifacts/verification/ci_scan.json
+
+      - name: Upload Scan Artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: veracity-reports
+          path: artifacts/verification/*.json
+          retention-days: 30
+
+      - name: Veracity Gate Status
+        if: failure()
+        run: |
+          echo "::error::Veracity regression detected! Malformation rate > 0.00%"
+          echo "::error::Review artifacts/verification/ci_scan.json for defect diagnostics"
+          exit 1

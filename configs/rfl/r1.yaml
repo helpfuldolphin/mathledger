@@ -1,0 +1,90 @@
+# ============================================================================
+# RFL Config: R1 (Production / Active Curriculum)
+# ============================================================================
+# Context: Integrated from Gemini-J 'atoms5-depth6' profile.
+# Purpose: The primary gate for current active development.
+# Mode: Production (Standard Rigor)
+# ============================================================================
+
+experiment_name: "RFL-R1: PL Atoms5-Depth6 (Active)"
+metrologist: "GEMINI-F (Integration)"
+version: "2.0.0"
+
+# ----------------------------------------------------------------------------
+# Curriculum Context (from Gemini-J)
+# ----------------------------------------------------------------------------
+curriculum_context:
+  slice_name: "atoms5-depth6"
+  params:
+    atoms: 5
+    depth_max: 6
+    breadth_max: 2000
+    total_max: 10000
+  gate_intent:
+    min_pph: 220
+    max_abstention_pct: 12.0
+
+# ----------------------------------------------------------------------------
+# RFL Experiment Settings
+# ----------------------------------------------------------------------------
+bootstrap_config:
+  method: "bca"             # Accurate for Production
+  n_experiments: 40
+  n_replicates: 10000
+  confidence_level: 0.95
+  seed: 42
+
+pass_criteria:
+  # Aligned with curriculum 'coverage.ci_lower_min: 0.93'
+  coverage_lower_bound: 0.93
+  uplift_lower_bound: 1.0
+  description: "PASS iff coverage₉₅lower ≥ 0.93 (Curriculum Req)"
+
+data_source:
+  mode: "historical"
+  path: "docs/progress.md"
+  fallback_to_db: true
+  db_config:
+    host: "localhost"
+    port: 5432
+    database: "mathledger"
+    user: "ml"
+    password: null
+
+metrics:
+  - name: "success_rate"
+    baseline: 0.5
+    weight: 1.0
+    experiments: 10
+  
+  - name: "proof_velocity"
+    # Target: 220 pph.
+    baseline: 1.0
+    weight: 2.0
+    experiments: 10
+
+  - name: "statement_growth"
+    baseline: 1.0
+    weight: 2.0
+    experiments: 10
+    
+  - name: "efficiency"
+    baseline: 0.5
+    weight: 1.0
+    experiments: 5
+    
+  - name: "density"
+    baseline: 0.1
+    weight: 1.5
+    experiments: 5
+
+output:
+  artifacts_dir: "artifacts/rfl_r1"
+  results_file: "results.json"
+  coverage_file: "coverage.json"
+  visualization_file: "curves.png"
+
+commit_template:
+  pass: "[PASS] RFL-R1 (Atoms5): Verified coverage≥{coverage:.3f} uplift>{uplift:.2f}"
+  fail: "[FAIL] RFL-R1 (Atoms5): Insufficient coverage={coverage:.3f} uplift={uplift:.2f}"
+  abstain: "[ABSTAIN] RFL-R1: Infrastructure offline"

@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Select-Object -First 30 Name)",
+      "Bash(python:*)",
+      "Bash(set:*)",
+      "Bash(cmd /c \"set DATABASE_URL=postgresql://ml:mlpass@localhost:5432/mathledger && set REDIS_URL=redis://localhost:6379/0 && python -m pytest tests/test_proof_dag.py -v --tb=short\")",
+      "Bash(powershell -Command \"$env:DATABASE_URL=''postgresql://ml:mlpass@localhost:5432/mathledger''; $env:REDIS_URL=''redis://localhost:6379/0''; python -m pytest tests/test_proof_dag.py -v --tb=short 2>&1 | Select-Object -First 60\")",
+      "Bash($env:DATABASE_URL='postgresql://ml:mlpass@localhost:5432/mathledger')",
+      "Bash($env:REDIS_URL='redis://localhost:6379/0')",
+      "Bash(Select-Object -First 80)",
+      "Bash(DATABASE_URL='postgresql://ml:mlpass@localhost:5432/mathledger' REDIS_URL='redis://localhost:6379/0' python -m pytest:*)",
+      "Bash(Select-Object -First 100)",
+      "Bash(powershell -Command \"$env:DATABASE_URL = ''postgresql://ml:mlpass@localhost:5432/mathledger''; $env:REDIS_URL = ''redis://localhost:6379/0''; python -m pytest tests/test_proof_dag.py -v --tb=short 2>&1\")",
+      "Bash(DATABASE_URL='postgresql://ml:mlpass@localhost:5432/mathledger' REDIS_URL='redis://localhost:6379/0' python -c:*)",
+      "Bash(FIRST_ORGANISM_TESTS=true python -m pytest:*)",
+      "Bash(DATABASE_URL='postgresql://ml:mlpass@localhost:5432/mathledger' REDIS_URL='redis://localhost:6379/0' python:*)",
+      "Bash(export FIRST_ORGANISM_TESTS=true)",
+      "Bash(export FIRST_ORGANISM_TESTS=true DATABASE_URL='postgresql://ml:mlpass@localhost:5432/mathledger' REDIS_URL='redis://localhost:6379/0':*)",
+      "Bash(dir /b /s C:devmathledgerbackend)",
+      "Bash(findstr:*)",
+      "Bash(dir:*)",
+      "Bash(powershell:*)",
+      "Bash(find:*)",
+      "Bash(uv run:*)",
+      "Bash(timeout 30 powershell:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

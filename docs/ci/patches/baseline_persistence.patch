@@ -1,0 +1,80 @@
+--- .github/workflows/docs-manifest.yml	2025-11-01 01:06:28.109374799 +0000
++++ .github/workflows/docs-manifest-v3.yml	2025-11-01 03:49:12.144306170 +0000
+@@ -91,17 +91,45 @@
+         with:
+           python-version: '3.11'
+       
+-      - name: Run docs delta watcher
++      - name: Install dependencies
++        run: |
++          pip install canonicaljson
++      
++      - name: Run docs delta watcher with baseline persistence
+         id: delta
+         run: |
+-          echo "Running docs delta watcher..."
+-          python tools/docs/docs_delta.py --docs-dir docs/methods --rfcsign --out artifacts/docs/docs_delta.json
++          echo "Running docs delta watcher with baseline persistence..."
++          
++          # Check if baseline exists
++          if [ -f docs/methods/docs_delta_baseline.json ]; then
++            echo "Using existing baseline"
++            python tools/docs/docs_delta.py \
++              --docs-dir docs/methods \
++              --baseline docs/methods/docs_delta_baseline.json \
++              --out artifacts/docs/docs_delta.json \
++              --write-baseline docs/methods/docs_delta_baseline.json \
++              --rfcsign
++          else
++            echo "No baseline found, creating initial baseline"
++            python tools/docs/docs_delta.py \
++              --docs-dir docs/methods \
++              --out artifacts/docs/docs_delta.json \
++              --write-baseline docs/methods/docs_delta_baseline.json \
++              --rfcsign
++          fi
++          
+           DELTA_EXIT=$?
+           
+           if [ $DELTA_EXIT -eq 0 ]; then
+             DELTA_SHA=$(sha256sum artifacts/docs/docs_delta.json | cut -d' ' -f1)
+             echo "[PASS] Docs Delta: <sha256:$DELTA_SHA>"
+             echo "delta_sha=$DELTA_SHA" >> $GITHUB_OUTPUT
++            
++            if [ -f docs/methods/docs_delta_baseline.json ]; then
++              BASELINE_SHA=$(sha256sum docs/methods/docs_delta_baseline.json | cut -d' ' -f1)
++              echo "[PASS] Baseline SHA-256: $BASELINE_SHA"
++              echo "baseline_sha=$BASELINE_SHA" >> $GITHUB_OUTPUT
++            fi
+           else
+             echo "ABSTAIN: Docs delta watcher detected failures"
+             if [ -f artifacts/docs/failure_lens.json ]; then
+@@ -120,5 +148,28 @@
+           name: docs-delta-${{ github.run_number }}
+           path: |
+             artifacts/docs/docs_delta.json
++            docs/methods/docs_delta_baseline.json
+             artifacts/docs/failure_lens.json
+           retention-days: 90
++      
++      - name: Commit baseline on main-merge
++        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.delta.outcome == 'success'
++        run: |
++          git config --local user.email "devin-ai-integration[bot]@users.noreply.github.com"
++          git config --local user.name "Devin AI"
++          
++          if [ -f docs/methods/docs_delta_baseline.json ]; then
++            BASELINE_SHA=$(sha256sum docs/methods/docs_delta_baseline.json | cut -d' ' -f1)
++            git add docs/methods/docs_delta_baseline.json
++            if ! git diff --cached --quiet; then
++              git commit -m "ci: update docs delta baseline [skip ci]
++              
++              Auto-generated baseline from docs delta watcher.
++              Used for tracking documentation drift across runs.
++              
++              [PASS] Baseline Committed <sha256:$BASELINE_SHA>"
++              git push origin main
++            else
++              echo "Baseline unchanged, skipping commit"
++            fi
++          fi

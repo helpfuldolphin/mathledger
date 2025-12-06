@@ -1,0 +1,235 @@
+version: 2
+systems:
+  pl:
+    description: Propositional logic curriculum (atoms & depth bounded)
+    active: slice_hard  # Using hard slice for RFL uplift experiments (atoms=7, depth_max=12)
+    invariants:
+      monotonic_axes:
+      - atoms
+      - depth_max
+      attestation_required: true
+      attestation_window_minutes: 60
+    slices:
+    # Debug slice for microscopic uplift experiments - minimal params, truth-table only
+    # Brutally tiny for fast iteration: atoms=2, depth=2, total_max=16
+    # Must come first for monotonicity (atoms=2, depth=2 < slice_easy_fo's atoms=3, depth=3)
+    - name: slice_debug_uplift
+      params:
+        atoms: 2
+        depth_max: 2
+        breadth_max: 8
+        total_max: 16
+        formula_pool: 4
+        axiom_instances: 8
+        timeout_s: 0.1
+        lean_timeout_s: 0.0
+      gates:
+        coverage:
+          ci_lower_min: 0.01
+          sample_min: 1
+          require_attestation: false
+        abstention:
+          max_rate_pct: 100.0
+          max_mass: 1000
+        velocity:
+          min_pph: 0.01
+          stability_cv_max: 1.0
+          window_minutes: 1
+        caps:
+          min_attempt_mass: 1
+          min_runtime_minutes: 0.001
+          backlog_max: 1.0
+    # Easy slice for First Organism testing (atoms=3, depth=3)
+    - name: slice_easy_fo
+      params:
+        atoms: 3
+        depth_max: 3
+        breadth_max: 300
+        total_max: 1000
+      gates:
+        coverage:
+          ci_lower_min: 0.98
+          sample_min: 10
+          require_attestation: false
+        abstention:
+          max_rate_pct: 2.0
+          max_mass: 50
+        velocity:
+          min_pph: 250
+          stability_cv_max: 0.10
+          window_minutes: 30
+        caps:
+          min_attempt_mass: 500
+          min_runtime_minutes: 5
+          backlog_max: 0.20
+    # Medium-hard slice for uplift experiments (atoms=3, depth=4)
+    # Target: baseline success rate ~30-60% for measurable uplift
+    # Positioned after slice_easy_fo (same atoms=3, higher depth_max=4)
+    # VERY tight budget - only top candidates get explored, ordering matters!
+    - name: slice_uplift_proto
+      params:
+        atoms: 3
+        depth_max: 4
+        breadth_max: 3   # Very tight - only top 3 per round
+        total_max: 10    # Very tight total budget
+        formula_pool: 8  # Large pool for variety
+        axiom_instances: 10  # Many axioms to create more candidates than we can explore
+        timeout_s: 0.3
+        lean_timeout_s: 0.0  # lean-disabled, hermetic
+      gates:
+        coverage:
+          ci_lower_min: 0.01  # Must be > 0, using same as debug slice
+          sample_min: 1
+          require_attestation: false
+        abstention:
+          max_rate_pct: 100.0
+          max_mass: 1000
+        velocity:
+          min_pph: 0.01
+          stability_cv_max: 1.0
+          window_minutes: 1
+        caps:
+          min_attempt_mass: 1
+          min_runtime_minutes: 0.001
+          backlog_max: 1.0
+    - name: atoms4-depth4
+      params:
+        atoms: 4
+        depth_max: 4
+        breadth_max: 500
+        total_max: 2000
+      gates:
+        coverage:
+          ci_lower_min: 0.92
+          sample_min: 12
+          require_attestation: true
+        abstention:
+          max_rate_pct: 15.0
+          max_mass: 225
+        velocity:
+          min_pph: 140
+          stability_cv_max: 0.09
+          window_minutes: 60
+        caps:
+          min_attempt_mass: 1400
+          min_runtime_minutes: 14
+          backlog_max: 0.40
+      completed_at: '2025-09-13T17:02:31.892690'
+    - name: atoms4-depth5
+      params:
+        atoms: 4
+        depth_max: 5
+        breadth_max: 1000
+        total_max: 5000
+      gates:
+        coverage:
+          ci_lower_min: 0.925
+          sample_min: 18
+          require_attestation: true
+        abstention:
+          max_rate_pct: 13.0
+          max_mass: 520
+        velocity:
+          min_pph: 180
+          stability_cv_max: 0.08
+          window_minutes: 60
+        caps:
+          min_attempt_mass: 3600
+          min_runtime_minutes: 18
+          backlog_max: 0.38
+      completed_at: '2025-09-13T17:02:36.541723'
+    # NOTE: slice_pl_uplift_a removed - it violated monotonicity (atoms=3 after atoms=4).
+    # U1 uses slice_medium instead. Lean-enabled uplift slices are deferred to Phase IIb.
+    # See docs/curriculum_gate_equations.md Section 10 for Phase IIb designs.
+    - name: atoms5-depth6
+      params:
+        atoms: 5
+        depth_max: 6
+        breadth_max: 2000
+        total_max: 10000
+      gates:
+        coverage:
+          ci_lower_min: 0.93
+          sample_min: 24
+          require_attestation: true
+        abstention:
+          max_rate_pct: 12.0
+          max_mass: 900
+        velocity:
+          min_pph: 220
+          stability_cv_max: 0.06
+          window_minutes: 60
+        caps:
+          min_attempt_mass: 7500
+          min_runtime_minutes: 24
+          backlog_max: 0.35
+    # NOTE: slice_medium is designated as the "Wide Slice" for RFL uplift experiments (Operation Dyno Chart).
+    # This slice produces non-trivial abstention (5-20%) and does not saturate trivially,
+    # making it statistically interesting for measuring RFL uplift across 1000-cycle runs.
+    # Placed after atoms5-depth6 (atoms=5, depth=6) since it has same atoms but higher depth (7)
+    - name: slice_medium
+      params:
+        atoms: 5
+        depth_max: 7
+        breadth_max: 1500
+        total_max: 8000
+      gates:
+        coverage:
+          ci_lower_min: 0.85
+          sample_min: 20
+          require_attestation: true
+        abstention:
+          max_rate_pct: 15.0
+          max_mass: 800
+        velocity:
+          min_pph: 150
+          stability_cv_max: 0.12
+          window_minutes: 60
+        caps:
+          min_attempt_mass: 3000
+          min_runtime_minutes: 20
+          backlog_max: 0.40
+    - name: first_organism_pl2_hard
+      params:
+        atoms: 6
+        depth_max: 8
+        breadth_max: 2000
+        total_max: 10000
+      gates:
+        coverage:
+          ci_lower_min: 0.90
+          sample_min: 20
+          require_attestation: true
+        abstention:
+          max_rate_pct: 20.0
+          max_mass: 1000
+        velocity:
+          min_pph: 120
+          stability_cv_max: 0.15
+          window_minutes: 60
+        caps:
+          min_attempt_mass: 2000
+          min_runtime_minutes: 20
+          backlog_max: 0.40
+    - name: slice_hard
+      params:
+        atoms: 7
+        depth_max: 12
+        breadth_max: 3000
+        total_max: 15000
+      gates:
+        coverage:
+          ci_lower_min: 0.70
+          sample_min: 30
+          require_attestation: true
+        abstention:
+          max_rate_pct: 30.0
+          max_mass: 2000
+        velocity:
+          min_pph: 80
+          stability_cv_max: 0.25
+          window_minutes: 90
+        caps:
+          min_attempt_mass: 5000
+          min_runtime_minutes: 40
+          backlog_max: 0.60

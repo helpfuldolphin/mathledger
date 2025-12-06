@@ -1,0 +1,62 @@
+# ============================================================================
+# RFL Experiment: Baseline
+# ============================================================================
+# Purpose: Quick health check for local development and CI smoke tests.
+# - Lower replication count (1000 vs 10000) for speed.
+# - Fewer experiments per metric.
+# - Uses 'percentile' method instead of 'bca' for faster computation.
+# ============================================================================
+
+experiment_name: "Reflexive Metabolism - Baseline (Dev)"
+metrologist: "GEMINI-F (via Claude M)"
+version: "1.0.0"
+
+bootstrap_config:
+  method: "percentile"
+  n_experiments: 10
+  n_replicates: 1000
+  confidence_level: 0.95
+  seed: 42
+
+pass_criteria:
+  coverage_lower_bound: 0.90
+  uplift_lower_bound: 1.0
+  description: "PASS iff coverage₉₅lower ≥ 0.90 AND uplift₉₅lower > 1.0"
+
+data_source:
+  mode: "historical"
+  path: "docs/progress.md"
+  fallback_to_db: false # Don't fail on missing DB in dev
+  db_config:
+    host: "localhost"
+    port: 5432
+    database: "mathledger"
+    user: "ml"
+    password: null
+
+metrics:
+  - name: "success_rate"
+    baseline: 0.5
+    weight: 1.0
+    experiments: 5
+  
+  - name: "proof_velocity"
+    baseline: 1.0
+    weight: 1.0
+    experiments: 5
+
+  - name: "statement_growth"
+    baseline: 1.0
+    weight: 1.0
+    experiments: 5
+
+output:
+  artifacts_dir: "artifacts/rfl_baseline"
+  results_file: "results.json"
+  coverage_file: "coverage.json"
+  visualization_file: "curves.png"
+
+commit_template:
+  pass: "[PASS] RFL Baseline: coverage≥{coverage:.3f}"
+  fail: "[FAIL] RFL Baseline: coverage={coverage:.3f}"
+  abstain: "[ABSTAIN] RFL Baseline: Insufficient data"

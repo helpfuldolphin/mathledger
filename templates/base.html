@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MathLedger{% endblock %}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .depth-bar { height: 20px; background: linear-gradient(90deg, #3b82f6 0%, #10b981 50%, #f59e0b 100%); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/ui" class="text-xl font-bold text-gray-900">MathLedger</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/ui" class="text-gray-600 hover:text-gray-900">Dashboard</a>
+                    <a href="/ui/blocks" class="text-gray-600 hover:text-gray-900">Blocks</a>
+                    <a href="/ui/lemmas" class="text-gray-600 hover:text-gray-900">Lemmas</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

@@ -1,0 +1,154 @@
+{
+  "version": "v3",
+  "timestamp": "2025-10-31T21:20:59.337093",
+  "tests_passed": 37,
+  "tests_failed": 0,
+  "integrity_hash": "c4d03939d90f586d383c0899c4282d5e4cd434b09090080ea91baceb90c432ee",
+  "findings": [],
+  "status": "PASS",
+  "v2_tests": {
+    "domain_separation": true,
+    "hash_functions": true,
+    "merkle_tree": true,
+    "cve_protection": true
+  },
+  "v3_tests": {
+    "rfc8785_compliance": true,
+    "handshake_validation": true
+  },
+  "handshake_report": {
+    "version": "v3",
+    "timestamp": "2025-10-31T21:20:59.335296",
+    "tests_passed": 17,
+    "tests_failed": 0,
+    "tests_total": 17,
+    "all_passed": true,
+    "workflows": {
+      "API Key Workflow": {
+        "passed": false,
+        "tests": []
+      },
+      "Redis Auth Workflow": {
+        "passed": false,
+        "tests": []
+      },
+      "Statement Workflow": {
+        "passed": false,
+        "tests": []
+      },
+      "Merkle Workflow": {
+        "passed": false,
+        "tests": []
+      },
+      "Block Sealing Workflow": {
+        "passed": false,
+        "tests": []
+      }
+    },
+    "errors": [],
+    "test_results": [
+      {
+        "name": "API key generation",
+        "passed": true,
+        "details": "Generated key: mlvk-api-v1-readonly...",
+        "timestamp": "2025-10-31T21:20:59.333946"
+      },
+      {
+        "name": "API key validation",
+        "passed": true,
+        "details": "Key valid: True, scope: readonly",
+        "timestamp": "2025-10-31T21:20:59.333969"
+      },
+      {
+        "name": "API key revocation",
+        "passed": true,
+        "details": "Key 34966499e14672b0 revoked: True",
+        "timestamp": "2025-10-31T21:20:59.334430"
+      },
+      {
+        "name": "Revoked key validation fails",
+        "passed": true,
+        "details": "Revoked key validation: False (should be False)",
+        "timestamp": "2025-10-31T21:20:59.334446"
+      },
+      {
+        "name": "Redis auth configuration",
+        "passed": true,
+        "details": "Redis auth configured: False",
+        "timestamp": "2025-10-31T21:20:59.334475"
+      },
+      {
+        "name": "Redis URL generation",
+        "passed": true,
+        "details": "URL: redis://127.0.0.1:6379/0...",
+        "timestamp": "2025-10-31T21:20:59.334483"
+      },
+      {
+        "name": "Redis password injection",
+        "passed": true,
+        "details": "No REDIS_PASSWORD set (optional)",
+        "timestamp": "2025-10-31T21:20:59.334488"
+      },
+      {
+        "name": "Statement hashing",
+        "passed": true,
+        "details": "Hash: 3be8db7b79679bf7...",
+        "timestamp": "2025-10-31T21:20:59.334500"
+      },
+      {
+        "name": "Statement domain separation",
+        "passed": true,
+        "details": "STMT domain tag applied",
+        "timestamp": "2025-10-31T21:20:59.334504"
+      },
+      {
+        "name": "Statement hash determinism",
+        "passed": true,
+        "details": "Hash is deterministic",
+        "timestamp": "2025-10-31T21:20:59.334509"
+      },
+      {
+        "name": "Merkle tree construction",
+        "passed": true,
+        "details": "Root: c03fbe28d655ac48...",
+        "timestamp": "2025-10-31T21:20:59.334612"
+      },
+      {
+        "name": "Merkle proof generation",
+        "passed": true,
+        "details": "Proof length: 2",
+        "timestamp": "2025-10-31T21:20:59.334697"
+      },
+      {
+        "name": "Merkle proof verification",
+        "passed": true,
+        "details": "Proof valid: True",
+        "timestamp": "2025-10-31T21:20:59.334725"
+      },
+      {
+        "name": "Block sealing",
+        "passed": true,
+        "details": "Block sealed with Merkle root: c03fbe28d655ac48...",
+        "timestamp": "2025-10-31T21:20:59.335181"
+      },
+      {
+        "name": "Block Merkle root correctness",
+        "passed": true,
+        "details": "Roots match: True",
+        "timestamp": "2025-10-31T21:20:59.335253"
+      },
+      {
+        "name": "Block header hashing",
+        "passed": true,
+        "details": "Block hash: 53cd04eb4379c056...",
+        "timestamp": "2025-10-31T21:20:59.335280"
+      },
+      {
+        "name": "Block domain separation",
+        "passed": true,
+        "details": "BLCK domain tag applied",
+        "timestamp": "2025-10-31T21:20:59.335285"
+      }
+    ]
+  }
+}

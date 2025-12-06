@@ -1,0 +1,69 @@
+{
+  "schema": "causal_config_v1",
+  "description": "Configuration for causal analysis of RFL runs",
+
+  "data_requirements": {
+    "min_runs": 30,
+    "min_policy_changes": 2,
+    "required_columns": [
+      "policy_hash",
+      "abstain_pct",
+      "proofs_per_sec",
+      "depth_max_reached",
+      "verify_ms_p50"
+    ]
+  },
+
+  "estimation": {
+    "method": "ols",
+    "bootstrap_replicates": 10000,
+    "confidence_level": 0.95,
+    "significance_threshold": 0.05,
+    "seed": 0
+  },
+
+  "graph_structure": {
+    "nodes": [
+      {"name": "policy_hash", "type": "treatment"},
+      {"name": "abstain_pct", "type": "mediator"},
+      {"name": "proofs_per_sec", "type": "outcome"},
+      {"name": "depth_max", "type": "covariate"},
+      {"name": "verify_ms_p50", "type": "mediator"}
+    ],
+    "edges": [
+      {"source": "policy_hash", "target": "abstain_pct"},
+      {"source": "policy_hash", "target": "depth_max"},
+      {"source": "abstain_pct", "target": "verify_ms_p50"},
+      {"source": "abstain_pct", "target": "proofs_per_sec"},
+      {"source": "depth_max", "target": "verify_ms_p50"},
+      {"source": "verify_ms_p50", "target": "proofs_per_sec"}
+    ]
+  },
+
+  "output_paths": {
+    "causal_summary": "reports/causal_summary.md",
+    "estimates_json": "artifacts/causal/estimates.json",
+    "policy_memo_template": "reports/policy_recommendation_{date}.md",
+    "graphviz_dot": "artifacts/causal/causal_graph.dot"
+  },
+
+  "seals": {
+    "pass_criteria": {
+      "min_significant_paths": 2,
+      "max_p_value": 0.05,
+      "min_stability_cv": 0.3
+    },
+    "abstain_criteria": {
+      "insufficient_runs": 30,
+      "insufficient_policy_changes": 2,
+      "high_instability_cv": 1.0
+    }
+  },
+
+  "handoff": {
+    "codex_m_artifacts": [
+      "artifacts/causal/estimates.json"
+    ],
+    "push_on_pass": true
+  }
+}

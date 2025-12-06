@@ -1,0 +1,33 @@
+{
+  "run_id": "20251002_002008",
+  "timestamp": "2025-10-02T00:20:08.193945",
+  "test_results": [
+    {
+      "test_name": "import_performance",
+      "latency_ms": 0.09119999594986439,
+      "memory_mb": 0.0,
+      "objects": -43,
+      "status": "PASS",
+      "regression": false,
+      "timestamp": "2025-10-02T00:20:08.193945"
+    }
+  ],
+  "summary": {
+    "total_tests": 1,
+    "passed_tests": 1,
+    "failed_tests": 0,
+    "performance_regressions": 0,
+    "memory_regressions": 0,
+    "max_latency_ms": 0.09119999594986439,
+    "max_memory_mb": 0.0,
+    "max_objects": 0,
+    "overall_status": "PASS"
+  },
+  "performance_guarantee": {
+    "statement": "Even in sandbox mode, we can prove we don't regress by more than 5% in formatter latency",
+    "max_latency_threshold_ms": 5.0,
+    "max_memory_threshold_mb": 10.0,
+    "max_objects_threshold": 1000,
+    "regression_tolerance_percent": 5.0
+  }
+}

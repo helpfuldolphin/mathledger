@@ -1,0 +1,35 @@
+{
+  "blockNumber": 1,
+  "blockHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "reasoningMerkleRoot": "142a7c15ac8d44d2e13aa1006febdaa46f66cc4d69b89ebae5cba472e8b47902",
+  "uiMerkleRoot": "3c9a33d055fd8f7f61d2dbe1f9835889efea13427837a2213355f26495cfedee",
+  "compositeAttestationRoot": "6a006e789be39105a37504e12305f5358baad273e15fb757f266c0f46b116e59",
+  "reasoningLeaves": [
+    {
+      "originalIndex": 0,
+      "sortedIndex": 0,
+      "canonicalValue": "{\"prover\":\"lean-interface\",\"reason\":\"mock dominant statement\",\"statement\":\"p -> p\",\"statement_hash\":\"c3f5b3205153cf1c5a2b8a0c3694a7c3\",\"status\":\"abstain\",\"verification_method\":\"lean-disabled\"}",
+      "leafHash": "98db47d99674abe1f6be5ba5672660b8057a616c6d5423a478470dfc1b344a26",
+      "merkleProof": []
+    }
+  ],
+  "uiLeaves": [
+    {
+      "originalIndex": 0,
+      "sortedIndex": 0,
+      "canonicalValue": "{\"event_type\":\"select_statement\",\"statement_hash\":\"c3f5b3\"}",
+      "leafHash": "d692382bd19d9113c44ecdadc37fc3839139bba0d4c0e471e3f4d76ce187a58e",
+      "merkleProof": []
+    }
+  ],
+  "metadata": {
+    "attestation_version": "v2",
+    "reasoning_event_count": 1,
+    "ui_event_count": 1,
+    "composite_formula": "SHA256(R_t || U_t)",
+    "leaf_hash_algorithm": "sha256",
+    "algorithm": "SHA256",
+    "system": "pl"
+  },
+  "_comment": "Canonical First Organism attestation fixture. Values computed from attestation.dual_root primitives using the exact payloads in tests/test_dual_root_attestation.py::test_first_organism_sample_metadata"
+}
