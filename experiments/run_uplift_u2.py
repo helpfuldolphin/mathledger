@@ -26,45 +26,121 @@ import yaml
 # dynamically imported or otherwise more complex. For this standalone script,
 # we define them here.
 
+
 def metric_arithmetic_simple(item: str, result: Any) -> bool:
-    """Success is when the python eval matches the expected result."""
+    """
+    Compute success metric for arithmetic_simple slice.
+
+    Args:
+        item: The input expression string (e.g., "2+3").
+        result: The computed result to verify.
+
+    Returns:
+        True if the Python eval of the item matches the result, False otherwise.
+    """
     try:
-        # A mock 'correct' result is simply the eval of the string.
         return eval(item) == result
     except Exception:
         return False
 
+
 def metric_algebra_expansion(item: str, result: Any) -> bool:
-    """A mock success metric for algebra. We'll just use string length."""
-    # This is a placeholder. A real metric would be much more complex.
+    """
+    Compute success metric for algebra_expansion slice.
+
+    This is a placeholder metric. A real implementation would validate
+    algebraic expansion correctness.
+
+    Args:
+        item: The input expression string.
+        result: The computed result to verify.
+
+    Returns:
+        True if the result string is longer than the input (indicating expansion).
+    """
     return len(str(result)) > len(item)
 
-METRIC_DISPATCHER = {
-    "arithmetic_simple": metric_arithmetic_simple,
-    "algebra_expansion": metric_algebra_expansion,
-}
+
+def get_success_metric(slice_name: str) -> Callable[[str, Any], bool]:
+    """
+    Retrieve the success metric function for a given slice name.
+
+    PHASE II — NOT USED IN PHASE I
+
+    Args:
+        slice_name: The name of the experiment slice (e.g., "arithmetic_simple").
+
+    Returns:
+        A callable that takes (item, result) and returns True if the result
+        is considered successful for the given slice.
+
+    Raises:
+        KeyError: If no metric is registered for the given slice name.
+    """
+    metric_dispatcher: Dict[str, Callable[[str, Any], bool]] = {
+        "arithmetic_simple": metric_arithmetic_simple,
+        "algebra_expansion": metric_algebra_expansion,
+    }
+    if slice_name not in metric_dispatcher:
+        raise KeyError(f"No success metric registered for slice '{slice_name}'")
+    return metric_dispatcher[slice_name]
 
 
 # --- RFL Policy Stubs ---
 # Mock implementation of the RFL policy scoring and update loop.
 
+
 class RFLPolicy:
-    """A mock RFL policy model."""
+    """
+    A mock RFL policy model for uplift experiments.
+
+    PHASE II — NOT USED IN PHASE I
+
+    This class implements a simple scoring and update mechanism for policy-driven
+    ordering of experiment items. It maintains internal scores for each item and
+    updates them based on success/failure feedback.
+
+    Attributes:
+        scores: Dictionary mapping item strings to their current scores.
+        rng: Random number generator for deterministic score initialization.
+    """
+
     def __init__(self, seed: int):
-        self.scores = {}
+        """
+        Initialize the RFL policy with a deterministic seed.
+
+        Args:
+            seed: Random seed for deterministic score initialization.
+        """
+        self.scores: Dict[str, float] = {}
         self.rng = random.Random(seed)
 
     def score(self, items: List[str]) -> List[float]:
-        """Scores items. Higher is better."""
-        # Initialize scores if not seen before
+        """
+        Score a list of items for ordering.
+
+        Items not previously seen are assigned random initial scores.
+        Higher scores indicate higher priority.
+
+        Args:
+            items: List of item strings to score.
+
+        Returns:
+            List of float scores corresponding to each input item.
+        """
         for item in items:
             if item not in self.scores:
                 self.scores[item] = self.rng.random()
         return [self.scores[item] for item in items]
 
-    def update(self, item: str, success: bool):
-        """Updates the policy based on feedback."""
-        # Simple update rule: reward success, penalize failure.
+    def update(self, item: str, success: bool) -> None:
+        """
+        Update the policy based on feedback from an experiment cycle.
+
+        Args:
+            item: The item that was evaluated.
+            success: True if the evaluation was successful, False otherwise.
+        """
         if success:
             self.scores[item] = self.scores.get(item, 0.5) * 1.1
         else:
@@ -75,8 +151,20 @@ class RFLPolicy:
 
 # --- Core Runner Logic ---
 
+
 def get_config(config_path: Path) -> Dict[str, Any]:
-    """Loads the YAML configuration file."""
+    """
+    Load the YAML configuration file for the experiment.
+
+    Args:
+        config_path: Path to the YAML configuration file.
+
+    Returns:
+        Dictionary containing the parsed configuration.
+
+    Raises:
+        SystemExit: If the configuration file does not exist.
+    """
     print(f"INFO: Loading config from {config_path}")
     if not config_path.exists():
         print(f"ERROR: Config file not found at {config_path}", file=sys.stderr)
@@ -84,14 +172,103 @@ def get_config(config_path: Path) -> Dict[str, Any]:
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
+
 def generate_seed_schedule(initial_seed: int, num_cycles: int) -> List[int]:
-    """Generates a deterministic list of seeds for each cycle."""
+    """
+    Generate a deterministic list of seeds for each experiment cycle.
+
+    PHASE II — NOT USED IN PHASE I
+
+    Args:
+        initial_seed: The initial seed for the random number generator.
+        num_cycles: The number of cycles (and seeds) to generate.
+
+    Returns:
+        A list of integer seeds, one for each cycle.
+    """
     rng = random.Random(initial_seed)
     return [rng.randint(0, 2**32 - 1) for _ in range(num_cycles)]
 
+
 def hash_string(data: str) -> str:
-    """Computes the SHA256 hash of a string."""
+    """
+    Compute the SHA256 hash of a string.
+
+    Args:
+        data: The input string to hash.
+
+    Returns:
+        The hexadecimal SHA256 hash of the input string.
+    """
     return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+
+def build_uplift_manifest(
+    slice_name: str,
+    slice_config: Dict[str, Any],
+    mode: str,
+    cycles: int,
+    initial_seed: int,
+    seed_schedule: List[int],
+    ht_series: List[Dict[str, Any]],
+    results_path: Path,
+    manifest_path: Path,
+) -> Dict[str, Any]:
+    """
+    Build the manifest dictionary for an uplift experiment.
+
+    PHASE II — NOT USED IN PHASE I
+
+    This function constructs a cryptographically bound manifest containing
+    configuration hashes and telemetry hashes for reproducibility verification.
+
+    Args:
+        slice_name: The name of the experiment slice.
+        slice_config: The configuration dictionary for the slice.
+        mode: The execution mode ('baseline' or 'rfl').
+        cycles: The number of experiment cycles.
+        initial_seed: The initial random seed.
+        seed_schedule: The list of per-cycle seeds.
+        ht_series: The telemetry history series (list of telemetry records).
+        results_path: Path to the results JSONL file.
+        manifest_path: Path to the manifest JSON file.
+
+    Returns:
+        A dictionary containing the manifest data ready for JSON serialization.
+    """
+    slice_config_str = json.dumps(slice_config, sort_keys=True)
+    slice_config_hash = hash_string(slice_config_str)
+    ht_series_str = json.dumps(ht_series, sort_keys=True)
+    ht_series_hash = hash_string(ht_series_str)
+
+    return {
+        "label": "PHASE II — NOT USED IN PHASE I",
+        "slice": slice_name,
+        "mode": mode,
+        "cycles": cycles,
+        "initial_seed": initial_seed,
+        "slice_config_hash": slice_config_hash,
+        "prereg_hash": slice_config.get("prereg_hash", "N/A"),
+        "ht_series_hash": ht_series_hash,
+        "deterministic_seed_schedule": seed_schedule,
+        "outputs": {
+            "results": str(results_path),
+            "manifest": str(manifest_path),
+        }
+    }
+
+
+def write_manifest(manifest: Dict[str, Any], manifest_path: Path) -> None:
+    """
+    Write a manifest dictionary to a JSON file.
+
+    Args:
+        manifest: The manifest dictionary to write.
+        manifest_path: The path to write the manifest file to.
+    """
+    with open(manifest_path, "w") as manifest_f:
+        json.dump(manifest, manifest_f, indent=2)
+
 
 def run_experiment(
     slice_name: str,
@@ -100,8 +277,27 @@ def run_experiment(
     mode: str,
     out_dir: Path,
     config: Dict[str, Any],
-):
-    """Main function to run the uplift experiment."""
+) -> None:
+    """
+    Run a U2 uplift experiment.
+
+    PHASE II — NOT USED IN PHASE I
+
+    This function executes the main experiment loop, running the specified number
+    of cycles with either baseline (random) or RFL (policy-driven) ordering.
+
+    Args:
+        slice_name: The name of the experiment slice (e.g., "arithmetic_simple").
+        cycles: The number of experiment cycles to run.
+        seed: The initial random seed for deterministic execution.
+        mode: The execution mode ('baseline' or 'rfl').
+        out_dir: The output directory for results and manifest files.
+        config: The loaded configuration dictionary.
+
+    Raises:
+        SystemExit: If the slice or success metric is not found.
+        ValueError: If an unknown mode is specified.
+    """
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
     print(f"PHASE II — NOT USED IN PHASE I")
 
@@ -113,22 +309,23 @@ def run_experiment(
         sys.exit(1)
 
     items = slice_config["items"]
-    success_metric = METRIC_DISPATCHER.get(slice_name)
-    if not success_metric:
+    try:
+        success_metric = get_success_metric(slice_name)
+    except KeyError:
         print(f"ERROR: Success metric for slice '{slice_name}' not found.", file=sys.stderr)
         sys.exit(1)
 
     seed_schedule = generate_seed_schedule(seed, cycles)
     policy = RFLPolicy(seed) if mode == "rfl" else None
-    ht_series = []  # History of Telemetry (Hₜ)
+    ht_series: List[Dict[str, Any]] = []  # History of Telemetry (Hₜ)
 
     results_path = out_dir / f"uplift_u2_{slice_name}_{mode}.jsonl"
     manifest_path = out_dir / f"uplift_u2_manifest_{slice_name}_{mode}.json"
 
     # 2. Main Loop
     with open(results_path, "w") as results_f:
-        for i in range(cycles):
-            cycle_seed = seed_schedule[i]
+        for cycle in range(cycles):
+            cycle_seed = seed_schedule[cycle]
             rng = random.Random(cycle_seed)
             
             # --- Ordering Step ---
@@ -157,7 +354,7 @@ def run_experiment(
 
             # --- Telemetry Logging ---
             telemetry_record = {
-                "cycle": i,
+                "cycle": cycle,
                 "slice": slice_name,
                 "mode": mode,
                 "seed": cycle_seed,
@@ -168,39 +365,37 @@ def run_experiment(
             }
             ht_series.append(telemetry_record)
             results_f.write(json.dumps(telemetry_record) + "\n")
-            print(f"Cycle {i+1}/{cycles}: Chose '{chosen_item}', Success: {success}")
+            print(f"Cycle {cycle+1}/{cycles}: Chose '{chosen_item}', Success: {success}")
 
     # 3. Manifest Generation
-    slice_config_str = json.dumps(slice_config, sort_keys=True)
-    slice_config_hash = hash_string(slice_config_str)
-    ht_series_str = json.dumps(ht_series, sort_keys=True)
-    ht_series_hash = hash_string(ht_series_str)
-
-    manifest = {
-        "label": "PHASE II — NOT USED IN PHASE I",
-        "slice": slice_name,
-        "mode": mode,
-        "cycles": cycles,
-        "initial_seed": seed,
-        "slice_config_hash": slice_config_hash,
-        "prereg_hash": slice_config.get("prereg_hash", "N/A"),
-        "ht_series_hash": ht_series_hash,
-        "deterministic_seed_schedule": seed_schedule,
-        "outputs": {
-            "results": str(results_path),
-            "manifest": str(manifest_path),
-        }
-    }
-
-    with open(manifest_path, "w") as manifest_f:
-        json.dump(manifest, manifest_f, indent=2)
+    manifest = build_uplift_manifest(
+        slice_name=slice_name,
+        slice_config=slice_config,
+        mode=mode,
+        cycles=cycles,
+        initial_seed=seed,
+        seed_schedule=seed_schedule,
+        ht_series=ht_series,
+        results_path=results_path,
+        manifest_path=manifest_path,
+    )
+    write_manifest(manifest, manifest_path)
 
     print(f"\n--- Experiment Complete ---")
     print(f"Results written to {results_path}")
     print(f"Manifest written to {manifest_path}")
 
-def main():
-    """CLI entry point."""
+def main() -> None:
+    """
+    CLI entry point for the U2 uplift experiment runner.
+
+    PHASE II — NOT USED IN PHASE I
+
+    This function parses command-line arguments and executes the uplift experiment
+    with the specified configuration. It supports two modes:
+    - 'baseline': Random ordering of items per cycle
+    - 'rfl': Policy-driven ordering with feedback-based updates
+    """
     parser = argparse.ArgumentParser(
         description="PHASE II U2 Uplift Runner. Must not be used for Phase I.",
         formatter_class=argparse.RawTextHelpFormatter,
@@ -233,6 +428,7 @@ Absolute Safeguards:
         out_dir=out_dir,
         config=config,
     )
+
 
 if __name__ == "__main__":
     main()

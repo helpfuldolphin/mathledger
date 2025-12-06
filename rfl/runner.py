@@ -183,7 +183,14 @@ class RFLRunner:
                 logger.warning(f"[WARN] Telemetry: Redis not available for metrics: {e}")
                 self._redis_client = None
 
-    def _increment_metric(self, key: str, amount: float = 1.0):
+    def _increment_metric(self, key: str, amount: float = 1.0) -> None:
+        """
+        Increment a Redis metric by the specified amount.
+
+        Args:
+            key: The Redis key for the metric.
+            amount: The amount to increment by (default 1.0).
+        """
         if self._redis_client:
             try:
                 if isinstance(amount, float):
@@ -195,23 +202,56 @@ class RFLRunner:
 
     @staticmethod
     def _bucket_label(value: float, thresholds: Sequence[float]) -> str:
+        """
+        Determine the histogram bucket label for a value.
+
+        Args:
+            value: The value to bucket.
+            thresholds: Sequence of threshold values defining bucket boundaries.
+
+        Returns:
+            String label for the bucket (threshold value or "+Inf").
+        """
         for threshold in thresholds:
             if value <= threshold:
                 return str(threshold)
         return "+Inf"
 
     def _record_bucket(self, prefix: str, value: float, thresholds: Sequence[float]) -> None:
+        """
+        Record a value in a histogram bucket metric.
+
+        Args:
+            prefix: The metric key prefix.
+            value: The value to record.
+            thresholds: Sequence of threshold values defining bucket boundaries.
+        """
         label = self._bucket_label(value, thresholds)
         self._increment_metric(f"{prefix}:{label}")
 
-    def _set_metric(self, key: str, value: Any):
+    def _set_metric(self, key: str, value: Any) -> None:
+        """
+        Set a Redis metric to a specific value.
+
+        Args:
+            key: The Redis key for the metric.
+            value: The value to set.
+        """
         if self._redis_client:
             try:
                 self._redis_client.set(key, str(value))
             except Exception:
                 pass
 
-    def _push_metric_history(self, key: str, value: str, max_len: int = 20):
+    def _push_metric_history(self, key: str, value: str, max_len: int = 20) -> None:
+        """
+        Push a value to a Redis list for historical tracking.
+
+        Args:
+            key: The Redis key for the list.
+            value: The value to push.
+            max_len: Maximum length of the history list (default 20).
+        """
         if self._redis_client:
             try:
                 pipe = self._redis_client.pipeline()
@@ -367,7 +407,12 @@ class RFLRunner:
         logger.info(f"Execution complete: {successful_runs}/{self.config.num_runs} successful runs")
 
     def _merge_abstention_breakdown(self, breakdown: Dict[str, int]) -> None:
-        """Aggregate abstention buckets across runs."""
+        """
+        Aggregate abstention buckets across runs.
+
+        Args:
+            breakdown: Dictionary mapping abstention categories to counts.
+        """
         if not breakdown:
             return
         for key, value in breakdown.items():
@@ -376,6 +421,14 @@ class RFLRunner:
     def _compute_reward_signal(self, result: ExperimentResult, coverage_metrics: CoverageMetrics) -> float:
         """
         Compute deterministic reward shaping signal for policy adaptation.
+
+        Args:
+            result: The experiment result containing success and throughput metrics.
+            coverage_metrics: Coverage metrics from the coverage tracker.
+
+        Returns:
+            A float reward value in [0, 1] combining success, novelty, throughput,
+            and abstention penalty.
 
         Components:
             - success rate (40%)
@@ -407,7 +460,16 @@ class RFLRunner:
         return max(0.0, composite * abstention_penalty)
 
     def _update_symbolic_descent(self, coverage_rate: Optional[float]) -> float:
-        """Track symbolic descent delta between consecutive successful runs."""
+        """
+        Track symbolic descent delta between consecutive successful runs.
+
+        Args:
+            coverage_rate: The coverage rate for the current run, or None if unavailable.
+
+        Returns:
+            The delta between current and previous coverage rate, or the current rate
+            if this is the first successful run.
+        """
         if coverage_rate is None:
             return 0.0
 
@@ -427,7 +489,16 @@ class RFLRunner:
         reward: float = 0.0,
         symbolic_descent: float = 0.0
     ) -> None:
-        """Append a ledger entry capturing policy dynamics for the run."""
+        """
+        Append a ledger entry capturing policy dynamics for the run.
+
+        Args:
+            result: The experiment result for this run.
+            slice_cfg: The curriculum slice configuration for this run.
+            coverage_metrics: Optional coverage metrics from the coverage tracker.
+            reward: The computed reward signal (default 0.0).
+            symbolic_descent: The symbolic descent delta (default 0.0).
+        """
         coverage_rate = coverage_metrics.coverage_rate if coverage_metrics else 0.0
         novelty_rate = coverage_metrics.novelty_rate if coverage_metrics else 0.0
         throughput = result.throughput_proofs_per_hour if result.status == "success" else 0.0
@@ -681,6 +752,15 @@ class RFLRunner:
         return result
 
     def _resolve_slice(self, slice_name: Optional[str]) -> CurriculumSlice:
+        """
+        Resolve a curriculum slice by name.
+
+        Args:
+            slice_name: The name of the slice to resolve, or None.
+
+        Returns:
+            The matching CurriculumSlice, or the first slice if no match found.
+        """
         if slice_name:
             for slice_cfg in self.config.curriculum:
                 if slice_cfg.name == slice_name:
@@ -688,6 +768,16 @@ class RFLRunner:
         return self.config.curriculum[0]
 
     def _validate_attestation(self, attestation: AttestedRunContext) -> None:
+        """
+        Validate the structure of an attestation payload.
+
+        Args:
+            attestation: The attestation context to validate.
+
+        Raises:
+            ValueError: If any root hash is not 64 hex characters or if
+                abstention values are negative.
+        """
         roots = [
             ("composite_root", attestation.composite_root),
             ("reasoning_root", attestation.reasoning_root),
@@ -929,7 +1019,14 @@ class RFLRunner:
             )
 
     def _summarize_policy_ledger(self) -> Dict[str, Any]:
-        """Aggregate curriculum ledger statistics."""
+        """
+        Aggregate curriculum ledger statistics.
+
+        Returns:
+            Dictionary containing summary statistics including entry count,
+            mean/median reward, mean symbolic descent, abstention fraction,
+            coverage rate, and curriculum slice distribution.
+        """
         if not self.policy_ledger:
             return {
                 "entries": 0,
