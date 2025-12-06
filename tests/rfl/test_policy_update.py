@@ -364,9 +364,15 @@ class TestUpdateDeterminism:
             SliceFeedback("refinement", 8, 12, 7),
         ]
 
+        # Use explicit known weights to avoid dependency on default implementation
+        initial_weights = PolicyWeights(
+            len=-0.01, depth=0.0, connectives=0.0, negations=-0.005,
+            overlap=0.1, goal_flag=1.0, success_count=0.05, chain_depth=0.0,
+        )
+
         def run_sequence(seed: int) -> PolicyWeights:
             updater = PolicyUpdater(seed=seed)
-            weights = PolicyWeights.default()
+            weights = initial_weights
             for fb in feedbacks:
                 result = updater.update(weights, fb)
                 weights = result.weights_after

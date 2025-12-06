@@ -134,6 +134,11 @@ SLICE_FEATURE_MASKS: Dict[str, Set[str]] = {
     },
 }
 
+# Default scaling factors for success_count updates
+# Success reinforcement is stronger than failure penalty to encourage exploration
+SUCCESS_COUNT_SUCCESS_SCALE = 0.1   # Scale factor when reward > 0
+SUCCESS_COUNT_FAILURE_SCALE = 0.01  # Scale factor when reward < 0
+
 
 class PolicyUpdater:
     """
@@ -153,6 +158,8 @@ class PolicyUpdater:
         max_learning_rate: float = 0.1,
         weight_clamp: float = 10.0,
         success_weight_floor: float = 0.0,
+        success_count_success_scale: float = SUCCESS_COUNT_SUCCESS_SCALE,
+        success_count_failure_scale: float = SUCCESS_COUNT_FAILURE_SCALE,
     ):
         """
         Initialize policy updater.
@@ -165,6 +172,8 @@ class PolicyUpdater:
             weight_clamp: Maximum absolute value for any weight.
             success_weight_floor: Minimum value for success_count weight
                                  (prevents penalizing successful formulas).
+            success_count_success_scale: Scale factor for success_count when reward > 0.
+            success_count_failure_scale: Scale factor for success_count when reward < 0.
         """
         self.seed = seed
         self.rng = SeededRNG(seed)
@@ -173,6 +182,8 @@ class PolicyUpdater:
         self.max_learning_rate = max_learning_rate
         self.weight_clamp = weight_clamp
         self.success_weight_floor = success_weight_floor
+        self.success_count_success_scale = success_count_success_scale
+        self.success_count_failure_scale = success_count_failure_scale
         self._update_count = 0
 
     def _get_feature_mask(self, slice_name: str) -> Set[str]:
@@ -223,8 +234,12 @@ class PolicyUpdater:
             "goal_flag": 0.2 * update_sign,
 
             # Success history should be reinforced
-            # Use direct reward scaling for success_count
-            "success_count": reward * 0.1 if reward > 0 else reward * 0.01,
+            # Use configurable scale factors for success_count updates
+            "success_count": (
+                reward * self.success_count_success_scale
+                if reward > 0
+                else reward * self.success_count_failure_scale
+            ),
 
             # Chain depth depends on strategy
             "chain_depth": 0.01 * update_sign,
@@ -362,4 +377,6 @@ __all__ = [
     "PolicyUpdateResult",
     "PolicyUpdater",
     "SLICE_FEATURE_MASKS",
+    "SUCCESS_COUNT_SUCCESS_SCALE",
+    "SUCCESS_COUNT_FAILURE_SCALE",
 ]

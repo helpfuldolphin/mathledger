@@ -572,7 +572,13 @@ class RFLRunner:
             # Update policy weights based on verified count (graded reward)
             # Use verified_count as a graded signal instead of binary success
             verified_count = attestation.metadata.get("verified_count", 0)
-            attempted_count = attestation.metadata.get("attempted_count", max(1, verified_count))
+            # Fallback for attempted_count: use max(1, verified_count) when not provided.
+            # This ensures attempted_count >= 1 (prevents division by zero) and is at least
+            # as large as verified_count (you can't verify more proofs than you attempt).
+            attempted_count = attestation.metadata.get(
+                "attempted_count",
+                max(1, verified_count)  # Default: at least 1, at least verified_count
+            )
             target_verified = 7  # Match the success threshold for slice_uplift_proto
             
             # Track success history for the candidate hash from this cycle
