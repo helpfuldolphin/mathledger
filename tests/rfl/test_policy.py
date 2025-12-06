@@ -18,7 +18,6 @@ from __future__ import annotations
 import hashlib
 import json
 import pytest
-from typing import Dict
 
 from rfl.policy.features import (
     extract_features,

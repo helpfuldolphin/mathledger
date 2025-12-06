@@ -357,10 +357,16 @@ def _count_connectives(formula: str) -> float:
     """
     Count logical connectives in formula.
 
-    Connectives: ->, <->, &, |, ~, ^, v (depending on notation)
+    Supports both ASCII notation (e.g., ->, &, |) and Unicode notation
+    (e.g., ∧, ∨, ¬, →). This allows the feature extractor to work with
+    formulas regardless of which notation system they use.
     """
-    connectives = ['->','<->','&','|','~','^','v','∧','∨','¬','→','↔']
+    # ASCII connectives (common in text-based systems)
+    ascii_connectives = ['->','<->','&','|','~','^','v']
+    # Unicode connectives (common in mathematical notation)
+    unicode_connectives = ['∧','∨','¬','→','↔']
+    all_connectives = ascii_connectives + unicode_connectives
     count = 0
-    for conn in connectives:
+    for conn in all_connectives:
         count += formula.count(conn)
     return float(count)

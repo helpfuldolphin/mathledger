@@ -260,7 +260,7 @@ def run_experiment(
 ):
     """Main function to run the uplift experiment."""
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
-    print(f"PHASE II - NOT USED IN PHASE I")
+    print(f"PHASE II \u2014 NOT USED IN PHASE I")
 
     # 1. Setup
     out_dir.mkdir(exist_ok=True, parents=True)
@@ -351,7 +351,7 @@ def run_experiment(
                 "item": chosen_item,
                 "result": str(mock_result),
                 "success": success,
-                "label": "PHASE II - NOT USED IN PHASE I",
+                "label": "PHASE II \u2014 NOT USED IN PHASE I",
             }
             ht_series.append(telemetry_record)
             results_f.write(json.dumps(telemetry_record) + "\n")
@@ -378,7 +378,7 @@ def run_experiment(
     ht_series_hash = hash_string(ht_series_str)
 
     manifest = {
-        "label": "PHASE II - NOT USED IN PHASE I",
+        "label": "PHASE II \u2014 NOT USED IN PHASE I",
         "slice": slice_name,
         "mode": mode,
         "cycles": cycles,
