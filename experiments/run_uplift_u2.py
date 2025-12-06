@@ -24,6 +24,7 @@
 import argparse
 import hashlib
 import json
+import os
 import sys
 import subprocess
 from pathlib import Path
@@ -57,6 +58,13 @@ from experiments.u2_calibration import (
     CalibrationNotFoundError as CalibNotFoundError,
     CalibrationInvalidError,
     check_calibration_exists,
+)
+
+# Phase II Verbose Formatter (verbose_formatter)
+from experiments.verbose_formatter import (
+    format_verbose_cycle,
+    parse_verbose_fields,
+    DEFAULT_VERBOSE_FIELDS,
 )
 
 from experiments.u2.runner import (
@@ -197,6 +205,8 @@ def run_experiment(
     trace_events: Optional[set] = None,
     require_calibration: bool = False,
     calibration_dir: Optional[Path] = None,
+    verbose_cycles: bool = False,
+    verbose_fields: Optional[List[str]] = None,
 ):
     """
     Main function to run the uplift experiment with snapshot support.
@@ -217,6 +227,8 @@ def run_experiment(
         snapshot_keep: Number of snapshots to keep (rotation policy, 0 = no rotation)
         require_calibration: If True, require valid calibration before running
         calibration_dir: Directory containing calibration results (default: results/uplift_u2/calibration)
+        verbose_cycles: If True, enable enhanced cycle-by-cycle logging
+        verbose_fields: List of fields to include in verbose output (None = default fields)
     """
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
     print(f"PHASE II — NOT USED IN PHASE I")
@@ -403,7 +415,36 @@ def run_experiment(
                     local_trace_ctx.end_cycle(i)
                 
                 # Progress output
-                print(f"Cycle {i+1}/{cycles}: Chose '{result.item}', Success: {result.success}")
+                if verbose_cycles:
+                    # Enhanced verbose output with configurable fields
+                    if verbose_fields is None:
+                        # Default fields
+                        verbose_fields_to_use = DEFAULT_VERBOSE_FIELDS
+                    else:
+                        verbose_fields_to_use = verbose_fields
+                    
+                    # Prepare data dict for formatter
+                    verbose_data = {
+                        "cycle": i + 1,
+                        "mode": result.mode,
+                        "success": result.success,
+                        "item": result.item,
+                        "label": "PHASE_II",
+                        "slice": result.slice_name,
+                        "seed": result.seed,
+                        "result": str(result.result),
+                    }
+                    
+                    # Add item hash prefix if item is long
+                    if len(result.item) > 8:
+                        item_hash = hashlib.sha256(result.item.encode()).hexdigest()
+                        verbose_data["item_hash_prefix"] = item_hash[:8]
+                    
+                    verbose_line = format_verbose_cycle(verbose_fields_to_use, verbose_data)
+                    print(f"VERBOSE: {verbose_line}")
+                else:
+                    # Default concise output
+                    print(f"Cycle {i+1}/{cycles}: Chose '{result.item}', Success: {result.success}")
                 
                 # Maybe save snapshot (handled internally by runner)
                 snapshot_path = runner.maybe_save_snapshot()
@@ -612,6 +653,18 @@ Exit Codes:
         default=None,
         help="Directory containing calibration results (default: results/uplift_u2/calibration)."
     )
+    
+    # Verbose cycles (developer mode)
+    parser.add_argument(
+        "--verbose-cycles",
+        action="store_true",
+        help=(
+            "Enable enhanced cycle-by-cycle logging with configurable fields. "
+            "Fields can be customized via U2_VERBOSE_FIELDS environment variable "
+            "(comma-separated, e.g., 'cycle,mode,success,item,label,item_hash_prefix'). "
+            "Default fields: cycle,mode,success,item"
+        )
+    )
 
     args = parser.parse_args()
 
@@ -659,6 +712,15 @@ Exit Codes:
     
     # Parse calibration directory
     calibration_dir = Path(args.calibration_dir) if args.calibration_dir else None
+    
+    # Parse verbose fields from environment
+    verbose_fields = None
+    if args.verbose_cycles:
+        verbose_fields = parse_verbose_fields()
+        if verbose_fields:
+            print(f"INFO: Verbose fields configured: {', '.join(verbose_fields)}")
+        else:
+            print(f"INFO: Verbose cycles enabled with default fields")
 
     run_experiment(
         slice_name=args.slice,
@@ -675,6 +737,8 @@ Exit Codes:
         trace_events=trace_events,
         require_calibration=args.require_calibration,
         calibration_dir=calibration_dir,
+        verbose_cycles=args.verbose_cycles,
+        verbose_fields=verbose_fields,
     )
 
 if __name__ == "__main__":
