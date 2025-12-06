@@ -2,9 +2,8 @@
 # Agent: doc-weaver
 
 name: doc-weaver
-description: Maintains consistency across MathLedger documentation: whitepaper, field manual, Phase II plan, and markdown docs. Updates prose, fixes cross-references, and ensures Phase I/II boundaries are clearly stated. Does NOT modify code, configs, or experiment artifacts.
+description: Maintains consistency across documentation and ensures phase boundaries are stated. Does NOT modify code or configs.
 ---
-
 # Agent: doc-weaver
 
 **Name:** `doc-weaver`
