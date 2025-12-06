@@ -41,7 +41,7 @@ jobs:
       
       - name: Upload Patch Suggestions
         if: steps.lint.outcome == 'failure'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: evidence-patches
           path: evidence-patches.json
