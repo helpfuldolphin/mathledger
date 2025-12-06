@@ -1,28 +1,156 @@
-# PHASE II — NOT USED IN PHASE I
-# Config for U2 Uplift Experiments
-version: 2.0
+# Phase II uplift slices — not used in Phase I evidence.
+#
+# This file defines curriculum slices for U2 Uplift Experiments.
+# These slices are SEPARATE from Phase I slices and must NOT be used
+# to claim Phase I evidence.
+#
+# Cross-reference: experiments/prereg/PREREG_UPLIFT_U2.yaml
+version: 2
 
-slices:
-  arithmetic_simple:
-    description: "Focuses on basic arithmetic."
-    items:
-      - "1 + 1"
-      - "2 - 1"
-      - "3 * 2"
-      - "4 / 2"
-      - "5 + 3"
-      - "6 - 4"
-      - "8 * 1"
-      - "9 / 3"
-    prereg_hash: "d8e8fca2dc0f896fd7cb4cb0031ba249" # Dummy hash for preregistered data
+# Phase II system configuration for propositional logic uplift experiments
+systems:
+  pl:
+    description: Phase II uplift slices for propositional logic (atoms & depth bounded)
+    active: slice_uplift_goal
+    invariants:
+      monotonic_axes:
+      - atoms
+      - depth_max
+      attestation_required: true
+      attestation_window_minutes: 60
+    slices:
+    # Slice for goal-hit success metric experiments
+    # Smallest parameters: atoms=3, depth_max=4
+    # Target: measurable uplift from goal-directed ordering
+    - name: slice_uplift_goal
+      params:
+        atoms: 3
+        depth_max: 4
+        breadth_max: 5
+        total_max: 20
+        formula_pool: 10
+        axiom_instances: 12
+        timeout_s: 0.5
+        lean_timeout_s: 0.0
+      gates:
+        coverage:
+          ci_lower_min: 0.01
+          sample_min: 1
+          require_attestation: false
+        abstention:
+          max_rate_pct: 100.0
+          max_mass: 1000
+        velocity:
+          min_pph: 0.01
+          stability_cv_max: 1.0
+          window_minutes: 1
+        caps:
+          min_attempt_mass: 1
+          min_runtime_minutes: 0.001
+          backlog_max: 1.0
+      metadata:
+        phase: "II"
+        prereg_ref: "slice_uplift_goal"
+        success_metric: "goal_hit"
 
-  algebra_expansion:
-    description: "Focuses on algebraic expansion."
-    items:
-      - "2 * (x + 1)"
-      - "a * (b - c)"
-      - "(x + y) * (x - y)"
-      - "3 * (a + b + c)"
-      - "-(x - y)"
-      - "(a+b)**2"
-    prereg_hash: "c157a79031e1c40f85931829bc5fc552" # Dummy hash
+    # Slice for density/sparse success metric experiments
+    # Same atoms=3, higher depth_max=5 (monotonic increase)
+    # Target: measurable uplift from density optimization
+    - name: slice_uplift_sparse
+      params:
+        atoms: 3
+        depth_max: 5
+        breadth_max: 8
+        total_max: 40
+        formula_pool: 12
+        axiom_instances: 15
+        timeout_s: 0.5
+        lean_timeout_s: 0.0
+      gates:
+        coverage:
+          ci_lower_min: 0.01
+          sample_min: 1
+          require_attestation: false
+        abstention:
+          max_rate_pct: 100.0
+          max_mass: 1000
+        velocity:
+          min_pph: 0.01
+          stability_cv_max: 1.0
+          window_minutes: 1
+        caps:
+          min_attempt_mass: 1
+          min_runtime_minutes: 0.001
+          backlog_max: 1.0
+      metadata:
+        phase: "II"
+        prereg_ref: "slice_uplift_sparse"
+        success_metric: "density"
+
+    # Slice for chain-length success metric experiments
+    # Increased atoms=4 (monotonic from atoms=3), depth_max=5
+    # Target: measurable uplift from chain-building heuristics
+    - name: slice_uplift_tree
+      params:
+        atoms: 4
+        depth_max: 5
+        breadth_max: 10
+        total_max: 50
+        formula_pool: 15
+        axiom_instances: 18
+        timeout_s: 0.5
+        lean_timeout_s: 0.0
+      gates:
+        coverage:
+          ci_lower_min: 0.01
+          sample_min: 1
+          require_attestation: false
+        abstention:
+          max_rate_pct: 100.0
+          max_mass: 1000
+        velocity:
+          min_pph: 0.01
+          stability_cv_max: 1.0
+          window_minutes: 1
+        caps:
+          min_attempt_mass: 1
+          min_runtime_minutes: 0.001
+          backlog_max: 1.0
+      metadata:
+        phase: "II"
+        prereg_ref: "slice_uplift_tree"
+        success_metric: "chain_length"
+
+    # Slice for multi-goal/dependency success metric experiments
+    # Largest parameters: atoms=4, depth_max=6 (monotonic increase)
+    # Target: measurable uplift from dependency-aware ordering
+    - name: slice_uplift_dependency
+      params:
+        atoms: 4
+        depth_max: 6
+        breadth_max: 12
+        total_max: 60
+        formula_pool: 18
+        axiom_instances: 20
+        timeout_s: 0.5
+        lean_timeout_s: 0.0
+      gates:
+        coverage:
+          ci_lower_min: 0.01
+          sample_min: 1
+          require_attestation: false
+        abstention:
+          max_rate_pct: 100.0
+          max_mass: 1000
+        velocity:
+          min_pph: 0.01
+          stability_cv_max: 1.0
+          window_minutes: 1
+        caps:
+          min_attempt_mass: 1
+          min_runtime_minutes: 0.001
+          backlog_max: 1.0
+      metadata:
+        phase: "II"
+        prereg_ref: "slice_uplift_dependency"
+        success_metric: "multi_goal"
