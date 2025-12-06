@@ -177,13 +177,18 @@ def run_uplift_u2(
     rfl_path = out_dir / "rfl.jsonl"
     manifest_path = out_dir / "experiment_manifest.json"
 
-    # Generate deterministic seed schedule shared by both modes
+    # Generate deterministic seed schedule from (global_seed, slice_name, cycle_index)
+    # This is stored in the manifest for audit/reproducibility purposes.
+    # Note: CycleRunner uses its own internal deterministic seeding (MDAP_EPOCH_SEED + cycle_index),
+    # which ensures both baseline and RFL modes process the same sequence of cycles deterministically.
+    # The seed_schedule here provides an additional hash-based schedule for reference.
     seed_schedule = generate_seed_schedule(seed, slice_name, cycles)
 
     # Record start time
     started_at = datetime.now(timezone.utc).isoformat()
 
     # --- Run Baseline Mode ---
+    # Both modes run the same cycle indices (0 to cycles-1), ensuring matched execution.
     print("Running baseline mode...")
     try:
         baseline_runner = CycleRunner(
@@ -199,6 +204,7 @@ def run_uplift_u2(
         raise
 
     # --- Run RFL Mode ---
+    # Uses same slice and cycle count as baseline for paired comparison.
     print("\nRunning RFL mode...")
     try:
         rfl_runner = CycleRunner(
