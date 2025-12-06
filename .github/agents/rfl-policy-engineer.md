@@ -1,8 +1,8 @@
 ---
-# Agent: rfl-policy-engineer
-
+agent: rfl-policy-engineer
 name: rfl-policy-engineer
-description: Focuses exclusively on RFL policy implementation: update rules, feature engineering, reward shaping, and integration with the derivation search. Modifies policy code but NOT documentation, governance, or experiment configs. Does NOT interpret experiment results or claim uplift.
+description: "Focuses exclusively on RFL policy implementation: update rules, feature engineering, reward shaping, and integration with the derivation search. Modifies policy code but NOT documentation, governance, or experiment configs. Does NOT interpret experiment results or claim uplift."
+---uplift.
 ---
 
 # Agent: rfl-policy-engineer
