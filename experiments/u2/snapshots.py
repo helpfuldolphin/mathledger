@@ -158,7 +158,9 @@ def rotate_snapshots(snapshot_dir: Path, keep_count: int = 5) -> List[Path]:
         try:
             path.unlink()
             deleted.append(path)
-        except OSError:
-            pass  # Ignore deletion errors
+        except OSError as e:
+            # Ignore deletion errors (e.g., file already deleted, permission denied)
+            # This is expected in concurrent or cleanup scenarios
+            pass
     
     return deleted

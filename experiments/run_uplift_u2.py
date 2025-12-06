@@ -613,7 +613,6 @@ def orchestrate_run(
         snapshot_dir=None,
         restore_from=None,
         trace_log_path=None,
-        trace_ctx=None,
         snapshot_keep=5,
         trace_events=None,
     )
@@ -634,7 +633,6 @@ def orchestrate_run(
         snapshot_dir=None,
         restore_from=None,
         trace_log_path=None,
-        trace_ctx=None,
         snapshot_keep=5,
         trace_events=None,
     )

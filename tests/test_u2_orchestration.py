@@ -7,9 +7,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 # Import functions to test
-import sys
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
+# Note: Tests rely on PYTHONPATH being set to repository root
 from experiments.run_uplift_u2 import (
     build_u2_run_summary,
     summarize_u2_run_for_evidence,
