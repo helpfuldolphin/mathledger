@@ -156,8 +156,11 @@ def verify_determinism(
             result["errors"].append(f"Unknown mode: {mode}")
             return result
 
+        # NOTE: eval() mirrors run_uplift_u2.py's mock execution for determinism replay.
+        # Input is from controlled config (curriculum_uplift_phase2.yaml), not user input.
+        # Only arithmetic_simple slice uses eval; items are simple arithmetic like "1 + 1".
         mock_result = (
-            eval(chosen_item)
+            eval(chosen_item)  # nosec B307 - controlled input from config
             if slice_name == "arithmetic_simple"
             else f"Expanded({chosen_item})"
         )

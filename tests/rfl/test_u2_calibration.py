@@ -361,8 +361,8 @@ class TestU2CalibrationDeterminism:
         """Test that same seed produces identical results."""
         # Run calibration twice with same seed
         results = []
-        for _ in range(2):
-            subprocess.run(
+        for i in range(2):
+            result = subprocess.run(
                 [
                     sys.executable,
                     str(PROJECT_ROOT / "experiments" / "run_uplift_u2.py"),
@@ -374,6 +374,7 @@ class TestU2CalibrationDeterminism:
                 text=True,
                 cwd=str(PROJECT_ROOT),
             )
+            assert result.returncode == 0, f"Run {i+1} failed: {result.stderr}"
 
             summary_path = (
                 PROJECT_ROOT
@@ -400,7 +401,7 @@ class TestU2CalibrationDeterminism:
         """Test that different seeds produce different results."""
         hashes = []
         for seed in [111, 222]:
-            subprocess.run(
+            result = subprocess.run(
                 [
                     sys.executable,
                     str(PROJECT_ROOT / "experiments" / "run_uplift_u2.py"),
@@ -412,6 +413,7 @@ class TestU2CalibrationDeterminism:
                 text=True,
                 cwd=str(PROJECT_ROOT),
             )
+            assert result.returncode == 0, f"Calibration with seed {seed} failed: {result.stderr}"
 
             summary_path = (
                 PROJECT_ROOT
