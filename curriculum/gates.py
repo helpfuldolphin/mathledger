@@ -270,7 +270,11 @@ class CurriculumSlice:
                 raise ValueError(f"Curriculum slice missing required field '{field_name}'")
         gates = SliceGates.from_dict(data['gates'], data['name'])
         params = dict(data['params'])
-        metadata = {k: v for k, v in data.items() if k not in {'name', 'params', 'gates', 'completed_at'}}
+        # Extract explicit metadata field if present, otherwise collect remaining fields
+        if 'metadata' in data:
+            metadata = dict(data['metadata'])
+        else:
+            metadata = {k: v for k, v in data.items() if k not in {'name', 'params', 'gates', 'completed_at'}}
         completed_at = data.get('completed_at')
         return cls(
             name=data['name'],
@@ -340,25 +344,47 @@ class CurriculumSystem:
         raise ValueError("No incomplete slices available to mark as active")
 
     def _validate_monotonicity(self) -> None:
+        """
+        Validate that slice parameters increase monotonically within each phase.
+        
+        Monotonicity is enforced:
+        - Within Phase I slices (slices without metadata.phase = "II")
+        - Within Phase II slices (slices with metadata.phase = "II")
+        
+        But NOT across the Phase I/II boundary, since Phase II slices are
+        independent experiments with their own progression.
+        """
         if not self.monotonic_axes:
             return
-        prior_values: Optional[Tuple[int, ...]] = None
+        
+        # Separate slices by phase
+        phase1_slices = []
+        phase2_slices = []
         for slice_obj in self.slices:
-            current_values: List[int] = []
-            for axis in self.monotonic_axes:
-                value = slice_obj.params.get(axis)
-                if value is None:
-                    raise ValueError(f"Slice '{slice_obj.name}' missing monotonic axis '{axis}'")
-                current_values.append(int(value))
-            current_tuple = tuple(current_values)
-            if prior_values is not None:
-                for prev, curr, axis in zip(prior_values, current_tuple, self.monotonic_axes):
-                    if curr < prev:
-                        raise ValueError(
-                            f"Slice '{slice_obj.name}' violates monotonicity on axis '{axis}': "
-                            f"{prev} -> {curr}"
-                        )
-            prior_values = current_tuple
+            if slice_obj.metadata.get('phase') == 'II':
+                phase2_slices.append(slice_obj)
+            else:
+                phase1_slices.append(slice_obj)
+        
+        # Validate monotonicity within each phase separately
+        for phase_slices, phase_name in [(phase1_slices, "Phase I"), (phase2_slices, "Phase II")]:
+            prior_values: Optional[Tuple[int, ...]] = None
+            for slice_obj in phase_slices:
+                current_values: List[int] = []
+                for axis in self.monotonic_axes:
+                    value = slice_obj.params.get(axis)
+                    if value is None:
+                        raise ValueError(f"Slice '{slice_obj.name}' missing monotonic axis '{axis}'")
+                    current_values.append(int(value))
+                current_tuple = tuple(current_values)
+                if prior_values is not None:
+                    for prev, curr, axis in zip(prior_values, current_tuple, self.monotonic_axes):
+                        if curr < prev:
+                            raise ValueError(
+                                f"Slice '{slice_obj.name}' ({phase_name}) violates monotonicity on axis '{axis}': "
+                                f"{prev} -> {curr}"
+                            )
+                prior_values = current_tuple
 
     @property
     def active_slice(self) -> CurriculumSlice:
@@ -882,16 +908,29 @@ class GateEvaluator:
         )
 
 
-def load(system_slug: str) -> CurriculumSystem:
+def load(system_slug: str, include_phase2: bool = True) -> CurriculumSystem:
     """
     Load curriculum configuration and return a CurriculumSystem dataclass.
+    
+    By default, this loads both Phase I slices from curriculum.yaml and
+    Phase II uplift slices from curriculum_uplift_phase2.yaml. The Phase II
+    slices are appended to the slices list and can be selected by name.
+    
+    Args:
+        system_slug: The system identifier (e.g., "pl")
+        include_phase2: If True (default), also load Phase II uplift slices.
+                        Set to False to load only Phase I slices.
+    
+    Note:
+        Phase II slices are namespaced separately and labeled with
+        metadata.phase = "II". They are NOT used in Phase I evidence.
     """
     # Go up 2 levels from curriculum/gates.py to project root, then into config/
-    config_path = os.path.join(
+    config_dir = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
         "config",
-        "curriculum.yaml",
     )
+    config_path = os.path.join(config_dir, "curriculum.yaml")
 
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Curriculum config not found: {config_path}")
@@ -899,7 +938,32 @@ def load(system_slug: str) -> CurriculumSystem:
     with open(config_path, 'r', encoding='utf-8') as handle:
         config = yaml.safe_load(handle.read())
 
+    # Optionally load Phase II uplift slices
+    if include_phase2:
+        phase2_path = os.path.join(config_dir, "curriculum_uplift_phase2.yaml")
+        if os.path.exists(phase2_path):
+            with open(phase2_path, 'r', encoding='utf-8') as handle:
+                phase2_config = yaml.safe_load(handle.read())
+            
+            # Merge Phase II slices into the config if system exists in both
+            if (phase2_config and 
+                'systems' in phase2_config and 
+                system_slug in phase2_config['systems'] and
+                'systems' in config and 
+                system_slug in config['systems']):
+                
+                phase2_slices = phase2_config['systems'][system_slug].get('slices', [])
+                if phase2_slices:
+                    # Append Phase II slices to Phase I slices
+                    # Note: monotonicity is NOT validated across Phase I/II boundary
+                    # because Phase II slices are independent experiments
+                    config['systems'][system_slug].setdefault('slices', []).extend(phase2_slices)
+
     return CurriculumSystem.from_config(system_slug, config)
+
+
+# Alias for backward compatibility
+load_curriculum_config = load
 
 
 def should_ratchet(
