@@ -16,30 +16,97 @@ import hashlib
 import json
 import random
 import sys
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import yaml
+
+from experiments.u2_safe_eval import safe_eval_arithmetic
+
+
+@dataclass
+class TelemetryRecord:
+    """
+    Represents a single cycle's telemetry in a Phase II U2 experiment.
+
+    This dataclass captures all relevant information for a single experiment
+    cycle, including the selected item, execution result, and success status.
+
+    Attributes:
+        cycle: The zero-indexed cycle number.
+        slice: The experiment slice name (e.g., 'arithmetic_simple').
+        mode: The execution mode ('baseline' or 'rfl').
+        seed: The random seed used for this cycle.
+        item: The problem item that was selected and executed.
+        result: String representation of the execution result.
+        success: Whether the execution was successful per the slice metric.
+        label: Phase label for artifact tracking.
+    """
+
+    cycle: int
+    slice: str
+    mode: str
+    seed: int
+    item: str
+    result: str
+    success: bool
+    label: str = "PHASE II — NOT USED IN PHASE I"
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Convert to dictionary for JSON serialization.
+
+        Returns:
+            A dict with all fields, preserving JSON key names.
+        """
+        return asdict(self)
 
 # --- Slice-specific Success Metrics ---
 # These are passed as pure functions. In a real scenario, these might be
 # dynamically imported or otherwise more complex. For this standalone script,
 # we define them here.
 
+
 def metric_arithmetic_simple(item: str, result: Any) -> bool:
-    """Success is when the python eval matches the expected result."""
+    """
+    Check if arithmetic expression evaluation matches the expected result.
+
+    Uses safe AST-based evaluation instead of eval() for security.
+
+    Args:
+        item: An arithmetic expression string (e.g., "1 + 2 * 3").
+        result: The expected numeric result.
+
+    Returns:
+        True if safe evaluation of item equals result, False otherwise.
+    """
     try:
-        # A mock 'correct' result is simply the eval of the string.
-        return eval(item) == result
-    except Exception:
+        evaluated = safe_eval_arithmetic(item)
+        if evaluated is None:
+            return False
+        return evaluated == result
+    except (ValueError, SyntaxError):
         return False
 
+
 def metric_algebra_expansion(item: str, result: Any) -> bool:
-    """A mock success metric for algebra. We'll just use string length."""
-    # This is a placeholder. A real metric would be much more complex.
+    """
+    A mock success metric for algebra based on string length expansion.
+
+    This is a placeholder metric. A real implementation would perform
+    proper algebraic expansion verification.
+
+    Args:
+        item: The original algebra expression.
+        result: The expanded result.
+
+    Returns:
+        True if the result is longer than the original expression.
+    """
     return len(str(result)) > len(item)
 
-METRIC_DISPATCHER = {
+METRIC_DISPATCHER: Dict[str, Callable[[str, Any], bool]] = {
     "arithmetic_simple": metric_arithmetic_simple,
     "algebra_expansion": metric_algebra_expansion,
 }
@@ -48,23 +115,59 @@ METRIC_DISPATCHER = {
 # --- RFL Policy Stubs ---
 # Mock implementation of the RFL policy scoring and update loop.
 
+
 class RFLPolicy:
-    """A mock RFL policy model."""
-    def __init__(self, seed: int):
-        self.scores = {}
+    """
+    A mock RFL (Reflexive Formal Learning) policy model.
+
+    This is a simplified policy that scores items based on past success
+    feedback. It uses a simple multiplicative update rule.
+
+    Attributes:
+        scores: Dictionary mapping items to their current scores.
+        rng: Random number generator for initializing new item scores.
+    """
+
+    def __init__(self, seed: int) -> None:
+        """
+        Initialize the RFL policy.
+
+        Args:
+            seed: Random seed for deterministic score initialization.
+        """
+        self.scores: Dict[str, float] = {}
         self.rng = random.Random(seed)
 
     def score(self, items: List[str]) -> List[float]:
-        """Scores items. Higher is better."""
-        # Initialize scores if not seen before
+        """
+        Score a list of items. Higher scores indicate higher priority.
+
+        Items not seen before are assigned a random initial score.
+
+        Args:
+            items: List of item strings to score.
+
+        Returns:
+            List of float scores corresponding to each input item.
+        """
         for item in items:
             if item not in self.scores:
                 self.scores[item] = self.rng.random()
         return [self.scores[item] for item in items]
 
-    def update(self, item: str, success: bool):
-        """Updates the policy based on feedback."""
-        # Simple update rule: reward success, penalize failure.
+    def update(self, item: str, success: bool) -> None:
+        """
+        Update the policy based on execution feedback.
+
+        Uses a simple multiplicative update rule:
+        - Success: multiply score by 1.1
+        - Failure: multiply score by 0.9
+        Scores are clamped to [0.01, 0.99].
+
+        Args:
+            item: The item that was executed.
+            success: Whether the execution was successful.
+        """
         if success:
             self.scores[item] = self.scores.get(item, 0.5) * 1.1
         else:
@@ -75,8 +178,21 @@ class RFLPolicy:
 
 # --- Core Runner Logic ---
 
+
 def get_config(config_path: Path) -> Dict[str, Any]:
-    """Loads the YAML configuration file."""
+    """
+    Load the YAML configuration file.
+
+    Args:
+        config_path: Path to the YAML configuration file.
+
+    Returns:
+        The parsed configuration dictionary.
+
+    Side-effects:
+        Prints info message to stdout.
+        Exits with code 1 if file not found.
+    """
     print(f"INFO: Loading config from {config_path}")
     if not config_path.exists():
         print(f"ERROR: Config file not found at {config_path}", file=sys.stderr)
@@ -84,14 +200,141 @@ def get_config(config_path: Path) -> Dict[str, Any]:
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
+
 def generate_seed_schedule(initial_seed: int, num_cycles: int) -> List[int]:
-    """Generates a deterministic list of seeds for each cycle."""
+    """
+    Generate a deterministic list of seeds for each cycle.
+
+    Args:
+        initial_seed: The master seed for reproducibility.
+        num_cycles: Number of experiment cycles.
+
+    Returns:
+        A list of integer seeds, one per cycle.
+    """
     rng = random.Random(initial_seed)
     return [rng.randint(0, 2**32 - 1) for _ in range(num_cycles)]
 
+
 def hash_string(data: str) -> str:
-    """Computes the SHA256 hash of a string."""
+    """
+    Compute the SHA256 hash of a string.
+
+    Args:
+        data: The string to hash.
+
+    Returns:
+        Hexadecimal SHA256 digest.
+    """
     return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+
+def _execute_item(chosen_item: str, slice_name: str) -> Any:
+    """
+    Execute a chosen item and return the result.
+
+    Uses safe AST-based evaluation for arithmetic slices.
+
+    Args:
+        chosen_item: The problem item to execute.
+        slice_name: The slice determining execution strategy.
+
+    Returns:
+        The execution result (numeric for arithmetic, string for others).
+    """
+    if slice_name == "arithmetic_simple":
+        return safe_eval_arithmetic(chosen_item)
+    else:
+        return f"Expanded({chosen_item})"
+
+
+def _select_item_baseline(items: List[str], rng: random.Random) -> str:
+    """
+    Select an item using baseline random shuffle strategy.
+
+    Args:
+        items: List of candidate items.
+        rng: Random number generator for this cycle.
+
+    Returns:
+        The selected item (first after shuffle).
+    """
+    ordered_items = list(items)
+    rng.shuffle(ordered_items)
+    return ordered_items[0]
+
+
+def _select_item_rfl(items: List[str], policy: "RFLPolicy") -> str:
+    """
+    Select an item using RFL policy scoring.
+
+    Args:
+        items: List of candidate items.
+        policy: The RFL policy model.
+
+    Returns:
+        The highest-scoring item per policy.
+    """
+    item_scores = policy.score(items)
+    scored_items = sorted(zip(items, item_scores), key=lambda x: x[1], reverse=True)
+    return scored_items[0][0]
+
+
+def _run_single_cycle(
+    cycle_idx: int,
+    cycle_seed: int,
+    items: List[str],
+    slice_name: str,
+    mode: str,
+    policy: Optional["RFLPolicy"],
+    success_metric: Callable[[str, Any], bool],
+) -> TelemetryRecord:
+    """
+    Execute a single experiment cycle.
+
+    Args:
+        cycle_idx: Zero-indexed cycle number.
+        cycle_seed: Random seed for this cycle.
+        items: List of candidate items.
+        slice_name: The experiment slice name.
+        mode: Execution mode ('baseline' or 'rfl').
+        policy: RFL policy (None for baseline mode).
+        success_metric: Function to evaluate success.
+
+    Returns:
+        TelemetryRecord for this cycle.
+
+    Side-effects:
+        Updates RFL policy if in 'rfl' mode.
+    """
+    rng = random.Random(cycle_seed)
+
+    # --- Ordering Step ---
+    if mode == "baseline":
+        chosen_item = _select_item_baseline(items, rng)
+    elif mode == "rfl":
+        chosen_item = _select_item_rfl(items, policy)
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
+
+    # --- Execution & Evaluation ---
+    mock_result = _execute_item(chosen_item, slice_name)
+    success = success_metric(chosen_item, mock_result)
+
+    # --- RFL Policy Update ---
+    if mode == "rfl" and policy is not None:
+        policy.update(chosen_item, success)
+
+    return TelemetryRecord(
+        cycle=cycle_idx,
+        slice=slice_name,
+        mode=mode,
+        seed=cycle_seed,
+        item=chosen_item,
+        result=str(mock_result),
+        success=success,
+    )
+
 
 def run_experiment(
     slice_name: str,
@@ -100,8 +343,32 @@ def run_experiment(
     mode: str,
     out_dir: Path,
     config: Dict[str, Any],
-):
-    """Main function to run the uplift experiment."""
+) -> None:
+    """
+    Run a Phase II U2 uplift experiment.
+
+    This is the main orchestrator function that sets up the experiment,
+    runs all cycles, and writes results and manifest files.
+
+    Args:
+        slice_name: The experiment slice to run (e.g., 'arithmetic_simple').
+        cycles: Number of experiment cycles.
+        seed: Initial random seed for deterministic execution.
+        mode: Execution mode ('baseline' or 'rfl').
+        out_dir: Output directory for results and manifest files.
+        config: Parsed YAML configuration dictionary.
+
+    Side-effects:
+        Creates output directory if needed.
+        Writes results JSONL file.
+        Writes manifest JSON file.
+        Prints progress to stdout.
+        Exits with code 1 on configuration errors.
+
+    Invariants:
+        Assumes config has been loaded via get_config().
+        Assumes slice_name exists in config['slices'].
+    """
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
     print(f"PHASE II — NOT USED IN PHASE I")
 
@@ -120,7 +387,7 @@ def run_experiment(
 
     seed_schedule = generate_seed_schedule(seed, cycles)
     policy = RFLPolicy(seed) if mode == "rfl" else None
-    ht_series = []  # History of Telemetry (Hₜ)
+    ht_series: List[Dict[str, Any]] = []
 
     results_path = out_dir / f"uplift_u2_{slice_name}_{mode}.jsonl"
     manifest_path = out_dir / f"uplift_u2_manifest_{slice_name}_{mode}.json"
@@ -128,47 +395,20 @@ def run_experiment(
     # 2. Main Loop
     with open(results_path, "w") as results_f:
         for i in range(cycles):
-            cycle_seed = seed_schedule[i]
-            rng = random.Random(cycle_seed)
-            
-            # --- Ordering Step ---
-            if mode == "baseline":
-                # Baseline: random shuffle ordering
-                ordered_items = list(items)
-                rng.shuffle(ordered_items)
-                chosen_item = ordered_items[0]
-            elif mode == "rfl":
-                # RFL: use policy scoring
-                item_scores = policy.score(items)
-                scored_items = sorted(zip(items, item_scores), key=lambda x: x[1], reverse=True)
-                chosen_item = scored_items[0][0]
-            else:
-                raise ValueError(f"Unknown mode: {mode}")
-
-            # --- Mock Execution & Evaluation ---
-            # In a real system, this would be a call to the substrate.
-            # Here, we just mock a result.
-            mock_result = eval(chosen_item) if slice_name == "arithmetic_simple" else f"Expanded({chosen_item})"
-            success = success_metric(chosen_item, mock_result)
-
-            # --- RFL Policy Update ---
-            if mode == "rfl":
-                policy.update(chosen_item, success)
-
-            # --- Telemetry Logging ---
-            telemetry_record = {
-                "cycle": i,
-                "slice": slice_name,
-                "mode": mode,
-                "seed": cycle_seed,
-                "item": chosen_item,
-                "result": str(mock_result),
-                "success": success,
-                "label": "PHASE II — NOT USED IN PHASE I",
-            }
-            ht_series.append(telemetry_record)
-            results_f.write(json.dumps(telemetry_record) + "\n")
-            print(f"Cycle {i+1}/{cycles}: Chose '{chosen_item}', Success: {success}")
+            telemetry = _run_single_cycle(
+                cycle_idx=i,
+                cycle_seed=seed_schedule[i],
+                items=items,
+                slice_name=slice_name,
+                mode=mode,
+                policy=policy,
+                success_metric=success_metric,
+            )
+            # Convert to dict for serialization (preserves JSON keys)
+            record_dict = telemetry.to_dict()
+            ht_series.append(record_dict)
+            results_f.write(json.dumps(record_dict) + "\n")
+            print(f"Cycle {i+1}/{cycles}: Chose '{telemetry.item}', Success: {telemetry.success}")
 
     # 3. Manifest Generation
     slice_config_str = json.dumps(slice_config, sort_keys=True)
