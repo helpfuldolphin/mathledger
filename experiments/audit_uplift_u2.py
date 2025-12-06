@@ -313,18 +313,31 @@ def compute_raw_stats(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     abstention_count = 0
 
     for record in records:
-        # Check multiple possible success indicators
-        if record.get("success") is True:
-            success_count += 1
-        elif record.get("status") == "success":
-            success_count += 1
-        elif record.get("proof_found") is True:
+        # Determine success using explicit precedence:
+        # 1. success field (boolean) takes precedence if present
+        # 2. Fall back to status field
+        # 3. Fall back to proof_found field
+        is_success = False
+        if "success" in record:
+            is_success = record.get("success") is True
+        elif "status" in record:
+            is_success = record.get("status") == "success"
+        elif "proof_found" in record:
+            is_success = record.get("proof_found") is True
+
+        if is_success:
             success_count += 1
 
-        # Check abstention
-        if record.get("abstention") is True:
-            abstention_count += 1
-        elif record.get("status") == "abstain":
+        # Determine abstention using explicit precedence:
+        # 1. abstention field (boolean) takes precedence if present
+        # 2. Fall back to status field
+        is_abstention = False
+        if "abstention" in record:
+            is_abstention = record.get("abstention") is True
+        elif "status" in record:
+            is_abstention = record.get("status") == "abstain"
+
+        if is_abstention:
             abstention_count += 1
 
     total = len(records)
