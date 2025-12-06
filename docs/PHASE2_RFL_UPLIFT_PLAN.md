@@ -242,3 +242,75 @@ uv run python experiments/summarize_uplift.py \
 | Phase II Experiments | ❌ Not Run |
 | Uplift Claims | ❌ None (blocked until U2 completes) |
 
+---
+
+## Auto-Generated Reference Tables
+
+> **Note**: The following sections are auto-generated from source files.
+> Do not edit manually. Run `python scripts/doc_sync_phase2.py` to update.
+
+### Curriculum Slices (Auto-Generated)
+
+<!-- BEGIN:AUTOGEN:PHASE2-SLICES -->
+| Slice Name | Description | Items Count | Prereg Hash |
+|------------|-------------|-------------|-------------|
+| `algebra_expansion` | Focuses on algebraic expansion. | 6 | `c157a79031e1c40f...` |
+| `arithmetic_simple` | Focuses on basic arithmetic. | 8 | `d8e8fca2dc0f896f...` |
+<!-- END:AUTOGEN:PHASE2-SLICES -->
+
+### Preregistered Experiments (Auto-Generated)
+
+<!-- BEGIN:AUTOGEN:PHASE2-PREREG -->
+| Experiment ID | Description | Slice Config | Success Metrics |
+|---------------|-------------|--------------|-----------------|
+| `U2_EXP_001` | Experiment to measure uplift in slice A. | `configs/slice_a.json` | goal_hit, sparse_density |
+| `U2_EXP_002` | Experiment to measure uplift in slice B. | `configs/slice_b.json` | chain_success, joint_goal |
+<!-- END:AUTOGEN:PHASE2-PREREG -->
+
+### CLI Usage (Auto-Generated)
+
+<!-- BEGIN:AUTOGEN:PHASE2-CLI -->
+**CLI Arguments:**
+
+```bash
+uv run python experiments/run_uplift_u2.py \
+  --config=<value> \
+  --cycles=100 \
+  --mode=baseline \
+  --out=results/ \
+  --seed=42 \
+  --slice=arithmetic_simple
+```
+
+| Argument | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `--config` | str | No | `config/curriculum_uplift_phase2.yaml` | Path to the curriculum config file. |
+| `--cycles` | int | Yes | — | Number of experiment cycles to run. |
+| `--mode` | str | Yes | — | Execution mode: 'baseline' or 'rfl'. |
+| `--out` | str | Yes | — | Output directory for results and manifest files. |
+| `--seed` | int | Yes | — | Initial random seed for deterministic execution. |
+| `--slice` | str | Yes | — | The experiment slice to run (e.g., 'arithmetic_simple'). |
+<!-- END:AUTOGEN:PHASE2-CLI -->
+
+### Success Metrics (Auto-Generated)
+
+<!-- BEGIN:AUTOGEN:PHASE2-METRICS -->
+| Metric Function | Parameters | Return Type | Description |
+|-----------------|------------|-------------|-------------|
+| `compute_chain_success` | `verified_statements, dependency_graph, chain_target_hash, min_chain_length` | `Tuple[bool, float]` | Computes success based on the length of a verified dependency chain ending at a target. |
+| `compute_goal_hit` | `verified_statements, target_hashes, min_total_verified` | `Tuple[bool, float]` | Computes success based on hitting a minimum number of specific target goals. |
+| `compute_multi_goal_success` | `verified_hashes, required_goal_hashes` | `Tuple[bool, float]` | Computes success based on verifying a set of required goals. |
+| `compute_sparse_success` | `verified_count, attempted_count, min_verified` | `Tuple[bool, float]` | Computes success based on a simple minimum count of verified statements. |
+<!-- END:AUTOGEN:PHASE2-METRICS -->
+
+### Implementation Status (Auto-Generated)
+
+<!-- BEGIN:AUTOGEN:PHASE2-STATUS -->
+| Component | Status |
+|-----------|--------|
+| Curriculum Slices | ✅ 2 slices defined |
+| Preregistration | ✅ 2 experiments |
+| U2 Runner | ✅ Implemented |
+| Success Metrics | ✅ Implemented |
+<!-- END:AUTOGEN:PHASE2-STATUS -->
+
