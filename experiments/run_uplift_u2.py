@@ -17,9 +17,19 @@ import json
 import random
 import sys
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import yaml
+
+# Import Phase II policy modules
+from rfl.policy.update import (
+    PolicyStateSnapshot,
+    PolicyUpdater,
+    LearningScheduleConfig,
+    summarize_policy_state,
+    init_cold_start,
+    init_from_file,
+)
 
 # --- Slice-specific Success Metrics ---
 # These are passed as pure functions. In a real scenario, these might be
@@ -73,6 +83,135 @@ class RFLPolicy:
         self.scores[item] = max(0.01, min(self.scores[item], 0.99))
 
 
+class RFLPolicyV2:
+    """
+    Phase II RFL policy with full telemetry and safety guards.
+    
+    PHASE II — NOT USED IN PHASE I
+    """
+    def __init__(
+        self,
+        seed: int,
+        slice_name: str,
+        schedule: Optional[LearningScheduleConfig] = None,
+        initial_state: Optional[PolicyStateSnapshot] = None,
+    ):
+        """
+        Initialize the V2 policy.
+        
+        Args:
+            seed: Random seed for determinism
+            slice_name: Name of the curriculum slice
+            schedule: Learning schedule config (uses defaults if None)
+            initial_state: Optional warm-start state
+        """
+        self.seed = seed
+        self.slice_name = slice_name
+        self.schedule = schedule or LearningScheduleConfig()
+        self.rng = random.Random(seed)
+        
+        # Initialize state (cold start or warm start)
+        if initial_state is not None:
+            self.state = initial_state
+        else:
+            self.state = init_cold_start(slice_name, self.schedule, seed)
+        
+        # Create updater
+        self.updater = PolicyUpdater(self.schedule, self.state)
+        
+        # Internal score cache for deterministic tie-breaking
+        self._score_cache: Dict[str, float] = {}
+        self._snapshot_history: List[PolicyStateSnapshot] = []
+
+    def score(self, items: List[str]) -> List[float]:
+        """
+        Score items using current policy weights.
+        
+        For Phase II, we use a simple linear model:
+            score = w_len * len(item) + w_success * success_rate
+        
+        Returns scores in same order as items.
+        """
+        scores = []
+        for item in items:
+            # Compute basic features
+            item_len = len(item)
+            item_hash = hashlib.sha256(item.encode('utf-8')).hexdigest()
+            
+            # Get weights (default to 0 if not set)
+            w_len = self.state.weights.get("len", 0.0)
+            w_success = self.state.weights.get("success", 0.0)
+            
+            # Compute success rate from cache
+            success_rate = self._score_cache.get(item_hash, 0.5)
+            
+            # Linear score
+            score = w_len * item_len + w_success * success_rate
+            
+            # Add small deterministic noise for tie-breaking
+            # Use item hash to ensure determinism
+            noise = (int(item_hash[:8], 16) % 1000) / 100000.0
+            score += noise
+            
+            scores.append(score)
+        
+        return scores
+
+    def update(self, item: str, success: bool):
+        """
+        Update policy based on verifiable feedback.
+        
+        Args:
+            item: The item that was evaluated
+            success: Whether the evaluation succeeded
+        """
+        item_hash = hashlib.sha256(item.encode('utf-8')).hexdigest()
+        
+        # Update success rate cache
+        old_rate = self._score_cache.get(item_hash, 0.5)
+        alpha = 0.1  # Exponential moving average
+        new_rate = (1 - alpha) * old_rate + alpha * (1.0 if success else 0.0)
+        self._score_cache[item_hash] = new_rate
+        
+        # Compute gradient based on success
+        gradient = 1.0 if success else -1.0
+        
+        # Apply update through the updater (with safety guards)
+        gradients = {
+            "success": gradient * 0.1,  # Small update for success weight
+            "len": gradient * -0.01,    # Slight preference for shorter on success
+        }
+        self.state = self.updater.batch_update(gradients)
+
+    def get_state(self) -> PolicyStateSnapshot:
+        """Get current policy state snapshot."""
+        return self.state
+
+    def get_summary(self) -> Dict[str, Any]:
+        """Get telemetry summary."""
+        return summarize_policy_state(self.state)
+
+    def take_snapshot(self) -> PolicyStateSnapshot:
+        """Take and store a snapshot of current state."""
+        snapshot = PolicyStateSnapshot(
+            slice_name=self.state.slice_name,
+            weights=dict(self.state.weights),
+            update_count=self.state.update_count,
+            learning_rate=self.state.learning_rate,
+            seed=self.state.seed,
+            clamped=self.state.clamped,
+            clamp_count=self.state.clamp_count,
+            phase=self.state.phase,
+        )
+        self._snapshot_history.append(snapshot)
+        return snapshot
+
+    def export_state(self, path: Path):
+        """Export current state to file."""
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self.state.to_dict(), f, indent=2)
+
+
 # --- Core Runner Logic ---
 
 def get_config(config_path: Path) -> Dict[str, Any]:
@@ -100,13 +239,29 @@ def run_experiment(
     mode: str,
     out_dir: Path,
     config: Dict[str, Any],
+    policy_in: Optional[Path] = None,
+    policy_out: Optional[Path] = None,
 ):
-    """Main function to run the uplift experiment."""
+    """
+    Main function to run the uplift experiment.
+    
+    PHASE II — NOT USED IN PHASE I
+    
+    Args:
+        slice_name: Name of the experiment slice
+        cycles: Number of cycles to run
+        seed: Initial random seed
+        mode: 'baseline' or 'rfl'
+        out_dir: Output directory
+        config: Configuration dictionary
+        policy_in: Optional path to warm-start policy snapshot
+        policy_out: Optional path to export final policy snapshot
+    """
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
     print(f"PHASE II — NOT USED IN PHASE I")
 
     # 1. Setup
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
     slice_config = config.get("slices", {}).get(slice_name)
     if not slice_config:
         print(f"ERROR: Slice '{slice_name}' not found in config.", file=sys.stderr)
@@ -119,14 +274,48 @@ def run_experiment(
         sys.exit(1)
 
     seed_schedule = generate_seed_schedule(seed, cycles)
-    policy = RFLPolicy(seed) if mode == "rfl" else None
+    
+    # Initialize policy based on mode
+    policy: Optional[RFLPolicyV2] = None
+    policy_v1: Optional[RFLPolicy] = None
+    
+    if mode == "rfl":
+        # Load learning schedule from config
+        schedule_config = slice_config.get("learning_schedule", {})
+        schedule = LearningScheduleConfig.from_dict(schedule_config) if schedule_config else LearningScheduleConfig()
+        
+        # Initialize policy state (warm-start or cold-start)
+        initial_state: Optional[PolicyStateSnapshot] = None
+        if policy_in is not None and policy_in.exists():
+            print(f"INFO: Loading policy warm-start from {policy_in}")
+            initial_state = init_from_file(policy_in)
+            # Validate slice_name matches
+            if initial_state.slice_name != slice_name:
+                print(f"WARNING: Policy snapshot slice_name '{initial_state.slice_name}' "
+                      f"differs from experiment slice '{slice_name}'")
+        else:
+            print(f"INFO: Using cold-start policy initialization")
+        
+        # Create V2 policy with full telemetry
+        policy = RFLPolicyV2(
+            seed=seed,
+            slice_name=slice_name,
+            schedule=schedule,
+            initial_state=initial_state,
+        )
+        # Also keep V1 for backward compatibility
+        policy_v1 = RFLPolicy(seed)
+    
     ht_series = []  # History of Telemetry (Hₜ)
 
     results_path = out_dir / f"uplift_u2_{slice_name}_{mode}.jsonl"
     manifest_path = out_dir / f"uplift_u2_manifest_{slice_name}_{mode}.json"
+    
+    # Policy telemetry file (PHASE II)
+    telemetry_path = out_dir / f"policy_telemetry.jsonl"
 
     # 2. Main Loop
-    with open(results_path, "w") as results_f:
+    with open(results_path, "w") as results_f, open(telemetry_path, "w") as telemetry_f:
         for i in range(cycles):
             cycle_seed = seed_schedule[i]
             rng = random.Random(cycle_seed)
@@ -138,7 +327,7 @@ def run_experiment(
                 rng.shuffle(ordered_items)
                 chosen_item = ordered_items[0]
             elif mode == "rfl":
-                # RFL: use policy scoring
+                # RFL: use policy scoring (V2 with telemetry)
                 item_scores = policy.score(items)
                 scored_items = sorted(zip(items, item_scores), key=lambda x: x[1], reverse=True)
                 chosen_item = scored_items[0][0]
@@ -154,6 +343,22 @@ def run_experiment(
             # --- RFL Policy Update ---
             if mode == "rfl":
                 policy.update(chosen_item, success)
+                
+                # Take periodic snapshot and write telemetry
+                if i % 10 == 0 or i == cycles - 1:  # Every 10 cycles and at end
+                    snapshot = policy.take_snapshot()
+                    policy_summary = summarize_policy_state(snapshot)
+                    
+                    # Write policy telemetry
+                    telemetry_record = {
+                        "cycle": i,
+                        "mode": mode,
+                        "slice": slice_name,
+                        "policy_summary": policy_summary,
+                        "phase": "II",
+                        "label": "PHASE II — NOT USED IN PHASE I",
+                    }
+                    telemetry_f.write(json.dumps(telemetry_record, sort_keys=True) + "\n")
 
             # --- Telemetry Logging ---
             telemetry_record = {
@@ -170,7 +375,13 @@ def run_experiment(
             results_f.write(json.dumps(telemetry_record) + "\n")
             print(f"Cycle {i+1}/{cycles}: Chose '{chosen_item}', Success: {success}")
 
-    # 3. Manifest Generation
+    # 3. Export final policy state if requested
+    if mode == "rfl" and policy_out is not None:
+        print(f"INFO: Exporting final policy state to {policy_out}")
+        policy_out.parent.mkdir(parents=True, exist_ok=True)
+        policy.export_state(policy_out)
+
+    # 4. Manifest Generation
     slice_config_str = json.dumps(slice_config, sort_keys=True)
     slice_config_hash = hash_string(slice_config_str)
     ht_series_str = json.dumps(ht_series, sort_keys=True)
@@ -189,6 +400,8 @@ def run_experiment(
         "outputs": {
             "results": str(results_path),
             "manifest": str(manifest_path),
+            "policy_telemetry": str(telemetry_path) if mode == "rfl" else None,
+            "policy_out": str(policy_out) if policy_out else None,
         }
     }
 
@@ -198,6 +411,8 @@ def run_experiment(
     print(f"\n--- Experiment Complete ---")
     print(f"Results written to {results_path}")
     print(f"Manifest written to {manifest_path}")
+    if mode == "rfl":
+        print(f"Policy telemetry written to {telemetry_path}")
 
 def main():
     """CLI entry point."""
@@ -209,6 +424,8 @@ Absolute Safeguards:
 - Do NOT reinterpret Phase I logs as uplift evidence.
 - All Phase II artifacts must be clearly labeled.
 - RFL uses verifiable feedback only.
+
+PHASE II — NOT USED IN PHASE I
         """
     )
     parser.add_argument("--slice", required=True, type=str, help="The experiment slice to run (e.g., 'arithmetic_simple').")
@@ -217,11 +434,27 @@ Absolute Safeguards:
     parser.add_argument("--mode", required=True, choices=["baseline", "rfl"], help="Execution mode: 'baseline' or 'rfl'.")
     parser.add_argument("--out", required=True, type=str, help="Output directory for results and manifest files.")
     parser.add_argument("--config", default="config/curriculum_uplift_phase2.yaml", type=str, help="Path to the curriculum config file.")
+    
+    # Policy warm-start / cold-start options (PHASE II)
+    parser.add_argument(
+        "--policy-in",
+        type=str,
+        default=None,
+        help="Optional path to warm-start policy snapshot file. If provided, loads policy state from this file."
+    )
+    parser.add_argument(
+        "--policy-out",
+        type=str,
+        default=None,
+        help="Optional path to export final policy snapshot. If provided, writes final policy state to this file."
+    )
 
     args = parser.parse_args()
 
     config_path = Path(args.config)
     out_dir = Path(args.out)
+    policy_in = Path(args.policy_in) if args.policy_in else None
+    policy_out = Path(args.policy_out) if args.policy_out else None
 
     config = get_config(config_path)
 
@@ -232,6 +465,8 @@ Absolute Safeguards:
         mode=args.mode,
         out_dir=out_dir,
         config=config,
+        policy_in=policy_in,
+        policy_out=policy_out,
     )
 
 if __name__ == "__main__":

@@ -1,0 +1,90 @@
+# PHASE II — NOT USED IN PHASE I
+#
+# RFL Policy Configuration for Phase II
+# ======================================
+#
+# This file configures:
+# - Per-slice learning rates
+# - Safety guards (weight clamping)
+# - Feature masks
+#
+# Determinism Contract:
+#   Same config + same seed => same policy trajectory
+
+version: "2.0"
+phase: "II"
+
+# Global safety guards and defaults
+global:
+  # Maximum L2 norm for weight vector
+  # If exceeded, weights are rescaled (pure normalization)
+  max_weight_norm_l2: 10.0
+  
+  # Maximum absolute value for any single weight
+  # Weights are clipped to [-max_abs_weight, +max_abs_weight]
+  max_abs_weight: 5.0
+  
+  # Default learning rate (can be overridden per-slice)
+  learning_rate: 0.01
+  
+  # Learning rate decay factor per update
+  decay_factor: 0.999
+  
+  # Minimum learning rate floor
+  min_learning_rate: 0.0001
+
+# Per-slice configuration
+slices:
+  arithmetic_simple:
+    description: "Focuses on basic arithmetic"
+    learning_schedule:
+      learning_rate: 0.01
+      decay_factor: 0.999
+      min_learning_rate: 0.0001
+      max_weight_norm_l2: 10.0
+      max_abs_weight: 5.0
+    items:
+      - "1 + 1"
+      - "2 - 1"
+      - "3 * 2"
+      - "4 / 2"
+      - "5 + 3"
+      - "6 - 4"
+      - "8 * 1"
+      - "9 / 3"
+    prereg_hash: "d8e8fca2dc0f896fd7cb4cb0031ba249"
+
+  algebra_expansion:
+    description: "Focuses on algebraic expansion"
+    learning_schedule:
+      learning_rate: 0.005
+      decay_factor: 0.995
+      min_learning_rate: 0.0001
+      max_weight_norm_l2: 8.0
+      max_abs_weight: 4.0
+    items:
+      - "2 * (x + 1)"
+      - "a * (b - c)"
+      - "(x + y) * (x - y)"
+      - "3 * (a + b + c)"
+      - "-(x - y)"
+      - "(a+b)**2"
+    prereg_hash: "c157a79031e1c40f85931829bc5fc552"
+
+  slice_uplift_goal:
+    description: "Phase II uplift goal slice"
+    learning_schedule:
+      learning_rate: 0.01
+      decay_factor: 0.999
+      min_learning_rate: 0.0001
+      max_weight_norm_l2: 10.0
+      max_abs_weight: 5.0
+
+  slice_uplift_proto:
+    description: "Phase II uplift prototype slice"
+    learning_schedule:
+      learning_rate: 0.01
+      decay_factor: 0.999
+      min_learning_rate: 0.0001
+      max_weight_norm_l2: 10.0
+      max_abs_weight: 5.0
