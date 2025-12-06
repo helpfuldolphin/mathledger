@@ -1,0 +1,5 @@
+slices:
+  slice_uplift_goal:
+    cycle_budget_s: 30.0
+    taut_timeout_s: 5.0
+    max_candidates_per_cycle: 10
