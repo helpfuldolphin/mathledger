@@ -1,6 +1,10 @@
 # Phase II: RFL Uplift Plan
 
 > **STATUS: PHASE II — NOT YET RUN. NO UPLIFT CLAIMS MAY BE MADE.**
+>
+> **No empirical uplift has been demonstrated yet.** All uplift slices described below are
+> hypothesized designs awaiting preregistered execution. The distinction between
+> *hypothesized uplift* (described here) and *observed results* (none exist) is absolute.
 
 ## Overview
 
@@ -221,10 +225,45 @@ uv run python experiments/summarize_uplift.py \
 
 ---
 
+## Safe-Eval Design Note
+
+> **PHASE II — NOT RUN IN PHASE I**
+
+Phase II code paths use a **restricted AST arithmetic evaluator** (`experiments/u2_safe_eval.py`) for processing numeric expressions in experiment configurations and metrics.
+
+### Allowed Operations
+
+- Numeric literals (integers and floats)
+- Unary operators: `+`, `-`
+- Binary operators: `+`, `-`, `*`, `/`
+
+### Disallowed Operations
+
+- Function calls
+- Variable names / identifiers
+- Import statements
+- List/dict comprehensions
+- Attribute access
+- Any form of code execution beyond arithmetic
+
+### Purpose
+
+1. **Security**: Prevents arbitrary code execution from configuration files or external inputs
+2. **Reproducibility**: Guarantees identical results across different Python versions and environments
+3. **Determinism**: Eliminates platform-specific floating-point variations where possible
+
+This design follows the principle of least privilege — only the minimum required functionality is exposed.
+
+See: `experiments/u2_safe_eval.py` for implementation details.
+
+---
+
 ## Files
 
 - `config/curriculum_uplift_phase2.yaml` — Slice definitions
-- `experiments/run_uplift_u2.py` — U2 experiment runner (TO BE IMPLEMENTED)
+- `experiments/run_uplift_u2.py` — U2 experiment runner
+- `experiments/slice_success_metrics.py` — Slice-specific success metrics
+- `experiments/u2_safe_eval.py` — Restricted arithmetic evaluator
 - `experiments/summarize_uplift.py` — Uplift summarizer (TO BE IMPLEMENTED)
 - `experiments/prereg/PREREG_UPLIFT_U2.yaml` — Preregistration template (TO BE IMPLEMENTED)
 
