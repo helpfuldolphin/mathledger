@@ -202,6 +202,7 @@ uv run python experiments/run_uplift_u2.py \
   --out=results/uplift_u2_goal_rfl.jsonl
 
 # 3. Summarize
+# DOCTEST: SKIP - summarize_uplift.py to be created in Phase II
 uv run python experiments/summarize_uplift.py \
   --baseline=results/uplift_u2_goal_baseline.jsonl \
   --rfl=results/uplift_u2_goal_rfl.jsonl \
