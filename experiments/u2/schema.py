@@ -5,7 +5,7 @@ Defines typed schema for trace events in U2 experiments.
 All events are versioned and follow strict typing for reproducibility.
 """
 
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, Field
 
 # Schema version for trace events
@@ -112,4 +112,4 @@ class EvalLintEvent(BaseModel):
     cycle_index: int
     expression: str
     is_safe: bool
-    issues: list[str] = Field(default_factory=list)
+    issues: List[str] = Field(default_factory=list)

@@ -52,7 +52,7 @@ class U2TraceLogger:
         self.enabled_events = enabled_events if enabled_events is not None else ALL_EVENT_TYPES
         self._file: Optional[TextIO] = None
     
-    def __enter__(self) -> "U2TraceLogger":
+    def __enter__(self) -> Self:
         """Open log file."""
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         self._file = open(self.log_path, "a")
