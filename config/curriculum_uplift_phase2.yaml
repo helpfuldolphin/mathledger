@@ -1,28 +1,313 @@
 # PHASE II — NOT USED IN PHASE I
 # Config for U2 Uplift Experiments
-version: 2.0
+# =================================
+# This file defines the four asymmetric uplift slices for Phase II.
+# Each slice is designed to be NON-DEGENERATE: baseline success is neither 0% nor 100%.
+# Slices are ordered by complexity and must respect monotonicity within theory rungs.
+#
+# Reference Documents:
+#   - docs/PHASE2_RFL_UPLIFT_PLAN.md (slice definitions and expected uplift)
+#   - RFL_UPLIFT_THEORY.md (theoretical framework)
+#   - experiments/slice_success_metrics.py (success metric implementations)
+#
+# CANONICAL SLICES:
+#   1. slice_uplift_goal       - Goal-conditioned target (specific formula hit)
+#   2. slice_uplift_sparse     - Sparse reward (few provable in large space)
+#   3. slice_uplift_tree       - Chain depth (multi-step derivation required)
+#   4. slice_uplift_dependency - Multiple subgoals (coordination required)
+
+version: 2.1.0
 
 slices:
-  arithmetic_simple:
-    description: "Focuses on basic arithmetic."
-    items:
-      - "1 + 1"
-      - "2 - 1"
-      - "3 * 2"
-      - "4 / 2"
-      - "5 + 3"
-      - "6 - 4"
-      - "8 * 1"
-      - "9 / 3"
-    prereg_hash: "d8e8fca2dc0f896fd7cb4cb0031ba249" # Dummy hash for preregistered data
+  # ============================================================================
+  # SLICE 1: slice_uplift_goal — Goal-Conditioned Target
+  # ============================================================================
+  # INTUITION: Specific target formula(s) are valuable; many other proofs are
+  #            distractors. RFL should learn to prioritize candidates that
+  #            overlap with or lead toward the target.
+  #
+  # NON-DEGENERACY TARGET:
+  #   Baseline success rate: 10–30% (goal hit rate with random exploration)
+  #   RFL target rate:       40–70% (policy learns goal-relevant features)
+  #
+  # MONOTONICITY: atoms=4, depth_min=2, depth_max=5
+  #   - First in complexity ordering for goal-type slices
+  #   - depth_max=5 is moderate; allows multi-step paths but not exhaustive
+  # ============================================================================
+  slice_uplift_goal:
+    description: >-
+      Goal-conditioned uplift slice. Success requires hitting specific target
+      formula(s) while also producing a minimum total of verified proofs.
+      Random exploration hits targets 10-30% of the time; RFL should learn
+      to prioritize goal-overlapping candidates for 40-70% success.
 
-  algebra_expansion:
-    description: "Focuses on algebraic expansion."
-    items:
-      - "2 * (x + 1)"
-      - "a * (b - c)"
-      - "(x + y) * (x - y)"
-      - "3 * (a + b + c)"
-      - "-(x - y)"
-      - "(a+b)**2"
-    prereg_hash: "c157a79031e1c40f85931829bc5fc552" # Dummy hash
+    uplift:
+      phase: II
+      experiment_family: U2
+      not_allowed_in_phase_I: true
+
+    parameters:
+      atoms: 4                    # {p, q, r, s} — moderate atom count
+      depth_min: 2                # Minimum syntax tree depth
+      depth_max: 5                # Maximum syntax tree depth
+      breadth_max: 40             # Candidates per MP round
+      total_max: 200              # Total candidates per cycle
+      formula_pool: 16            # Size of initial formula pool
+      axiom_instances: 24         # Axiom instantiation count
+      timeout_s: 1.0              # Per-candidate verification timeout
+      lean_timeout_s: 0.0         # Lean disabled (truth-table only)
+
+    success_metric:
+      # Maps to: compute_goal_hit() in slice_success_metrics.py
+      kind: goal_hit
+      parameters:
+        min_goal_hits: 1          # At least one target must be hit
+        min_total_verified: 3     # Must also verify at least 3 total
+
+    budget:
+      max_candidates_per_cycle: 40
+      max_cycles_per_run: 500
+
+    formula_pool_entries:
+      # Representative formulas for goal targeting
+      # Target hashes will be computed from specific goal formulas
+      - "p"
+      - "q"
+      - "r"
+      - "s"
+      - "p->q"
+      - "q->r"
+      - "r->s"
+      - "p->(q->r)"
+      - "(p->q)->(p->r)"
+      - "p|~p"                     # Tautology target
+      - "(p->q)->((q->r)->(p->r))" # Chain target (transitivity)
+      - "~(p&~p)"                  # Non-contradiction
+      - "(p&q)->p"                 # Simplification
+      - "p->(q->p)"                # Weakening
+      - "((p->q)->p)->p"           # Peirce's law
+      - "(p->(q->r))->((p->q)->(p->r))"  # S combinator / distribution
+
+  # ============================================================================
+  # SLICE 2: slice_uplift_sparse — Sparse Reward Environment
+  # ============================================================================
+  # INTUITION: Many candidates exist, but few are provable. Baseline wanders
+  #            through dead zones; RFL learns to avoid unprovable regions
+  #            and concentrate on productive formula patterns.
+  #
+  # NON-DEGENERACY TARGET:
+  #   Baseline success rate: 20–50% (reaching 5+ verified under budget)
+  #   RFL target rate:       50–80% (learns to navigate sparse landscape)
+  #
+  # MONOTONICITY: atoms=5, depth_min=3, depth_max=7
+  #   - More atoms than slice_uplift_goal (5 vs 4)
+  #   - Higher depth range (3-7 vs 2-5)
+  #   - Strictly more complex search space
+  # ============================================================================
+  slice_uplift_sparse:
+    description: >-
+      Sparse reward uplift slice. Large candidate space with few provable
+      formulas. Success requires finding at least 5 verified statements
+      within budget. Baseline wastes resources on dead zones (20-50% success);
+      RFL should learn to identify productive regions (50-80% success).
+
+    uplift:
+      phase: II
+      experiment_family: U2
+      not_allowed_in_phase_I: true
+
+    parameters:
+      atoms: 5                    # {p, q, r, s, t} — larger atom set
+      depth_min: 3                # Higher minimum depth
+      depth_max: 7                # Higher maximum depth
+      breadth_max: 40             # Candidates per MP round
+      total_max: 300              # Larger total pool
+      formula_pool: 24            # Larger formula pool
+      axiom_instances: 32         # More axiom instances
+      timeout_s: 1.0              # Per-candidate verification timeout
+      lean_timeout_s: 0.0         # Lean disabled (truth-table only)
+
+    success_metric:
+      # Maps to: compute_sparse_success() in slice_success_metrics.py
+      kind: sparse_success
+      parameters:
+        min_verified: 5           # Must verify at least 5 statements
+
+    budget:
+      max_candidates_per_cycle: 40
+      max_cycles_per_run: 500
+
+    formula_pool_entries:
+      # Extended pool for sparse exploration
+      - "p"
+      - "q"
+      - "r"
+      - "s"
+      - "t"
+      - "p->q"
+      - "q->r"
+      - "r->s"
+      - "s->t"
+      - "p->(q->p)"
+      - "(p->q)->(p->r)"
+      - "p|~p"
+      - "~(p&~p)"
+      - "(p&q)->p"
+      - "(p&q)->q"
+      - "p->(p|q)"
+      - "q->(p|q)"
+      - "(p->r)->((q->r)->((p|q)->r))"
+      - "((p->q)->p)->p"
+      - "(p->(q->r))->((p->q)->(p->r))"
+      - "~p->(p->q)"
+      - "(p->q)->(~q->~p)"
+      - "p->~~p"
+      - "~~p->p"
+
+  # ============================================================================
+  # SLICE 3: slice_uplift_tree — Chain Depth (Multi-Step Derivation)
+  # ============================================================================
+  # INTUITION: Target formula requires a chain of k intermediate lemmas.
+  #            Direct proof is impossible; RFL must learn to build useful
+  #            intermediates that enable the final derivation step.
+  #
+  # NON-DEGENERACY TARGET:
+  #   Baseline success rate: 10–30% (chain depth >= 3 achieved randomly)
+  #   RFL target rate:       40–70% (learns lemma-building strategy)
+  #
+  # MONOTONICITY: atoms=4, depth_min=2, depth_max=6
+  #   - Same atoms as slice_uplift_goal (4)
+  #   - Higher depth_max (6 vs 5) to enable longer chains
+  #   - Tighter budget forces strategic intermediate selection
+  # ============================================================================
+  slice_uplift_tree:
+    description: >-
+      Chain depth uplift slice. Success requires proving a target formula
+      via a derivation chain of at least 3 intermediate steps. Random
+      exploration rarely builds the right intermediates (10-30% success);
+      RFL should learn to construct useful lemma chains (40-70% success).
+
+    uplift:
+      phase: II
+      experiment_family: U2
+      not_allowed_in_phase_I: true
+
+    parameters:
+      atoms: 4                    # {p, q, r, s} — same as goal slice
+      depth_min: 2                # Minimum depth
+      depth_max: 6                # Higher max depth for chain building
+      breadth_max: 30             # Tighter per-round budget
+      total_max: 180              # Tighter total budget
+      formula_pool: 20            # Moderate formula pool
+      axiom_instances: 28         # Sufficient for chain building
+      timeout_s: 1.5              # Slightly longer for chain verification
+      lean_timeout_s: 0.0         # Lean disabled (truth-table only)
+
+    success_metric:
+      # Maps to: compute_chain_success() in slice_success_metrics.py
+      kind: chain_success
+      parameters:
+        min_chain_length: 3       # Derivation must have depth >= 3
+
+    budget:
+      max_candidates_per_cycle: 30
+      max_cycles_per_run: 500
+
+    formula_pool_entries:
+      # Formulas suitable for building derivation chains
+      - "p"
+      - "q"
+      - "r"
+      - "s"
+      - "p->q"
+      - "q->r"
+      - "r->s"
+      - "p->r"                     # Derived: p->q, q->r |- p->r
+      - "q->s"                     # Derived: q->r, r->s |- q->s
+      - "p->s"                     # Derived: p->r, r->s |- p->s (chain target)
+      - "(p->q)->(q->r)->(p->r)"   # Transitivity schema
+      - "p->(q->p)"
+      - "(p->(q->r))->((p->q)->(p->r))"
+      - "((p->q)->p)->p"
+      - "p|~p"
+      - "~(p&~p)"
+      - "(p&q)->p"
+      - "(p&q)->q"
+      - "p->(p|q)"
+      - "(p->r)->((q->r)->((p|q)->r))"
+
+  # ============================================================================
+  # SLICE 4: slice_uplift_dependency — Multiple Subgoals (Coordination)
+  # ============================================================================
+  # INTUITION: Success requires proving ALL of k required subgoals in the
+  #            same cycle. Random exploration may prove some but not all;
+  #            RFL must learn to coordinate effort across multiple targets.
+  #
+  # NON-DEGENERACY TARGET:
+  #   Baseline success rate: 5–20% (all subgoals hit in same cycle)
+  #   RFL target rate:       30–60% (learns coordinated multi-goal strategy)
+  #
+  # MONOTONICITY: atoms=5, depth_min=2, depth_max=6
+  #   - More atoms than tree slice (5 vs 4)
+  #   - Same depth range as tree slice
+  #   - Coordination complexity adds difficulty
+  # ============================================================================
+  slice_uplift_dependency:
+    description: >-
+      Multi-goal dependency uplift slice. Success requires proving ALL
+      specified subgoals within the same cycle. Random exploration may
+      prove some but miss others (5-20% joint success); RFL should learn
+      to coordinate effort across targets (30-60% success).
+
+    uplift:
+      phase: II
+      experiment_family: U2
+      not_allowed_in_phase_I: true
+
+    parameters:
+      atoms: 5                    # {p, q, r, s, t} — larger for multi-goal
+      depth_min: 2                # Minimum depth
+      depth_max: 6                # Moderate maximum depth
+      breadth_max: 40             # Budget for multi-goal coordination
+      total_max: 250              # Sufficient for covering multiple goals
+      formula_pool: 22            # Pool sized for goal coverage
+      axiom_instances: 30         # Instances for multi-goal reach
+      timeout_s: 1.0              # Per-candidate verification timeout
+      lean_timeout_s: 0.0         # Lean disabled (truth-table only)
+
+    success_metric:
+      # Maps to: compute_multi_goal_success() in slice_success_metrics.py
+      kind: multi_goal_success
+      parameters:
+        # Required goals will be specified via target_hashes in experiment config
+        # All must be verified in the same cycle for success
+        required_goal_count: 3    # Must prove all 3 specified goals
+
+    budget:
+      max_candidates_per_cycle: 40
+      max_cycles_per_run: 500
+
+    formula_pool_entries:
+      # Formulas for multi-goal coordination
+      - "p"
+      - "q"
+      - "r"
+      - "s"
+      - "t"
+      - "p->q"
+      - "q->r"
+      - "r->s"
+      - "s->t"
+      - "p|~p"                     # Goal 1: Excluded middle
+      - "~(p&~p)"                  # Goal 2: Non-contradiction
+      - "(p&q)->p"                 # Goal 3: Simplification
+      - "p->(q->p)"                # Alternative goal: Weakening
+      - "(p->q)->(~q->~p)"         # Alternative goal: Contraposition
+      - "(p->(q->r))->((p->q)->(p->r))"  # Alternative goal: Distribution
+      - "((p->q)->p)->p"           # Alternative goal: Peirce
+      - "p->~~p"
+      - "~~p->p"
+      - "(p->r)->((q->r)->((p|q)->r))"
+      - "p->(p|q)"
+      - "q->(p|q)"
+      - "(p&q)->q"
