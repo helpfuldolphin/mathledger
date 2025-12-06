@@ -50,6 +50,42 @@ Phase I experiments aimed to characterize the behavior of the \projectname{} sub
 
 Future work will focus on integrating RFL for measurable uplift in stability and performance. Specifically, the objective is to observe if reflexive feedback can dampen oscillatory states in the decision boundary and achieve measurable reductions in abstention rates and improvements in convergence latency.
 
+% PHASE II — NOT USED IN PHASE I
+% The following tables are auto-generated. Run scripts/doc_sync_phase2.py to update.
+
+% BEGIN:AUTOGEN:PHASE2-SLICES
+\begin{table}[h]
+\centering
+\caption{Phase II Uplift Slices (Auto-generated)}
+\label{tab:phase2_slices_autogen}
+\begin{tabular}{l l r l}
+\toprule
+\textbf{Slice} & \textbf{Description} & \textbf{Items} & \textbf{Prereg Hash} \\
+\midrule
+\texttt{algebra_expansion} & Focuses on algebraic expansion. & 6 & \texttt{c157a79031e1...} \\
+\texttt{arithmetic_simple} & Focuses on basic arithmetic. & 8 & \texttt{d8e8fca2dc0f...} \\
+\bottomrule
+\end{tabular}
+\end{table}
+% END:AUTOGEN:PHASE2-SLICES
+
+% BEGIN:AUTOGEN:PHASE2-METRICS
+\begin{table}[h]
+\centering
+\caption{Phase II Success Metrics (Auto-generated)}
+\label{tab:phase2_metrics_autogen}
+\begin{tabular}{l p{6cm}}
+\toprule
+\textbf{Metric} & \textbf{Description} \\
+\midrule
+\texttt{compute_chain_success} & Computes success based on the length of a verified dependency chain ending at a target. \\
+\texttt{compute_goal_hit} & Computes success based on hitting a minimum number of specific target goals. \\
+\texttt{compute_multi_goal_success} & Computes success based on verifying a set of required goals. \\
+\texttt{compute_sparse_success} & Computes success based on a simple minimum count of verified statements. \\
+\bottomrule
+\end{tabular}
+\end{table}
+% END:AUTOGEN:PHASE2-METRICS
 
 
 \section{Conclusion}
