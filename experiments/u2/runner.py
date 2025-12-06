@@ -220,7 +220,7 @@ class U2Runner:
         # Fallback to last item
         return items[-1]
     
-    def _update_rfl_policy(self, item: str, success: bool):
+    def _update_rfl_policy(self, item: str, success: bool) -> None:
         """
         Update RFL policy based on cycle outcome.
         
@@ -241,6 +241,9 @@ class U2Runner:
             Path to saved snapshot, or None if no snapshot was saved
         """
         if self.config.snapshot_interval <= 0:
+            return None
+        
+        if self.config.snapshot_dir is None:
             return None
         
         if self.cycle_index % self.config.snapshot_interval == 0:
@@ -268,7 +271,7 @@ class U2Runner:
             config=self.config.to_safe_dict(),
         )
     
-    def restore_state(self, snapshot: SnapshotData):
+    def restore_state(self, snapshot: SnapshotData) -> None:
         """
         Restore runner state from a snapshot.
         
@@ -295,23 +298,23 @@ class TracedExperimentContext:
     mode: str
     cycle_start_time: Optional[float] = None
     
-    def begin_cycle(self, cycle_index: int):
+    def begin_cycle(self, cycle_index: int) -> None:
         """Mark the beginning of a cycle."""
         self.cycle_start_time = time.time()
     
-    def end_cycle(self, cycle_index: int):
+    def end_cycle(self, cycle_index: int) -> None:
         """Mark the end of a cycle and log duration."""
         if self.cycle_start_time is not None:
             duration_ms = (time.time() - self.cycle_start_time) * 1000
             self.cycle_start_time = None
     
-    def log_cycle_telemetry(self, cycle_index: int, telemetry: Dict[str, Any]):
+    def log_cycle_telemetry(self, cycle_index: int, telemetry: Dict[str, Any]) -> None:
         """Log cycle telemetry data."""
         # Logging is handled by the logger instance
         pass
 
 
-def run_with_traces(func: Callable, trace_ctx: TracedExperimentContext, *args, **kwargs):
+def run_with_traces(func: Callable[..., Any], trace_ctx: TracedExperimentContext, *args: Any, **kwargs: Any) -> Any:
     """
     Wrapper to run a function with trace context.
     

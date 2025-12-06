@@ -1,0 +1,100 @@
+name: U2 Safety Gate
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/u2/**'
+      - 'tests/test_u2*.py'
+      - 'pyproject.toml'
+  push:
+    branches:
+      - main
+      - 'copilot/**'
+
+jobs:
+  type-check:
+    name: Type Safety Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install mypy pytest pyyaml pydantic typing-extensions
+      
+      - name: Run mypy on U2 modules
+        run: |
+          mypy experiments/u2/ --config-file pyproject.toml
+      
+      - name: Fail if mypy errors
+        if: failure()
+        run: |
+          echo "::error::Type checking failed for U2 modules"
+          exit 1
+
+  safety-tests:
+    name: Safety & Performance Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pytest pyyaml pydantic typing-extensions
+      
+      - name: Run U2 tests
+        run: |
+          pytest tests/test_u2*.py -v
+      
+      - name: Check test results
+        if: failure()
+        run: |
+          echo "::error::U2 tests failed"
+          exit 1
+      
+      - name: Run performance guardrail tests
+        run: |
+          pytest tests/test_u2_perf_guardrails.py -v
+      
+      - name: Check safety envelope smoke test
+        run: |
+          python3 -c "
+          from experiments.u2.entrypoint import run_u2_experiment
+          from experiments.u2.runner import U2Config
+          from experiments.u2.safety_envelope import evaluate_safety_status
+          
+          # Quick smoke test
+          config = U2Config(
+              experiment_id='ci_smoke',
+              slice_name='test',
+              mode='baseline',
+              total_cycles=5,
+              master_seed=42
+          )
+          
+          def mock_exec(item, seed):
+              return True, {'ok': True}
+          
+          results, envelope = run_u2_experiment(
+              config=config,
+              items=['a', 'b', 'c'],
+              execute_fn=mock_exec
+          )
+          
+          if not evaluate_safety_status(envelope):
+              raise RuntimeError(f'Safety envelope BLOCKED: {envelope.warnings}')
+          
+          print(f'✓ Safety status: {envelope.safety_status}')
+          print(f'✓ Completed {len(results)} cycles')
+          print(f'✓ Performance OK: {envelope.perf_ok}')
+          "

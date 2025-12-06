@@ -6,7 +6,7 @@ Enforces strict constraints on allowed operations and prevents unsafe code execu
 """
 
 import ast
-from typing import Any, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 from dataclasses import dataclass
 
 
@@ -101,7 +101,7 @@ class SafeEvalLintResult:
     dangerous_nodes: List[str]
     expression: str
     
-    def to_dict(self) -> dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "is_safe": self.is_safe,
@@ -173,7 +173,7 @@ def lint_expression(expression: str, allowed_names: Optional[Set[str]] = None) -
             issues.append(f"Dangerous operation: {node_name}")
         
         # Special handling for Call nodes - allow only safe builtins
-        elif node_type == ast.Call:
+        elif isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name):
                 func_name = node.func.id
                 if func_name not in SAFE_BUILTINS:
@@ -208,7 +208,7 @@ def lint_expression(expression: str, allowed_names: Optional[Set[str]] = None) -
 
 def safe_eval(
     expression: str,
-    allowed_names: Optional[dict] = None,
+    allowed_names: Optional[Dict[str, Any]] = None,
     lint_only: bool = False,
 ) -> Any:
     """

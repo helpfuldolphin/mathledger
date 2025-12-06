@@ -6,7 +6,15 @@ and fail-soft behavior.
 """
 
 import json
-from typing import Any, Dict, Optional, Set, TextIO
+from typing import Any, Dict, Optional, Set, TextIO, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Self
+else:
+    try:
+        from typing import Self
+    except ImportError:
+        from typing_extensions import Self
 from pathlib import Path
 
 from . import schema
@@ -44,13 +52,13 @@ class U2TraceLogger:
         self.enabled_events = enabled_events if enabled_events is not None else ALL_EVENT_TYPES
         self._file: Optional[TextIO] = None
     
-    def __enter__(self):
+    def __enter__(self) -> "U2TraceLogger":
         """Open log file."""
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         self._file = open(self.log_path, "a")
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Close log file."""
         if self._file is not None:
             self._file.close()
@@ -60,7 +68,7 @@ class U2TraceLogger:
         """Check if event type should be logged."""
         return event_type in self.enabled_events
     
-    def _write_event(self, event_dict: Dict[str, Any]):
+    def _write_event(self, event_dict: Dict[str, Any]) -> None:
         """Write event to log file."""
         if self._file is None:
             if not self.fail_soft:
@@ -76,49 +84,49 @@ class U2TraceLogger:
                 raise
             # Silently ignore errors in fail-soft mode
     
-    def log_session_start(self, event: schema.SessionStartEvent):
+    def log_session_start(self, event: schema.SessionStartEvent) -> None:
         """Log session start event."""
         if not self._should_log(schema.EVENT_SESSION_START):
             return
         self._write_event(event.model_dump())
     
-    def log_session_end(self, event: schema.SessionEndEvent):
+    def log_session_end(self, event: schema.SessionEndEvent) -> None:
         """Log session end event."""
         if not self._should_log(schema.EVENT_SESSION_END):
             return
         self._write_event(event.model_dump())
     
-    def log_cycle_begin(self, event: schema.CycleBeginEvent):
+    def log_cycle_begin(self, event: schema.CycleBeginEvent) -> None:
         """Log cycle begin event."""
         if not self._should_log(schema.EVENT_CYCLE_BEGIN):
             return
         self._write_event(event.model_dump())
     
-    def log_cycle_end(self, event: schema.CycleEndEvent):
+    def log_cycle_end(self, event: schema.CycleEndEvent) -> None:
         """Log cycle end event."""
         if not self._should_log(schema.EVENT_CYCLE_END):
             return
         self._write_event(event.model_dump())
     
-    def log_cycle_telemetry(self, event: schema.CycleTelemetryEvent):
+    def log_cycle_telemetry(self, event: schema.CycleTelemetryEvent) -> None:
         """Log cycle telemetry event."""
         if not self._should_log(schema.EVENT_CYCLE_TELEMETRY):
             return
         self._write_event(event.model_dump())
     
-    def log_policy_weight_update(self, event: schema.PolicyWeightUpdateEvent):
+    def log_policy_weight_update(self, event: schema.PolicyWeightUpdateEvent) -> None:
         """Log policy weight update event."""
         if not self._should_log(schema.EVENT_POLICY_WEIGHT_UPDATE):
             return
         self._write_event(event.model_dump())
     
-    def log_snapshot_saved(self, event: schema.SnapshotSavedEvent):
+    def log_snapshot_saved(self, event: schema.SnapshotSavedEvent) -> None:
         """Log snapshot saved event."""
         if not self._should_log(schema.EVENT_SNAPSHOT_SAVED):
             return
         self._write_event(event.model_dump())
     
-    def log_eval_lint(self, event: schema.EvalLintEvent):
+    def log_eval_lint(self, event: schema.EvalLintEvent) -> None:
         """Log eval lint event."""
         if not self._should_log(schema.EVENT_EVAL_LINT):
             return
