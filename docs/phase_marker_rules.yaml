@@ -1,0 +1,63 @@
+# Phase Marker Rules Configuration
+# Defines which documents require which phase markers and disclaimers
+
+rules:
+  # Phase II planning documents MUST have PHASE II markers
+  "docs/PHASE2*.md":
+    phase_marker: "PHASE II"
+    require_uplift_disclaimer: true
+    forbidden_claims:
+      - "uplift has been demonstrated"
+      - "we have shown uplift"
+      - "results show significant uplift"
+      - "RFL outperforms baseline"
+    required_sections:
+      - "Overview"
+  
+  # U2 planning documents
+  "docs/U2*.md":
+    phase_marker: "PHASE II"
+    require_uplift_disclaimer: true
+    forbidden_claims:
+      - "Phase I demonstrated uplift"
+      - "we have demonstrated uplift"
+      - "empirical evidence shows uplift"
+  
+  # RFL uplift theory and planning
+  "RFL_UPLIFT_THEORY.md":
+    phase_marker: "PHASE II"
+    require_uplift_disclaimer: true
+    forbidden_claims:
+      - "Phase I demonstrated uplift"
+      - "baseline comparison shows uplift"
+  
+  # Phase I truth source - must NOT claim uplift
+  "docs/RFL_PHASE_I_TRUTH_SOURCE.md":
+    forbidden_claims:
+      - "demonstrated uplift"
+      - "showed improvement over baseline"
+      - "RFL learns effectively"
+  
+  # Evidence pack documents - must have proper phase boundaries
+  "docs/EVIDENCE_PACK*.md":
+    forbidden_claims:
+      - "Phase I showed uplift"
+      - "demonstrated learning"
+  
+  "docs/RFL_EVIDENCE_MANIFEST.md":
+    forbidden_claims:
+      - "Phase I uplift"
+      - "demonstrated improvement"
+  
+  # Experiment results - must be conservative
+  "docs/RFL_EXPERIMENT_PLAN*.md":
+    require_uplift_disclaimer: true
+    forbidden_claims:
+      - "will demonstrate uplift"  # Too strong - should be "may demonstrate"
+  
+  # Main README - must not claim undemonstrated uplift
+  "README.md":
+    forbidden_claims:
+      - "demonstrated uplift"
+      - "proven improvement"
+      - "RFL learns to improve"

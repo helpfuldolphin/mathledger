@@ -1,5 +1,9 @@
 # U2 Architecture Port Plan
 
+> **STATUS: PHASE II — IMPLEMENTATION PLANNING**
+> 
+> **Note:** No empirical uplift has been demonstrated yet. This document describes implementation planning for Phase II experiments.
+
 This document outlines the plan for porting the U2 uplift experiment architecture from the `helpfuldolphin/mathledger` GitHub repository into the local MathLedger substrate.
 
 ## 1. File-by-File Diff Summary
