@@ -1,0 +1,171 @@
+% MathLedger Field Manual
+% PHASE II — NOT RUN IN PHASE I
+%
+% This document serves as the technical field manual for MathLedger
+% Phase II development and experimentation.
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{MathLedger Field Manual}
+\fancyhead[R]{PHASE II --- NOT RUN IN PHASE I}
+\fancyfoot[C]{\thepage}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10}
+}
+
+\title{\textbf{MathLedger Field Manual}\\[10pt]
+\large Phase II Technical Reference}
+\author{MathLedger Research Fleet}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.9\textwidth}{
+\textbf{STATUS: PHASE II --- NOT RUN IN PHASE I}\\[5pt]
+As of Evidence Pack v1, \textbf{no uplift claims exist}; all uplift discussion is purely theoretical.
+No Phase II experiments have been executed.
+}}
+\end{center}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+This field manual provides technical guidance for MathLedger Phase II development and experimentation. It covers the key infrastructure components, safety mechanisms, and operational procedures required for conducting preregistered asymmetric uplift experiments.
+
+\textbf{Important:} No empirical uplift has been demonstrated yet. All experimental designs in this document are preregistered protocols awaiting execution.
+
+\section{Safe-Eval Design}
+
+\subsection{Overview}
+
+Phase II code paths use a \textbf{restricted AST arithmetic evaluator} for processing numeric expressions in experiment configurations and metrics. This evaluator will be implemented in \texttt{experiments/u2\_safe\_eval.py} (TO BE IMPLEMENTED by sober-refactor).
+
+\subsection{Allowed Operations}
+
+The safe evaluator permits only the following operations:
+
+\begin{itemize}
+    \item Numeric literals (integers and floats)
+    \item Unary operators: \texttt{+}, \texttt{-}
+    \item Binary operators: \texttt{+}, \texttt{-}, \texttt{*}, \texttt{/}
+\end{itemize}
+
+\subsection{Disallowed Operations}
+
+The following operations are \textbf{strictly forbidden}:
+
+\begin{itemize}
+    \item Function calls
+    \item Variable names / identifiers
+    \item Import statements
+    \item List/dict comprehensions
+    \item Attribute access
+    \item Any form of code execution beyond arithmetic
+\end{itemize}
+
+\subsection{Purpose}
+
+The restricted evaluator serves three critical purposes:
+
+\begin{enumerate}
+    \item \textbf{Security:} Prevents arbitrary code execution from configuration files or external inputs
+    \item \textbf{Reproducibility:} Guarantees identical results across different Python versions and environments
+    \item \textbf{Determinism:} Eliminates platform-specific floating-point variations where possible
+\end{enumerate}
+
+This design follows the principle of least privilege---only the minimum required functionality is exposed.
+
+\subsection{Implementation Reference}
+
+See \texttt{experiments/u2\_safe\_eval.py} for the complete implementation (TO BE IMPLEMENTED by sober-refactor). The module will provide:
+
+\begin{lstlisting}
+def safe_eval(expr: str) -> float:
+    """
+    Evaluate a restricted arithmetic expression.
+    Raises ValueError for disallowed operations.
+    """
+\end{lstlisting}
+
+\section{U2 Experiment Infrastructure}
+
+\subsection{Key Modules}
+
+\begin{itemize}
+    \item \texttt{experiments/run\_uplift\_u2.py} --- Main experiment runner
+    \item \texttt{experiments/slice\_success\_metrics.py} --- Success metric functions
+    \item \texttt{experiments/curriculum\_loader\_v2.py} --- Curriculum configuration (TO BE IMPLEMENTED)
+    \item \texttt{experiments/u2\_calibration.py} --- Slice calibration (TO BE IMPLEMENTED)
+    \item \texttt{experiments/manifest\_verifier.py} --- Manifest verification (TO BE IMPLEMENTED)
+\end{itemize}
+
+\subsection{Running Experiments}
+
+\textbf{Note:} No U2 experiments have been run as of Evidence Pack v1.
+
+\begin{lstlisting}
+# Baseline run
+python experiments/run_uplift_u2.py \
+  --slice slice_uplift_goal \
+  --mode baseline \
+  --cycles 20 \
+  --seed 12345 \
+  --out results/uplift_u2/slice_uplift_goal
+
+# RFL run (same seed)
+python experiments/run_uplift_u2.py \
+  --slice slice_uplift_goal \
+  --mode rfl \
+  --cycles 20 \
+  --seed 12345 \
+  --out results/uplift_u2/slice_uplift_goal
+\end{lstlisting}
+
+\section{Absolute Safeguards}
+
+The following safeguards are embedded in Phase II infrastructure:
+
+\begin{enumerate}
+    \item \textbf{No Uplift Claims:} All output files are labeled ``PHASE II --- NOT USED IN PHASE I''
+    \item \textbf{Deterministic Execution:} Same seed must produce identical results
+    \item \textbf{Preregistration Required:} Experiments must be preregistered before execution
+    \item \textbf{Paired Design:} Uplift claims require both baseline and RFL runs with matched seeds
+    \item \textbf{Verifiable Feedback Only:} RFL uses only verifiable feedback (no RLHF, no proxy rewards)
+\end{enumerate}
+
+\section{Related Documentation}
+
+\begin{itemize}
+    \item \texttt{docs/PHASE2\_RFL\_UPLIFT\_PLAN.md} --- Overall Phase II uplift plan
+    \item \texttt{docs/PHASE2\_U2\_DEVELOPER\_GUIDE.md} --- U2 developer guide
+    \item \texttt{RFL\_UPLIFT\_THEORY.md} --- Theoretical framework (unverified conjectures)
+    \item \texttt{docs/VSD\_PHASE\_2.md} --- VSD Phase 2 architecture
+\end{itemize}
+
+\vfill
+
+\begin{center}
+\textbf{PHASE II --- NOT PART OF EVIDENCE PACK v1}
+\end{center}
+
+\end{document}
