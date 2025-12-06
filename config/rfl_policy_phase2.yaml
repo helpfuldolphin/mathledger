@@ -1,0 +1,55 @@
+# PHASE II — NOT USED IN PHASE I
+# RFL Policy Configuration for Phase II U2 Experiments
+#
+# This file defines per-slice learning rates and schedules for the
+# RFL policy in Phase II uplift experiments.
+#
+# Absolute Safeguards:
+# - All policy updates remain deterministic given seed + initial weights
+# - No wall-clock time or external entropy in policy computation
+# - Default behavior is preserved unless explicitly overridden
+
+version: 2.0
+label: "PHASE II — NOT USED IN PHASE I"
+
+# RFL Policy Configuration
+rfl_policy:
+  # Default learning rate for all slices
+  default_learning_rate: 0.01
+
+  # Per-slice learning rates (override default)
+  slice_learning_rates:
+    # Goal-oriented slices: slightly higher learning rate
+    slice_uplift_goal: 0.015
+    
+    # Sparse reward slices: higher learning rate to adapt faster
+    slice_uplift_sparse: 0.02
+    
+    # Tree/structural slices: moderate learning rate
+    slice_uplift_tree: 0.012
+    
+    # Dependency slices: standard learning rate
+    slice_uplift_dependency: 0.01
+
+  # Optional learning rate decay
+  # decay_rate: 1.0 means no decay
+  decay_rate: 1.0
+  decay_steps: 100
+
+# Policy Snapshot Configuration
+policy_snapshots:
+  # How often to log snapshots (every N cycles)
+  snapshot_interval: 10
+  
+  # Include in JSONL logs
+  include_in_jsonl: true
+  
+  # Include in debug records
+  include_in_debug: true
+
+# Feature mask configuration (maps to SLICE_FEATURE_MASKS in features.py)
+# These are defaults; actual masks are defined in code
+feature_masks:
+  enabled: true
+  # Use slice-specific masks from SLICE_FEATURE_MASKS
+  use_slice_masks: true
