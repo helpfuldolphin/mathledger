@@ -17,9 +17,25 @@ import json
 import random
 import sys
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import yaml
+
+# Support running as both a module and a standalone script
+try:
+    from experiments.curriculum_loader_v2 import (
+        CurriculumLoader,
+        CurriculumLoadError,
+        UpliftSlice,
+        hash_slice_config,
+    )
+except ImportError:
+    from curriculum_loader_v2 import (
+        CurriculumLoader,
+        CurriculumLoadError,
+        UpliftSlice,
+        hash_slice_config,
+    )
 
 # --- Slice-specific Success Metrics ---
 # These are passed as pure functions. In a real scenario, these might be
@@ -84,6 +100,29 @@ def get_config(config_path: Path) -> Dict[str, Any]:
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
+
+def load_slice_with_loader(
+    slice_name: str,
+    config_path: Path,
+) -> tuple:
+    """
+    Load a slice using the curriculum_loader_v2 module.
+
+    Returns:
+        A tuple of (UpliftSlice, slice_hash, loader).
+
+    Raises:
+        SystemExit: If loading or validation fails (fail-fast).
+    """
+    try:
+        loader = CurriculumLoader(config_path, strict=True)
+        slice_obj = loader.get_slice(slice_name)
+        slice_hash = loader.get_slice_hash(slice_name)
+        return slice_obj, slice_hash, loader
+    except CurriculumLoadError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+
 def generate_seed_schedule(initial_seed: int, num_cycles: int) -> List[int]:
     """Generates a deterministic list of seeds for each cycle."""
     rng = random.Random(initial_seed)
@@ -100,8 +139,21 @@ def run_experiment(
     mode: str,
     out_dir: Path,
     config: Dict[str, Any],
+    uplift_slice: Optional[UpliftSlice] = None,
+    uplift_slice_hash: Optional[str] = None,
 ):
-    """Main function to run the uplift experiment."""
+    """Main function to run the uplift experiment.
+
+    Args:
+        slice_name: Name of the slice to run.
+        cycles: Number of experiment cycles.
+        seed: Initial random seed.
+        mode: Execution mode ('baseline' or 'rfl').
+        out_dir: Output directory for results.
+        config: Raw curriculum configuration dictionary.
+        uplift_slice: Optional pre-loaded UpliftSlice from curriculum_loader_v2.
+        uplift_slice_hash: Optional pre-computed slice hash from curriculum_loader_v2.
+    """
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
     print(f"PHASE II — NOT USED IN PHASE I")
 
@@ -171,8 +223,12 @@ def run_experiment(
             print(f"Cycle {i+1}/{cycles}: Chose '{chosen_item}', Success: {success}")
 
     # 3. Manifest Generation
-    slice_config_str = json.dumps(slice_config, sort_keys=True)
-    slice_config_hash = hash_string(slice_config_str)
+    # Use the hash from curriculum_loader_v2 if provided, otherwise compute legacy hash
+    if uplift_slice_hash is not None:
+        slice_config_hash = uplift_slice_hash
+    else:
+        slice_config_str = json.dumps(slice_config, sort_keys=True)
+        slice_config_hash = hash_string(slice_config_str)
     ht_series_str = json.dumps(ht_series, sort_keys=True)
     ht_series_hash = hash_string(ht_series_str)
 
@@ -217,6 +273,7 @@ Absolute Safeguards:
     parser.add_argument("--mode", required=True, choices=["baseline", "rfl"], help="Execution mode: 'baseline' or 'rfl'.")
     parser.add_argument("--out", required=True, type=str, help="Output directory for results and manifest files.")
     parser.add_argument("--config", default="config/curriculum_uplift_phase2.yaml", type=str, help="Path to the curriculum config file.")
+    parser.add_argument("--use-loader", action="store_true", help="Use curriculum_loader_v2 for slice loading and validation.")
 
     args = parser.parse_args()
 
@@ -225,6 +282,14 @@ Absolute Safeguards:
 
     config = get_config(config_path)
 
+    # Optionally use the curriculum loader for enhanced validation and deterministic hashing
+    uplift_slice = None
+    uplift_slice_hash = None
+    if args.use_loader:
+        print("INFO: Using curriculum_loader_v2 for slice loading")
+        uplift_slice, uplift_slice_hash, _ = load_slice_with_loader(args.slice, config_path)
+        print(f"INFO: Loaded slice '{uplift_slice.name}' with hash {uplift_slice_hash[:16]}...")
+
     run_experiment(
         slice_name=args.slice,
         cycles=args.cycles,
@@ -232,6 +297,8 @@ Absolute Safeguards:
         mode=args.mode,
         out_dir=out_dir,
         config=config,
+        uplift_slice=uplift_slice,
+        uplift_slice_hash=uplift_slice_hash,
     )
 
 if __name__ == "__main__":
