@@ -51,6 +51,14 @@ from experiments.curriculum_loader_v2 import (
     CurriculumNotFoundError,
 )
 
+# Phase II Calibration (u2_calibration)
+from experiments.u2_calibration import (
+    validate_calibration,
+    CalibrationNotFoundError as CalibNotFoundError,
+    CalibrationInvalidError,
+    check_calibration_exists,
+)
+
 from experiments.u2.runner import (
     U2Runner,
     U2Config,
@@ -187,6 +195,8 @@ def run_experiment(
     trace_ctx: Optional[TracedExperimentContext] = None,
     snapshot_keep: int = 5,
     trace_events: Optional[set] = None,
+    require_calibration: bool = False,
+    calibration_dir: Optional[Path] = None,
 ):
     """
     Main function to run the uplift experiment with snapshot support.
@@ -205,9 +215,36 @@ def run_experiment(
         trace_ctx: TracedExperimentContext for per-cycle logging (internal use)
         trace_events: Set of event types to log (None = all events)
         snapshot_keep: Number of snapshots to keep (rotation policy, 0 = no rotation)
+        require_calibration: If True, require valid calibration before running
+        calibration_dir: Directory containing calibration results (default: results/uplift_u2/calibration)
     """
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
     print(f"PHASE II — NOT USED IN PHASE I")
+    
+    # Phase II Calibration Guardrail
+    if require_calibration:
+        if calibration_dir is None:
+            calibration_dir = Path("results/uplift_u2/calibration")
+        
+        print(f"INFO: Calibration check enabled for slice '{slice_name}'")
+        try:
+            summary = validate_calibration(calibration_dir, slice_name, require_valid=True)
+            print(f"INFO: Calibration valid:")
+            print(f"      determinism_verified = {summary.determinism_verified}")
+            print(f"      schema_valid = {summary.schema_valid}")
+            if summary.replay_hash:
+                print(f"      replay_hash = {summary.replay_hash[:16]}...")
+        except CalibNotFoundError as e:
+            print(f"ERROR: Calibration not found for slice '{slice_name}'", file=sys.stderr)
+            print(f"       {e}", file=sys.stderr)
+            print(f"       Run calibration first before main uplift experiment.", file=sys.stderr)
+            print(f"       Expected location: {calibration_dir / slice_name / 'calibration_summary.json'}", file=sys.stderr)
+            sys.exit(2)  # Exit code 2 = calibration missing
+        except CalibrationInvalidError as e:
+            print(f"ERROR: Calibration invalid for slice '{slice_name}'", file=sys.stderr)
+            print(f"       {e}", file=sys.stderr)
+            print(f"       Re-run calibration to fix.", file=sys.stderr)
+            sys.exit(2)  # Exit code 2 = calibration invalid
     
     # Phase II Budget Enforcement (Agent B1)
     # Load budget for Phase II slices; fail fast if missing
@@ -469,7 +506,7 @@ Snapshot Support:
 Exit Codes:
 - 0: Success
 - 1: General error
-- 2: No snapshot found for --resume
+- 2: Calibration missing/invalid (with --require-calibration) or no snapshot found (with --resume)
         """
     )
     parser.add_argument(
@@ -558,6 +595,23 @@ Exit Codes:
             f"{','.join(sorted(CORE_EVENTS))}."
         )
     )
+    
+    # Calibration arguments (PHASE II)
+    parser.add_argument(
+        "--require-calibration",
+        action="store_true",
+        help=(
+            "Require valid calibration before running experiment. "
+            "Checks for calibration_summary.json in results/uplift_u2/calibration/<slice>/. "
+            "Exits with code 2 if calibration missing or invalid."
+        )
+    )
+    parser.add_argument(
+        "--calibration-dir",
+        type=str,
+        default=None,
+        help="Directory containing calibration results (default: results/uplift_u2/calibration)."
+    )
 
     args = parser.parse_args()
 
@@ -602,6 +656,9 @@ Exit Codes:
         restore_from = Path(args.restore_from)
 
     config = get_config(config_path)
+    
+    # Parse calibration directory
+    calibration_dir = Path(args.calibration_dir) if args.calibration_dir else None
 
     run_experiment(
         slice_name=args.slice,
@@ -616,6 +673,8 @@ Exit Codes:
         trace_log_path=trace_log_path,
         snapshot_keep=args.snapshot_keep,
         trace_events=trace_events,
+        require_calibration=args.require_calibration,
+        calibration_dir=calibration_dir,
     )
 
 if __name__ == "__main__":
