@@ -17,32 +17,13 @@ import json
 import random
 import sys
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Dict, List
 
-import yaml
-
-# --- Slice-specific Success Metrics ---
-# These are passed as pure functions. In a real scenario, these might be
-# dynamically imported or otherwise more complex. For this standalone script,
-# we define them here.
-
-def metric_arithmetic_simple(item: str, result: Any) -> bool:
-    """Success is when the python eval matches the expected result."""
-    try:
-        # A mock 'correct' result is simply the eval of the string.
-        return eval(item) == result
-    except Exception:
-        return False
-
-def metric_algebra_expansion(item: str, result: Any) -> bool:
-    """A mock success metric for algebra. We'll just use string length."""
-    # This is a placeholder. A real metric would be much more complex.
-    return len(str(result)) > len(item)
-
-METRIC_DISPATCHER = {
-    "arithmetic_simple": metric_arithmetic_simple,
-    "algebra_expansion": metric_algebra_expansion,
-}
+from experiments.curriculum_loader_v2 import (
+    CurriculumLoaderV2,
+    SuccessMetricSpec,
+    UpliftSlice,
+)
 
 
 # --- RFL Policy Stubs ---
@@ -75,14 +56,25 @@ class RFLPolicy:
 
 # --- Core Runner Logic ---
 
-def get_config(config_path: Path) -> Dict[str, Any]:
-    """Loads the YAML configuration file."""
+def get_loader(config_path: Path) -> CurriculumLoaderV2:
+    """
+    Load curriculum using CurriculumLoaderV2.
+
+    Args:
+        config_path: Path to curriculum YAML file.
+
+    Returns:
+        CurriculumLoaderV2 instance with validated configuration.
+    """
     print(f"INFO: Loading config from {config_path}")
-    if not config_path.exists():
+    try:
+        return CurriculumLoaderV2.from_yaml_path(config_path)
+    except FileNotFoundError:
         print(f"ERROR: Config file not found at {config_path}", file=sys.stderr)
         sys.exit(1)
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+    except Exception as e:
+        print(f"ERROR: Failed to load config: {e}", file=sys.stderr)
+        sys.exit(1)
 
 def generate_seed_schedule(initial_seed: int, num_cycles: int) -> List[int]:
     """Generates a deterministic list of seeds for each cycle."""
@@ -93,30 +85,86 @@ def hash_string(data: str) -> str:
     """Computes the SHA256 hash of a string."""
     return hashlib.sha256(data.encode('utf-8')).hexdigest()
 
+
+def evaluate_success(
+    slice_obj: UpliftSlice,
+    chosen_item: str,
+    mock_result: Any,
+) -> bool:
+    """
+    Evaluate success using the slice's SuccessMetricSpec.
+
+    This is a mock evaluator that simulates success based on the metric kind.
+    In production, this would call the actual metric functions with real
+    verified statements.
+
+    Args:
+        slice_obj: UpliftSlice with success_metric configuration.
+        chosen_item: The item/formula being evaluated.
+        mock_result: The mock execution result.
+
+    Returns:
+        True if success criteria met, False otherwise.
+    """
+    metric_spec = slice_obj.success_metric
+    kind = metric_spec.kind
+
+    # Mock evaluation based on metric kind
+    # In production, these would call slice_success_metrics functions
+    if kind == "sparse":
+        # For sparse metric, mock success based on item evaluation
+        try:
+            # Attempt to evaluate arithmetic expressions
+            expected = eval(chosen_item)
+            return mock_result == expected
+        except Exception:
+            # For non-arithmetic items, use length-based heuristic
+            return len(str(mock_result)) > len(chosen_item)
+    elif kind == "goal_hit":
+        # Mock: success if mock_result hash is in target_hashes
+        # In production, would use compute_goal_hit
+        thresholds = metric_spec.thresholds
+        min_verified = thresholds.get("min_total_verified", 1)
+        return min_verified <= 1  # Mock: always succeed if threshold is 1
+    elif kind == "chain_length":
+        # Mock: success based on chain length threshold
+        thresholds = metric_spec.thresholds
+        min_chain = thresholds.get("min_chain_length", 1)
+        return min_chain <= 1  # Mock: always succeed if threshold is 1
+    elif kind == "multi_goal":
+        # Mock: success if required goals are met
+        return True  # Mock: optimistically succeed
+
+    # Default fallback
+    return False
+
+
 def run_experiment(
     slice_name: str,
     cycles: int,
     seed: int,
     mode: str,
     out_dir: Path,
-    config: Dict[str, Any],
+    loader: CurriculumLoaderV2,
 ):
     """Main function to run the uplift experiment."""
     print(f"--- Running Experiment: slice={slice_name}, mode={mode}, cycles={cycles}, seed={seed} ---")
     print(f"PHASE II — NOT USED IN PHASE I")
 
-    # 1. Setup
+    # 1. Setup using CurriculumLoaderV2
     out_dir.mkdir(exist_ok=True)
-    slice_config = config.get("slices", {}).get(slice_name)
-    if not slice_config:
+
+    try:
+        slice_obj = loader.get_slice(slice_name)
+    except KeyError:
         print(f"ERROR: Slice '{slice_name}' not found in config.", file=sys.stderr)
         sys.exit(1)
 
-    items = slice_config["items"]
-    success_metric = METRIC_DISPATCHER.get(slice_name)
-    if not success_metric:
-        print(f"ERROR: Success metric for slice '{slice_name}' not found.", file=sys.stderr)
-        sys.exit(1)
+    items = list(slice_obj.items)
+    metric_spec = slice_obj.success_metric
+
+    print(f"INFO: Slice '{slice_name}' loaded with metric kind '{metric_spec.kind}'")
+    print(f"INFO: Slice config hash: {slice_obj.config_hash}")
 
     seed_schedule = generate_seed_schedule(seed, cycles)
     policy = RFLPolicy(seed) if mode == "rfl" else None
@@ -130,7 +178,7 @@ def run_experiment(
         for i in range(cycles):
             cycle_seed = seed_schedule[i]
             rng = random.Random(cycle_seed)
-            
+
             # --- Ordering Step ---
             if mode == "baseline":
                 # Baseline: random shuffle ordering
@@ -148,8 +196,13 @@ def run_experiment(
             # --- Mock Execution & Evaluation ---
             # In a real system, this would be a call to the substrate.
             # Here, we just mock a result.
-            mock_result = eval(chosen_item) if slice_name == "arithmetic_simple" else f"Expanded({chosen_item})"
-            success = success_metric(chosen_item, mock_result)
+            try:
+                mock_result = eval(chosen_item)
+            except Exception:
+                mock_result = f"Expanded({chosen_item})"
+
+            # Use SuccessMetricSpec-driven evaluation
+            success = evaluate_success(slice_obj, chosen_item, mock_result)
 
             # --- RFL Policy Update ---
             if mode == "rfl":
@@ -170,9 +223,7 @@ def run_experiment(
             results_f.write(json.dumps(telemetry_record) + "\n")
             print(f"Cycle {i+1}/{cycles}: Chose '{chosen_item}', Success: {success}")
 
-    # 3. Manifest Generation
-    slice_config_str = json.dumps(slice_config, sort_keys=True)
-    slice_config_hash = hash_string(slice_config_str)
+    # 3. Manifest Generation - use slice_obj from loader
     ht_series_str = json.dumps(ht_series, sort_keys=True)
     ht_series_hash = hash_string(ht_series_str)
 
@@ -182,8 +233,9 @@ def run_experiment(
         "mode": mode,
         "cycles": cycles,
         "initial_seed": seed,
-        "slice_config_hash": slice_config_hash,
-        "prereg_hash": slice_config.get("prereg_hash", "N/A"),
+        "slice_config_hash": slice_obj.config_hash,
+        "prereg_hash": slice_obj.prereg_hash or "N/A",
+        "success_metric": metric_spec.to_dict(),
         "ht_series_hash": ht_series_hash,
         "deterministic_seed_schedule": seed_schedule,
         "outputs": {
@@ -223,7 +275,8 @@ Absolute Safeguards:
     config_path = Path(args.config)
     out_dir = Path(args.out)
 
-    config = get_config(config_path)
+    # Use CurriculumLoaderV2 instead of raw YAML loading
+    loader = get_loader(config_path)
 
     run_experiment(
         slice_name=args.slice,
@@ -231,7 +284,7 @@ Absolute Safeguards:
         seed=args.seed,
         mode=args.mode,
         out_dir=out_dir,
-        config=config,
+        loader=loader,
     )
 
 if __name__ == "__main__":
