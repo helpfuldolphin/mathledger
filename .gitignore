@@ -44,5 +44,8 @@ artifacts/
 logs/
 *.backup.py
 
+# Calibration test outputs (generated during testing)
+results/uplift_u2/calibration/
+
 # Docker volumes (not needed if named volumes)
 # data/
