@@ -1,11 +1,30 @@
 """
-PHASE II — NOT USED IN PHASE I
-This module provides pure, deterministic functions for computing slice-specific success metrics.
+PHASE II -- NOT USED IN PHASE I
+
+Slice Success Metrics
+=====================
+
+This module provides pure, deterministic functions for computing slice-specific
+success metrics in Phase II uplift experiments.
+
+Module Responsibilities:
+  - Provide deterministic success metric computations
+  - Support multiple metric types (goal-hit, sparse, chain, multi-goal)
+  - Maintain behavior-preserving contracts for RFL protocol
+
+All functions are:
+  - Pure (no side effects)
+  - Deterministic (same inputs always produce same outputs)
+  - Order-independent where applicable
+
+These metrics are used by the U2 uplift runner to evaluate experiment outcomes.
 """
 
-from typing import List, Set, Dict, Any, Tuple
+from __future__ import annotations
 
-# A statement is represented as a dictionary-like object with at least a 'hash' key.
+from typing import Any, Dict, List, Set, Tuple
+
+# Type alias for statement records
 Statement = Dict[str, Any]
 
 def compute_goal_hit(
