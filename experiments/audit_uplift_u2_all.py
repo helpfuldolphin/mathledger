@@ -16,7 +16,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 
 from experiments.audit_uplift_u2 import (
     audit_experiment,
@@ -177,7 +177,7 @@ def format_multi_audit_markdown(
 def audit_all_experiments(
     root_dir: Path,
     quiet: bool = False
-) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
     Discover and audit all experiments under root_dir.
     

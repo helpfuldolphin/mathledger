@@ -43,7 +43,8 @@ class TestArtifactHashes(unittest.TestCase):
             self.assertEqual(hash_value, hash_value2)
             
             # Verify specific hash for known content
-            # 'test content\n' with actual newline character
+            # SHA-256 of literal string 'test content\n' (with actual newline)
+            # This hash was computed independently to validate correctness
             expected = "a1fff0ffefb9eace7230c24e50731f0a91c62f9cefdfe77121c2f607125dffae"
             self.assertEqual(hash_value, expected)
         finally:
@@ -64,7 +65,8 @@ class TestArtifactHashes(unittest.TestCase):
         try:
             hash_value = compute_artifact_hash(tmp_path)
             
-            # SHA-256 of empty string
+            # SHA-256 of empty string (well-known constant)
+            # This is the standard SHA-256 hash of zero bytes
             expected = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
             self.assertEqual(hash_value, expected)
         finally:
