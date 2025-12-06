@@ -302,6 +302,14 @@ class CurriculumLoaderV2:
         schema_version: str,
         raw_config: Dict[str, Any],
     ):
+        """
+        Initialize curriculum loader.
+        
+        Args:
+            slices: Dictionary mapping slice names to UpliftSlice instances
+            schema_version: Schema version string (e.g., 'phase2-v1')
+            raw_config: Raw configuration dictionary from YAML
+        """
         self.slices = slices
         self.schema_version = schema_version
         self.raw_config = raw_config
@@ -323,7 +331,10 @@ class CurriculumLoaderV2:
             yaml.YAMLError: If YAML parsing fails
         """
         if yaml is None:
-            raise ImportError("PyYAML is required for curriculum loading")
+            raise ImportError(
+                "PyYAML is required for curriculum loading. "
+                "Install with: pip install pyyaml"
+            )
         
         if not config_path.exists():
             raise FileNotFoundError(f"Curriculum config not found: {config_path}")
