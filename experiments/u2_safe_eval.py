@@ -11,6 +11,12 @@ Security Principles:
 - Only allow numeric literals (int, float)
 - No variable names, function calls, or other constructs
 - Provide diagnostic feedback without weakening security
+
+Note on eval() usage:
+    We use eval() after strict AST validation to support arithmetic evaluation.
+    ast.literal_eval() cannot be used here as it only supports literals, not
+    arithmetic expressions. The AST whitelist ensures only safe operations are
+    allowed before eval() is called.
 """
 
 import ast

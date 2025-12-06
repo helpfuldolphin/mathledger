@@ -72,8 +72,12 @@ from experiments.u2 import schema as trace_schema
 def metric_arithmetic_simple(item: str, result: Any) -> bool:
     """Success is when the python eval matches the expected result."""
     try:
-        # A mock 'correct' result is simply the eval of the string.
-        return bool(eval(item) == result)
+        # Use safe_eval_arithmetic to avoid security issues with eval()
+        from experiments.u2_safe_eval import safe_eval_arithmetic
+        expected = safe_eval_arithmetic(item)
+        if expected is None:
+            return False
+        return bool(expected == result)
     except Exception:
         return False
 

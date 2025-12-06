@@ -64,9 +64,10 @@ def simple_curriculum():
 @pytest.fixture
 def mock_execute_fn():
     """Mock execution function with minimal overhead."""
+    import hashlib
+    
     def execute(item: str, seed: int) -> Tuple[bool, Any]:
         # Minimal execution: just return success based on hash
-        import hashlib
         h = int(hashlib.sha256(f"{item}{seed}".encode()).hexdigest()[:8], 16)
         success = (h % 2) == 0
         return success, {"outcome": "mock"}
@@ -201,6 +202,7 @@ def test_telemetry_record_serialization_performance(temp_output_dir):
     This ensures the dataclass-based telemetry doesn't introduce overhead.
     """
     import json
+    from dataclasses import asdict
     from experiments.u2.runner import TelemetryRecord
     
     num_records = 10000
@@ -220,7 +222,7 @@ def test_telemetry_record_serialization_performance(temp_output_dir):
             success=(i % 2) == 0,
         )
         # Serialize to JSON (common operation in telemetry)
-        _ = json.dumps(record.__dict__)
+        _ = json.dumps(asdict(record))
     
     end_time = time.perf_counter()
     elapsed_ms = (end_time - start_time) * 1000

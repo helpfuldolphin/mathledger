@@ -4,6 +4,11 @@ Snapshot Management for U2 Uplift Experiments
 Provides deterministic snapshot save/restore functionality for long-running experiments.
 
 PHASE II — NOT USED IN PHASE I
+
+Security Note:
+    Snapshots use pickle for serialization. Only load snapshots from trusted sources.
+    For production use with untrusted sources, consider migrating to JSON with custom
+    serialization or a more secure format.
 """
 
 import hashlib

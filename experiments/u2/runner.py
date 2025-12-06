@@ -10,6 +10,9 @@ This module provides the core runner logic for U2 uplift experiments with:
 PHASE II — NOT USED IN PHASE I
 """
 
+import hashlib
+import json
+import random
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -159,7 +162,6 @@ class U2Runner:
             CycleResult with execution details
         """
         # Derive cycle seed from master seed and cycle index
-        import hashlib
         seed_str = f"{self.config.master_seed}_{self.cycle_index}"
         cycle_seed = int(hashlib.sha256(seed_str.encode()).hexdigest()[:8], 16)
         
@@ -179,7 +181,6 @@ class U2Runner:
             self._update_rfl_policy(item, success)
         
         # Compute H_t (hash of telemetry)
-        import json
         telemetry_str = json.dumps({
             "cycle": self.cycle_index,
             "item": item,
@@ -208,7 +209,6 @@ class U2Runner:
     
     def _select_item_baseline(self, items: List[str], seed: int) -> str:
         """Select item using baseline (random) policy."""
-        import random
         rng = random.Random(seed)
         return rng.choice(items)
     
@@ -243,7 +243,6 @@ class U2Runner:
         probs = [w / total_weight for w in weights]
         
         # Sample from weighted distribution
-        import random
         rng = random.Random(seed)
         return rng.choices(items, weights=probs)[0]
     
