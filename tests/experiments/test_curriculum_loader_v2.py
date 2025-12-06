@@ -271,7 +271,9 @@ def test_unsupported_format(temp_dir):
 
 def test_real_curriculum_file():
     """Test loading the actual Phase II curriculum config."""
-    config_path = Path("/home/runner/work/mathledger/mathledger/config/curriculum_uplift_phase2.yaml")
+    # Use relative path from repository root
+    repo_root = Path(__file__).parent.parent.parent
+    config_path = repo_root / "config" / "curriculum_uplift_phase2.yaml"
     
     if not config_path.exists():
         pytest.skip("Phase II curriculum config not found")
