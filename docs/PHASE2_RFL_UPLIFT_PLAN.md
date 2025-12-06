@@ -202,6 +202,7 @@ uv run python experiments/run_uplift_u2.py \
   --out=results/uplift_u2_goal_rfl.jsonl
 
 # 3. Summarize
+# DOCTEST: SKIP - summarize_uplift.py to be created in Phase II
 uv run python experiments/summarize_uplift.py \
   --baseline=results/uplift_u2_goal_baseline.jsonl \
   --rfl=results/uplift_u2_goal_rfl.jsonl \
@@ -227,6 +228,15 @@ uv run python experiments/summarize_uplift.py \
 - `experiments/run_uplift_u2.py` — U2 experiment runner (TO BE IMPLEMENTED)
 - `experiments/summarize_uplift.py` — Uplift summarizer (TO BE IMPLEMENTED)
 - `experiments/prereg/PREREG_UPLIFT_U2.yaml` — Preregistration template (TO BE IMPLEMENTED)
+
+---
+
+## Documentation Resources
+
+For the canonical index of all Evidence Pack v1 documents, see:
+
+- **[Evidence Pack v1 TOC](evidence_pack_v1_toc.md)** - Complete table of contents with document descriptions, phases, and metadata
+- **[Documentation Automation Tools](DOC_AUTOMATION_TOOLS.md)** - Guide to snippet checking, phase marker linting, and TOC generation
 
 ---
 

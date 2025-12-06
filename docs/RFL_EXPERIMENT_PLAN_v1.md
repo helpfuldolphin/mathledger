@@ -1,9 +1,11 @@
 # RFL Experiment Plan v1.0: Empirical Verification of Reflexive Formal Learning
 
-**Status:** DRAFT
+**Status:** DRAFT - PHASE I
 **Author:** GEMINI-A (RFL Experiment Orchestrator)
 **Date:** 2025-11-27
 **Context:** MathLedger VCP 2.2 Integration
+
+> **Note:** This is Phase I experiment planning focused on RFL infrastructure verification and negative control experiments. No uplift has been demonstrated in Phase I. Phase II uplift experiments are described in PHASE2_RFL_UPLIFT_PLAN.md.
 
 ## 1. Executive Summary
 This document defines the experimental campaign to verify the core claims of the MathLedger Research Paper regarding **Reflexive Formal Learning (RFL)**. We utilize the existing "First Organism" architecture (UI $\rightarrow$ Derivation $\rightarrow$ Attestation $\rightarrow$ RFL Metabolism) to measure the descent of epistemic risk and the stabilization of the dual-attestation ledger.
