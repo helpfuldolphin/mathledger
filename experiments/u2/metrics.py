@@ -50,12 +50,76 @@ def metric_arithmetic_simple(item: str, result: Any) -> bool:
 
     **Determinism Notes:**
         - Pure function with no side effects.
-        - Safe evaluation catches all exceptions.
+        - Uses ast.literal_eval for safe evaluation (no code execution).
     """
+    import ast
     try:
-        return eval(item) == result
+        # Use ast.literal_eval for safe evaluation of literals only
+        # This prevents code injection while allowing arithmetic constants
+        evaluated = ast.literal_eval(item)
+        return evaluated == result
+    except (ValueError, SyntaxError):
+        # ast.literal_eval can't handle arithmetic expressions like "1+1"
+        # Fall back to manual parsing for simple arithmetic
+        return _safe_eval_arithmetic(item) == result
     except Exception:
         return False
+
+
+def _safe_eval_arithmetic(expr: str) -> Any:
+    """Safely evaluate simple arithmetic expressions.
+
+    This function evaluates basic arithmetic expressions without using eval(),
+    supporting only +, -, *, / operations on integers and floats.
+
+    Args:
+        expr: A string arithmetic expression (e.g., "1+1", "2*3").
+
+    Returns:
+        The numeric result, or None if evaluation fails.
+
+    **Determinism Notes:**
+        - Pure function with no side effects.
+        - No code execution, only number parsing and arithmetic.
+    """
+    import ast
+    import operator
+
+    # Supported operators (safe subset)
+    ops = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.USub: operator.neg,
+    }
+
+    def _eval_node(node: ast.AST) -> Any:
+        if isinstance(node, ast.Constant):  # Python 3.8+
+            return node.value
+        elif isinstance(node, ast.Num):  # Python 3.7 compatibility
+            return node.n
+        elif isinstance(node, ast.BinOp):
+            left = _eval_node(node.left)
+            right = _eval_node(node.right)
+            op = ops.get(type(node.op))
+            if op is None:
+                return None
+            return op(left, right)
+        elif isinstance(node, ast.UnaryOp):
+            operand = _eval_node(node.operand)
+            op = ops.get(type(node.op))
+            if op is None:
+                return None
+            return op(operand)
+        else:
+            return None
+
+    try:
+        tree = ast.parse(expr, mode='eval')
+        return _eval_node(tree.body)
+    except Exception:
+        return None
 
 
 def metric_algebra_expansion(item: str, result: Any) -> bool:

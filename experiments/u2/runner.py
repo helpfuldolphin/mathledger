@@ -211,10 +211,8 @@ def _mock_execute_item(item: str, slice_name: str) -> Any:
         The mock result of execution.
     """
     if slice_name == "arithmetic_simple":
-        try:
-            return eval(item)
-        except Exception:
-            return None
+        from experiments.u2.metrics import _safe_eval_arithmetic
+        return _safe_eval_arithmetic(item)
     else:
         return f"Expanded({item})"
 

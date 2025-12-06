@@ -205,12 +205,10 @@ def run_experiment(
                 )
                 chosen_item = scored_items[0][0]
 
-            # Mock execution & evaluation
+            # Mock execution & evaluation using safe arithmetic evaluator
             if slice_name == "arithmetic_simple":
-                try:
-                    mock_result = eval(chosen_item)
-                except Exception:
-                    mock_result = None
+                from experiments.u2.metrics import _safe_eval_arithmetic
+                mock_result = _safe_eval_arithmetic(chosen_item)
             else:
                 mock_result = f"Expanded({chosen_item})"
 

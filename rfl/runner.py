@@ -95,7 +95,10 @@ def compute_step_id(
     """Compute deterministic step_id from input parameters.
 
     This implements the RFL Law formula:
-        step_id = SHA256(experiment_id | slice_name | policy_id | H_t)
+        step_id = SHA256(concat(experiment_id, slice_name, policy_id, H_t))
+
+    The components are concatenated with pipe ('|') separators to form
+    a unique material string that is then hashed.
 
     Args:
         experiment_id: The RFL experiment identifier.
@@ -173,7 +176,8 @@ def validate_attestation_root(root_value: str, root_name: str) -> None:
             f"Ensure the attestation was generated correctly."
         )
     try:
-        int(root_value, 16)
+        # Validate hex format by attempting conversion (result intentionally discarded)
+        _ = int(root_value, 16)
     except ValueError:
         raise ValueError(
             f"{root_name} must be valid hexadecimal, got invalid chars. "
