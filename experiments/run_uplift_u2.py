@@ -73,7 +73,7 @@ def metric_arithmetic_simple(item: str, result: Any) -> bool:
     """Success is when the python eval matches the expected result."""
     try:
         # A mock 'correct' result is simply the eval of the string.
-        return eval(item) == result
+        return bool(eval(item) == result)
     except Exception:
         return False
 
@@ -100,7 +100,8 @@ def get_config(config_path: Path) -> Dict[str, Any]:
         print(f"ERROR: Config file not found at {config_path}", file=sys.stderr)
         sys.exit(1)
     with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+        config: Dict[str, Any] = yaml.safe_load(f)
+        return config
 
 
 def create_execute_fn(slice_name: str) -> Callable[[str, int], Tuple[bool, Any]]:
@@ -179,8 +180,8 @@ def run_experiment(
     trace_log_path: Optional[Path] = None,
     trace_ctx: Optional[TracedExperimentContext] = None,
     snapshot_keep: int = 5,
-    trace_events: Optional[set] = None,
-):
+    trace_events: Optional[set[str]] = None,
+) -> None:
     """
     Main function to run the uplift experiment with snapshot support.
     
@@ -436,7 +437,7 @@ def run_experiment(
         print(f"Snapshots saved to {snapshot_dir}")
 
 
-def main():
+def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
         description="PHASE II U2 Uplift Runner with Snapshot Support. Must not be used for Phase I.",
@@ -562,7 +563,7 @@ Exit Codes:
     trace_log_path = Path(args.trace_log) if args.trace_log else None
     
     # Parse trace events filter
-    trace_events: Optional[set] = None
+    trace_events: Optional[set[str]] = None
     if args.trace_events:
         trace_events = set(e.strip() for e in args.trace_events.split(",") if e.strip())
         # Validate event types

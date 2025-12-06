@@ -8,7 +8,7 @@ PHASE II — NOT USED IN PHASE I
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Literal, Optional, Set, TextIO
 
 
 # Event type constants
@@ -49,15 +49,15 @@ class U2TraceLogger:
         self.log_path = log_path
         self.fail_soft = fail_soft
         self.enabled_events = enabled_events if enabled_events is not None else ALL_EVENT_TYPES
-        self._file = None
+        self._file: Optional[TextIO] = None
     
-    def __enter__(self):
+    def __enter__(self) -> 'U2TraceLogger':
         """Open log file."""
         self.log_path.parent.mkdir(parents=True, exist_ok=True)
         self._file = open(self.log_path, 'a')
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> Literal[False]:
         """Close log file."""
         if self._file is not None:
             self._file.close()
