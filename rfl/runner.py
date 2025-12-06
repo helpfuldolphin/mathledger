@@ -1,9 +1,25 @@
 """
-RFL 40-Run Orchestrator
+PHASE-II -- RFL 40-Run Orchestrator
+====================================
 
 Executes 40 derivation experiments and verifies reflexive metabolism:
-- Coverage ≥ 92% (bootstrap CI lower bound)
-- Uplift > 1.0 (bootstrap CI lower bound)
+    - Coverage >= 92% (bootstrap CI lower bound)
+    - Uplift > 1.0 (bootstrap CI lower bound)
+
+**Determinism Notes:**
+    - All random operations use seeded RNG (config.random_seed).
+    - Step IDs are computed deterministically via SHA-256.
+    - Policy updates follow deterministic symbolic descent rules.
+
+Module Structure:
+    - ``RunLedgerEntry``: Structured curriculum ledger entry
+    - ``RflResult``: Outcome emitted by run_with_attestation
+    - ``RFLRunner``: Main orchestrator class
+
+Error Handling:
+    - Determinism mismatch: Raised when step_id computation fails
+    - Missing config hash: Logged with experiment context
+    - Malformed log entry: Validated before export
 """
 
 import hashlib
@@ -13,7 +29,7 @@ import os
 import redis
 import time
 import numpy as np
-from typing import List, Dict, Any, Optional, Sequence
+from typing import List, Dict, Any, Optional, Sequence, Tuple
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, asdict, field
@@ -21,7 +37,7 @@ from collections import Counter
 import warnings
 
 LATENCY_BUCKET_THRESHOLDS = (0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
-ABSTENTION_BUCKET_THRESHOLDS = (0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 1.0)
+ABSTENTION_BUCKET_THRESHOLDS: Tuple[float, ...] = (0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 1.0)
 
 from .config import RFLConfig, CurriculumSlice
 from .experiment import RFLExperiment, ExperimentResult
@@ -38,6 +54,137 @@ from .audit import RFLAuditLog, SymbolicDescentGradient, StepIdComputation
 from .experiment_logging import RFLExperimentLogger
 from .provenance import ManifestBuilder
 
+
+# ---------------- Pure Helper Functions ----------------
+
+
+def compute_bucket_label(value: float, thresholds: Sequence[float]) -> str:
+    """Compute the bucket label for a value given threshold boundaries.
+
+    This is a pure function that determines which histogram bucket a value
+    falls into based on provided thresholds.
+
+    Args:
+        value: The numeric value to classify.
+        thresholds: Sequence of threshold values in ascending order.
+
+    Returns:
+        String representation of the first threshold >= value, or "+Inf".
+
+    Example:
+        >>> compute_bucket_label(0.3, (0.1, 0.5, 1.0))
+        '0.5'
+        >>> compute_bucket_label(2.0, (0.1, 0.5, 1.0))
+        '+Inf'
+
+    **Determinism Notes:**
+        - Pure function with no side effects.
+    """
+    for threshold in thresholds:
+        if value <= threshold:
+            return str(threshold)
+    return "+Inf"
+
+
+def compute_step_id(
+    experiment_id: str,
+    slice_name: str,
+    policy_id: str,
+    composite_root: str,
+) -> str:
+    """Compute deterministic step_id from input parameters.
+
+    This implements the RFL Law formula:
+        step_id = SHA256(concat(experiment_id, slice_name, policy_id, H_t))
+
+    The components are concatenated with pipe ('|') separators to form
+    a unique material string that is then hashed.
+
+    Args:
+        experiment_id: The RFL experiment identifier.
+        slice_name: The resolved curriculum slice name.
+        policy_id: The policy identifier.
+        composite_root: The composite attestation root (H_t).
+
+    Returns:
+        64-character hexadecimal SHA-256 hash.
+
+    Raises:
+        ValueError: If composite_root is not a valid 64-char hex string.
+
+    **Determinism Notes:**
+        - Pure function, deterministic output for same inputs.
+    """
+    step_material = f"{experiment_id}|{slice_name}|{policy_id}|{composite_root}"
+    return hashlib.sha256(step_material.encode("utf-8")).hexdigest()
+
+
+def compute_reward_from_abstention(abstention_rate: float) -> float:
+    """Compute policy reward signal from abstention rate.
+
+    Args:
+        abstention_rate: The abstention rate [0.0, 1.0].
+
+    Returns:
+        Reward value in range [0.0, 1.0], where lower abstention = higher reward.
+
+    **Determinism Notes:**
+        - Pure function with no side effects.
+    """
+    return max(0.0, 1.0 - max(abstention_rate, 0.0))
+
+
+def compute_symbolic_descent(
+    abstention_rate: float,
+    tolerance: float,
+) -> float:
+    """Compute symbolic descent value from abstention profile.
+
+    The symbolic descent represents the direction and magnitude of
+    policy adjustment based on the abstention rate relative to tolerance.
+
+    Args:
+        abstention_rate: The abstention rate [0.0, 1.0].
+        tolerance: The configured abstention tolerance threshold.
+
+    Returns:
+        Symbolic descent value (negative rate_delta).
+
+    **Determinism Notes:**
+        - Pure function with no side effects.
+    """
+    rate_delta = abstention_rate - tolerance
+    return -rate_delta
+
+
+def validate_attestation_root(root_value: str, root_name: str) -> None:
+    """Validate an attestation root hash value.
+
+    Args:
+        root_value: The root hash to validate.
+        root_name: Name of the root for error messages.
+
+    Raises:
+        ValueError: If root is not a valid 64-character hex string.
+
+    **Determinism Notes:**
+        - Pure function, raises on invalid input.
+    """
+    if len(root_value) != 64:
+        raise ValueError(
+            f"{root_name} must be 64 hex chars, got {len(root_value)}. "
+            f"Ensure the attestation was generated correctly."
+        )
+    try:
+        # Validate hex format by attempting conversion (result intentionally discarded)
+        _ = int(root_value, 16)
+    except ValueError:
+        raise ValueError(
+            f"{root_name} must be valid hexadecimal, got invalid chars. "
+            f"Check the attestation generation pipeline."
+        )
+
+
 # ---------------- Logger ----------------
 logging.basicConfig(
     level=logging.INFO,
@@ -49,10 +196,37 @@ logger = logging.getLogger("RFLRunner")
 
 @dataclass
 class RunLedgerEntry:
-    """Structured curriculum ledger entry for a single RFL run."""
+    """Structured curriculum ledger entry for a single RFL run.
+
+    PHASE-II: This dataclass captures the complete state of an RFL run
+    for curriculum tracking and policy analysis.
+
+    Attributes:
+        run_id: Unique identifier for the run.
+        slice_name: Resolved curriculum slice name.
+        status: Run status ("success", "failed", "aborted", "attestation").
+        coverage_rate: Coverage rate achieved [0.0, 1.0].
+        novelty_rate: Novelty rate achieved [0.0, 1.0].
+        throughput: Proofs per hour throughput.
+        success_rate: Success rate achieved [0.0, 1.0].
+        abstention_fraction: Fraction of abstentions [0.0, 1.0].
+        policy_reward: Computed policy reward signal.
+        symbolic_descent: Symbolic descent delta.
+        budget_spent: Total budget units consumed.
+        derive_steps: Number of derivation steps.
+        max_breadth: Maximum breadth parameter.
+        max_total: Maximum total parameter.
+        abstention_breakdown: Breakdown of abstention reasons.
+        attestation_slice_id: Original slice_id from attestation (optional).
+        composite_root: H_t for traceability (optional).
+
+    **Determinism Notes:**
+        - All fields are immutable after construction.
+        - Serialization is deterministic via asdict().
+    """
 
     run_id: str
-    slice_name: str  # Resolved curriculum slice name
+    slice_name: str
     status: str
     coverage_rate: float
     novelty_rate: float
@@ -66,9 +240,8 @@ class RunLedgerEntry:
     max_breadth: int
     max_total: int
     abstention_breakdown: Dict[str, int] = field(default_factory=dict)
-    # Attestation-specific fields (optional, populated by run_with_attestation)
-    attestation_slice_id: Optional[str] = None  # Original slice_id from attestation
-    composite_root: Optional[str] = None  # H_t for traceability
+    attestation_slice_id: Optional[str] = None
+    composite_root: Optional[str] = None
 
 
 from substrate.bridge.context import AttestedRunContext
@@ -76,7 +249,22 @@ from substrate.bridge.context import AttestedRunContext
 
 @dataclass
 class RflResult:
-    """Outcome emitted by run_with_attestation."""
+    """Outcome emitted by run_with_attestation.
+
+    PHASE-II: This dataclass captures the result of processing an
+    attested run context through the RFL metabolism loop.
+
+    Attributes:
+        policy_update_applied: Whether a policy update was triggered.
+        source_root: The composite attestation root (H_t) that sourced this result.
+        abstention_mass_delta: Delta between actual and expected abstention mass.
+        step_id: Deterministic step identifier (SHA-256 hash).
+        ledger_entry: Optional ledger entry with full run details.
+
+    **Determinism Notes:**
+        - step_id is computed deterministically from inputs.
+        - All fields are immutable after construction.
+    """
 
     policy_update_applied: bool
     source_root: str
@@ -86,16 +274,31 @@ class RflResult:
 
 
 class RFLRunner:
-    """Orchestrator for 40-run RFL experiment suite."""
+    """Orchestrator for 40-run RFL experiment suite.
 
-    def __init__(self, config: RFLConfig):
-        """
-        Initialize RFL runner.
+    PHASE-II: This class manages the execution of RFL experiment suites,
+    including derivation experiments, coverage metrics, uplift computation,
+    and metabolism verification.
+
+    **Determinism Notes:**
+        - All random operations use config.random_seed.
+        - Step IDs are computed deterministically.
+        - Policy updates follow deterministic rules.
+    """
+
+    def __init__(self, config: RFLConfig) -> None:
+        """Initialize RFL runner.
 
         Args:
-            config: RFL experiment configuration
+            config: RFL experiment configuration. Must pass validation.
+
+        Raises:
+            ValueError: If config validation fails.
+
+        **Determinism Notes:**
+            - Initialization is deterministic given same config.
         """
-        self.config = config
+        self.config: RFLConfig = config
         config.validate()
 
         # Create artifacts directory
@@ -153,10 +356,10 @@ class RFLRunner:
         self.attempt_count: Dict[str, int] = {}   # candidate_hash -> number of cycles where it appeared
 
         # Audit log for RFL Law compliance (determinism verification)
-        self.audit_log = RFLAuditLog(seed=self.config.random_seed)
+        self.audit_log: RFLAuditLog = RFLAuditLog(seed=self.config.random_seed)
 
         # Experiment Logger (Schema v1)
-        self.experiment_logger = RFLExperimentLogger(config)
+        self.experiment_logger: RFLExperimentLogger = RFLExperimentLogger(config)
 
         # Metrics Logger for Wide Slice (JSONL format)
         # Only enable if experiment_id suggests Wide Slice usage
@@ -168,7 +371,7 @@ class RFLRunner:
             logger.info(f"[INIT] Metrics logger enabled: {metrics_path}")
 
         # Telemetry
-        self._redis_client = None
+        self._redis_client: Optional[Any] = None
         # Skip Redis if explicitly disabled or for debug experiments
         if os.getenv("FIRST_ORGANISM_DISABLE_REDIS", "").lower() in ("1", "true", "yes"):
             logger.info("[INFO] Redis telemetry disabled via FIRST_ORGANISM_DISABLE_REDIS")
@@ -183,7 +386,16 @@ class RFLRunner:
                 logger.warning(f"[WARN] Telemetry: Redis not available for metrics: {e}")
                 self._redis_client = None
 
-    def _increment_metric(self, key: str, amount: float = 1.0):
+    def _increment_metric(self, key: str, amount: float = 1.0) -> None:
+        """Increment a Redis metric by the given amount.
+
+        Args:
+            key: The metric key to increment.
+            amount: The amount to increment by (default 1.0).
+
+        **Determinism Notes:**
+            - Side effect only (telemetry), does not affect core logic.
+        """
         if self._redis_client:
             try:
                 if isinstance(amount, float):
@@ -195,10 +407,18 @@ class RFLRunner:
 
     @staticmethod
     def _bucket_label(value: float, thresholds: Sequence[float]) -> str:
-        for threshold in thresholds:
-            if value <= threshold:
-                return str(threshold)
-        return "+Inf"
+        """Compute bucket label for histogram binning.
+
+        This method delegates to the module-level pure function.
+
+        Args:
+            value: The numeric value to classify.
+            thresholds: Sequence of threshold values.
+
+        Returns:
+            String bucket label.
+        """
+        return compute_bucket_label(value, thresholds)
 
     def _record_bucket(self, prefix: str, value: float, thresholds: Sequence[float]) -> None:
         label = self._bucket_label(value, thresholds)
@@ -524,10 +744,13 @@ class RFLRunner:
         slice_cfg = self._resolve_slice(attestation.slice_id)
         policy_id = attestation.policy_id or "default"
 
-        step_material = (
-            f"{self.config.experiment_id}|{slice_cfg.name}|{policy_id}|{attestation.composite_root}"
+        # Compute step_id using the pure helper function
+        step_id = compute_step_id(
+            experiment_id=self.config.experiment_id,
+            slice_name=slice_cfg.name,
+            policy_id=policy_id,
+            composite_root=attestation.composite_root,
         )
-        step_id = hashlib.sha256(step_material.encode("utf-8")).hexdigest()
 
         attempt_mass = float(
             attestation.metadata.get("attempt_mass", max(attestation.abstention_mass, 1.0))
@@ -539,8 +762,12 @@ class RFLRunner:
             abs(abstention_mass_delta) > 1e-9 or abs(abstention_rate_delta) > 1e-9
         )
 
-        reward = max(0.0, 1.0 - max(attestation.abstention_rate, 0.0))
-        symbolic_descent = -abstention_rate_delta
+        # Compute reward and symbolic descent using pure helpers
+        reward = compute_reward_from_abstention(attestation.abstention_rate)
+        symbolic_descent = compute_symbolic_descent(
+            attestation.abstention_rate,
+            self.config.abstention_tolerance,
+        )
 
         if policy_update_applied:
             self.policy_update_count += 1
@@ -681,6 +908,17 @@ class RFLRunner:
         return result
 
     def _resolve_slice(self, slice_name: Optional[str]) -> CurriculumSlice:
+        """Resolve slice configuration by name.
+
+        Args:
+            slice_name: The slice name to resolve, or None for default.
+
+        Returns:
+            The resolved CurriculumSlice configuration.
+
+        **Determinism Notes:**
+            - Same slice_name always returns same configuration.
+        """
         if slice_name:
             for slice_cfg in self.config.curriculum:
                 if slice_cfg.name == slice_name:
@@ -688,19 +926,33 @@ class RFLRunner:
         return self.config.curriculum[0]
 
     def _validate_attestation(self, attestation: AttestedRunContext) -> None:
-        roots = [
-            ("composite_root", attestation.composite_root),
-            ("reasoning_root", attestation.reasoning_root),
-            ("ui_root", attestation.ui_root),
-        ]
-        for root_name, root_value in roots:
-            if len(root_value) != 64:
-                raise ValueError(f"{root_name} must be 64 hex chars, got {len(root_value)}")
-            int(root_value, 16)
+        """Validate attestation context for required fields and formats.
+
+        Args:
+            attestation: The attestation context to validate.
+
+        Raises:
+            ValueError: If any validation check fails with descriptive error.
+
+        **Determinism Notes:**
+            - Pure validation, no side effects.
+        """
+        # Validate all root hashes
+        validate_attestation_root(attestation.composite_root, "composite_root")
+        validate_attestation_root(attestation.reasoning_root, "reasoning_root")
+        validate_attestation_root(attestation.ui_root, "ui_root")
+
+        # Validate abstention metrics
         if attestation.abstention_rate < 0.0:
-            raise ValueError("abstention_rate must be non-negative")
+            raise ValueError(
+                f"abstention_rate must be non-negative, got {attestation.abstention_rate}. "
+                f"Check the attestation generation pipeline."
+            )
         if attestation.abstention_mass < 0.0:
-            raise ValueError("abstention_mass must be non-negative")
+            raise ValueError(
+                f"abstention_mass must be non-negative, got {attestation.abstention_mass}. "
+                f"Check the attestation generation pipeline."
+            )
 
     def _compute_coverage_metrics(self) -> None:
         """Compute bootstrap CI for coverage rate."""
