@@ -44,6 +44,13 @@ from backend.verification.budget_loader import (
     DEFAULT_CONFIG_PATH,
 )
 
+# Phase II Curriculum Loading (curriculum_loader_v2)
+from experiments.curriculum_loader_v2 import (
+    CurriculumLoader,
+    CurriculumLoaderError,
+    CurriculumNotFoundError,
+)
+
 from experiments.u2.runner import (
     U2Runner,
     U2Config,
@@ -241,19 +248,24 @@ def run_experiment(
         snapshot_dir = out_dir / "snapshots"
     snapshot_dir.mkdir(parents=True, exist_ok=True)
     
-    slice_config = config.get("slices", {}).get(slice_name, {})
-    if not slice_config:
-        # Try alternative config structure
-        for item in config.get("slices", []):
-            if isinstance(item, dict) and item.get("name") == slice_name:
-                slice_config = item
-                break
-    
-    if not slice_config:
-        print(f"WARNING: Slice '{slice_name}' not found in config, using empty config.", file=sys.stderr)
+    # Load slice config and items using CurriculumLoader
+    try:
+        curriculum_loader = CurriculumLoader(config_path)
+        curriculum_items = curriculum_loader.load_for_slice(slice_name)
+        slice_config = curriculum_loader.get_slice_config(slice_name)
+        
+        # Convert CurriculumItem objects to strings for compatibility
+        items = [item.formula for item in curriculum_items]
+        print(f"INFO: Loaded {len(items)} curriculum items for slice '{slice_name}'")
+        
+    except CurriculumNotFoundError as e:
+        print(f"WARNING: {e}", file=sys.stderr)
+        print(f"         Using fallback items for testing.", file=sys.stderr)
         slice_config = {"items": [f"item_{i}" for i in range(10)]}
-    
-    items = slice_config.get("items", [f"item_{i}" for i in range(10)])
+        items = slice_config.get("items", [f"item_{i}" for i in range(10)])
+    except CurriculumLoaderError as e:
+        print(f"ERROR: Failed to load curriculum: {e}", file=sys.stderr)
+        sys.exit(1)
     
     # 2. Create U2 runner with config
     u2_config = U2Config(
