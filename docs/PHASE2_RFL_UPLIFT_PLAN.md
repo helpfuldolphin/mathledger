@@ -205,7 +205,7 @@ score(φ) = (
 **Files**:
 - Config: `config/curriculum_uplift_phase2.yaml`
 - Runner: `experiments/run_uplift_u2.py`
-- Preregistration: `experiments/prereg/PREREG_UPLIFT_U2.yaml`
+- Preregistration: `experiments/prereg/PREREG_UPLIFT_U2.yaml` (template to be completed per-experiment before execution)
 
 **CLI Examples**:
 
