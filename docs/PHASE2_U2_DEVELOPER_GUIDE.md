@@ -70,6 +70,12 @@ Calibration utilities for determining appropriate difficulty parameters for U2 s
 
 Verifies experiment manifests for integrity and completeness.
 
+### `experiments/u2_safe_eval.py`
+
+*(PHASE II — TO BE IMPLEMENTED by sober-refactor)*
+
+Restricted AST arithmetic evaluator for safe numeric expression parsing in configurations.
+
 ---
 
 ## How to Run a Small Experiment

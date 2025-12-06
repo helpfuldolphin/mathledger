@@ -254,7 +254,7 @@ Phase II code paths use a **restricted AST arithmetic evaluator** (`experiments/
 
 This design follows the principle of least privilege — only the minimum required functionality is exposed.
 
-See: `experiments/u2_safe_eval.py` for implementation details.
+See: `experiments/u2_safe_eval.py` for implementation details (TO BE IMPLEMENTED by sober-refactor).
 
 ---
 
@@ -263,7 +263,7 @@ See: `experiments/u2_safe_eval.py` for implementation details.
 - `config/curriculum_uplift_phase2.yaml` — Slice definitions
 - `experiments/run_uplift_u2.py` — U2 experiment runner
 - `experiments/slice_success_metrics.py` — Slice-specific success metrics
-- `experiments/u2_safe_eval.py` — Restricted arithmetic evaluator
+- `experiments/u2_safe_eval.py` — Restricted arithmetic evaluator (TO BE IMPLEMENTED)
 - `experiments/summarize_uplift.py` — Uplift summarizer (TO BE IMPLEMENTED)
 - `experiments/prereg/PREREG_UPLIFT_U2.yaml` — Preregistration template (TO BE IMPLEMENTED)
 

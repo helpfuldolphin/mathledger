@@ -58,7 +58,7 @@ This field manual provides technical guidance for MathLedger Phase II developmen
 
 \subsection{Overview}
 
-Phase II code paths use a \textbf{restricted AST arithmetic evaluator} for processing numeric expressions in experiment configurations and metrics. This evaluator is implemented in \texttt{experiments/u2\_safe\_eval.py}.
+Phase II code paths use a \textbf{restricted AST arithmetic evaluator} for processing numeric expressions in experiment configurations and metrics. This evaluator will be implemented in \texttt{experiments/u2\_safe\_eval.py} (TO BE IMPLEMENTED by sober-refactor).
 
 \subsection{Allowed Operations}
 
@@ -97,7 +97,7 @@ This design follows the principle of least privilege---only the minimum required
 
 \subsection{Implementation Reference}
 
-See \texttt{experiments/u2\_safe\_eval.py} for the complete implementation. The module provides:
+See \texttt{experiments/u2\_safe\_eval.py} for the complete implementation (TO BE IMPLEMENTED by sober-refactor). The module will provide:
 
 \begin{lstlisting}
 def safe_eval(expr: str) -> float:
