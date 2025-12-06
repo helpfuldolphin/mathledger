@@ -41,4 +41,52 @@ dev = [
     "coverage==7.4.1",
     "pip-audit==2.7.0",
     "hypothesis>=6.100.0",
+    "mypy>=1.0.0",
+    "types-PyYAML>=6.0.0",
 ]
+
+[tool.mypy]
+# Mypy configuration for experiments package
+# This ensures type safety for the U2 uplift experiment code
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_calls = false  # Too strict for now, enable incrementally
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+# Experiments package strict checking
+[[tool.mypy.overrides]]
+module = "experiments.u2.*"
+disallow_untyped_defs = true
+disallow_any_unimported = false  # Allow Any from untyped imports
+warn_return_any = true
+
+[[tool.mypy.overrides]]
+module = "experiments.u2_safe_eval"
+disallow_untyped_defs = true
+warn_return_any = true
+
+[[tool.mypy.overrides]]
+module = "experiments.run_uplift_u2"
+disallow_untyped_defs = true
+disallow_any_unimported = false
+
+# Ignore missing imports for external packages without stubs
+[[tool.mypy.overrides]]
+module = [
+    "rfl.*",
+    "backend.*",
+    "substrate.*",
+    "derivation.*",
+    "normalization.*",
+    "attestation.*",
+    "curriculum.*",
+    "interface.*",
+]
+ignore_missing_imports = true
