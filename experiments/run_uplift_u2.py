@@ -12,8 +12,10 @@
 # - All new files must be standalone and MUST NOT modify Phase I behavior.
 
 import argparse
+import ast
 import hashlib
 import json
+import operator
 import random
 import sys
 from pathlib import Path
@@ -24,6 +26,65 @@ from experiments.curriculum_loader_v2 import (
     SuccessMetricSpec,
     UpliftSlice,
 )
+
+
+# --- Safe Arithmetic Evaluator ---
+# Securely evaluate simple arithmetic expressions without using eval()
+
+_SAFE_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Mod: operator.mod,
+    ast.Pow: operator.pow,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
+
+
+def safe_eval_arithmetic(expr: str) -> Any:
+    """
+    Safely evaluate a simple arithmetic expression.
+
+    Only supports numbers and basic operators (+, -, *, /, %, **).
+    Does NOT support function calls, variable access, or other Python features.
+
+    Args:
+        expr: A string containing a simple arithmetic expression.
+
+    Returns:
+        The numeric result of the expression.
+
+    Raises:
+        ValueError: If the expression contains unsupported operations.
+    """
+    try:
+        tree = ast.parse(expr, mode="eval")
+    except SyntaxError as e:
+        raise ValueError(f"Invalid expression: {e}")
+
+    def _eval(node: ast.AST) -> Any:
+        if isinstance(node, ast.Expression):
+            return _eval(node.body)
+        elif isinstance(node, ast.Constant):
+            if isinstance(node.value, (int, float, complex)):
+                return node.value
+            raise ValueError(f"Unsupported constant type: {type(node.value)}")
+        elif isinstance(node, ast.BinOp):
+            op_type = type(node.op)
+            if op_type not in _SAFE_OPERATORS:
+                raise ValueError(f"Unsupported operator: {op_type.__name__}")
+            return _SAFE_OPERATORS[op_type](_eval(node.left), _eval(node.right))
+        elif isinstance(node, ast.UnaryOp):
+            op_type = type(node.op)
+            if op_type not in _SAFE_OPERATORS:
+                raise ValueError(f"Unsupported unary operator: {op_type.__name__}")
+            return _SAFE_OPERATORS[op_type](_eval(node.operand))
+        else:
+            raise ValueError(f"Unsupported expression type: {type(node).__name__}")
+
+    return _eval(tree)
 
 
 # --- RFL Policy Stubs ---
@@ -114,10 +175,10 @@ def evaluate_success(
     if kind == "sparse":
         # For sparse metric, mock success based on item evaluation
         try:
-            # Attempt to evaluate arithmetic expressions
-            expected = eval(chosen_item)
+            # Attempt to safely evaluate arithmetic expressions
+            expected = safe_eval_arithmetic(chosen_item)
             return mock_result == expected
-        except Exception:
+        except (ValueError, ZeroDivisionError):
             # For non-arithmetic items, use length-based heuristic
             return len(str(mock_result)) > len(chosen_item)
     elif kind == "goal_hit":
@@ -195,10 +256,10 @@ def run_experiment(
 
             # --- Mock Execution & Evaluation ---
             # In a real system, this would be a call to the substrate.
-            # Here, we just mock a result.
+            # Here, we just mock a result using safe arithmetic evaluation.
             try:
-                mock_result = eval(chosen_item)
-            except Exception:
+                mock_result = safe_eval_arithmetic(chosen_item)
+            except (ValueError, ZeroDivisionError):
                 mock_result = f"Expanded({chosen_item})"
 
             # Use SuccessMetricSpec-driven evaluation
