@@ -1,0 +1,138 @@
+# Verifier Noise Configuration for Phase II
+# All noise is deterministic and seeded for reproducibility
+#
+# Author: Manus-C (Telemetry Architect)
+# Date: 2025-12-06
+
+# ==================== Global Configuration ====================
+
+global:
+  noise_enabled: true
+  default_tier: "balanced"
+  escalation_policy: "on_failure"  # Options: on_failure, on_timeout, on_noise, never, always
+  max_escalation_attempts: 3
+
+# ==================== Tier Configurations ====================
+
+tiers:
+  fast_noisy:
+    # High noise, low latency tier
+    timeout_rate: 0.10          # 10% of calls timeout
+    spurious_fail_rate: 0.05    # 5% false negatives
+    spurious_pass_rate: 0.02    # 2% false positives
+    base_timeout_s: 30
+    timeout_distribution:
+      type: "uniform"
+      min_ms: 500
+      max_ms: 1500
+  
+  balanced:
+    # Medium noise, medium latency tier
+    timeout_rate: 0.05          # 5% of calls timeout
+    spurious_fail_rate: 0.02    # 2% false negatives
+    spurious_pass_rate: 0.01    # 1% false positives
+    base_timeout_s: 60
+    timeout_distribution:
+      type: "uniform"
+      min_ms: 1000
+      max_ms: 2000
+  
+  slow_precise:
+    # Low noise, high latency tier
+    timeout_rate: 0.01          # 1% of calls timeout
+    spurious_fail_rate: 0.005   # 0.5% false negatives
+    spurious_pass_rate: 0.001   # 0.1% false positives
+    base_timeout_s: 120
+    timeout_distribution:
+      type: "uniform"
+      min_ms: 1500
+      max_ms: 3000
+
+# ==================== Slice-Specific Overrides ====================
+
+slices:
+  arithmetic_simple:
+    noise_enabled: true
+    tier_overrides:
+      fast_noisy:
+        timeout_rate: 0.08      # Slightly lower timeout rate for simple arithmetic
+      balanced:
+        timeout_rate: 0.04
+    timeout_distribution:
+      type: "uniform"
+      min_ms: 400
+      max_ms: 1200
+  
+  algebra_expansion:
+    noise_enabled: true
+    tier_overrides:
+      fast_noisy:
+        timeout_rate: 0.12      # Higher timeout rate for complex algebra
+        spurious_fail_rate: 0.06
+      balanced:
+        timeout_rate: 0.06
+        spurious_fail_rate: 0.03
+    timeout_distribution:
+      type: "exponential"
+      mean_ms: 1000
+  
+  geometry_proofs:
+    noise_enabled: true
+    tier_overrides:
+      fast_noisy:
+        timeout_rate: 0.15      # Even higher timeout rate for geometry
+        spurious_fail_rate: 0.08
+      balanced:
+        timeout_rate: 0.08
+        spurious_fail_rate: 0.04
+    timeout_distribution:
+      type: "exponential"
+      mean_ms: 1500
+
+# ==================== Testing Configurations ====================
+
+test_slices:
+  no_noise_test:
+    # Configuration for testing with no noise
+    noise_enabled: false
+    tier_overrides:
+      fast_noisy:
+        timeout_rate: 0.0
+        spurious_fail_rate: 0.0
+        spurious_pass_rate: 0.0
+  
+  high_noise_test:
+    # Configuration for stress testing with high noise
+    noise_enabled: true
+    tier_overrides:
+      fast_noisy:
+        timeout_rate: 0.30
+        spurious_fail_rate: 0.20
+        spurious_pass_rate: 0.10
+      balanced:
+        timeout_rate: 0.20
+        spurious_fail_rate: 0.10
+        spurious_pass_rate: 0.05
+    timeout_distribution:
+      type: "uniform"
+      min_ms: 200
+      max_ms: 800
+
+# ==================== Notes ====================
+#
+# Noise Rate Guidelines:
+# - timeout_rate: Probability of timeout injection (0.0 to 1.0)
+# - spurious_fail_rate: Probability of false negative (0.0 to 1.0)
+# - spurious_pass_rate: Probability of false positive (0.0 to 1.0)
+#
+# Timeout Distribution Types:
+# - uniform: Uniform distribution between min_ms and max_ms
+# - exponential: Exponential distribution with mean_ms
+# - fixed: Fixed timeout duration (fixed_ms)
+#
+# Escalation Policies:
+# - on_failure: Escalate on any verification failure
+# - on_timeout: Escalate only on timeout
+# - on_noise: Escalate only on noise-injected failures
+# - never: Never escalate (single-tier only)
+# - always: Always escalate (for testing)
