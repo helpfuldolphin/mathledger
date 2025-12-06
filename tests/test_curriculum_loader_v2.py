@@ -11,6 +11,7 @@ from experiments.curriculum_loader_v2 import (
     CurriculumLoaderV2,
     CurriculumLoadError,
     UnknownMetricKindError,
+    InvalidMetricKindError,
     SuccessMetricSpec,
     UpliftSlice,
     DegenerateCheckWarning,
@@ -124,9 +125,10 @@ class TestSuccessMetricSpec:
         assert "h1" in spec.target_hashes
 
     def test_invalid_metric_kind_raises(self):
-        """Creating a spec with unknown metric kind raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        """Creating a spec with unknown metric kind raises InvalidMetricKindError."""
+        with pytest.raises(InvalidMetricKindError) as exc_info:
             SuccessMetricSpec(kind="invalid_kind")
+        assert exc_info.value.kind == "invalid_kind"
         assert "Unknown metric kind" in str(exc_info.value)
         assert "invalid_kind" in str(exc_info.value)
 
@@ -339,8 +341,8 @@ class TestCurriculumLoaderV2:
         assert "slice_a" in usage["sparse_success"]
         assert "goal_hit" in usage
         assert "slice_b" in usage["goal_hit"]
-        # slice_c has no metric, so shouldn't appear
-        assert "slice_c_no_metric" not in str(usage)
+        # slice_c has no metric, so shouldn't appear in any slice list
+        assert all("slice_c_no_metric" not in slice_list for slice_list in usage.values())
 
     def test_unknown_metric_kind_raises_at_load(self):
         """Loading config with unknown metric kind raises error."""

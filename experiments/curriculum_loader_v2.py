@@ -36,6 +36,20 @@ class CurriculumLoadError(Exception):
     pass
 
 
+class InvalidMetricKindError(ValueError):
+    """
+    PHASE II — NOT USED IN PHASE I
+
+    Raised when a metric kind is not registered in METRIC_KINDS.
+    """
+    def __init__(self, kind: str):
+        self.kind = kind
+        available = ", ".join(sorted(METRIC_KINDS.keys()))
+        super().__init__(
+            f"Unknown metric kind '{kind}'. Valid kinds: {available}"
+        )
+
+
 class UnknownMetricKindError(CurriculumLoadError):
     """
     PHASE II — NOT USED IN PHASE I
@@ -71,10 +85,7 @@ class SuccessMetricSpec:
     def __post_init__(self) -> None:
         # Validate that kind is known
         if not is_valid_metric_kind(self.kind):
-            raise ValueError(
-                f"Unknown metric kind '{self.kind}'. "
-                f"Valid kinds: {', '.join(sorted(METRIC_KINDS.keys()))}"
-            )
+            raise InvalidMetricKindError(self.kind)
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SuccessMetricSpec":
@@ -301,17 +312,9 @@ class CurriculumLoaderV2:
         for name, data in slices_data.items():
             try:
                 self.slices[name] = UpliftSlice.from_dict(name, data)
-            except ValueError as e:
-                # Check if this is a metric kind validation error
-                error_msg = str(e)
-                if "Unknown metric kind" in error_msg:
-                    # Extract the invalid kind from the error message
-                    # Format: "Unknown metric kind 'xxx'. Valid kinds: ..."
-                    import re
-                    match = re.search(r"Unknown metric kind '([^']+)'", error_msg)
-                    kind = match.group(1) if match else "unknown"
-                    raise UnknownMetricKindError(name, kind) from e
-                raise
+            except InvalidMetricKindError as e:
+                # Convert to UnknownMetricKindError with slice context
+                raise UnknownMetricKindError(name, e.kind) from e
 
         # Validate metric kinds if requested
         if validate_metrics:
@@ -528,7 +531,8 @@ class CurriculumLoaderV2:
 
                 elif metric.kind == "goal_hit":
                     min_hits = metric.thresholds.get("min_total_verified", 0)
-                    pool = slice_obj.formula_pool or len(slice_obj.items)
+                    # Use explicit None check to handle formula_pool=0 correctly
+                    pool = slice_obj.formula_pool if slice_obj.formula_pool > 0 else len(slice_obj.items)
                     if min_hits > pool > 0:
                         warnings_list.append(DegenerateCheckWarning(
                             slice_name=name,
