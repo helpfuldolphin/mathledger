@@ -1,6 +1,6 @@
 {
   "format_version": "1.0",
-  "generated_at": "2025-12-06T19:18:59+00:00",
+  "generated_at": "2025-12-06T19:24:38+00:00",
   "metadata": {
     "version": "1.0",
     "description": "Evidence Pack v1 - Phase I RFL Infrastructure and Negative Control",
@@ -19,8 +19,8 @@
         "rfl",
         "planning"
       ],
-      "file_size": 6430,
-      "modified_time": "2025-12-06T19:16:13.309496"
+      "file_size": 6795,
+      "modified_time": "2025-12-06T19:24:19.339702"
     },
     {
       "path": "docs/RFL_EVIDENCE_MANIFEST.md",
@@ -86,8 +86,8 @@
         "rfl",
         "planning"
       ],
-      "file_size": 9116,
-      "modified_time": "2025-12-06T19:11:44.078297"
+      "file_size": 9368,
+      "modified_time": "2025-12-06T19:22:03.887614"
     },
     {
       "path": "docs/ARCHITECTURE.md",

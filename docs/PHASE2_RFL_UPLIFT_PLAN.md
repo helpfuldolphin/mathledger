@@ -231,6 +231,15 @@ uv run python experiments/summarize_uplift.py \
 
 ---
 
+## Documentation Resources
+
+For the canonical index of all Evidence Pack v1 documents, see:
+
+- **[Evidence Pack v1 TOC](evidence_pack_v1_toc.md)** - Complete table of contents with document descriptions, phases, and metadata
+- **[Documentation Automation Tools](DOC_AUTOMATION_TOOLS.md)** - Guide to snippet checking, phase marker linting, and TOC generation
+
+---
+
 ## Status
 
 | Component | Status |

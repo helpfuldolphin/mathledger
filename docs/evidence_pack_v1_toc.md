@@ -1,6 +1,6 @@
 # Evidence Pack v1 - Table of Contents
 
-**Generated:** 2025-12-06 19:18:59 UTC
+**Generated:** 2025-12-06 19:24:38 UTC
 **Version:** 1.0
 **Description:** Evidence Pack v1 - Phase I RFL Infrastructure and Negative Control
 
@@ -115,7 +115,7 @@
 **Description:** Original RFL experiment plan for Phase I
 
 **Category:** experiment-plan
-**Size:** 8.9 KB
+**Size:** 9.1 KB
 **Tags:** phase-i, rfl, planning
 
 ### `docs/RFL_EXPERIMENT_RISKS.md`
@@ -157,7 +157,7 @@
 **Description:** Phase II uplift experiment plan with four slices (goal, sparse, tree, dependency)
 
 **Category:** experiment-plan
-**Size:** 6.3 KB
+**Size:** 6.6 KB
 **Tags:** phase-ii, uplift, rfl, planning
 
 ---
