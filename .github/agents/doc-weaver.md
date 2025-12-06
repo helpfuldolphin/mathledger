@@ -1,4 +1,3 @@
----
  # Agent: doc-weaver
 
   **Name:** `doc-weaver`
