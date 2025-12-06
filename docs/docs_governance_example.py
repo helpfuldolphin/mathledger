@@ -125,7 +125,7 @@ def example_3_blocking_issues():
     print(f"\n⚠️  CRITICAL ISSUES:")
     for issue in safety['issues']:
         print(f"  ❌ {issue}")
-    print(f"\nThese issues MUST be resolved before publication!")
+    print(f"\nNote: Blocking status indicates issues requiring resolution.")
     print()
 
 

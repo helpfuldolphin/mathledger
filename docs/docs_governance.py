@@ -13,7 +13,7 @@ All outputs are deterministic and JSON-safe.
 """
 
 from pathlib import Path
-from typing import Dict, Any, List, Set
+from typing import Dict, Any, List
 import json
 
 
@@ -74,14 +74,16 @@ def build_docs_governance_snapshot(
             if Path(doc_path).exists():
                 existing_docs += 1
         snapshot["evidence_docs_covered"] = existing_docs
-        
-        # Total doc count from all sources
-        all_docs = set()
-        all_docs.update(snapshot["docs_with_invalid_snippets"])
-        all_docs.update(snapshot["docs_missing_phase_markers"])
-        all_docs.update(snapshot["docs_with_uplift_mentions_without_disclaimer"])
-        all_docs.update(evidence_docs)
-        snapshot["doc_count"] = len(all_docs)
+    else:
+        evidence_docs = []
+    
+    # Total doc count from all sources (always calculated)
+    all_docs = set()
+    all_docs.update(snapshot["docs_with_invalid_snippets"])
+    all_docs.update(snapshot["docs_missing_phase_markers"])
+    all_docs.update(snapshot["docs_with_uplift_mentions_without_disclaimer"])
+    all_docs.update(evidence_docs)
+    snapshot["doc_count"] = len(all_docs)
     
     return snapshot
 
