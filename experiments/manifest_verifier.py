@@ -241,12 +241,11 @@ class ManifestVerifier:
                 expected=declared_hash,
             )
 
-        # Load config and compute hash of slice-specific section
+        # Load config and compute hash of the entire config file
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 config_content = f.read()
 
-            # The hash is computed from the entire config file
             actual_hash = self._hash_string(config_content)
 
             if declared_hash == actual_hash:

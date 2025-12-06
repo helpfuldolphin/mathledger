@@ -32,6 +32,7 @@ Exit codes:
 """
 
 import argparse
+import hashlib
 import json
 import sys
 from datetime import datetime, timezone
@@ -256,8 +257,6 @@ def verify_ht_series_integrity(
             ht_data = json.load(f)
 
         # Compute hash
-        import hashlib
-
         ht_str = json.dumps(ht_data, sort_keys=True)
         actual_hash = hashlib.sha256(ht_str.encode("utf-8")).hexdigest()
 
