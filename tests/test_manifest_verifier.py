@@ -12,14 +12,10 @@ Exit Codes tested:
 """
 
 import json
-import sys
 import tempfile
 from pathlib import Path
 
 import pytest
-
-# Add experiments directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent / "experiments"))
 
 from experiments.manifest_verifier import (
     ManifestVerifier,
@@ -267,6 +263,73 @@ class TestManifestVerifier:
         
         binding_result = next(r for r in report.results if r.check_name == "binding")
         assert not binding_result.passed
+
+    def test_verify_artifact_hashes_match(self, temp_experiment_dir):
+        """Test artifact hash verification with matching hashes."""
+        import hashlib
+        
+        # Create a log file
+        log_path = temp_experiment_dir / "test_log.jsonl"
+        log_content = '{"cycle": 0}\n{"cycle": 1}\n'
+        log_path.write_text(log_content)
+        
+        # Compute actual hash
+        actual_hash = hashlib.sha256(log_content.encode()).hexdigest()
+        
+        # Create manifest with correct hash
+        manifest_path = temp_experiment_dir / "manifest.json"
+        manifest = {
+            "label": "PHASE II — NOT USED IN PHASE I",
+            "prereg_hash": "abc123",
+            "artifacts": {
+                "logs": [
+                    {
+                        "path": str(log_path),
+                        "sha256": actual_hash,
+                        "type": "jsonl"
+                    }
+                ]
+            }
+        }
+        with open(manifest_path, 'w') as f:
+            json.dump(manifest, f)
+        
+        verifier = ManifestVerifier(manifest_path, temp_experiment_dir)
+        report = verifier.verify_all()
+        
+        hash_result = next(r for r in report.results if r.check_name == "artifact_hashes")
+        assert hash_result.passed
+
+    def test_verify_artifact_hashes_mismatch(self, temp_experiment_dir):
+        """Test artifact hash verification with mismatching hashes."""
+        # Create a log file
+        log_path = temp_experiment_dir / "test_log.jsonl"
+        log_path.write_text('{"cycle": 0}\n')
+        
+        # Create manifest with wrong hash
+        manifest_path = temp_experiment_dir / "manifest.json"
+        manifest = {
+            "label": "PHASE II — NOT USED IN PHASE I",
+            "prereg_hash": "abc123",
+            "artifacts": {
+                "logs": [
+                    {
+                        "path": str(log_path),
+                        "sha256": "wrong_hash_value_that_does_not_match",
+                        "type": "jsonl"
+                    }
+                ]
+            }
+        }
+        with open(manifest_path, 'w') as f:
+            json.dump(manifest, f)
+        
+        verifier = ManifestVerifier(manifest_path, temp_experiment_dir)
+        report = verifier.verify_all()
+        
+        hash_result = next(r for r in report.results if r.check_name == "artifact_hashes")
+        assert not hash_result.passed
+        assert "mismatch" in hash_result.message.lower()
 
 
 class TestAuditUpliftU2:

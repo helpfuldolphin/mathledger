@@ -162,7 +162,7 @@ class ManifestVerifier:
                             json.loads(line)
                             count += 1
                         except json.JSONDecodeError:
-                            # Skip malformed lines but continue counting
+                            # Skip malformed lines without counting them
                             pass
         except (IOError, OSError):
             return None
@@ -610,6 +610,96 @@ class ManifestVerifier:
                 details=details
             )
     
+    def verify_artifact_hashes(self) -> VerificationResult:
+        """
+        Verify SHA256 hashes of artifacts declared in manifest.
+        
+        Checks that artifacts listed in manifest["artifacts"] have matching
+        SHA256 hashes to their actual file contents.
+        
+        Returns:
+            VerificationResult with pass/fail status and details.
+        """
+        if not self.manifest:
+            return VerificationResult(
+                check_name="artifact_hashes",
+                passed=False,
+                message="Manifest not loaded"
+            )
+        
+        artifacts = self.manifest.get("artifacts", {})
+        logs = artifacts.get("logs", [])
+        figures = artifacts.get("figures", [])
+        
+        if not logs and not figures:
+            return VerificationResult(
+                check_name="artifact_hashes",
+                passed=True,
+                message="No artifacts with declared hashes to verify",
+                details={"skipped": True}
+            )
+        
+        all_passed = True
+        messages = []
+        details = {"checks": []}
+        
+        for artifact_list, artifact_type in [(logs, "log"), (figures, "figure")]:
+            for artifact in artifact_list:
+                artifact_path = artifact.get("path")
+                declared_hash = artifact.get("sha256")
+                
+                if not artifact_path or not declared_hash:
+                    continue
+                
+                resolved_path = self._resolve_path(artifact_path)
+                actual_hash = self._compute_file_hash(resolved_path)
+                
+                check_result = {
+                    "type": artifact_type,
+                    "path": artifact_path,
+                    "declared_hash": declared_hash,
+                    "actual_hash": actual_hash
+                }
+                
+                if actual_hash is None:
+                    all_passed = False
+                    check_result["status"] = "missing"
+                    messages.append(f"{artifact_type} not found: {artifact_path}")
+                elif actual_hash != declared_hash:
+                    all_passed = False
+                    check_result["status"] = "mismatch"
+                    messages.append(
+                        f"{artifact_type} hash mismatch: {artifact_path} "
+                        f"(declared={declared_hash[:16]}..., actual={actual_hash[:16]}...)"
+                    )
+                else:
+                    check_result["status"] = "match"
+                
+                details["checks"].append(check_result)
+        
+        if not details["checks"]:
+            return VerificationResult(
+                check_name="artifact_hashes",
+                passed=True,
+                message="No artifacts with declared hashes to verify",
+                details={"skipped": True}
+            )
+        
+        if all_passed:
+            return VerificationResult(
+                check_name="artifact_hashes",
+                passed=True,
+                message=f"All {len(details['checks'])} artifact hashes verified",
+                details=details
+            )
+        else:
+            return VerificationResult(
+                check_name="artifact_hashes",
+                passed=False,
+                message="; ".join(messages),
+                details=details
+            )
+    
     def verify_all(self) -> ManifestVerificationReport:
         """
         Run all verification checks and return complete report.
@@ -627,6 +717,7 @@ class ManifestVerifier:
         self.report.results.append(self.verify_binding())
         self.report.results.append(self.verify_cycle_count())
         self.report.results.append(self.verify_ht_series())
+        self.report.results.append(self.verify_artifact_hashes())
         
         # Compute overall status
         self.report.compute_overall_status()
