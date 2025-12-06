@@ -9,14 +9,72 @@
 # - No uplift fields (no Δp, no p-values, no statistics).
 # - Determinism replay failures surface cleanly and do not break output formatting.
 
+import ast
 import hashlib
 import json
+import operator
 import random
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import yaml
+
+
+# Safe arithmetic operations for expression evaluation
+_SAFE_OPS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
+
+
+def safe_eval_arithmetic(expr: str) -> Any:
+    """
+    Safely evaluate simple arithmetic expressions.
+    
+    Only supports: numbers and basic arithmetic operators (+, -, *, /).
+    Does NOT allow function calls, variable references, or other constructs.
+    
+    Args:
+        expr: A simple arithmetic expression string (e.g., "1 + 2", "3 * 4")
+    
+    Returns:
+        The evaluated result
+    
+    Raises:
+        ValueError: If the expression contains unsupported constructs
+    """
+    try:
+        tree = ast.parse(expr, mode='eval')
+    except SyntaxError as e:
+        raise ValueError(f"Invalid expression syntax: {expr}") from e
+    
+    def _eval_node(node):
+        if isinstance(node, ast.Expression):
+            return _eval_node(node.body)
+        elif isinstance(node, ast.Constant):
+            return node.value
+        elif isinstance(node, ast.BinOp):
+            op_type = type(node.op)
+            if op_type not in _SAFE_OPS:
+                raise ValueError(f"Unsupported operator: {op_type.__name__}")
+            left = _eval_node(node.left)
+            right = _eval_node(node.right)
+            return _SAFE_OPS[op_type](left, right)
+        elif isinstance(node, ast.UnaryOp):
+            op_type = type(node.op)
+            if op_type not in _SAFE_OPS:
+                raise ValueError(f"Unsupported unary operator: {op_type.__name__}")
+            operand = _eval_node(node.operand)
+            return _SAFE_OPS[op_type](operand)
+        else:
+            raise ValueError(f"Unsupported expression type: {type(node).__name__}")
+    
+    return _eval_node(tree)
 
 
 def hash_string(data: str) -> str:
@@ -73,9 +131,9 @@ class CalibrationRunner:
     def _mock_success_metric(self, item: str, result: Any) -> bool:
         """Mock success metric for calibration. Returns True if eval matches."""
         try:
-            # For arithmetic_simple, eval the expression
+            # For arithmetic_simple, safely evaluate the expression
             if self.slice_name == "arithmetic_simple":
-                return eval(item) == result
+                return safe_eval_arithmetic(item) == result
             # For other slices, check string length as a proxy
             return len(str(result)) > len(item)
         except Exception:
@@ -135,7 +193,7 @@ class CalibrationRunner:
                 # Mock execution
                 if self.slice_name == "arithmetic_simple":
                     try:
-                        mock_result = eval(chosen_item)
+                        mock_result = safe_eval_arithmetic(chosen_item)
                     except Exception:
                         mock_result = None
                 else:
@@ -229,7 +287,7 @@ class CalibrationRunner:
             
             if self.slice_name == "arithmetic_simple":
                 try:
-                    mock_result = eval(chosen_item)
+                    mock_result = safe_eval_arithmetic(chosen_item)
                 except Exception:
                     mock_result = None
             else:

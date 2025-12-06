@@ -12,8 +12,10 @@
 # - All new files must be standalone and MUST NOT modify Phase I behavior.
 
 import argparse
+import ast
 import hashlib
 import json
+import operator
 import random
 import sys
 from pathlib import Path
@@ -21,8 +23,62 @@ from typing import Any, Callable, Dict, List, Optional
 
 import yaml
 
-# Global verbose flag for per-cycle logging
-_VERBOSE_CYCLES: bool = False
+
+# Safe arithmetic operations for expression evaluation
+_SAFE_OPS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
+
+
+def safe_eval_arithmetic(expr: str) -> Any:
+    """
+    Safely evaluate simple arithmetic expressions.
+    
+    Only supports: numbers and basic arithmetic operators (+, -, *, /).
+    Does NOT allow function calls, variable references, or other constructs.
+    
+    Args:
+        expr: A simple arithmetic expression string (e.g., "1 + 2", "3 * 4")
+    
+    Returns:
+        The evaluated result
+    
+    Raises:
+        ValueError: If the expression contains unsupported constructs
+    """
+    try:
+        tree = ast.parse(expr, mode='eval')
+    except SyntaxError as e:
+        raise ValueError(f"Invalid expression syntax: {expr}") from e
+    
+    def _eval_node(node):
+        if isinstance(node, ast.Expression):
+            return _eval_node(node.body)
+        elif isinstance(node, ast.Constant):
+            return node.value
+        elif isinstance(node, ast.BinOp):
+            op_type = type(node.op)
+            if op_type not in _SAFE_OPS:
+                raise ValueError(f"Unsupported operator: {op_type.__name__}")
+            left = _eval_node(node.left)
+            right = _eval_node(node.right)
+            return _SAFE_OPS[op_type](left, right)
+        elif isinstance(node, ast.UnaryOp):
+            op_type = type(node.op)
+            if op_type not in _SAFE_OPS:
+                raise ValueError(f"Unsupported unary operator: {op_type.__name__}")
+            operand = _eval_node(node.operand)
+            return _SAFE_OPS[op_type](operand)
+        else:
+            raise ValueError(f"Unsupported expression type: {type(node).__name__}")
+    
+    return _eval_node(tree)
+
 
 # --- Slice-specific Success Metrics ---
 # These are passed as pure functions. In a real scenario, these might be
@@ -30,10 +86,9 @@ _VERBOSE_CYCLES: bool = False
 # we define them here.
 
 def metric_arithmetic_simple(item: str, result: Any) -> bool:
-    """Success is when the python eval matches the expected result."""
+    """Success is when the safe arithmetic evaluation matches the expected result."""
     try:
-        # A mock 'correct' result is simply the eval of the string.
-        return eval(item) == result
+        return safe_eval_arithmetic(item) == result
     except Exception:
         return False
 
@@ -155,8 +210,14 @@ def run_experiment(
 
             # --- Mock Execution & Evaluation ---
             # In a real system, this would be a call to the substrate.
-            # Here, we just mock a result.
-            mock_result = eval(chosen_item) if slice_name == "arithmetic_simple" else f"Expanded({chosen_item})"
+            # Here, we just mock a result using safe arithmetic evaluation.
+            if slice_name == "arithmetic_simple":
+                try:
+                    mock_result = safe_eval_arithmetic(chosen_item)
+                except Exception:
+                    mock_result = None
+            else:
+                mock_result = f"Expanded({chosen_item})"
             success = success_metric(chosen_item, mock_result)
 
             # --- RFL Policy Update ---
