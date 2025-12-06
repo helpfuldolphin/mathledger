@@ -3,10 +3,63 @@ PHASE II — NOT USED IN PHASE I
 This module provides pure, deterministic functions for computing slice-specific success metrics.
 """
 
-from typing import List, Set, Dict, Any, Tuple
+from typing import List, Set, Dict, Any, Tuple, Callable
 
 # A statement is represented as a dictionary-like object with at least a 'hash' key.
 Statement = Dict[str, Any]
+
+
+# Registry of metric kinds with their required parameters
+# Each entry is: kind_name -> (required_params, optional_params, description)
+METRIC_KINDS: Dict[str, Tuple[Tuple[str, ...], Tuple[str, ...], str]] = {
+    "goal_hit": (
+        ("target_hashes", "min_total_verified"),
+        (),
+        "Success based on hitting a minimum number of specific target goals",
+    ),
+    "sparse_success": (
+        ("min_verified",),
+        (),
+        "Success based on a simple minimum count of verified statements",
+    ),
+    "chain_success": (
+        ("dependency_graph", "chain_target_hash", "min_chain_length"),
+        (),
+        "Success based on the length of a verified dependency chain ending at a target",
+    ),
+    "multi_goal": (
+        ("required_goal_hashes",),
+        (),
+        "Success based on verifying a set of required goals",
+    ),
+}
+
+
+def get_metric_kinds() -> Dict[str, Tuple[Tuple[str, ...], Tuple[str, ...], str]]:
+    """
+    PHASE II — NOT USED IN PHASE I
+
+    Returns the registry of known metric kinds with their parameter requirements.
+
+    Returns:
+        A dict mapping metric kind name to (required_params, optional_params, description).
+    """
+    return METRIC_KINDS.copy()
+
+
+def is_valid_metric_kind(kind: str) -> bool:
+    """
+    PHASE II — NOT USED IN PHASE I
+
+    Check if a metric kind is valid (registered in METRIC_KINDS).
+
+    Args:
+        kind: The metric kind name to check.
+
+    Returns:
+        True if the kind is valid, False otherwise.
+    """
+    return kind in METRIC_KINDS
 
 def compute_goal_hit(
     verified_statements: List[Statement],
