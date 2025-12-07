@@ -12,7 +12,19 @@ Provides:
 from .frontier import FrontierManager, BeamAllocator, FrontierCandidate
 from .logging import U2TraceLogger, load_experiment_trace, verify_trace_determinism
 from .policy import SearchPolicy, BaselinePolicy, RFLPolicy, create_policy
-from .runner import U2Runner, U2Config, CycleResult, TracedExperimentContext, run_with_traces
+from .runner import (
+    U2Runner,
+    U2Config,
+    CycleResult,
+    TracedExperimentContext,
+    U2SafetyContext,
+    U2Snapshot,
+    run_with_traces,
+    run_u2_experiment,
+    safe_eval_expression,
+    save_u2_snapshot,
+    load_u2_snapshot,
+)
 from .schema import EventType, TraceEvent, CycleTrace, ExperimentTrace
 from .snapshots import (
     SnapshotData,
@@ -63,7 +75,13 @@ __all__ = [
     "U2Config",
     "CycleResult",
     "TracedExperimentContext",
+    "U2SafetyContext",
+    "U2Snapshot",
     "run_with_traces",
+    "run_u2_experiment",
+    "safe_eval_expression",
+    "save_u2_snapshot",
+    "load_u2_snapshot",
     
     # Schema
     "EventType",

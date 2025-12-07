@@ -10,8 +10,9 @@ Core execution engine for U2 experiments with:
 
 import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 from rfl.prng import DeterministicPRNG, int_to_hex_seed
 
@@ -20,6 +21,7 @@ from .logging import U2TraceLogger
 from .policy import create_policy, SearchPolicy
 from .schema import EventType
 from .snapshots import SnapshotData, create_snapshot_name, save_snapshot
+from .safety_slo import SafetyEnvelope, SafetyStatus
 
 
 @dataclass
@@ -65,6 +67,55 @@ class TracedExperimentContext:
     
     trace_logger: U2TraceLogger
     current_cycle: int = 0
+
+
+@dataclass(frozen=True)
+class U2SafetyContext:
+    """
+    Type-safe safety context for U2 experiment execution.
+    
+    Ensures all safety-critical parameters are explicit and typed.
+    
+    INVARIANTS:
+    - config must be a valid U2Config
+    - perf_threshold_ms must be positive
+    - max_cycles must be positive
+    - slice_name and mode must match config
+    """
+    config: U2Config
+    perf_threshold_ms: float
+    max_cycles: int
+    enable_safe_eval: bool
+    slice_name: str
+    mode: Literal["baseline", "rfl"]
+    
+    def __post_init__(self) -> None:
+        """Validate safety context invariants."""
+        if self.perf_threshold_ms <= 0:
+            raise ValueError(f"perf_threshold_ms must be positive, got {self.perf_threshold_ms}")
+        if self.max_cycles <= 0:
+            raise ValueError(f"max_cycles must be positive, got {self.max_cycles}")
+        if self.slice_name != self.config.slice_name:
+            raise ValueError(
+                f"slice_name mismatch: context={self.slice_name}, config={self.config.slice_name}"
+            )
+        if self.mode != self.config.mode:
+            raise ValueError(
+                f"mode mismatch: context={self.mode}, config={self.config.mode}"
+            )
+
+
+@dataclass(frozen=True)
+class U2Snapshot:
+    """
+    Type-safe snapshot representation.
+    
+    Replaces bare dict snapshots with typed structure.
+    """
+    config: U2Config
+    cycles_completed: int
+    state_hash: str
+    snapshot_data: SnapshotData
 
 
 class U2Runner:
@@ -425,3 +476,175 @@ def run_with_traces(
                 runner.save_snapshot(cycle)
     
     return runner.results
+
+
+# Type-safe wrapper functions
+
+def safe_eval_expression(expr: str) -> float:
+    """
+    Type-safe wrapper for evaluating expressions.
+    
+    SECURITY: Never uses bare eval(). Restricts to safe numeric evaluation.
+    
+    Args:
+        expr: Expression string (must be numeric)
+        
+    Returns:
+        Evaluated float value
+        
+    Raises:
+        ValueError: If expression is not a valid numeric literal
+    """
+    try:
+        # Only allow numeric literals - no eval() of arbitrary code
+        value = float(expr.strip())
+        return value
+    except (ValueError, AttributeError) as e:
+        raise ValueError(f"Invalid numeric expression: {expr}") from e
+
+
+def save_u2_snapshot(path: Path, snapshot: U2Snapshot) -> str:
+    """
+    Type-safe snapshot save.
+    
+    Args:
+        path: Path to save snapshot
+        snapshot: Typed U2Snapshot object
+        
+    Returns:
+        Snapshot hash
+    """
+    return save_snapshot(snapshot.snapshot_data, path)
+
+
+def load_u2_snapshot(path: Path) -> U2Snapshot:
+    """
+    Type-safe snapshot load.
+    
+    Args:
+        path: Path to snapshot file
+        
+    Returns:
+        Typed U2Snapshot object
+        
+    Raises:
+        NoSnapshotFoundError: Snapshot file not found
+        SnapshotCorruptionError: Snapshot file is corrupted
+    """
+    from .snapshots import load_snapshot
+    
+    snapshot_data = load_snapshot(path)
+    
+    # Reconstruct config from snapshot
+    config = U2Config(
+        experiment_id=snapshot_data.experiment_id,
+        slice_name=snapshot_data.slice_name,
+        mode=snapshot_data.mode,
+        total_cycles=snapshot_data.total_cycles,
+        master_seed=int(snapshot_data.master_seed, 16),  # Convert hex back to int
+    )
+    
+    # Create typed snapshot
+    return U2Snapshot(
+        config=config,
+        cycles_completed=snapshot_data.current_cycle,
+        state_hash=snapshot_data.compute_hash(),
+        snapshot_data=snapshot_data,
+    )
+
+
+def run_u2_experiment(
+    safety_ctx: U2SafetyContext,
+    execute_fn: Callable[[str, int], Tuple[bool, Any]],
+    output_dir: Optional[Path] = None,
+) -> SafetyEnvelope:
+    """
+    Type-safe entrypoint for running U2 experiments with safety envelope.
+    
+    This is the primary entrypoint that enforces type safety and produces
+    a SafetyEnvelope for SLO tracking.
+    
+    Args:
+        safety_ctx: Type-safe safety context
+        execute_fn: Candidate execution function
+        output_dir: Optional output directory for traces
+        
+    Returns:
+        SafetyEnvelope with run results and safety status
+    """
+    start_time = time.time()
+    
+    # Set up output directory
+    if output_dir is None:
+        output_dir = Path(f"./outputs/{safety_ctx.config.experiment_id}")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Set up trace path
+    trace_path = output_dir / f"{safety_ctx.config.experiment_id}_trace.jsonl"
+    
+    # Run experiment
+    runner = U2Runner(safety_ctx.config)
+    
+    lint_issues: List[str] = []
+    warnings: List[str] = []
+    
+    try:
+        with U2TraceLogger(
+            output_path=trace_path,
+            experiment_id=safety_ctx.config.experiment_id,
+            slice_name=safety_ctx.slice_name,
+            mode=safety_ctx.mode,
+            master_seed=int_to_hex_seed(safety_ctx.config.master_seed),
+        ) as logger:
+            trace_ctx = TracedExperimentContext(trace_logger=logger)
+            
+            for cycle in range(min(safety_ctx.max_cycles, safety_ctx.config.total_cycles)):
+                cycle_start = time.time()
+                
+                result = runner.run_cycle(cycle, execute_fn, trace_ctx)
+                
+                cycle_elapsed_ms = (time.time() - cycle_start) * 1000
+                
+                # Check performance threshold
+                if cycle_elapsed_ms > safety_ctx.perf_threshold_ms:
+                    warnings.append(
+                        f"cycle {cycle} exceeded perf threshold: {cycle_elapsed_ms:.1f}ms > {safety_ctx.perf_threshold_ms}ms"
+                    )
+    
+    except Exception as e:
+        lint_issues.append(f"Experiment failed with error: {str(e)}")
+    
+    # Compute total elapsed time
+    total_elapsed_ms = (time.time() - start_time) * 1000
+    perf_ok = total_elapsed_ms < (safety_ctx.perf_threshold_ms * safety_ctx.max_cycles)
+    
+    # Determine safety status
+    safety_status: SafetyStatus
+    if len(lint_issues) > 0:
+        safety_status = "BLOCK"
+    elif len(warnings) > 3 or not perf_ok:
+        safety_status = "WARN"
+    else:
+        safety_status = "OK"
+    
+    # Build safety envelope
+    envelope: SafetyEnvelope = {
+        "schema_version": "1.0",
+        "config": {
+            "experiment_id": safety_ctx.config.experiment_id,
+            "slice_name": safety_ctx.slice_name,
+            "mode": safety_ctx.mode,
+            "master_seed": safety_ctx.config.master_seed,
+            "total_cycles": safety_ctx.config.total_cycles,
+        },
+        "perf_ok": perf_ok,
+        "safety_status": safety_status,
+        "lint_issues": lint_issues,
+        "warnings": warnings,
+        "run_id": safety_ctx.config.experiment_id,
+        "slice_name": safety_ctx.slice_name,
+        "mode": safety_ctx.mode,
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    
+    return envelope
