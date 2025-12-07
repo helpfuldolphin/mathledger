@@ -291,6 +291,30 @@ class TestFuseEvidenceSummaries:
         assert fused.pass_status == "BLOCK"
         assert fused.run_count == 0
     
+    def test_validation_rejects_negative_run_count(self):
+        """FusedEvidenceSummary rejects negative run_count."""
+        from experiments.u2.evidence_fusion import FusedEvidenceSummary
+        with pytest.raises(ValueError, match="run_count must be non-negative"):
+            FusedEvidenceSummary(run_count=-1)
+    
+    def test_validation_rejects_invalid_pass_status(self):
+        """FusedEvidenceSummary rejects invalid pass_status."""
+        from experiments.u2.evidence_fusion import FusedEvidenceSummary
+        with pytest.raises(ValueError, match="pass_status must be one of"):
+            FusedEvidenceSummary(run_count=1, pass_status="INVALID")
+    
+    def test_missing_ht_hash_blocks_in_validation(self):
+        """Missing ht_series_hash blocks in validation phase."""
+        summary1 = create_minimal_run_summary(ht_series_hash="abc123")
+        summary2 = create_minimal_run_summary()
+        del summary2["ht_series_hash"]
+        
+        summaries = [summary1, summary2]
+        fused = fuse_evidence_summaries(summaries)
+        assert fused.pass_status == "BLOCK"
+        assert "validation_errors" in fused.metadata
+        assert any("ht_series_hash" in e for e in fused.metadata["validation_errors"])
+    
     def test_valid_single_run_passes(self):
         """Valid single run passes."""
         with tempfile.NamedTemporaryFile(suffix=".jsonl") as results_file:
@@ -391,61 +415,73 @@ class TestPromotionPrecheckCLI:
     
     def test_pass_exit_code(self):
         """PASS returns exit code 0."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
-            with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as results_file:
-                summary = create_minimal_run_summary(
-                    results_path=results_file.name,
-                    manifest_path=f.name,
-                )
-                json.dump(summary, f)
-                f.flush()
-                
-                try:
-                    exit_code = promotion_precheck([f.name])
-                    assert exit_code == 0
-                finally:
-                    Path(f.name).unlink(missing_ok=True)
-                    Path(results_file.name).unlink(missing_ok=True)
+        results_file = None
+        manifest_file = None
+        try:
+            results_file = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+            manifest_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+            
+            summary = create_minimal_run_summary(
+                results_path=results_file.name,
+                manifest_path=manifest_file.name,
+            )
+            json.dump(summary, manifest_file)
+            manifest_file.flush()
+            results_file.close()
+            manifest_file.close()
+            
+            exit_code = promotion_precheck([manifest_file.name])
+            assert exit_code == 0
+        finally:
+            if results_file:
+                Path(results_file.name).unlink(missing_ok=True)
+            if manifest_file:
+                Path(manifest_file.name).unlink(missing_ok=True)
     
     def test_warn_exit_code(self):
         """WARN returns exit code 1."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
-            with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as results_file:
-                summary = create_minimal_run_summary(
-                    mode="rfl",
-                    results_path=results_file.name,
-                    manifest_path=f.name,
-                )
-                json.dump(summary, f)
-                f.flush()
-                
-                try:
-                    exit_code = promotion_precheck([f.name])
-                    assert exit_code == 1
-                finally:
-                    Path(f.name).unlink(missing_ok=True)
-                    Path(results_file.name).unlink(missing_ok=True)
+        results_file = None
+        manifest_file = None
+        try:
+            results_file = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+            manifest_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+            
+            summary = create_minimal_run_summary(
+                mode="rfl",
+                results_path=results_file.name,
+                manifest_path=manifest_file.name,
+            )
+            json.dump(summary, manifest_file)
+            manifest_file.flush()
+            results_file.close()
+            manifest_file.close()
+            
+            exit_code = promotion_precheck([manifest_file.name])
+            assert exit_code == 1
+        finally:
+            if results_file:
+                Path(results_file.name).unlink(missing_ok=True)
+            if manifest_file:
+                Path(manifest_file.name).unlink(missing_ok=True)
     
     def test_block_exit_code(self):
         """BLOCK returns exit code 2."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as f:
+        manifest_file = None
+        try:
+            manifest_file = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+            
             summary = create_minimal_run_summary(
                 results_path="/nonexistent/results.jsonl",
             )
-            json.dump(summary, f)
-            f.flush()
+            json.dump(summary, manifest_file)
+            manifest_file.flush()
+            manifest_file.close()
             
-            try:
-                exit_code = promotion_precheck([f.name])
-                assert exit_code == 2
-            finally:
-                Path(f.name).unlink(missing_ok=True)
+            exit_code = promotion_precheck([manifest_file.name])
+            assert exit_code == 2
+        finally:
+            if manifest_file:
+                Path(manifest_file.name).unlink(missing_ok=True)
     
     def test_nonexistent_manifest_blocks(self):
         """Nonexistent manifest returns exit code 2."""

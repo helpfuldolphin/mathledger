@@ -59,6 +59,13 @@ class RunOrderingAnomaly:
     details: Dict[str, Any] = field(default_factory=dict)
 
 
+class PassStatus:
+    """Valid pass status values."""
+    PASS = "PASS"
+    WARN = "WARN"
+    BLOCK = "BLOCK"
+
+
 @dataclass
 class FusedEvidenceSummary:
     """
@@ -86,6 +93,17 @@ class FusedEvidenceSummary:
     rfl_policy_complete: bool = True
     pass_status: str = "PASS"
     metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def __post_init__(self):
+        """Validate fields after initialization."""
+        if self.run_count < 0:
+            raise ValueError(f"run_count must be non-negative, got {self.run_count}")
+        
+        valid_statuses = [PassStatus.PASS, PassStatus.WARN, PassStatus.BLOCK]
+        if self.pass_status not in valid_statuses:
+            raise ValueError(
+                f"pass_status must be one of {valid_statuses}, got {self.pass_status}"
+            )
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to JSON-serializable dict."""
@@ -205,12 +223,30 @@ def check_determinism_violations(
         
         # Compare ht_series_hash across runs
         ht_hashes = [s.get("ht_series_hash") for s in summaries]
-        if len(set(ht_hashes)) > 1:
+        # Filter out None values before comparison
+        valid_hashes = [h for h in ht_hashes if h is not None]
+        if len(valid_hashes) != len(ht_hashes):
+            # Some summaries are missing ht_series_hash
             violations.append(
                 DeterminismViolation(
                     run_ids=[
-                        s.get("outputs", {}).get("manifest", "unknown")
-                        for s in summaries
+                        s.get("outputs", {}).get("manifest") or f"run_{i}"
+                        for i, s in enumerate(summaries)
+                    ],
+                    cycle=-1,
+                    description=(
+                        f"Missing ht_series_hash for slice={slice_name}, "
+                        f"mode={mode}, seed={seed}"
+                    ),
+                    trace_hashes=ht_hashes,
+                )
+            )
+        elif len(set(valid_hashes)) > 1:
+            violations.append(
+                DeterminismViolation(
+                    run_ids=[
+                        s.get("outputs", {}).get("manifest") or f"run_{i}"
+                        for i, s in enumerate(summaries)
                     ],
                     cycle=-1,  # Not cycle-specific
                     description=(
@@ -416,7 +452,7 @@ def fuse_evidence_summaries(run_summaries: List[Dict[str, Any]]) -> FusedEvidenc
     if not run_summaries:
         return FusedEvidenceSummary(
             run_count=0,
-            pass_status="BLOCK",
+            pass_status=PassStatus.BLOCK,
             metadata={"error": "No run summaries provided"},
         )
     
@@ -430,7 +466,7 @@ def fuse_evidence_summaries(run_summaries: List[Dict[str, Any]]) -> FusedEvidenc
     if validation_errors:
         return FusedEvidenceSummary(
             run_count=len(run_summaries),
-            pass_status="BLOCK",
+            pass_status=PassStatus.BLOCK,
             metadata={"validation_errors": validation_errors},
         )
     
@@ -442,22 +478,22 @@ def fuse_evidence_summaries(run_summaries: List[Dict[str, Any]]) -> FusedEvidenc
     rfl_policy_complete = check_rfl_policy_completeness(run_summaries)
     
     # Determine pass status
-    pass_status = "PASS"
+    pass_status = PassStatus.PASS
     
     # BLOCK conditions
     if determinism_violations:
-        pass_status = "BLOCK"
+        pass_status = PassStatus.BLOCK
     elif missing_artifacts:
-        pass_status = "BLOCK"
+        pass_status = PassStatus.BLOCK
     elif conflicting_slice_names:
-        pass_status = "BLOCK"
+        pass_status = PassStatus.BLOCK
     
     # WARN conditions
-    if pass_status == "PASS":
+    if pass_status == PassStatus.PASS:
         if run_ordering_anomalies:
-            pass_status = "WARN"
+            pass_status = PassStatus.WARN
         elif not rfl_policy_complete:
-            pass_status = "WARN"
+            pass_status = PassStatus.WARN
     
     return FusedEvidenceSummary(
         run_count=len(run_summaries),
