@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/curriculum_snapshot.schema.json",
+  "title": "Curriculum Snapshot",
+  "description": "Versioned snapshot of MathLedger curriculum structure, problem definitions, difficulty scores, and topic taxonomies.",
+  "x-version": "1.0.0",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this snapshot schema (MAJOR.MINOR.PATCH)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this snapshot was generated"
+    },
+    "topic_taxonomy": {
+      "type": "object",
+      "description": "Mapping of topics to their subtopics",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "problems": {
+      "type": "array",
+      "description": "List of all problems in the curriculum",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the problem"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable title of the problem"
+          },
+          "topic": {
+            "type": "string",
+            "description": "Topic this problem belongs to"
+          },
+          "difficulty_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Normalized difficulty score (0 = easiest, 1 = hardest)"
+          },
+          "content_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA-256 hash of the problem content"
+          }
+        },
+        "required": ["id", "title", "topic", "difficulty_score", "content_hash"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["version", "timestamp", "topic_taxonomy", "problems"],
+  "additionalProperties": false
+}

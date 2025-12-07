@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/attestation_snapshot.schema.json",
+  "title": "Attestation Snapshot",
+  "description": "Versioned snapshot of dual-attestation seals with H_t, R_t, U_t triple-hash verification.",
+  "x-version": "1.0.0",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this snapshot schema (MAJOR.MINOR.PATCH)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this snapshot was generated"
+    },
+    "attestations": {
+      "type": "array",
+      "description": "List of all attestations",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the attestation"
+          },
+          "H_t": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "Composite root hash (H_t = SHA256(R_t || U_t))"
+          },
+          "R_t": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "Reasoning Merkle root"
+          },
+          "U_t": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "UI Merkle root"
+          }
+        },
+        "required": ["id", "H_t", "R_t", "U_t"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["version", "timestamp", "attestations"],
+  "additionalProperties": false
+}
