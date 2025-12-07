@@ -7,6 +7,7 @@ Provides:
 - Policy-driven candidate selection
 - Snapshot and replay support
 - Trace logging for RFL evidence
+- Multi-run evidence fusion for promotion readiness
 """
 
 from .frontier import FrontierManager, BeamAllocator, FrontierCandidate
@@ -24,6 +25,15 @@ from .snapshots import (
     load_snapshot,
     find_latest_snapshot,
     rotate_snapshots,
+)
+from .evidence_fusion import (
+    fuse_evidence_summaries,
+    inject_multi_run_fusion_into_evidence,
+    FusedEvidenceSummary,
+    DeterminismViolation,
+    MissingArtifact,
+    ConflictingSliceName,
+    RunOrderingAnomaly,
 )
 
 __all__ = [
@@ -66,4 +76,13 @@ __all__ = [
     "load_snapshot",
     "find_latest_snapshot",
     "rotate_snapshots",
+    
+    # Evidence Fusion
+    "fuse_evidence_summaries",
+    "inject_multi_run_fusion_into_evidence",
+    "FusedEvidenceSummary",
+    "DeterminismViolation",
+    "MissingArtifact",
+    "ConflictingSliceName",
+    "RunOrderingAnomaly",
 ]
