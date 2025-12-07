@@ -1,4 +1,24 @@
 """MathLedger dual attestation package."""
 
-__all__: list[str] = []
+from attestation.cross_chain_verifier import (
+    CrossChainVerifier,
+    ChainVerificationResult,
+    ChainDiscontinuity,
+    DuplicateExperiment,
+    HashDrift,
+    SchemaDrift,
+    DualRootMismatch,
+    TimestampViolation,
+)
+
+__all__ = [
+    'CrossChainVerifier',
+    'ChainVerificationResult',
+    'ChainDiscontinuity',
+    'DuplicateExperiment',
+    'HashDrift',
+    'SchemaDrift',
+    'DualRootMismatch',
+    'TimestampViolation',
+]
 
