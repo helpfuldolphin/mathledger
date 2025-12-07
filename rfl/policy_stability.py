@@ -48,6 +48,25 @@ from .config import CurriculumSlice
 
 
 # -----------------------------------------------------------------------------
+# Constants
+# -----------------------------------------------------------------------------
+
+# Numerical epsilon for variance and zero comparisons
+# Value chosen to be small enough to detect meaningful differences while
+# avoiding false positives from floating-point precision issues
+EPSILON = 1e-9
+
+# Threshold for negative weight growth to flag divergence
+# A 50% increase in negative weight norm is considered significant
+NEGATIVE_DIVERGENCE_THRESHOLD = 0.5
+
+# Thresholds for governance red flag counting
+# These values balance sensitivity with false positive rate
+MAX_SLICE_BOUNDARY_DRIFTS = 5  # Typical curriculum has ~5-10 slices
+MAX_FEATURE_FLIPS = 3  # Feature sign flips are rare in stable policies
+
+
+# -----------------------------------------------------------------------------
 # Data Classes
 # -----------------------------------------------------------------------------
 
@@ -531,12 +550,12 @@ def detect_policy_toxicity(
         current_var = np.var(weights)
         
         # If historical variance is near zero, use epsilon to avoid division by zero
-        if historical_var > 1e-9:
+        if historical_var > EPSILON:
             variance_ratio = current_var / historical_var
         else:
             # If historical has no variance but current does, ratio is large
-            if current_var > 1e-9:
-                variance_ratio = current_var / 1e-9  # Effectively infinite ratio
+            if current_var > EPSILON:
+                variance_ratio = current_var / EPSILON  # Effectively infinite ratio
             else:
                 variance_ratio = 1.0
     else:
@@ -548,7 +567,7 @@ def detect_policy_toxicity(
         prev_negative = prev_weights[prev_weights < 0]
         prev_negative_norm = np.linalg.norm(prev_negative) if len(prev_negative) > 0 else 0.0
         
-        if prev_negative_norm > 0:
+        if prev_negative_norm > EPSILON:
             negative_norm_divergence = (negative_norm - prev_negative_norm) / prev_negative_norm
         else:
             negative_norm_divergence = 0.0
@@ -558,7 +577,7 @@ def detect_policy_toxicity(
     # Flag indicators
     has_extreme_concentration = weight_concentration > concentration_threshold
     has_diversity_collapse = diversity_score < diversity_threshold
-    has_negative_divergence = negative_norm_divergence > 0.5  # 50% growth in negative norm
+    has_negative_divergence = negative_norm_divergence > NEGATIVE_DIVERGENCE_THRESHOLD
     has_high_variance = variance_ratio > variance_spike_threshold
     
     return ToxicityIndicators(
@@ -614,7 +633,7 @@ def _compute_gini_coefficient(values: np.ndarray) -> float:
     return float(gini)
 
 
-def _compute_effective_features(weights: np.ndarray, epsilon: float = 1e-6) -> float:
+def _compute_effective_features(weights: np.ndarray, epsilon: float = EPSILON) -> float:
     """
     Compute effective number of features (diversity score).
     
@@ -624,7 +643,7 @@ def _compute_effective_features(weights: np.ndarray, epsilon: float = 1e-6) -> f
     
     Args:
         weights: Array of weight values
-        epsilon: Regularization for log
+        epsilon: Regularization for log (default: EPSILON)
     
     Returns:
         Effective number of features
@@ -700,9 +719,9 @@ def summarize_policy_stability_for_global_health(
     slice_boundary_drifts = sum(1 for e in drift_events if e.is_slice_boundary)
     feature_flips = sum(1 for e in drift_events if e.is_feature_flip)
     
-    if slice_boundary_drifts > 5:
+    if slice_boundary_drifts > MAX_SLICE_BOUNDARY_DRIFTS:
         red_flags += 1
-    if feature_flips > 3:
+    if feature_flips > MAX_FEATURE_FLIPS:
         red_flags += 1
     
     # Check toxicity indicators

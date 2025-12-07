@@ -38,7 +38,7 @@ def create_policy_state(epoch: int, weights: dict) -> PolicyState:
     return PolicyState(
         weights=weights,
         epoch=epoch,
-        timestamp=f"2025-01-01T00:{epoch:02d}:00Z",
+        timestamp=f"2024-01-01T00:{epoch:02d}:00Z",
     )
 
 
