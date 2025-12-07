@@ -65,6 +65,11 @@ REQUIRED_DISCLAIMERS = [
     "NO UPLIFT CLAIMS",
 ]
 
+# Governance validation constants
+UPLIFT_READINESS_PATTERN = r'(uplift\s+ready|ready\s+for\s+uplift|production\s+ready.*uplift)'
+DISCLAIMER_SEARCH_RANGE = 500  # chars before/after to search for disclaimers
+TERMINOLOGY_DRIFT_THRESHOLD = 1.5  # 50% increase triggers alert
+
 
 def normalize_text(text: str) -> str:
     """
@@ -129,7 +134,7 @@ def count_section_headers(text: str) -> int:
     return count
 
 
-def extract_phase_markers(text: str) -> List[str]:
+def extract_phase_markers(text: str) -> List[Dict]:
     """
     Extract Phase markers (PHASE I, PHASE II, etc.) from text.
     
@@ -140,9 +145,14 @@ def extract_phase_markers(text: str) -> List[str]:
         List of found Phase markers with context
     """
     markers = []
-    for marker in PHASE_MARKERS:
-        # Find all occurrences with surrounding context
-        pattern = re.escape(marker)
+    # Process markers from longest to shortest to avoid substring matches
+    # e.g., "PHASE II" before "PHASE I"
+    sorted_markers = sorted(PHASE_MARKERS, key=len, reverse=True)
+    
+    for marker in sorted_markers:
+        # Use word boundaries to avoid substring matches
+        # e.g., don't match "PHASE I" within "PHASE II"
+        pattern = r'\b' + re.escape(marker) + r'\b'
         for match in re.finditer(pattern, text):
             start = max(0, match.start() - 50)
             end = min(len(text), match.end() + 50)
@@ -299,9 +309,9 @@ def detect_uplifting_language(fingerprints: List[Dict]) -> List[Dict]:
                 # Check if there's a nearby disclaimer
                 pattern = re.escape(phrase)
                 for match in re.finditer(pattern, content, re.IGNORECASE):
-                    # Look for disclaimers within 500 chars before or after
-                    start = max(0, match.start() - 500)
-                    end = min(len(content), match.end() + 500)
+                    # Look for disclaimers within range before or after
+                    start = max(0, match.start() - DISCLAIMER_SEARCH_RANGE)
+                    end = min(len(content), match.end() + DISCLAIMER_SEARCH_RANGE)
                     context = content[start:end]
                     
                     has_disclaimer = any(
@@ -385,7 +395,7 @@ def detect_terminology_drift(fingerprints: List[Dict]) -> List[Dict]:
         prev_rfl = len(prev.get('rfl_uplift_contexts', []))
         curr_rfl = len(curr.get('rfl_uplift_contexts', []))
         
-        if curr_rfl > prev_rfl * 1.5:  # 50% increase
+        if curr_rfl > prev_rfl * TERMINOLOGY_DRIFT_THRESHOLD:
             issues.append({
                 'type': 'terminology_expansion',
                 'from_path': prev['path'],
@@ -488,8 +498,7 @@ def validate_governance_annotations(fingerprints: List[Dict]) -> Dict:
             })
         
         # Check for uplift readiness claims
-        readiness_pattern = r'(uplift\s+ready|ready\s+for\s+uplift|production\s+ready.*uplift)'
-        if re.search(readiness_pattern, content, re.IGNORECASE):
+        if re.search(UPLIFT_READINESS_PATTERN, content, re.IGNORECASE):
             issues.append({
                 'type': 'premature_readiness_claim',
                 'path': fp['path'],

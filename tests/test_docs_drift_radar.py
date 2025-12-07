@@ -113,14 +113,13 @@ class TestPhaseMarkerExtraction:
     """Test Phase marker extraction."""
     
     def test_extract_phase_ii_marker(self):
-        """Test extracting PHASE II markers."""
+        """Test extracting PHASE II markers without matching PHASE I."""
         text = "This is PHASE II content for testing"
         markers = extract_phase_markers(text)
-        # Note: "PHASE II" contains "PHASE I" so both may match
-        assert len(markers) >= 1
-        phase_ii_markers = [m for m in markers if m['marker'] == 'PHASE II']
-        assert len(phase_ii_markers) >= 1
-        assert 'PHASE II content' in phase_ii_markers[0]['context']
+        # With word boundaries, "PHASE II" should not match "PHASE I"
+        assert len(markers) == 1
+        assert markers[0]['marker'] == 'PHASE II'
+        assert 'PHASE II content' in markers[0]['context']
     
     def test_extract_multiple_phase_markers(self):
         """Test extracting multiple Phase markers."""
