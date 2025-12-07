@@ -27,10 +27,13 @@ import sys
 import argparse
 from pathlib import Path
 
-# Add parent directory to path to import attestation module
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from attestation.cross_chain_verifier import CrossChainVerifier
+# Import attestation module (assumes script is run from project root)
+try:
+    from attestation.cross_chain_verifier import CrossChainVerifier
+except ImportError:
+    # Fallback: add parent directory to path if needed
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from attestation.cross_chain_verifier import CrossChainVerifier
 
 
 # Exit codes

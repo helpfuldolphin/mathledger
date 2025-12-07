@@ -43,13 +43,17 @@ class TestCrossChainVerifier:
     
     def test_single_valid_manifest(self):
         """Single valid manifest should pass."""
+        r_t = 'a' * 64
+        u_t = 'b' * 64
+        h_t = compute_composite_root(r_t, u_t)
+        
         manifest = {
             'experiment_id': 'EXP_001',
             'manifest_version': '1.0',
             'timestamp_utc': '2025-01-01T00:00:00Z',
-            'reasoning_merkle_root': 'a' * 64,
-            'ui_merkle_root': 'b' * 64,
-            'composite_attestation_root': hashlib.sha256(('a' * 64 + 'b' * 64).encode('ascii')).hexdigest(),
+            'reasoning_merkle_root': r_t,
+            'ui_merkle_root': u_t,
+            'composite_attestation_root': h_t,
         }
         
         verifier = CrossChainVerifier()

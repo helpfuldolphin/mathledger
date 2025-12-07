@@ -391,13 +391,19 @@ class CrossChainVerifier:
                 unique_hashes = set(h for _, h in hashes)
                 if len(unique_hashes) > 1:
                     # Report drift between first two different hashes
-                    hash_map = {h: idx for idx, h in hashes}
+                    # Build map of hash -> list of indices
+                    hash_indices: Dict[str, List[int]] = {}
+                    for idx, h in hashes:
+                        if h not in hash_indices:
+                            hash_indices[h] = []
+                        hash_indices[h].append(idx)
+                    
                     sorted_hashes = sorted(unique_hashes)
                     result.hash_drifts.append(
                         HashDrift(
                             experiment_id=exp_id,
-                            run_1=hash_map[sorted_hashes[0]],
-                            run_2=hash_map[sorted_hashes[1]],
+                            run_1=hash_indices[sorted_hashes[0]][0],
+                            run_2=hash_indices[sorted_hashes[1]][0],
                             hash_field='configuration.snapshot',
                             hash_1=sorted_hashes[0],
                             hash_2=sorted_hashes[1],
@@ -405,7 +411,13 @@ class CrossChainVerifier:
                     )
         
         # Count valid experiments (no critical issues)
-        result.valid_experiments = result.total_experiments - len(result.chain_discontinuities) - len(result.duplicate_experiments) - len(result.dual_root_mismatches)
+        # For duplicate experiments, count unique experiment IDs with issues
+        duplicate_exp_ids = set(dup.experiment_id for dup in result.duplicate_experiments)
+        discontinuity_exp_ids = set(disc.experiment_id for disc in result.chain_discontinuities)
+        mismatch_exp_ids = set(mm.experiment_id for mm in result.dual_root_mismatches)
+        
+        invalid_exp_ids = duplicate_exp_ids | discontinuity_exp_ids | mismatch_exp_ids
+        result.valid_experiments = result.total_experiments - len(invalid_exp_ids)
         
         return result
     
