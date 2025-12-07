@@ -25,6 +25,21 @@ from .snapshots import (
     find_latest_snapshot,
     rotate_snapshots,
 )
+from .safety_slo import (
+    SafetyStatus,
+    SafetyEnvelope,
+    SafetySLOPoint,
+    SafetySLOTimeline,
+    ScenarioSafetyCell,
+    ScenarioSafetyMatrix,
+    SafetySLOEvaluation,
+    build_safety_slo_timeline,
+    build_scenario_safety_matrix,
+    evaluate_safety_slo,
+    MAX_BLOCK_RATE,
+    MAX_WARN_RATE,
+    MAX_PERF_FAILURE_RATE,
+)
 
 __all__ = [
     # Frontier
@@ -66,4 +81,19 @@ __all__ = [
     "load_snapshot",
     "find_latest_snapshot",
     "rotate_snapshots",
+    
+    # Safety SLO
+    "SafetyStatus",
+    "SafetyEnvelope",
+    "SafetySLOPoint",
+    "SafetySLOTimeline",
+    "ScenarioSafetyCell",
+    "ScenarioSafetyMatrix",
+    "SafetySLOEvaluation",
+    "build_safety_slo_timeline",
+    "build_scenario_safety_matrix",
+    "evaluate_safety_slo",
+    "MAX_BLOCK_RATE",
+    "MAX_WARN_RATE",
+    "MAX_PERF_FAILURE_RATE",
 ]
