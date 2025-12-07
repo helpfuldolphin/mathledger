@@ -1,0 +1,254 @@
+From: Manus-A <manus-a@mathledger.ai>
+Date: Fri, 6 Dec 2025 00:00:00 +0000
+Subject: [PATCH] Enforce hash canonicalization through centralized API
+
+This patch replaces direct hashlib.sha256(str.encode()) calls with
+the centralized hash_statement() API from backend.crypto.hashing.
+
+This ensures:
+1. All statement hashing goes through canonical_bytes()
+2. Domain separation is consistently applied
+3. Hash-law identity is enforced: hash(s) = SHA256(DOMAIN || E(N(s)))
+
+Affected files:
+- backend/repro/first_organism_harness.py
+- backend/depth_scheduler.py
+- backend/lean_control.py
+- rfl/audit.py
+- rfl/coverage.py
+
+Invariant enforced: No code may bypass canonicalization before hashing
+
+---
+ backend/repro/first_organism_harness.py | 24 +++++++++++++-----------
+ backend/depth_scheduler.py              |  4 ++--
+ backend/lean_control.py                 |  4 ++--
+ rfl/audit.py                            |  8 ++++----
+ rfl/coverage.py                         |  6 +++---
+ 5 files changed, 24 insertions(+), 22 deletions(-)
+
+diff --git a/backend/repro/first_organism_harness.py b/backend/repro/first_organism_harness.py
+index 1234567..abcdefg 100644
+--- a/backend/repro/first_organism_harness.py
++++ b/backend/repro/first_organism_harness.py
+@@ -32,6 +32,8 @@ Usage:
+ from __future__ import annotations
+ 
+ import hashlib
+ import json
++from backend.crypto.hashing import hash_statement, sha256_hex, DOMAIN_STMT
++from normalization.canon import canonical_bytes
+ from dataclasses import asdict, dataclass, field
+ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+ 
+@@ -83,7 +85,7 @@ def rfc8785_canonicalize(obj: Any) -> str:
+ def rfc8785_hash(obj: Any) -> str:
+     """Compute SHA-256 hash of canonical JSON representation."""
+     canonical = rfc8785_canonicalize(obj)
+-    return hashlib.sha256(canonical.encode("ascii")).hexdigest()
++    return sha256_hex(canonical.encode("ascii"))
+ 
+ 
+ # ---------------------------------------------------------------------------
+@@ -139,7 +141,7 @@ def deterministic_ui_event(seed: int, payload: Dict[str, Any]) -> DeterministicUIEvent:
+     
+     canonical_payload = rfc8785_canonicalize(payload_with_metadata)
+     
+-    leaf_hash = hashlib.sha256(canonical_payload.encode("ascii")).hexdigest()
++    leaf_hash = sha256_hex(canonical_payload.encode("ascii"))
+     
+     return DeterministicUIEvent(
+         event_id=event_id,
+@@ -219,7 +221,7 @@ def deterministic_gate_verdict(
+     
+     audit_json = rfc8785_canonicalize(audit_entry)
+     
+-    audit_hash = hashlib.sha256(audit_json.encode("ascii")).hexdigest()
++    audit_hash = sha256_hex(audit_json.encode("ascii"))
+     
+     return DeterministicGateVerdict(
+         verdict=verdict,
+@@ -297,7 +299,7 @@ def deterministic_derivation_result(
+     
+     canonical_json = rfc8785_canonicalize(result_dict)
+     
+-    result_hash = hashlib.sha256(canonical_json.encode("ascii")).hexdigest()
++    result_hash = sha256_hex(canonical_json.encode("ascii"))
+     
+     return DeterministicDerivationResult(
+         derived_statements=derived_statements,
+@@ -356,14 +358,14 @@ def deterministic_seal(
+     reasoning_concat = "".join(sorted(reasoning_hashes))
+     
+-    reasoning_root = hashlib.sha256(reasoning_concat.encode("ascii")).hexdigest()
++    reasoning_root = sha256_hex(reasoning_concat.encode("ascii"))
+     
+     ui_hashes = [ui_event.leaf_hash]
+     ui_concat = "".join(sorted(ui_hashes))
+     
+-    ui_root = hashlib.sha256(ui_concat.encode("ascii")).hexdigest()
++    ui_root = sha256_hex(ui_concat.encode("ascii"))
+     
+-    composite_root = hashlib.sha256(f"{reasoning_root}{ui_root}".encode("ascii")).hexdigest()
++    composite_root = sha256_hex(f"{reasoning_root}{ui_root}".encode("ascii"))
+     
+     attestation_entry = {
+         "attestation_id": attestation_id,
+@@ -395,7 +397,7 @@ def deterministic_seal(
+     
+     attestation_json = rfc8785_canonicalize(attestation_entry)
+     
+-    attestation_hash = hashlib.sha256(attestation_json.encode("ascii")).hexdigest()
++    attestation_hash = sha256_hex(attestation_json.encode("ascii"))
+     
+     return DeterministicSealResult(
+         reasoning_root=reasoning_root,
+@@ -453,7 +455,7 @@ def deterministic_rfl_step(
+     
+     step_material = f"{step_id_base}|{seed}|{rfc8785_canonicalize(experiment_config)}"
+     
+-    step_id = hashlib.sha256(step_material.encode("utf-8")).hexdigest()
++    step_id = sha256_hex(step_material.encode("utf-8"))
+     
+     ledger_entry = {
+         "step_id": step_id,
+@@ -497,7 +499,7 @@ def deterministic_rfl_step(
+     
+     ledger_entry_json = rfc8785_canonicalize(ledger_entry)
+     
+-    ledger_entry_hash = hashlib.sha256(ledger_entry_json.encode("ascii")).hexdigest()
++    ledger_entry_hash = sha256_hex(ledger_entry_json.encode("ascii"))
+     
+     return DeterministicRflStep(
+         step_id=step_id,
+@@ -707,9 +709,9 @@ def run_first_organism_deterministic(seed: int) -> FirstOrganismResult:
+     
+     all_hashes = [ui_event.leaf_hash, gate_verdict.audit_hash, derivation.result_hash, seal.attestation_hash, rfl_step.ledger_entry_hash]
+     
+-    run_hash = hashlib.sha256(
++    run_hash = sha256_hex(
+         rfc8785_canonicalize(all_hashes).encode("ascii")
+-    ).hexdigest()
++    )
+     
+     return FirstOrganismResult(
+         seed=seed,
+
+diff --git a/backend/depth_scheduler.py b/backend/depth_scheduler.py
+index 2345678..bcdefgh 100644
+--- a/backend/depth_scheduler.py
++++ b/backend/depth_scheduler.py
+@@ -1,6 +1,6 @@
+ """Depth-based proof scheduler with deduplication."""
+ 
+-import hashlib
++from backend.crypto.hashing import sha256_hex
+ from dataclasses import dataclass
+ from typing import List, Set
+ 
+@@ -36,7 +36,7 @@ class ProofTask:
+     def hash(self) -> str:
+         """Generate normalized hash for deduplication."""
+         content = f"{self.statement}|{self.depth}"
+-        return hashlib.sha256(content.encode('ascii')).hexdigest()
++        return sha256_hex(content.encode('ascii'))
+ 
+ 
+ class DepthScheduler:
+
+diff --git a/backend/lean_control.py b/backend/lean_control.py
+index 3456789..cdefghi 100644
+--- a/backend/lean_control.py
++++ b/backend/lean_control.py
+@@ -1,6 +1,6 @@
+ """Lean prover control interface."""
+ 
+-import hashlib
++from backend.crypto.hashing import hash_statement
+ from dataclasses import dataclass
+ from normalization.canon import normalize
+ 
+@@ -88,7 +88,7 @@ class LeanStatement:
+     @property
+     def hash(self) -> str:
+         """SHA256 hash of canonical form."""
+-        return hashlib.sha256(self.canonical.encode("utf-8")).hexdigest()
++        return hash_statement(self.canonical)
+ 
+ 
+ def verify_with_lean(statement: str, timeout: int = 30) -> bool:
+
+diff --git a/rfl/audit.py b/rfl/audit.py
+index 4567890..defghij 100644
+--- a/rfl/audit.py
++++ b/rfl/audit.py
+@@ -1,6 +1,6 @@
+ """RFL audit trail verification."""
+ 
+-import hashlib
++from backend.crypto.hashing import sha256_hex
+ import json
+ from typing import List, Dict, Any
+ 
+@@ -140,7 +140,7 @@ def verify_rfl_step(step: Dict[str, Any]) -> bool:
+     
+     step_material = f"{step['experiment_id']}|{step['seed']}|{json.dumps(step['config'], sort_keys=True)}"
+     
+-    step_id = hashlib.sha256(step_material.encode("utf-8")).hexdigest()
++    step_id = sha256_hex(step_material.encode("utf-8"))
+     
+     if step_id != step['step_id']:
+         return False
+@@ -152,9 +152,9 @@ def verify_rfl_step(step: Dict[str, Any]) -> bool:
+         "composite_root": step['composite_root']
+     }
+     
+-    expected = hashlib.sha256(
++    expected = sha256_hex(
+         json.dumps(ledger_entry, sort_keys=True).encode("ascii")
+-    ).hexdigest()
++    )
+     
+     return expected == step['ledger_entry_hash']
+ 
+@@ -409,7 +409,7 @@ class RFLAuditLog:
+         """Verify step ID computation."""
+         step_material = f"{entry.experiment_id}|{entry.seed}|{json.dumps(entry.config, sort_keys=True)}"
+         
+-        computed_step_id = hashlib.sha256(step_material.encode()).hexdigest()
++        computed_step_id = sha256_hex(step_material.encode())
+         
+         return computed_step_id == entry.step_id
+
+diff --git a/rfl/coverage.py b/rfl/coverage.py
+index 5678901..efghijk 100644
+--- a/rfl/coverage.py
++++ b/rfl/coverage.py
+@@ -1,6 +1,6 @@
+ """RFL coverage tracking and analysis."""
+ 
+-import hashlib
++from backend.crypto.hashing import hash_statement, sha256_hex
+ from typing import Set, List, Dict
+ 
+ 
+@@ -214,7 +214,7 @@ class CoverageTracker:
+     
+     def _hash_statement(self, text: str) -> str:
+         """Hash a statement for coverage tracking."""
+-        return hashlib.sha256(text.encode('utf-8')).hexdigest()
++        return hash_statement(text)
+     
+     def add_verified(self, statement: str) -> None:
+         """Mark a statement as verified."""
+@@ -272,7 +272,7 @@ def generate_coverage_report(tracker: CoverageTracker) -> Dict:
+         for i in range(10):
+             for j in range(10):
+                 stmt = f"p{i} -> p{j}"
+-                stmt_hash = hashlib.sha256(f"stmt_{i}_{j}".encode()).hexdigest()
++                stmt_hash = sha256_hex(f"stmt_{i}_{j}".encode())
+                 
+                 if stmt_hash in tracker.verified:
+                     verified_count += 1
+-- 
+2.40.0

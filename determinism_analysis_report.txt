@@ -1,0 +1,2377 @@
+Manus-A: Canonicalization & Determinism Analysis Report
+================================================================================
+
+
+Analysis Summary
+================
+Files Scanned: 532
+Total Issues: 591
+
+By Severity:
+  CRITICAL: 142
+  HIGH:     139
+  MEDIUM:   283
+  LOW:      27
+
+
+Detailed Issues
+================================================================================
+
+
+HASHING
+--------------------------------------------------------------------------------
+
+[MEDIUM] test_dual_attestation.py:18
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: composite_root = hashlib.sha256(composite_input.encode('utf-8')).hexdigest()
+
+[MEDIUM] test_dual_attestation.py:28
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: composite_root_2 = hashlib.sha256(composite_input.encode('utf-8')).hexdigest()
+
+[MEDIUM] test_integrity_audit.py:118
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash1 = hashlib.sha256(norm1.encode('utf-8')).hexdigest()
+
+[MEDIUM] test_integrity_audit.py:119
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash2 = hashlib.sha256(norm2.encode('utf-8')).hexdigest()
+
+[MEDIUM] backend/depth_scheduler.py:39
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(content.encode('ascii')).hexdigest()
+
+[MEDIUM] backend/lean_control.py:91
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(self.canonical.encode("utf-8")).hexdigest()
+
+[MEDIUM] backend/lean_mode.py:68
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: MOCK_STDOUT_HASH = hashlib.sha256(MOCK_STDOUT.encode("utf-8")).hexdigest()
+
+[MEDIUM] backend/lean_mode.py:69
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: MOCK_STDERR_HASH = hashlib.sha256(MOCK_STDERR.encode("utf-8")).hexdigest()
+
+[MEDIUM] backend/lean_mode.py:76
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: MOCK_STDERR_FULL_HASH = hashlib.sha256(MOCK_STDERR_FULL.encode("utf-8")).hexdigest()
+
+[MEDIUM] backend/metrics_cartographer.py:77
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(payload.encode()).hexdigest()
+
+[MEDIUM] backend/metrics_cartographer.py:1135
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(payload.encode()).hexdigest()
+
+[MEDIUM] backend/axiom_engine/derive_worker.py:54
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+[MEDIUM] backend/axiom_engine/policy.py:111
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(policy_str.encode()).hexdigest()
+
+[MEDIUM] backend/causal/graph.py:241
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(data.encode()).hexdigest()
+
+[MEDIUM] backend/crypto/auth.py:87
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: key_id = hashlib.sha256(key.encode()).hexdigest()[:16]
+
+[MEDIUM] backend/crypto/auth.py:96
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: "key_hash": hashlib.sha256(key.encode()).hexdigest(),
+
+[MEDIUM] backend/crypto/auth.py:126
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: key_hash = hashlib.sha256(key.encode()).hexdigest()
+
+[MEDIUM] backend/crypto/auth.py:184
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: new_key_hash = hashlib.sha256(new_key.encode()).hexdigest()
+
+[MEDIUM] backend/crypto/handshake.py:85
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: key_hash = hashlib.sha256(key.encode()).hexdigest()
+
+[MEDIUM] backend/integration/bridge_v2.py:95
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+[MEDIUM] backend/integration/bridge_v2.py:370
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(combined.encode('utf-8')).hexdigest()
+
+[MEDIUM] backend/metrics/fo_feedback.py:80
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(data.encode()).hexdigest()[:16]
+
+[MEDIUM] backend/metrics/fo_feedback.py:363
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: decision_hash = hashlib.sha256(
+
+[MEDIUM] backend/repro/first_organism_harness.py:86
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(canonical.encode("ascii")).hexdigest()
+
+[MEDIUM] backend/repro/first_organism_harness.py:142
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: leaf_hash = hashlib.sha256(canonical_payload.encode("ascii")).hexdigest()
+
+[MEDIUM] backend/repro/first_organism_harness.py:222
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: audit_hash = hashlib.sha256(audit_json.encode("ascii")).hexdigest()
+
+[MEDIUM] backend/repro/first_organism_harness.py:300
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: result_hash = hashlib.sha256(canonical_json.encode("ascii")).hexdigest()
+
+[MEDIUM] backend/repro/first_organism_harness.py:359
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: reasoning_root = hashlib.sha256(reasoning_concat.encode("ascii")).hexdigest()
+
+[MEDIUM] backend/repro/first_organism_harness.py:367
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: ui_root = hashlib.sha256(ui_concat.encode("ascii")).hexdigest()
+
+[MEDIUM] backend/repro/first_organism_harness.py:398
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: attestation_hash = hashlib.sha256(attestation_json.encode("ascii")).hexdigest()
+
+[MEDIUM] backend/repro/first_organism_harness.py:456
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: step_id = hashlib.sha256(step_material.encode("utf-8")).hexdigest()
+
+[MEDIUM] backend/repro/first_organism_harness.py:500
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: ledger_entry_hash = hashlib.sha256(ledger_entry_json.encode("ascii")).hexdigest()
+
+[MEDIUM] backend/repro/first_organism_harness.py:710
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: run_hash = hashlib.sha256(
+
+[MEDIUM] backend/testing/no_network.py:280
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(key.encode()).hexdigest()[:16]
+
+[MEDIUM] backend/tools/export_fol_ab.py:187
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: content_hash = hashlib.sha256(record['content_norm'].encode('utf-8')).digest()
+
+[MEDIUM] derivation/pipeline.py:92
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(payload.encode("ascii")).hexdigest()[:16]
+
+[MEDIUM] derivation/pipeline.py:768
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(payload.encode("ascii")).hexdigest()[:12]
+
+[MEDIUM] experiments/run_uplift_u2.py:93
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+[MEDIUM] ops/basis_promotion_precheck.py:235
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: candidate_ht = hashlib.sha256((rt + ut).encode("ascii")).hexdigest()
+
+[MEDIUM] rfl/audit.py:143
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: step_id = hashlib.sha256(step_material.encode("utf-8")).hexdigest()
+
+[MEDIUM] rfl/audit.py:155
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected = hashlib.sha256(
+
+[MEDIUM] rfl/audit.py:412
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: computed_step_id = hashlib.sha256(step_material.encode()).hexdigest()
+
+[MEDIUM] rfl/coverage.py:217
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+[MEDIUM] rfl/coverage.py:275
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hashlib.sha256(f"stmt_{i}_{j}".encode()).hexdigest()
+
+[MEDIUM] rfl/runner.py:530
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: step_id = hashlib.sha256(step_material.encode("utf-8")).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:171
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: workflow_hash = hashlib.sha256(workflow_data.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:272
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(hygiene_data.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:297
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: witnesses['verification_gate_sig'] = hashlib.sha256(witness_data.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:307
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: witnesses['hermetic_matrix_sig'] = hashlib.sha256(witness_data.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:317
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: witnesses['perf_gate_sig'] = hashlib.sha256(witness_data.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:347
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_sig = hashlib.sha256(expected_data.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:392
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_sig = hashlib.sha256(expected_data.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:440
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_sig = hashlib.sha256(expected_data.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:518
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: epoch_hash = hashlib.sha256(canonical_manifest.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:538
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: witnessed_hash = hashlib.sha256(canonical_manifest.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_allblue_fleet_state.py:253
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(canonical_json.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/generate_policy_run.py:47
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(content.encode('ascii')).hexdigest()
+
+[MEDIUM] scripts/generate_triple_hash_verification.py:112
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(composite_input.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/performance-formatter.py:226
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(json_str.encode()).hexdigest()
+
+[MEDIUM] scripts/run-migrations.py:27
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+[MEDIUM] scripts/run_first_organism.py:213
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: r_t = hashlib.sha256(r_t_data.encode()).hexdigest()
+
+[MEDIUM] scripts/run_first_organism.py:214
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: u_t = hashlib.sha256(u_t_data.encode()).hexdigest()
+
+[MEDIUM] scripts/run_first_organism.py:217
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: h_t = hashlib.sha256((r_t + u_t).encode()).hexdigest()
+
+[MEDIUM] scripts/run_first_organism.py:239
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: recomputed = hashlib.sha256((r_t + u_t).encode()).hexdigest()
+
+[MEDIUM] scripts/uplift_gate.py:33
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(combined.encode("utf-8")).hexdigest()
+
+[MEDIUM] scripts/telemetry/uplift_eval.py:41
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(s.encode('utf-8')).hexdigest()
+
+[MEDIUM] substrate/auth/redis_auth.py:80
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: key_id = hashlib.sha256(key.encode()).hexdigest()[:16]
+
+[MEDIUM] substrate/auth/redis_auth.py:89
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: "key_hash": hashlib.sha256(key.encode()).hexdigest(),
+
+[MEDIUM] substrate/auth/redis_auth.py:119
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: key_hash = hashlib.sha256(key.encode()).hexdigest()
+
+[MEDIUM] substrate/auth/redis_auth.py:177
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: new_key_hash = hashlib.sha256(new_key.encode()).hexdigest()
+
+[MEDIUM] tests/test_derive.py:16
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash=hashlib.sha256("p".encode()).hexdigest(),
+
+[MEDIUM] tests/test_derive.py:22
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash=hashlib.sha256(f"p {IMPLIES} q".encode()).hexdigest(),
+
+[MEDIUM] tests/test_derive.py:28
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash=hashlib.sha256(f"p {IMPLIES} r".encode()).hexdigest(),
+
+[MEDIUM] tests/test_derive.py:44
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash=hashlib.sha256("p".encode()).hexdigest(),
+
+[MEDIUM] tests/test_derive.py:50
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash=hashlib.sha256(f"p {IMPLIES} q".encode()).hexdigest(),
+
+[MEDIUM] tests/test_derive.py:56
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash=hashlib.sha256(f"p {IMPLIES} r".encode()).hexdigest(),
+
+[MEDIUM] tests/test_dual_root_attestation.py:550
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: manual_h_t = hashlib.sha256(f"{r_t}{u_t}".encode("ascii")).hexdigest()
+
+[MEDIUM] tests/test_first_organism_harness_v2.py:134
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(canonical.encode("ascii")).hexdigest()
+
+[MEDIUM] tests/test_first_organism_harness_v2.py:421
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: state.reasoning_root = hashlib.sha256(
+
+[MEDIUM] tests/test_first_organism_harness_v2.py:428
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: state.ui_root = hashlib.sha256(f"UI:{ui_concat}".encode()).hexdigest()
+
+[MEDIUM] tests/test_first_organism_harness_v2.py:489
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected = hashlib.sha256(f"{r_t}{u_t}".encode("ascii")).hexdigest()
+
+[MEDIUM] tests/test_first_organism_harness_v2.py:859
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: correct_h_t = hashlib.sha256(f"{r_t}{u_t}".encode("ascii")).hexdigest()
+
+[MEDIUM] tests/test_lean_mode.py:121
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_stdout_hash = hashlib.sha256(MOCK_STDOUT.encode("utf-8")).hexdigest()
+
+[MEDIUM] tests/test_lean_mode.py:122
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_stderr_hash = hashlib.sha256(MOCK_STDERR.encode("utf-8")).hexdigest()
+
+[MEDIUM] tests/test_lean_mode.py:471
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash1 = hashlib.sha256(result1.stdout.encode("utf-8")).hexdigest()
+
+[MEDIUM] tests/test_lean_mode.py:472
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash2 = hashlib.sha256(result2.stdout.encode("utf-8")).hexdigest()
+
+[MEDIUM] tests/test_worker_lean_job.py:477
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: computed_stdout_hash = hashlib.sha256(MOCK_STDOUT.encode("utf-8")).hexdigest()
+
+[MEDIUM] tests/test_worker_lean_job.py:478
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: computed_stderr_hash = hashlib.sha256(MOCK_STDERR.encode("utf-8")).hexdigest()
+
+[MEDIUM] tests/test_worker_lean_job.py:479
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: computed_stderr_full_hash = hashlib.sha256(MOCK_STDERR_FULL.encode("utf-8")).hexdigest()
+
+[MEDIUM] tests/fixtures/first_organism.py:51
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+[MEDIUM] tests/fixtures/first_organism.py:176
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: _CANONICAL_COMPOSITE_ROOT = hashlib.sha256(
+
+[MEDIUM] tests/fixtures/first_organism.py:376
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(step_material.encode("utf-8")).hexdigest()
+
+[MEDIUM] tests/integration/conftest.py:181
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: r_t = hashlib.sha256(f"SYNTHETIC:R_t:{statement_hash}".encode()).hexdigest()
+
+[MEDIUM] tests/integration/conftest.py:183
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: u_t = hashlib.sha256(f"SYNTHETIC:U_t:{statement_hash}".encode()).hexdigest()
+
+[MEDIUM] tests/integration/test_api_endpoints.py:102
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: test_hash = hashlib.sha256(test_content.encode('utf-8')).hexdigest()
+
+[MEDIUM] tests/integration/test_api_endpoints.py:126
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: test_hash = hashlib.sha256(test_content.encode('utf-8')).hexdigest()
+
+[MEDIUM] tests/integration/test_api_endpoints.py:152
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: test_hash = hashlib.sha256(test_content.encode('utf-8')).hexdigest()
+
+[MEDIUM] tests/integration/test_api_endpoints.py:162
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_parent_hash = hashlib.sha256("(and p q)".encode('utf-8')).hexdigest()
+
+[MEDIUM] tests/integration/test_api_endpoints.py:173
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: nonexistent_hash = hashlib.sha256("nonexistent".encode('utf-8')).hexdigest()
+
+[MEDIUM] tests/integration/test_api_endpoints.py:201
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: test_hash = hashlib.sha256(test_content.encode('utf-8')).hexdigest()
+
+[MEDIUM] tests/integration/test_api_surface_validation.py:386
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected = hashlib.sha256(f"{r_t}{u_t}".encode("ascii")).hexdigest()
+
+[MEDIUM] tests/integration/test_first_organism_determinism.py:169
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_hash = hashlib.sha256(canonical.encode("ascii")).hexdigest()
+
+[MEDIUM] tests/integration/test_first_organism_lean_mode.py:259
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: "stdout_hash": hashlib.sha256(MOCK_STDOUT.encode()).hexdigest(),
+
+[MEDIUM] tests/integration/test_first_organism_lean_mode.py:260
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: "stderr_hash": hashlib.sha256(MOCK_STDERR.encode()).hexdigest(),
+
+[MEDIUM] tests/integration/test_hashing_canon.py:106
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: naive = hashlib.sha256(s.encode()).hexdigest()
+
+[MEDIUM] tests/integration/test_hashing_canon.py:114
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: norm_naive = hashlib.sha256(normalize(s).encode()).hexdigest()
+
+[MEDIUM] tests/qa/test_exporter_v1_export.py:50
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: content_hash = hashlib.sha256(content_norm.encode('utf-8')).digest()
+
+[MEDIUM] tests/rfl/test_coverage.py:291
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hashes = [hashlib.sha256(f"stmt_{i}".encode()).hexdigest() for i in range(10000)]
+
+[MEDIUM] tests/rfl/test_rfl_law_determinism.py:94
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: r_t = hashlib.sha256(f"{seed}:reasoning".encode()).hexdigest()
+
+[MEDIUM] tests/rfl/test_rfl_law_determinism.py:95
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: u_t = hashlib.sha256(f"{seed}:ui".encode()).hexdigest()
+
+[MEDIUM] tests/rfl/test_rfl_law_determinism.py:96
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: h_t = hashlib.sha256((r_t + u_t).encode()).hexdigest()
+
+[MEDIUM] tests/rfl/test_rfl_law_determinism.py:232
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: statement_hash=hashlib.sha256(case.name.encode()).hexdigest(),
+
+[MEDIUM] tests/rfl/test_rfl_law_determinism.py:329
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected = hashlib.sha256(
+
+[MEDIUM] tests/rfl/test_rfl_law_determinism.py:402
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_step = hashlib.sha256(
+
+[MEDIUM] tests/rfl/test_rfl_law_determinism.py:470
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_step_id = hashlib.sha256(
+
+[MEDIUM] tests/rfl/test_runner_first_organism.py:341
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: statement_hash=hashlib.sha256(f"cycle-{cycle}".encode()).hexdigest(),
+
+[MEDIUM] tests/rfl/test_runner_first_organism.py:344
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: composite_root=hashlib.sha256(
+
+[MEDIUM] tests/rfl/test_runner_first_organism.py:347
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: reasoning_root=hashlib.sha256(
+
+[MEDIUM] tests/rfl/test_runner_first_organism.py:350
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: ui_root=hashlib.sha256(
+
+[MEDIUM] tests/rfl/test_runner_first_organism.py:640
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected_h_t = hashlib.sha256(
+
+[MEDIUM] tools/composite_da.py:160
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: composite_hash = hashlib.sha256(canonical_json.encode('ascii')).hexdigest()
+
+[MEDIUM] tools/metrics_cartographer_demo.py:86
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: merkle_hash = hashlib.sha256(payload.encode()).hexdigest()
+
+[MEDIUM] tools/proof_simulator.py:127
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: merkle = hashlib.sha256(merkle_data.encode()).hexdigest()
+
+[MEDIUM] tools/verify_all.py:83
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash1 = hashlib.sha256(normalized1.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/verify_all.py:84
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: hash2 = hashlib.sha256(normalized2.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/verify_all_v2.py:73
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(timestamp.encode()).hexdigest()[:16]
+
+[MEDIUM] tools/verify_all_v2.py:78
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(canonical.encode()).hexdigest()
+
+[MEDIUM] tools/verify_all_v3.py:117
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(timestamp.encode()).hexdigest()[:16]
+
+[MEDIUM] tools/verify_all_v3.py:122
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/verify_all_v3.py:793
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: telemetry_hash = hashlib.sha256(
+
+[MEDIUM] tools/verify_hash_collisions.py:106
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: computed_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/ci/docs_fix.py:69
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: claim_hash = hashlib.sha256(claim.encode()).hexdigest()[:8]
+
+[MEDIUM] tools/ci/velocity_telemetry.py:129
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(config_str.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/crypto/verify_crypto_v3.py:105
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected = hashlib.sha256(test_data.encode()).hexdigest()
+
+[MEDIUM] tools/crypto/verify_domain_sep.py:97
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: expected = hashlib.sha256(test_data.encode()).hexdigest()
+
+[MEDIUM] tools/crypto/verify_domain_sep.py:273
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: "timestamp": hashlib.sha256(str(os.times()).encode()).hexdigest()[:16],
+
+[MEDIUM] tools/devin_e_toolbox/allblue_archive.py:42
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/devin_e_toolbox/artifact_verifier.py:36
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(combined.encode()).hexdigest()
+
+[MEDIUM] tools/devin_e_toolbox/audit_sync.py:49
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/devin_e_toolbox/ci_velocity.py:39
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/devin_e_toolbox/deterministic_build.py:52
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(combined.encode()).hexdigest(), file_hashes
+
+[MEDIUM] tools/devin_e_toolbox/flightdeck.py:253
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/docs/docs_delta.py:405
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: delta_hash = hashlib.sha256(canonical_json.encode("ascii")).hexdigest()
+
+[MEDIUM] tools/docs/docs_delta.py:419
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: baseline_hash = hashlib.sha256(baseline_canonical.encode("ascii")).hexdigest()
+
+[MEDIUM] tools/docs/docs_delta.py:428
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: failure_hash = hashlib.sha256(failure_lens_canonical.encode("ascii")).hexdigest()
+
+[MEDIUM] tools/docs/verify_baseline_ci.py:139
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(canonical.encode("ascii")).hexdigest()
+
+[MEDIUM] tools/docs/verify_baseline_ci.py:203
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: computed_signature = hashlib.sha256(canonical.encode("ascii")).hexdigest()
+
+[MEDIUM] tools/docs/verify_baseline_ci.py:398
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: signature = hashlib.sha256(canonical.encode("ascii")).hexdigest()
+
+[MEDIUM] tools/hermetic/matrix_trend.py:537
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: global_root = hashlib.sha256(concatenated.encode('ascii')).hexdigest()
+
+[MEDIUM] tools/hermetic/matrix_trend.py:576
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: global_root = hashlib.sha256(concatenated.encode('ascii')).hexdigest()
+
+[MEDIUM] tools/perf/perf_gate.py:57
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(workload_str.encode('utf-8')).hexdigest()[:16]
+
+[MEDIUM] tools/perf/perf_gate.py:217
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/repro/autofix_drift_v3.py:119
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+[MEDIUM] tools/repro/autofix_drift_v3_2.py:125
+Description: Direct hashlib.sha256(str.encode()) may bypass canonicalization; use canonical_bytes()
+Code: return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+ITERATION_ORDER
+--------------------------------------------------------------------------------
+
+[MEDIUM] verify_local_schema.py:174
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for test_name, (passed, message) in results.items():
+
+[MEDIUM] verify_local_schema.py:182
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for test_name, (passed, message) in results.items():
+
+[MEDIUM] backend/depth_scheduler.py:146
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for depth, data in self.stats['per_depth_success_rate'].items():
+
+[MEDIUM] backend/metrics_cartographer.py:920
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for section, payload in result.metrics.items():
+
+[MEDIUM] backend/axiom_engine/axioms.py:57
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for var, replacement in binding.items():
+
+[MEDIUM] backend/axiom_engine/substitution.py:61
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for k,v in subst.items():
+
+[MEDIUM] backend/bridge/context.py:63
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in reasons_raw.items():
+
+[MEDIUM] backend/bridge/context.py:76
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in data.items():
+
+[MEDIUM] backend/bridge/context.py:87
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in raw.items():
+
+[MEDIUM] backend/causal/counterfactual.py:168
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for var_name in self.graph.nodes.keys():
+
+[MEDIUM] backend/causal/export.py:66
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for (source, target), coef_obj in causal_estimates.items():
+
+[MEDIUM] backend/causal/export.py:81
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for (source, target), stability in stability_results.items():
+
+[MEDIUM] backend/causal/graph.py:357
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, node in graph.nodes.items():
+
+[MEDIUM] backend/causal/policy_memo.py:325
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for (source, target), est in causal_estimates.items():
+
+[MEDIUM] backend/causal/report.py:225
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for (source, target), coef in coefficients.items():
+
+[MEDIUM] backend/causal/report.py:275
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, node in causal_graph.nodes.items():
+
+[MEDIUM] backend/causal/report.py:344
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for (source, target), coef in coefficients.items():
+
+[MEDIUM] backend/consensus/harmony.py:49
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for node_id, value in votes.items():
+
+[MEDIUM] backend/consensus/harmony.py:59
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for weight in value_weights.values():
+
+[MEDIUM] backend/consensus/harmony.py:67
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for node_id, value in votes.items():
+
+[MEDIUM] backend/consensus/harmony.py:77
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for value, weight in value_weights.items():
+
+[MEDIUM] backend/frontier/curriculum.py:89
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in obj.items():
+
+[MEDIUM] backend/frontier/curriculum.py:172
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for slug, system_cfg in systems.items():
+
+[MEDIUM] backend/integration/benchmark.py:152
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, bench_fn in benchmarks.items():
+
+[MEDIUM] backend/integration/latency_profiler.py:119
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for op_name, op_fn in operations.items():
+
+[MEDIUM] backend/integration/latency_profiler.py:182
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for op_name, stats in self.profile_data["operations"].items():
+
+[MEDIUM] backend/integration/metrics.py:152
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for component, tracker in self.trackers.items():
+
+[MEDIUM] backend/integration/metrics.py:176
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for tracker in self.trackers.values():
+
+[MEDIUM] backend/ledger/consensus/celestial_dossier_v2.py:320
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for node_id, node in self.provenance_nodes.items():
+
+[MEDIUM] backend/ledger/consensus/celestial_dossier_v2.py:353
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for node in self.provenance_nodes.values():
+
+[MEDIUM] backend/ledger/v4/stellar.py:406
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for fed_id, data in federation_proposals.items():
+
+[MEDIUM] backend/testing/hermetic.py:507
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for pkg in pkg_manager.packages.values():
+
+[MEDIUM] backend/tools/metrics_linter.py:166
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in obj.items():
+
+[MEDIUM] backend/tools/metrics_linter.py:200
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in obj.items():
+
+[MEDIUM] backend/tools/metrics_linter.py:219
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in obj.items():
+
+[MEDIUM] basis/logic/normalizer.py:56
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for src, dest in _SYMBOL_MAP.items():
+
+[MEDIUM] cli/ledgerctl.py:160
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for fed_id, identity in self.gossip.known_federations.items():
+
+[MEDIUM] curriculum/gates.py:89
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in obj.items():
+
+[MEDIUM] derivation/axioms.py:57
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for var, replacement in binding.items():
+
+[MEDIUM] experiments/analyze_abstention_curves.py:216
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for method, freq in dist.items():
+
+[MEDIUM] experiments/compute_log_stats.py:13
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, path in files.items():
+
+[MEDIUM] experiments/cursor_h_sober_audit.py:128
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for f, data in baseline_data.items():
+
+[MEDIUM] experiments/cursor_h_sober_audit.py:135
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for f, data in rfl_data.items():
+
+[MEDIUM] experiments/derivation_chain_analysis.py:32
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for premises in dag.values():
+
+[MEDIUM] normalization/ast_canon.py:61
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for unicode_char, ascii_equiv in _SYMBOL_MAP.items():
+
+[MEDIUM] normalization/canon.py:76
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for unicode_char, ascii_equiv in _SYMBOL_MAP.items():
+
+[MEDIUM] ops/analyze_census.py:18
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for path, info in entries.items():
+
+[MEDIUM] ops/generate_census.py:153
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for role, count in summary.items():
+
+[MEDIUM] ops/promote_basis.py:329
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for gate, info in gate_statuses.items():
+
+[MEDIUM] ops/promote_basis.py:378
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for gate, info in gate_statuses.items():
+
+[MEDIUM] rfl/runner.py:373
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in breakdown.items():
+
+[MEDIUM] rfl/runner.py:549
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in breakdown.items():
+
+[MEDIUM] scripts/analyze_rfl_logs.py:102
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, path in files_to_check.items():
+
+[MEDIUM] scripts/analyze_rfl_logs.py:112
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, data in results.items():
+
+[MEDIUM] scripts/compute_rfl_log_hashes.py:17
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, path in files.items():
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:504
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for lane_id, lane_data in lane_results['lanes'].items():
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:785
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for witness_name, witness_data in witness_verification['witnesses'].items():
+
+[MEDIUM] scripts/generate_allblue_epoch_seal.py:793
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for witness_name, witness_data in witness_verification['witnesses'].items():
+
+[MEDIUM] scripts/generate_allblue_fleet_state.py:179
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for workflow_key, workflow_data in workflows.items():
+
+[MEDIUM] scripts/generate_triple_hash_verification.py:129
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, path in da_paths.items():
+
+[MEDIUM] scripts/hermetic-validate-v2.py:261
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for check_name, check_result in results['checks'].items():
+
+[MEDIUM] scripts/hermetic-validate-v2.py:304
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for component, config in manifest['components'].items():
+
+[MEDIUM] scripts/hermetic-validate.py:121
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for check_name, check_result in results['checks'].items():
+
+[MEDIUM] scripts/hermetic-validate.py:153
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for component, config in manifest['components'].items():
+
+[MEDIUM] scripts/ledgerctl.py:167
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in metrics.items():
+
+[MEDIUM] scripts/mk_evidence_pack.py:145
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, path in csv_files.items():
+
+[MEDIUM] scripts/uplift_gate.py:288
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for badge_name, badge_data in badges.items():
+
+[MEDIUM] scripts/validate_metrics_mock.py:80
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for test_name, result in results.items():
+
+[MEDIUM] scripts/wonder_scan.py:156
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for policy_hash, guided_pph_list in guided_runs.items():
+
+[MEDIUM] scripts/wonder_scan.py:360
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for count in root_counts.values():
+
+[MEDIUM] substrate/bridge/context.py:63
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in reasons_raw.items():
+
+[MEDIUM] substrate/bridge/context.py:75
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in data.items():
+
+[MEDIUM] substrate/bridge/context.py:86
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in raw.items():
+
+[MEDIUM] tests/test_causal_estimator.py:214
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for (source, target), coef in coefficients.items():
+
+[MEDIUM] tests/test_federation_v4.py:456
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for fed_id, gossip in gossip_instances.items():
+
+[MEDIUM] tests/test_federation_v4.py:457
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for other_id, other_gossip in gossip_instances.items():
+
+[MEDIUM] tests/test_lean_control.py:53
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for canonical, stmt in CONTROLLED_STATEMENTS.items():
+
+[MEDIUM] tests/test_lean_control.py:59
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for canonical, stmt in CONTRADICTION_PATTERNS.items():
+
+[MEDIUM] tests/helpers/dag_assertions.py:403
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in db_report.issues.items():
+
+[MEDIUM] tests/integration/test_first_organism_dag.py:250
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, inv in report.invariants.items():
+
+[MEDIUM] tests/integration/test_integration_metrics.py:246
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for tracker in metrics.trackers.values():
+
+[MEDIUM] tests/interop/run_all_tests.py:72
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for lang, result in self.results.items():
+
+[MEDIUM] tests/interop/test_api_contracts.py:349
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key in metrics.keys():
+
+[MEDIUM] tests/rfl/test_runner_first_organism.py:165
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in canonical_fixture.abstention_breakdown.items():
+
+[MEDIUM] tools/api_signature_audit.py:72
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for model_name, model_info in self.models.items():
+
+[MEDIUM] tools/api_signature_audit.py:76
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for field_name, field_info in fields.items():
+
+[MEDIUM] tools/api_signature_audit.py:114
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for model_name, model_info in self.models.items():
+
+[MEDIUM] tools/api_signature_audit.py:157
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for model_name in self.models.keys():
+
+[MEDIUM] tools/ascii_fixer.py:160
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for unicode_char, ascii_replacement in self.replacements.items():
+
+[MEDIUM] tools/ascii_fixer.py:234
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for file_path, replacements in fixed_files.items():
+
+[MEDIUM] tools/ascii_validator.py:167
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for file_path, file_violations in violations.items():
+
+[MEDIUM] tools/fix_ascii_comprehensive.py:61
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for unicode_char, ascii_replacement in replacements.items():
+
+[MEDIUM] tools/metrics_lint_v1.py:107
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for field, expected_type in required_fields.items():
+
+[MEDIUM] tools/preflight_lean_jobs.py:63
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for pattern_name, pattern_re in PATTERNS.items():
+
+[MEDIUM] tools/validate_first_organism_env.py:195
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, rules in REQUIRED_VARS.items():
+
+[MEDIUM] tools/validate_first_organism_env.py:203
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, rules in OPTIONAL_VARS.items():
+
+[MEDIUM] tools/verify_all.py:65
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in result.details.items():
+
+[MEDIUM] tools/verify_all_v2.py:156
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in result['details'].items():
+
+[MEDIUM] tools/verify_all_v3.py:265
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in result['details'].items():
+
+[MEDIUM] tools/verify_hash_collisions.py:65
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for stmt_hash, contents in hash_to_content.items():
+
+[MEDIUM] tools/ci/critical_path_intel.py:193
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job_name, durations in job_timings.items():
+
+[MEDIUM] tools/ci/critical_path_intel.py:229
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job_name, band in stability_bands.items():
+
+[MEDIUM] tools/ci/critical_path_intel.py:244
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, cov_value in covariance_matrix.items():
+
+[MEDIUM] tools/ci/critical_path_intel.py:297
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job_name, stats in job_stats.items():
+
+[MEDIUM] tools/ci/critical_path_intel.py:359
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job_name, durations in job_timings.items():
+
+[MEDIUM] tools/ci/docs_fix.py:64
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for keyword, hash_value in self.hash_map.items():
+
+[MEDIUM] tools/ci/docs_fix.py:104
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for keyword, hash_value in self.hash_map.items():
+
+[MEDIUM] tools/ci/meta_scheduler.py:130
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job_name, job_config in jobs.items():
+
+[MEDIUM] tools/ci/meta_scheduler.py:215
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job_name, durations in job_durations.items():
+
+[MEDIUM] tools/ci/velocity_plan.py:135
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job_name, job_config in jobs.items():
+
+[MEDIUM] tools/ci/velocity_plan.py:173
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job in dependencies.keys():
+
+[MEDIUM] tools/ci/velocity_plan.py:190
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job, deps in dependencies.items():
+
+[MEDIUM] tools/ci/velocity_plan.py:202
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for next_job, deps in dependencies.items():
+
+[MEDIUM] tools/ci/velocity_telemetry.py:163
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for job_name, durations in job_durations.items():
+
+[MEDIUM] tools/devin_e_toolbox/metrics_diff.py:85
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, val in diff['baseline'].items():
+
+[MEDIUM] tools/devin_e_toolbox/metrics_diff.py:90
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, val in diff['current'].items():
+
+[MEDIUM] tools/devin_e_toolbox/metrics_diff.py:95
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, change in diff['changes'].items():
+
+[MEDIUM] tools/devin_e_toolbox/workflow-validator.py:217
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for name, check_func in checks.items():
+
+[MEDIUM] tools/docs/docs_delta.py:186
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for section, links in index["sections"].items():
+
+[MEDIUM] tools/perf/perf_bench.py:352
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for suite_name, suite_results in results.get("benchmarks", {}).items():
+
+[MEDIUM] tools/perf/perf_bench.py:357
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for test_name, test_result in suite_results.items():
+
+[MEDIUM] tools/perf/perf_bench.py:360
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for key, value in test_result.items():
+
+[MEDIUM] tools/repro/autofix_drift_v3.py:140
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for pattern_name, pattern_info in REPAIR_PATTERNS.items():
+
+[MEDIUM] tools/repro/autofix_drift_v3.py:258
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for file_path_str, violations in all_violations.items():
+
+[MEDIUM] tools/repro/autofix_drift_v3_2.py:154
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for pattern_name, pattern_info in REPAIR_PATTERNS.items():
+
+[MEDIUM] tools/repro/autofix_drift_v3_2.py:269
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for file_path_str, violations in all_violations.items():
+
+[MEDIUM] tools/repro/autofix_drift_v3_2.py:343
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for file_path, patch_info in confirmed_patches.items():
+
+[MEDIUM] tools/repro/autofix_drift_v3_2.py:526
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for file_path in manifest['confirmed_patches'].keys():
+
+[MEDIUM] tools/repro/autofix_drift_v3_2.py:530
+Description: Iterating over dict keys/values/items without sorting may be nondeterministic
+Code: for file_path in manifest['manual_review_patches'].keys():
+
+JSON_SERIALIZATION
+--------------------------------------------------------------------------------
+
+[HIGH] backend/axiom_engine/derive.py:221
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: params += [json.dumps(header)]
+
+[HIGH] backend/axiom_engine/derive.py:224
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: params += [json.dumps(leafs)]
+
+[HIGH] backend/axiom_engine/derive.py:419
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: job_data = json.dumps({
+
+[HIGH] backend/axiom_engine/derive.py:558
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: rc.rpush("ml:jobs", json.dumps({"text": p1.formula, "theory": "Propositional"}))
+
+[HIGH] backend/axiom_engine/derive.py:559
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: rc.rpush("ml:jobs", json.dumps({"text": p2.formula, "theory": "Propositional"}))
+
+[HIGH] backend/axiom_engine/derive.py:562
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: rc.rpush("ml:jobs", json.dumps({"text": lf.get("pretty","guided-proof"), "theory": "Propositional"}))
+
+[HIGH] backend/axiom_engine/derive_core.py:186
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: add("context", json.dumps(proof_context.to_dict()))  # type: ignore[arg-type]
+
+[HIGH] backend/axiom_engine/derive_core.py:360
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: job_data = json.dumps({"statement": stmt.content, "theory": "Propositional"})
+
+[HIGH] backend/axiom_engine/derive_worker.py:50
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: (h["block_number"], h["prev_hash"], h["merkle_root"], json.dumps(h), json.dumps(blk["statements"]))
+
+[HIGH] backend/axiom_engine/derive_worker.py:50
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: (h["block_number"], h["prev_hash"], h["merkle_root"], json.dumps(h), json.dumps(blk["statements"]))
+
+[HIGH] backend/crypto/core.py:64
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(v)
+
+[HIGH] backend/crypto/core.py:67
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(v, ensure_ascii=False)
+
+[HIGH] backend/crypto/core.py:75
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: key_str = json.dumps(key, ensure_ascii=False)
+
+[HIGH] backend/frontier/ratchet.py:119
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(result))
+
+[HIGH] backend/frontier/ratchet.py:139
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(error_result))
+
+[HIGH] backend/generator/propgen.py:125
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: redis_client.rpush(queue_key, json.dumps(job, ensure_ascii=False))
+
+[HIGH] backend/integration/bridge.py:240
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: job_data = json.dumps({
+
+[HIGH] backend/integration/bridge_v2.py:333
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: job_data = json.dumps({
+
+[HIGH] backend/metrics/fo_feedback.py:371
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: pipe.set(self._key("latest_decision"), json.dumps(decision))
+
+[HIGH] backend/metrics/fo_feedback.py:374
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: pipe.lpush(self._key("decision_history"), json.dumps(decision))
+
+[HIGH] backend/orchestrator/proof_middleware.py:173
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(record) + "\n")
+
+[HIGH] backend/repro/determinism_cli.py:82
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps({"status": "FAIL", "error": "directory missing"}))
+
+[HIGH] backend/repro/determinism_cli.py:85
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps({"status": "FAIL", "error": "manifest missing"}))
+
+[HIGH] backend/repro/determinism_cli.py:90
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps({"status": "PASS", "summary": summary}, indent=2))
+
+[HIGH] backend/repro/determinism_cli.py:92
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps({"status": "FAIL", "error": str(exc)}))
+
+[HIGH] backend/testing/hermetic_v2.py:76
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(value, ensure_ascii=False)
+
+[HIGH] backend/testing/hermetic_v2.py:83
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json.dumps(key, ensure_ascii=False) + ':' +
+
+[HIGH] backend/testing/no_network.py:379
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: body = json.dumps(body)
+
+[HIGH] basis/curriculum/ladder.py:65
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: path.write_text(json.dumps(payload, indent=2, ensure_ascii=True), encoding="utf-8")
+
+[HIGH] cli/ledgerctl.py:190
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(federations, indent=2))
+
+[HIGH] derivation/pipeline.py:408
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(f"CANDIDATE_ORDERING_DEBUG={json.dumps(debug_log)}", file=sys.stderr, flush=True)
+
+[HIGH] experiments/gen_mock_data.py:29
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(entry) + "\n")
+
+[HIGH] experiments/run_uplift_u2.py:346
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: results_f.write(json.dumps(telemetry_record) + "\n")
+
+[HIGH] ops/promote_basis.py:423
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(entry) + "\n")
+
+[HIGH] rfl/experiment_logging.py:109
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(entry) + "\n")
+
+[HIGH] scripts/compute_rfl_log_hashes.py:37
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(results, indent=2))
+
+[HIGH] scripts/dry_run_spark.py:65
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(result, indent=2))
+
+[HIGH] scripts/dry_run_spark.py:75
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(result, indent=2))
+
+[HIGH] scripts/dry_run_spark.py:151
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(result, indent=2))
+
+[HIGH] scripts/dry_run_spark.py:227
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(result, indent=2))
+
+[HIGH] scripts/dry_run_spark.py:236
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(result, indent=2))
+
+[HIGH] scripts/dry_run_spark.py:242
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(result, indent=2))
+
+[HIGH] scripts/export_guidance_data.py:206
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json.dumps(item['features']),
+
+[HIGH] scripts/export_guidance_data.py:207
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json.dumps(item['action']),
+
+[HIGH] scripts/generate_triple_hash_summary.py:142
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(summary, indent=2))
+
+[HIGH] scripts/verify_proof_pipeline.py:145
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: "timestamp": json.dumps({"time": "now"}),  # Placeholder for deterministic time
+
+[HIGH] substrate/crypto/core.py:60
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(v)
+
+[HIGH] substrate/crypto/core.py:63
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(v, ensure_ascii=False)
+
+[HIGH] substrate/crypto/core.py:71
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: key_str = json.dumps(key, ensure_ascii=False)
+
+[HIGH] tests/test_docs_delta_integration.py:29
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: (docs_dir / "cross_ledger_index.json").write_text(json.dumps(cross_ledger_index), encoding="ascii")
+
+[HIGH] tests/test_docs_delta_integration.py:276
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: baseline_path.write_text(json.dumps(wrong_version_baseline), encoding="ascii")
+
+[HIGH] tests/test_first_organism_telemetry.py:203
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: metrics_file.write_text(json.dumps(metrics_data))
+
+[HIGH] tests/test_first_organism_telemetry.py:259
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: metrics_file.write_text(json.dumps(metrics_data))
+
+[HIGH] tests/integration/conftest.py:970
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: path.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
+
+[HIGH] tests/integration/conftest.py:1378
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: artifact_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+[HIGH] tests/integration/test_first_organism.py:303
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: artifact_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+[HIGH] tests/integration/test_first_organism.py:2103
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: artifact_path.write_text(json.dumps(_state.attestation.to_dict(), indent=2), encoding="utf-8")
+
+[HIGH] tests/interop/test_type_coercion.py:22
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:34
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:45
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(original)
+
+[HIGH] tests/interop/test_type_coercion.py:62
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:75
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_with_null = json.dumps(with_null)
+
+[HIGH] tests/interop/test_type_coercion.py:76
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_without = json.dumps(without_field)
+
+[HIGH] tests/interop/test_type_coercion.py:89
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(original)
+
+[HIGH] tests/interop/test_type_coercion.py:104
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:119
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:130
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:142
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:158
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:169
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:180
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:210
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:227
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:240
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:264
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:275
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:292
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:319
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/interop/test_type_coercion.py:329
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data, ensure_ascii=False)
+
+[HIGH] tests/interop/test_type_coercion.py:339
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json_str = json.dumps(data)
+
+[HIGH] tests/qa/test_exporter_v1.py:27
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(rec)+"\n"); f.flush()
+
+[HIGH] tests/qa/test_exporter_v1.py:37
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps({"id": "stmt-1", "theory_id": "pl", "hash": "a"*64,
+
+[HIGH] tests/qa/test_exporter_v1.py:73
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(rec)+"\r\n")  # CRLF
+
+[HIGH] tests/qa/test_exporter_v1.py:74
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(rec)+"\n")    # LF
+
+[HIGH] tests/qa/test_exporter_v1.py:75
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(rec)+"\r\n")  # CRLF
+
+[HIGH] tests/qa/test_exporter_v1.py:107
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(rec1)+"\r\n")  # CRLF
+
+[HIGH] tests/qa/test_exporter_v1.py:108
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(rec2)+"\n")    # LF
+
+[HIGH] tests/qa/test_exporter_v1.py:125
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(rec)+"\n"); f.flush()
+
+[HIGH] tests/qa/test_exporter_v1.py:135
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps({"system":"fol","mode":"baseline","method":"fol-baseline","seed":"1",
+
+[HIGH] tests/qa/test_exporter_v1_export.py:71
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json.dumps({
+
+[HIGH] tests/qa/test_exporter_v1_export.py:78
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json.dumps({
+
+[HIGH] tests/qa/test_exporter_v1_export.py:115
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json.dumps({
+
+[HIGH] tests/qa/test_exporter_v1_export.py:151
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json.dumps({
+
+[HIGH] tests/qa/test_metrics_lint_v1.py:27
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(rec) + "\n"); f.flush()
+
+[HIGH] tests/qa/test_metrics_lint_v1.py:34
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps({
+
+[HIGH] tools/proof_simulator.py:40
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(asdict(self), ensure_ascii=True)
+
+[HIGH] tools/verify_all_v3.py:85
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(val, separators=(',', ':'), ensure_ascii=True)
+
+[HIGH] tools/verify_all_v3.py:87
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(val, ensure_ascii=True)
+
+[HIGH] tools/verify_all_v3.py:93
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: pairs = [json.dumps(k, ensure_ascii=True) + ':' + canonicalize_value(val[k]) for k in sorted_keys]
+
+[HIGH] tools/ci/meta_scheduler.py:252
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: print(json.dumps(result, indent=2))
+
+[HIGH] tools/ci/narrative_audit.py:265
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: output = json.dumps(analysis, indent=2, default=str)
+
+[HIGH] tools/devin_e_toolbox/pr-helper.py:226
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: cursor_file.write_text(json.dumps(default_config, indent=2))
+
+[HIGH] tools/docs/docs_delta.py:40
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(obj)
+
+[HIGH] tools/docs/docs_delta.py:42
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: return json.dumps(obj, ensure_ascii=True)
+
+[HIGH] tools/docs/docs_delta.py:49
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: json.dumps(k, ensure_ascii=True) + ":" + canonicalize_json_rfc8785(obj[k])
+
+[HIGH] tools/simulation/run_imperfect_verifier_experiment.py:122
+Description: json.dumps() without sort_keys=True may produce nondeterministic output
+Code: f.write(json.dumps(record) + "\n")
+
+PARSE_ERROR
+--------------------------------------------------------------------------------
+
+[LOW] bridge.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (bridge.py, line 1)
+
+[LOW] scripts/bootstrap_db.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (bootstrap_db.py, line 1)
+
+[LOW] scripts/check_fol_parents.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (check_fol_parents.py, line 1)
+
+[LOW] scripts/db_ok.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (db_ok.py, line 1)
+
+[LOW] scripts/dedupe_parents.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (dedupe_parents.py, line 1)
+
+[LOW] scripts/enqueue_two_jobs.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (enqueue_two_jobs.py, line 1)
+
+[LOW] scripts/export_pl2_dataset.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (export_pl2_dataset.py, line 1)
+
+[LOW] scripts/hash_fa_eq_fc.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (hash_fa_eq_fc.py, line 1)
+
+[LOW] scripts/insert_known_statement.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (insert_known_statement.py, line 1)
+
+[LOW] scripts/latest_hash.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (latest_hash.py, line 1)
+
+[LOW] scripts/patch_db_for_smoke.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (patch_db_for_smoke.py, line 1)
+
+[LOW] scripts/patch_parents.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (patch_parents.py, line 1)
+
+[LOW] scripts/patch_parents_table.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (patch_parents_table.py, line 1)
+
+[LOW] scripts/patch_schema_v1.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (patch_schema_v1.py, line 1)
+
+[LOW] scripts/patch_smoke_on_conflict.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (patch_smoke_on_conflict.py, line 1)
+
+[LOW] scripts/patch_statements_cols.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (patch_statements_cols.py, line 1)
+
+[LOW] scripts/print_routes.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (print_routes.py, line 1)
+
+[LOW] scripts/print_ui_json_routes.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (print_ui_json_routes.py, line 1)
+
+[LOW] scripts/run_fol_smoke.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (run_fol_smoke.py, line 1)
+
+[LOW] scripts/run_pl_mp_smoke.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (run_pl_mp_smoke.py, line 1)
+
+[LOW] scripts/seed_policy_row.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (seed_policy_row.py, line 1)
+
+[LOW] scripts/train_policy.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (train_policy.py, line 1)
+
+[LOW] scripts/validate_metrics.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (validate_metrics.py, line 1)
+
+[LOW] scripts/widen_statements_more.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (widen_statements_more.py, line 1)
+
+[LOW] tests/test_mp_derivation.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (test_mp_derivation.py, line 1)
+
+[LOW] tools/flywheel_chart.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (flywheel_chart.py, line 1)
+
+[LOW] tools/flywheel_harvest.py:0
+Description: Failed to parse file: invalid non-printable character U+FEFF (flywheel_harvest.py, line 1)
+
+RANDOM
+--------------------------------------------------------------------------------
+
+[HIGH] test_integrity_audit.py:302
+Description: random module usage may be nondeterministic without explicit seeding
+Code: random.seed(42)
+
+[HIGH] test_integrity_audit.py:309
+Description: random module usage may be nondeterministic without explicit seeding
+Code: formula = f"{random.choice(atoms)} {random.choice(ops)} {random.choice(atoms)}"
+
+[HIGH] test_integrity_audit.py:309
+Description: random module usage may be nondeterministic without explicit seeding
+Code: formula = f"{random.choice(atoms)} {random.choice(ops)} {random.choice(atoms)}"
+
+[HIGH] test_integrity_audit.py:309
+Description: random module usage may be nondeterministic without explicit seeding
+Code: formula = f"{random.choice(atoms)} {random.choice(ops)} {random.choice(atoms)}"
+
+[HIGH] backend/depth_scheduler.py:198
+Description: random module usage may be nondeterministic without explicit seeding
+Code: random.seed(seed)
+
+[HIGH] backend/depth_scheduler.py:219
+Description: random module usage may be nondeterministic without explicit seeding
+Code: success = random.random() > (goal.depth * 0.1)  # Success decreases with depth
+
+[HIGH] backend/depth_scheduler.py:220
+Description: random module usage may be nondeterministic without explicit seeding
+Code: time_spent = random.uniform(0.1, 1.0)
+
+[HIGH] backend/depth_scheduler.py:227
+Description: random module usage may be nondeterministic without explicit seeding
+Code: num_subgoals = random.randint(1, 3)
+
+[HIGH] backend/repro/determinism.py:142
+Description: random module usage may be nondeterministic without explicit seeding
+Code: self.rng = random.Random(seed)
+
+[HIGH] derivation/pipeline.py:361
+Description: random module usage may be nondeterministic without explicit seeding
+Code: rng = random.Random(self._cycle_seed + mp_round * 1000)
+
+[HIGH] experiments/analyze_uplift_u1.py:275
+Description: random module usage may be nondeterministic without explicit seeding
+Code: random.seed(42)  # Deterministic bootstrap
+
+[HIGH] experiments/analyze_uplift_u1.py:278
+Description: random module usage may be nondeterministic without explicit seeding
+Code: baseline_sample = random.choices(baseline_abstention_rates, k=len(baseline_abstention_rates))
+
+[HIGH] experiments/analyze_uplift_u1.py:279
+Description: random module usage may be nondeterministic without explicit seeding
+Code: rfl_sample = random.choices(rfl_abstention_rates, k=len(rfl_abstention_rates))
+
+[HIGH] experiments/gen_mock_data.py:21
+Description: random module usage may be nondeterministic without explicit seeding
+Code: if random.random() < p_abstain:
+
+[HIGH] experiments/generate_report.py:47
+Description: random module usage may be nondeterministic without explicit seeding
+Code: mean_depth = phase_depth + random.uniform(-0.5, 0.5)
+
+[HIGH] experiments/generate_report.py:48
+Description: random module usage may be nondeterministic without explicit seeding
+Code: max_depth = int(mean_depth + random.uniform(1, 3))
+
+[HIGH] experiments/generate_report.py:53
+Description: random module usage may be nondeterministic without explicit seeding
+Code: throughput = (base_tpt / (mean_depth ** 1.5)) + random.uniform(-50, 50)
+
+[HIGH] experiments/generate_report.py:60
+Description: random module usage may be nondeterministic without explicit seeding
+Code: success_rate = max(0.4, min(0.99, success_rate + random.uniform(-0.02, 0.02)))
+
+[HIGH] experiments/generate_report.py:68
+Description: random module usage may be nondeterministic without explicit seeding
+Code: abstention_rate = 0.2 + (0.3 * decay_rate) + random.uniform(-0.05, 0.05)
+
+[HIGH] experiments/generate_report.py:71
+Description: random module usage may be nondeterministic without explicit seeding
+Code: abstention_rate = 0.4 + random.uniform(-0.15, 0.15)
+
+[HIGH] scripts/export_guidance_data.py:136
+Description: random module usage may be nondeterministic without explicit seeding
+Code: block = random.choice(blocks_data) if blocks_data else None
+
+[HIGH] scripts/export_guidance_data.py:140
+Description: random module usage may be nondeterministic without explicit seeding
+Code: stmt = random.choice(block['statements'])
+
+[HIGH] scripts/export_guidance_data.py:158
+Description: random module usage may be nondeterministic without explicit seeding
+Code: alternative_method = random.choice(available_methods)
+
+[HIGH] scripts/export_guidance_data.py:221
+Description: random module usage may be nondeterministic without explicit seeding
+Code: random.shuffle(all_data)
+
+[HIGH] scripts/gen_small_test.py:19
+Description: random module usage may be nondeterministic without explicit seeding
+Code: current_nv += random.randint(0, 50)
+
+[HIGH] scripts/gen_small_test.py:20
+Description: random module usage may be nondeterministic without explicit seeding
+Code: ht_hex = f"{random.getrandbits(256):064x}"
+
+[HIGH] scripts/generate_synthetic_fo_data.py:29
+Description: random module usage may be nondeterministic without explicit seeding
+Code: proofs_in_block = random.randint(0, 50)
+
+[HIGH] scripts/generate_synthetic_fo_data.py:34
+Description: random module usage may be nondeterministic without explicit seeding
+Code: ht_int = random.getrandbits(256)
+
+[HIGH] substrate/repro/determinism.py:144
+Description: random module usage may be nondeterministic without explicit seeding
+Code: self.rng = random.Random(seed)
+
+[HIGH] tools/proof_simulator.py:97
+Description: random module usage may be nondeterministic without explicit seeding
+Code: random.seed(self.seed)
+
+[HIGH] tools/proof_simulator.py:122
+Description: random module usage may be nondeterministic without explicit seeding
+Code: actual_proofs = target_proofs + random.randint(-2, 2)
+
+[HIGH] tools/simulation/noisy_verifier.py:27
+Description: random module usage may be nondeterministic without explicit seeding
+Code: self._rng = random.Random(seed)
+
+[HIGH] tools/simulation/run_imperfect_verifier_experiment.py:56
+Description: random module usage may be nondeterministic without explicit seeding
+Code: rng = random.Random(seed)
+
+TIMESTAMP
+--------------------------------------------------------------------------------
+
+[CRITICAL] bootstrap_metabolism.py:293
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.utcnow().isoformat() + "Z",
+
+[CRITICAL] monitor.py:47
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+[CRITICAL] phase_ix_attestation.py:222
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+
+[CRITICAL] rfl_gate.py:471
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.utcnow().isoformat() + "Z",
+
+[CRITICAL] backend/metrics_md_report.py:255
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: date_str = datetime.now().strftime('%Y-%m-%d')
+
+[CRITICAL] backend/audit/verify_phase_x_blocks.py:58
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat() + 'Z'
+
+[CRITICAL] backend/audit/verify_phase_x_blocks.py:142
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat() + 'Z',
+
+[CRITICAL] backend/causal/analyze_cli.py:369
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: date_str = datetime.now().strftime("%Y-%m-%d")
+
+[CRITICAL] backend/causal/export.py:38
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "generated_at": datetime.now().isoformat(),
+
+[CRITICAL] backend/causal/policy_memo.py:64
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: date_str = datetime.now().strftime("%Y-%m-%d")
+
+[CRITICAL] backend/causal/policy_memo.py:193
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: memo.append(f"**Generated:** {datetime.now().isoformat()}")
+
+[CRITICAL] backend/crypto/auth.py:89
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: created_at = datetime.utcnow().isoformat()
+
+[CRITICAL] backend/crypto/auth.py:92
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: expires_at = (datetime.utcnow() + timedelta(days=expires_days)).isoformat()
+
+[CRITICAL] backend/crypto/auth.py:135
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: if datetime.utcnow() > expires:
+
+[CRITICAL] backend/crypto/handshake.py:55
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.utcnow().isoformat()
+
+[CRITICAL] backend/crypto/handshake.py:316
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.utcnow().isoformat(),
+
+[CRITICAL] backend/governance/export.py:66
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "exported_at": datetime.utcnow().isoformat() + "Z",
+
+[CRITICAL] backend/governance/export.py:139
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "exported_at": datetime.utcnow().isoformat() + "Z",
+
+[CRITICAL] backend/governance/export.py:194
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "exported_at": datetime.utcnow().isoformat() + "Z",
+
+[CRITICAL] backend/ledger/consensus/celestial_dossier_v2.py:135
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp=datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+
+[CRITICAL] backend/ledger/consensus/celestial_dossier_v2.py:305
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp=datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+
+[CRITICAL] backend/ledger/consensus/harmony_v1_1.py:155
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp=datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+
+[CRITICAL] backend/ledger/consensus/harmony_v1_1.py:309
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'proof_timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+[CRITICAL] backend/metrics/fo_analytics.py:240
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).isoformat()
+
+[CRITICAL] backend/metrics/fo_analytics.py:578
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: generated_at=datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] backend/metrics/fo_feedback.py:73
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: self.timestamp = datetime.now(timezone.utc).isoformat()
+
+[CRITICAL] backend/metrics/fo_feedback.py:355
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] backend/models/proof_metadata.py:57
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+
+[CRITICAL] backend/orchestrator/proof_middleware.py:100
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: request_id = f"req_{self.request_count}_{datetime.utcnow().timestamp()}"
+
+[CRITICAL] backend/orchestrator/proof_middleware.py:117
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.utcnow().isoformat(),
+
+[CRITICAL] backend/tools/progress.py:22
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+[CRITICAL] backend/tools/progress.py:69
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: log.write(f"{datetime.now().isoformat()} progress=blocked ratchet_schema_violation\n")
+
+[CRITICAL] backend/tools/progress.py:77
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'created_at': datetime.now(),
+
+[CRITICAL] backend/tools/progress.py:147
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+[CRITICAL] experiments/analyze_uplift_u1.py:410
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "computed_at": datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] experiments/create_manifest_direct.py:50
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'generated_at': datetime.now().isoformat(),
+
+[CRITICAL] experiments/generate_dyno_chart.py:100
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'generated_at': datetime.now().isoformat(),
+
+[CRITICAL] experiments/manifest.py:30
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp_utc": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+
+[CRITICAL] experiments/run_uplift_u1.py:152
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: prereg_hash_computed_at = datetime.now(timezone.utc).isoformat()
+
+[CRITICAL] experiments/run_uplift_u1.py:173
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: started_at = datetime.now(timezone.utc).isoformat()
+
+[CRITICAL] experiments/run_uplift_u1.py:184
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "completed_at": datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] experiments/test_dyno_generation.py:45
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'generated_at': datetime.now().isoformat(),
+
+[CRITICAL] ops/basis_promotion_precheck.py:279
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp_iso=datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
+
+[CRITICAL] ops/basis_promotion_precheck.py:304
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: report["timestamp_iso"] = datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+
+[CRITICAL] ops/generate_census.py:93
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "generated_at": datetime.utcnow().isoformat() + "Z",
+
+[CRITICAL] ops/promote_basis.py:299
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+
+[CRITICAL] ops/promote_basis.py:374
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: f.write(f"**Date:** {datetime.now(timezone.utc).isoformat()}\n")
+
+[CRITICAL] ops/promote_basis.py:393
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M")
+
+[CRITICAL] ops/promote_basis.py:414
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] rfl/experiment_logging.py:58
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+
+[CRITICAL] rfl/metrics_logger.py:107
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp=datetime.utcnow().isoformat() + "Z",
+
+[CRITICAL] rfl/runner.py:1040
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: start_time = self.run_results[0].start_time if self.run_results else datetime.utcnow().isoformat() + "Z"
+
+[CRITICAL] rfl/runner.py:1041
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: end_time = self.run_results[-1].end_time if self.run_results else datetime.utcnow().isoformat() + "Z"
+
+[CRITICAL] scripts/ci-performance-check.py:135
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+[CRITICAL] scripts/create_sealed_evidence_pack.py:27
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.now().isoformat() + 'Z',
+
+[CRITICAL] scripts/create_sealed_evidence_pack.py:89
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+[CRITICAL] scripts/export_guidance_data.py:255
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'created_at': datetime.now(),
+
+[CRITICAL] scripts/export_guidance_data.py:263
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'proof_created_at': datetime.now()
+
+[CRITICAL] scripts/gen_dual_attestation.py:121
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now().isoformat() + 'Z'
+
+[CRITICAL] scripts/generate_allblue_epoch_seal.py:336
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).isoformat() + 'Z'
+
+[CRITICAL] scripts/generate_allblue_epoch_seal.py:552
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).isoformat() + 'Z'
+
+[CRITICAL] scripts/generate_allblue_epoch_seal.py:580
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).isoformat() + 'Z'
+
+[CRITICAL] scripts/generate_allblue_epoch_seal.py:708
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).isoformat() + 'Z'
+
+[CRITICAL] scripts/generate_allblue_fleet_state.py:192
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat() + 'Z',
+
+[CRITICAL] scripts/generate_triple_hash_verification.py:192
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat() + 'Z',
+
+[CRITICAL] scripts/hermetic-validate-v2.py:45
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.utcnow().isoformat()
+
+[CRITICAL] scripts/hermetic-validate.py:39
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.utcnow().isoformat()
+
+[CRITICAL] scripts/mk_evidence_pack.py:184
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now().isoformat()
+
+[CRITICAL] scripts/network-sandbox.py:46
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.utcnow().isoformat()
+
+[CRITICAL] scripts/run_first_organism.py:44
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+[CRITICAL] scripts/run_first_organism.py:328
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp=datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] scripts/uplift_gate.py:293
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now().isoformat()
+
+[CRITICAL] scripts/upload-performance-passport.py:37
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+[CRITICAL] scripts/wonder_scan.py:193
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "correlation_id": "rfl_policy_uplift_" + datetime.utcnow().strftime("%Y%m%d"),
+
+[CRITICAL] scripts/wonder_scan.py:260
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "correlation_id": "depth_throughput_" + datetime.utcnow().strftime("%Y%m%d"),
+
+[CRITICAL] scripts/wonder_scan.py:315
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "correlation_id": "determinism_health_" + datetime.utcnow().strftime("%Y%m%d"),
+
+[CRITICAL] scripts/wonder_scan.py:380
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "correlation_id": "merkle_entropy_" + datetime.utcnow().strftime("%Y%m%d"),
+
+[CRITICAL] scripts/wonder_scan.py:428
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "scan_timestamp": datetime.utcnow().isoformat() + "Z",
+
+[CRITICAL] scripts/telemetry/uplift_eval.py:313
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: output['generated_at'] = datetime.now(timezone.utc).isoformat()
+
+[CRITICAL] substrate/auth/redis_auth.py:82
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: created_at = datetime.utcnow().isoformat()
+
+[CRITICAL] substrate/auth/redis_auth.py:85
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: expires_at = (datetime.utcnow() + timedelta(days=expires_days)).isoformat()
+
+[CRITICAL] substrate/auth/redis_auth.py:128
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: if datetime.utcnow() > expires:
+
+[CRITICAL] tests/test_causal_variables.py:25
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:49
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:71
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:93
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:115
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:137
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:165
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:189
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:214
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:252
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:281
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_causal_variables.py:317
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: now = datetime.now()
+
+[CRITICAL] tests/test_derive.py:17
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: created_at=datetime.now()
+
+[CRITICAL] tests/test_derive.py:23
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: created_at=datetime.now()
+
+[CRITICAL] tests/test_derive.py:29
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: created_at=datetime.now()
+
+[CRITICAL] tests/test_derive.py:45
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: created_at=datetime.now()
+
+[CRITICAL] tests/test_derive.py:51
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: created_at=datetime.now()
+
+[CRITICAL] tests/test_derive.py:57
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: created_at=datetime.now()
+
+[CRITICAL] tests/integration/conftest.py:499
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: probe_timestamp = datetime.now(timezone.utc).isoformat()
+
+[CRITICAL] tests/integration/test_api_surface_validation.py:220
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp=datetime.now(),
+
+[CRITICAL] tests/integration/test_api_surface_validation.py:340
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: generated_at=datetime.now(),
+
+[CRITICAL] tests/interop/test_type_coercion.py:196
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc)
+
+[CRITICAL] tests/interop/test_type_coercion.py:209
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: data = {"timestamp": datetime.now(timezone.utc).isoformat()}
+
+[CRITICAL] tools/metrics_cartographer_demo.py:19
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).isoformat()
+
+[CRITICAL] tools/mirror_auditor.py:130
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat()
+
+[CRITICAL] tools/mirror_auditor.py:242
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: f"Timestamp: {datetime.utcnow().isoformat()}Z",
+
+[CRITICAL] tools/mirror_auditor.py:310
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat(),
+
+[CRITICAL] tools/mirror_auditor_demo.py:53
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'created_at': datetime.utcnow().isoformat(),
+
+[CRITICAL] tools/mirror_auditor_demo.py:143
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat() + 'Z',
+
+[CRITICAL] tools/mirror_auditor_demo.py:168
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: f"**Timestamp**: {datetime.utcnow().isoformat()}Z",
+
+[CRITICAL] tools/monitoring_dashboard.py:118
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: last_block_time=datetime.now().isoformat(),
+
+[CRITICAL] tools/monitoring_dashboard.py:195
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: last_run_time=datetime.now().isoformat(),
+
+[CRITICAL] tools/monitoring_dashboard.py:274
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp=datetime.now().isoformat(),
+
+[CRITICAL] tools/verify_all_v2.py:68
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: self.start_time = datetime.now(timezone.utc)
+
+[CRITICAL] tools/verify_all_v2.py:72
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).isoformat()
+
+[CRITICAL] tools/verify_all_v2.py:82
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: end_time = datetime.now(timezone.utc)
+
+[CRITICAL] tools/verify_all_v3.py:111
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: self.start_time = datetime.now(timezone.utc)
+
+[CRITICAL] tools/verify_all_v3.py:116
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: timestamp = datetime.now(timezone.utc).isoformat()
+
+[CRITICAL] tools/verify_all_v3.py:164
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: end_time = datetime.now(timezone.utc)
+
+[CRITICAL] tools/verify_all_v3.py:339
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "frozen_at": datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] tools/verify_all_v3.py:385
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] tools/verify_all_v3.py:599
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] tools/verify_all_v3.py:889
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.now(timezone.utc).isoformat(),
+
+[CRITICAL] tools/ci/critical_path_intel.py:404
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "analyzed_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+
+[CRITICAL] tools/ci/narrative_audit.py:57
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: since_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+
+[CRITICAL] tools/ci/narrative_audit.py:158
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: report_date = datetime.now().strftime('%Y-%m-%d')
+
+[CRITICAL] tools/ci/velocity_plan.py:480
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+
+[CRITICAL] tools/ci/velocity_plan.py:556
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+
+[CRITICAL] tools/ci/velocity_proof_pack.py:185
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: current_day = (datetime.utcnow().timestamp() - base_time) / 86400
+
+[CRITICAL] tools/ci/velocity_proof_pack.py:297
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+
+[CRITICAL] tools/ci/velocity_telemetry.py:97
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'generated_at': datetime.utcnow().isoformat() + 'Z',
+
+[CRITICAL] tools/crypto/verify_crypto_v3.py:295
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: "timestamp": datetime.utcnow().isoformat(),
+
+[CRITICAL] tools/devin_e_toolbox/allblue_archive.py:130
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat() + 'Z',
+
+[CRITICAL] tools/devin_e_toolbox/audit_sync.py:54
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat() + 'Z',
+
+[CRITICAL] tools/devin_e_toolbox/audit_sync.py:187
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'export_timestamp': datetime.utcnow().isoformat() + 'Z',
+
+[CRITICAL] tools/devin_e_toolbox/ci_velocity.py:87
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat() + 'Z',
+
+[CRITICAL] tools/devin_e_toolbox/deterministic_build.py:89
+Description: datetime.now()/utcnow() introduces nondeterminism; use deterministic timestamps
+Code: 'timestamp': datetime.utcnow().isoformat(),
+
+UUID
+--------------------------------------------------------------------------------
+
+[CRITICAL] test_v05_integration.py:31
+Description: uuid4() generates random UUIDs; use deterministic ID generation
+Code: self.test_db_name = f"test_mathledger_{os.getpid()}_{uuid.uuid4().hex[:8]}"
+
+[CRITICAL] backend/lean_control_sandbox.py:319
+Description: uuid4() generates random UUIDs; use deterministic ID generation
+Code: self._session_id = uuid.uuid4().hex[:8]
+
+[CRITICAL] ops/microagents/runner_skeleton.py:1062
+Description: uuid4() generates random UUIDs; use deterministic ID generation
+Code: return str(uuid.uuid4())
