@@ -12,6 +12,11 @@ Provides:
 from .frontier import FrontierManager, BeamAllocator, FrontierCandidate
 from .logging import U2TraceLogger, load_experiment_trace, verify_trace_determinism
 from .policy import SearchPolicy, BaselinePolicy, RFLPolicy, create_policy
+from .telemetry import (
+    TelemetryReport,
+    extract_telemetry_from_trace,
+    compare_telemetry,
+)
 from .runner import (
     U2Runner,
     U2Config,
@@ -63,6 +68,11 @@ __all__ = [
     "U2TraceLogger",
     "load_experiment_trace",
     "verify_trace_determinism",
+    
+    # Telemetry
+    "TelemetryReport",
+    "extract_telemetry_from_trace",
+    "compare_telemetry",
     
     # Policy
     "SearchPolicy",
