@@ -35,6 +35,11 @@ from .evidence_fusion import (
     ConflictingSliceName,
     RunOrderingAnomaly,
 )
+from .telemetry import (
+    TelemetryReport,
+    extract_telemetry_from_trace,
+    compare_telemetry,
+)
 
 __all__ = [
     # Frontier
@@ -85,4 +90,9 @@ __all__ = [
     "MissingArtifact",
     "ConflictingSliceName",
     "RunOrderingAnomaly",
+    
+    # Telemetry
+    "TelemetryReport",
+    "extract_telemetry_from_trace",
+    "compare_telemetry",
 ]
