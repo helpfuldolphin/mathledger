@@ -502,7 +502,7 @@ class TestGovernanceHook:
             stability,
             drift_events,
             toxicity,
-            timestamp="2025-01-01T00:00:00Z",
+            timestamp="2024-01-01T00:00:00Z",
         )
         
         assert summary.health_status == HealthStatus.OK
@@ -601,7 +601,7 @@ class TestGovernanceHook:
             stability,
             drift_events,
             toxicity,
-            timestamp="2025-01-01T00:00:00Z",
+            timestamp="2024-01-01T00:00:00Z",
         )
         
         summary_dict = summary.to_dict()
@@ -623,7 +623,7 @@ class TestGovernanceHook:
             stability,
             drift_events,
             toxicity,
-            timestamp="2025-01-01T00:00:00Z",
+            timestamp="2024-01-01T00:00:00Z",
         )
         
         json_str = summary.to_json()
@@ -683,7 +683,7 @@ class TestIntegration:
             stability,
             drift_events,
             toxicity,
-            timestamp="2025-01-01T00:00:00Z",
+            timestamp="2024-01-01T00:00:00Z",
         )
         
         assert summary.health_status == HealthStatus.OK

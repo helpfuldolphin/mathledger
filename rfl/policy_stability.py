@@ -253,7 +253,12 @@ def evaluate_policy_stability(
         )
     
     # Extract weight vectors for all features
-    all_features = sorted(snapshot_series[0].weights.keys())
+    # Collect all features across all snapshots to handle dynamic feature sets
+    all_features = set()
+    for state in snapshot_series:
+        all_features.update(state.weights.keys())
+    all_features = sorted(all_features)
+    
     weight_matrix = np.array([
         [state.weights.get(f, 0.0) for f in all_features]
         for state in snapshot_series
