@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from rfl.prng import DeterministicPRNG, int_to_hex_seed
+from backend.safety import evaluate_hard_gate_decision, check_gate_decision
+from backend.tda import TDAMode
 
 from .frontier import FrontierManager, BeamAllocator
 from .logging import U2TraceLogger
@@ -45,6 +47,10 @@ class U2Config:
     # Budget parameters
     cycle_budget_s: float = 60.0
     max_candidates_per_cycle: int = 100
+    
+    # TDA Hard Gate configuration
+    tda_mode: str = "BLOCK"  # "BLOCK", "DRY_RUN", or "SHADOW"
+    tda_enabled: bool = True  # Enable/disable TDA hard gate
 
 
 @dataclass
@@ -162,6 +168,53 @@ class U2Runner:
         # Initialize policy if not done
         if self.policy is None:
             self.initialize_policy()
+        
+        # ═══════════════════════════════════════════════════════════════════
+        # CORTEX: TDA Hard Gate Decision (BLOCKING)
+        # ═══════════════════════════════════════════════════════════════════
+        # Evaluate hard gate decision before processing candidates.
+        # This is the Brain - the central decision point that can block execution.
+        
+        if self.config.tda_enabled:
+            # Build context for TDA evaluation
+            gate_context = {
+                "abstention_rate": 0.0,  # U2 doesn't have direct abstention tracking yet
+                "coverage_rate": 0.0,  # Will be computed from frontier stats
+                "verified_count": candidates_processed,  # Use processed count as proxy
+                "cycle_index": cycle,
+                "frontier_size": self.frontier.size(),
+                "experiment_id": self.config.experiment_id,
+                "slice_name": self.config.slice_name,
+            }
+            
+            # Parse TDA mode from config
+            try:
+                tda_mode = TDAMode(self.config.tda_mode)
+            except ValueError:
+                # Default to BLOCK if invalid mode
+                tda_mode = TDAMode.BLOCK
+            
+            # Evaluate gate decision (the Cortex)
+            gate_envelope = evaluate_hard_gate_decision(gate_context, tda_mode)
+            
+            # Log the decision if trace context available
+            if trace_ctx:
+                trace_ctx.trace_logger.log_event(
+                    EventType.DERIVE_SUCCESS if not gate_envelope.is_blocking() else EventType.DERIVE_FAILURE,
+                    cycle=cycle,
+                    data={
+                        "gate_decision": gate_envelope.decision,
+                        "tda_mode": gate_envelope.tda_mode,
+                        "slo_status": gate_envelope.slo.status.value,
+                        "message": gate_envelope.slo.message,
+                    }
+                )
+            
+            # BLOCKING CHECK: Enforce gate decision
+            # If gate says block, execution stops here with RuntimeError
+            check_gate_decision(gate_envelope)
+        
+        # ═══════════════════════════════════════════════════════════════════
         
         candidates_processed = 0
         candidates_generated = 0
