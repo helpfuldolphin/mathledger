@@ -1,0 +1,150 @@
+# Migration Intent Schema
+# JSON Schema (in YAML format) for migration_intent.yaml validation
+#
+# Author: Agent E4 (doc-ops-4) — Phase Migration Architect
+# Date: 2025-12-06
+
+$schema: "http://json-schema.org/draft-07/schema#"
+$id: "https://mathledger.io/schemas/migration_intent.json"
+title: "Migration Intent Declaration"
+description: |
+  Schema for migration_intent.yaml files that declare intentional phase migrations.
+  Required when a PR implicitly constitutes a phase boundary crossing.
+
+type: object
+required:
+  - source_phase
+  - target_phase
+  - justification
+  - preconditions_verified
+  - rollback_plan
+
+properties:
+  source_phase:
+    type: string
+    enum:
+      - phase_i
+      - phase_ii
+      - phase_iib
+      - phase_iii
+    description: "The current phase before migration"
+
+  target_phase:
+    type: string
+    enum:
+      - phase_i
+      - phase_ii
+      - phase_iib
+      - phase_iii
+    description: "The target phase after migration"
+
+  justification:
+    type: string
+    minLength: 50
+    description: |
+      Detailed justification for why this migration is necessary.
+      Must be at least 50 characters.
+
+  preconditions_verified:
+    type: array
+    minItems: 1
+    items:
+      type: string
+      minLength: 10
+    description: |
+      List of preconditions that have been verified before this migration.
+      Each precondition should describe a specific check that was performed.
+
+  rollback_plan:
+    type: string
+    minLength: 30
+    description: |
+      Plan for reverting this migration if issues occur.
+      Must be at least 30 characters.
+
+  approvers:
+    type: array
+    items:
+      type: string
+      pattern: "^[a-zA-Z0-9_-]+$"
+    description: "GitHub usernames of required approvers"
+
+  metadata:
+    type: object
+    properties:
+      migration_simulator_run:
+        type: boolean
+        description: "Whether the migration simulator was run before this PR"
+      simulation_id:
+        type:
+          - string
+          - "null"
+        description: "Simulation ID from migration_sim_result.json"
+      pr_number:
+        type:
+          - integer
+          - "null"
+        description: "GitHub PR number (filled by CI)"
+      determinism_verified:
+        type: boolean
+        description: "Whether determinism tests passed"
+      evidence_sealed:
+        type: boolean
+        description: "Whether prior phase evidence is sealed"
+    additionalProperties: true
+
+  signals_acknowledged:
+    type: array
+    items:
+      type: string
+      enum:
+        - db_write_introduction
+        - rfl_db_enable
+        - prereg_addition
+        - uplift_slice_addition
+        - lean_enable
+        - lean_timeout_config
+        - lean_toolchain_update
+        - basis_import_activation
+        - ed25519_introduction
+        - rfc8785_activation
+        - proof_middleware_addition
+        - curriculum_active_change
+        - security_model_change
+        - determinism_envelope_change
+    description: |
+      Migration signals that this declaration acknowledges.
+      Should match signals detected by pr_migration_linter.py.
+
+additionalProperties: false
+
+# Custom validation rules (enforced by validator, not JSON Schema)
+x-custom-rules:
+  - name: "valid_transition"
+    description: "Target phase must be reachable from source phase"
+    valid_transitions:
+      phase_i:
+        - phase_ii
+      phase_ii:
+        - phase_iib
+        - phase_iii
+      phase_iib:
+        - phase_iii
+      phase_iii: []
+
+  - name: "no_regression"
+    description: "Cannot migrate to a lower phase"
+    phase_order:
+      - phase_i
+      - phase_ii
+      - phase_iib
+      - phase_iii
+
+  - name: "simulator_required_for_critical"
+    description: "Critical migrations require simulator run"
+    critical_transitions:
+      - source: phase_i
+        target: phase_ii
+      - source: phase_ii
+        target: phase_iii
+

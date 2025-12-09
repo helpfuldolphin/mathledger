@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\rfl\verification\failure_classifier.py
+# hypothesis_version: 6.148.2
+
+['ExperimentResult', 'aborted', 'budget', 'budget_exceeded', 'budget_exhausted', 'budget_skip', 'context', 'crash', 'crash_abstain', 'derivation_abstain', 'derive cli failed', 'empty_run', 'engine', 'engine_failure', 'exception_type', 'failed', 'failure_state', 'formula', 'invalid', 'invalid_formula', 'killed', 'lean_failure', 'malformed', 'memory', 'no_successful_proofs', 'normalize', 'parse', 'parse_error', 'pending_validation', 'returncode', 'segfault', 'skip', 'skipped_by_budget', 'source', 'success', 'syntax', 'timed out', 'timed_out', 'timeout', 'timeout_abstain', 'unexpected_error', 'unknown', 'unknown_error', 'zero_throughput']

@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\rfl\verification\abstention_taxonomy.py
+# hypothesis_version: 6.148.2
+
+['ABSTAIN', 'AbstentionType', 'COMPLETE_MAPPING', 'abstain_budget', 'abstain_crash', 'abstain_invalid', 'abstain_lean_error', 'abstain_lean_timeout', 'abstain_timeout', 'attestation_events', 'attestation_mass', 'budget_exceeded', 'candidate_limit', 'crash', 'derivation_abstain', 'derivation_timeout', 'empty_run', 'engine_failure', 'get_mapping_table', 'invalid_input', 'is_abstention_method', 'lean-disabled', 'lean-error', 'lean-timeout', 'lean_disabled', 'lean_error', 'lean_timeout', 'memory_limit', 'no_successful_proofs', 'oracle_unavailable', 'pending_validation', 'resource_exhausted', 'serialize_abstention', 'timeout', 'timeout_abstain', 'truth-table-error', 'truth_table_error', 'unexpected_error', 'zero_throughput']

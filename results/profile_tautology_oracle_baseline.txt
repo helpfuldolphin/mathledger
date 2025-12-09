@@ -1,0 +1,51 @@
+
+================================================================================
+TRUTH-TABLE ORACLE BENCHMARK
+================================================================================
+Iterations per formula: 1000
+Timestamp: 2025-12-06 00:03:41
+Python version: 3.11.9
+================================================================================
+
+
+--- Oracle: truthtab.is_tautology ---
+
+Formula                                       Name                      Mean (μs)    Std (μs)     Min (μs)     Max (μs)     Result  
+----------------------------------------------------------------------------------------------------------------------------------
+p -> p                                        identity                  5.35         0.54         5.10         14.70        PASS    
+p \/ ~p                                       excluded_middle           8.35         12.68        6.80         287.70       PASS    
+p /\ ~p                                       contradiction             6.24         41.35        4.40         1310.40      PASS    
+((p -> q) -> p) -> p                          peirce_law                32.83        47.59        25.50        1052.30      PASS    
+(p -> q) \/ (q -> p)                          connectivity              29.84        32.15        25.70        920.80       PASS    
+(p /\ q) -> p                                 simplification            18.86        9.66         17.20        207.00       PASS    
+p -> (q -> p)                                 affirmation_consequent    21.25        19.54        17.20        437.60       PASS    
+(p -> q) /\ (q -> p)                          biconditional_parts       17.58        18.28        14.20        401.30       PASS    
+(p -> q) -> ((q -> r) -> (p -> r))            hypothetical_syllogism    97.99        47.70        82.70        931.70       PASS    
+p -> (q -> (p /\ q))                          conjunction_intro         29.13        16.02        25.70        312.90       PASS    
+((p /\ q) /\ r) -> p                          nested_simplification     58.65        49.58        49.60        948.20       PASS    
+(p \/ q) -> (q \/ p)                          disjunction_commutativity 29.61        15.61        25.50        271.70       PASS    
+p -> q                                        simple_implication        6.18         10.70        5.20         279.30       PASS    
+p /\ q /\ r                                   triple_conjunction        10.46        16.19        8.20         370.60       PASS    
+
+--- Oracle: taut.truth_table_is_tautology ---
+
+Formula                                       Name                      Mean (μs)    Std (μs)     Min (μs)     Max (μs)     Result  
+----------------------------------------------------------------------------------------------------------------------------------
+p -> p                                        identity                  5.35         0.54         5.10         14.70        PASS    
+p \/ ~p                                       excluded_middle           8.35         12.68        6.80         287.70       PASS    
+p /\ ~p                                       contradiction             6.24         41.35        4.40         1310.40      PASS    
+((p -> q) -> p) -> p                          peirce_law                32.83        47.59        25.50        1052.30      PASS    
+(p -> q) \/ (q -> p)                          connectivity              29.84        32.15        25.70        920.80       PASS    
+(p /\ q) -> p                                 simplification            18.86        9.66         17.20        207.00       PASS    
+p -> (q -> p)                                 affirmation_consequent    21.25        19.54        17.20        437.60       PASS    
+(p -> q) /\ (q -> p)                          biconditional_parts       17.58        18.28        14.20        401.30       PASS    
+(p -> q) -> ((q -> r) -> (p -> r))            hypothetical_syllogism    97.99        47.70        82.70        931.70       PASS    
+p -> (q -> (p /\ q))                          conjunction_intro         29.13        16.02        25.70        312.90       PASS    
+((p /\ q) /\ r) -> p                          nested_simplification     58.65        49.58        49.60        948.20       PASS    
+(p \/ q) -> (q \/ p)                          disjunction_commutativity 29.61        15.61        25.50        271.70       PASS    
+p -> q                                        simple_implication        6.18         10.70        5.20         279.30       PASS    
+p /\ q /\ r                                   triple_conjunction        10.46        16.19        8.20         370.60       PASS    
+
+==============================================================================================================
+SUMMARY
+==============================================================================================================

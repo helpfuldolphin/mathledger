@@ -1,0 +1,15 @@
+# ==============================================================================
+# PHASE II — SYNTHETIC TEST DATA ONLY
+# ==============================================================================
+# This directory contains ONLY synthetic generated data.
+# All contents are auto-generated and should NOT be committed.
+# NOT part of Evidence Pack.
+# ==============================================================================
+
+# Ignore all generated files
+*.jsonl
+*.json
+
+# Keep this .gitignore
+!.gitignore
+

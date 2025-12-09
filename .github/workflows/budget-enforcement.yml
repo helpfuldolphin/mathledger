@@ -1,0 +1,123 @@
+# Phase II Budget Enforcement CI Gate
+# ====================================
+#
+# This workflow validates budget enforcement invariants on relevant PRs.
+# It runs the budget loader tests and the self-test harness to ensure
+# no regressions in budget enforcement.
+#
+# Trigger: PRs touching budget-related files
+# Exit behavior: Fails CI if any budget invariant is violated
+
+name: Budget Enforcement
+
+on:
+  pull_request:
+    paths:
+      - 'config/verifier_budget_phase2.yaml'
+      - 'backend/verification/budget_loader.py'
+      - 'derivation/pipeline.py'
+      - 'experiments/budget_self_test.py'
+      - 'tests/verification/test_budget_loader.py'
+      - '.github/workflows/budget-enforcement.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'config/verifier_budget_phase2.yaml'
+      - 'backend/verification/budget_loader.py'
+      - 'derivation/pipeline.py'
+
+jobs:
+  budget-enforcement:
+    name: Budget Invariant Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Run budget loader tests
+        run: |
+          echo "Running budget loader unit tests..."
+          uv run pytest tests/verification/test_budget_loader.py -v --tb=short
+        env:
+          PYTHONPATH: .
+      
+      - name: Run budget invariant governance tests
+        run: |
+          echo "Running budget invariant governance tests..."
+          uv run pytest tests/derivation/test_budget_invariants.py -v --tb=short
+        env:
+          PYTHONPATH: .
+      
+      - name: Run budget self-test harness
+        run: |
+          echo "Running budget self-test harness..."
+          uv run python experiments/budget_self_test.py
+        env:
+          PYTHONPATH: .
+          MATHLEDGER_DEBUG_BUDGET: "1"
+        timeout-minutes: 2
+      
+      - name: Run budget quick health check
+        run: |
+          echo "Running budget quick health check..."
+          uv run python experiments/budget_quick_health.py
+        env:
+          PYTHONPATH: .
+          MATHLEDGER_DEBUG_BUDGET: "1"
+        timeout-minutes: 1
+      
+      - name: Generate budget invariant snapshot (JSON)
+        run: |
+          echo "Generating budget invariant snapshot..."
+          uv run python experiments/budget_quick_health.py --snapshot-json > budget_snapshot.json
+          cat budget_snapshot.json
+        env:
+          PYTHONPATH: .
+          MATHLEDGER_DEBUG_BUDGET: "1"
+        timeout-minutes: 1
+        continue-on-error: true  # Allow pipeline to continue for summary
+      
+      - name: Upload budget snapshot artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: budget-invariant-snapshot
+          path: budget_snapshot.json
+          retention-days: 30
+      
+      - name: Budget enforcement summary
+        if: always()
+        run: |
+          echo "=========================================="
+          echo "Phase III Budget Invariant Governance: Complete"
+          echo "=========================================="
+          echo ""
+          echo "Validated invariants:"
+          echo "  INV-BUD-1: No post-exhaustion candidate processing"
+          echo "  INV-BUD-2: Hard cap on max_candidates_per_cycle"
+          echo "  INV-BUD-3: Monotonic remaining_budget_s"
+          echo "  INV-BUD-4: All budget fields in to_dict()"
+          echo "  INV-BUD-5: Deterministic serialization"
+          echo ""
+          echo "Governance layer components:"
+          echo "  - Snapshot contract: build_budget_invariant_snapshot()"
+          echo "  - Timeline aggregation: build_budget_invariant_timeline()"
+          echo "  - MAAS integration: summarize_budget_invariants_for_global_health()"
+          echo ""
+          echo "Artifacts:"
+          echo "  - budget_snapshot.json (invariant snapshot for this run)"
+

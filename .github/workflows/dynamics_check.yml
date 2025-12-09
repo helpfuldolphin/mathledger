@@ -1,0 +1,72 @@
+# .github/workflows/dynamics_check.yml
+name: 'Dynamics & Governance Check'
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'A unique ID for this simulation run (e.g., U2_ci_test_001)'
+        required: true
+        default: 'ci_run_1'
+      scenario:
+        description: 'The mock data scenario to test against'
+        type: choice
+        options:
+          - positive_logistic
+          - null
+          - instability
+          - degenerate
+        required: true
+        default: 'positive_logistic'
+
+jobs:
+  dynamics-pipeline:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 'Install dependencies'
+        run: pip install -r requirements.txt # Assumes requirements.txt exists
+
+      - name: 'Run Full Phase IV Orchestration'
+        id: orchestration
+        run: |
+          python scripts/orchestrate_phase_iv.py \
+            --run-id ${{ github.event.inputs.run_id }} \
+            --scenario ${{ github.event.inputs.scenario }}
+
+      - name: 'Check Uplift Readiness Gate'
+        id: readiness_gate
+        run: |
+          # This step uses 'jq' to parse the final readiness report.
+          # It fails the workflow if the readiness flag is not true.
+          READINESS_REPORT='artifacts/governance/uplift_readiness_report.json'
+          
+          echo "Checking readiness status in ${READINESS_REPORT}"
+          
+          READINESS_FLAG=$(jq -r '.uplift_readiness_flag' ${READINESS_REPORT})
+          DYNAMICS_STATUS=$(jq -r '.dynamics_status' ${READINESS_REPORT})
+
+          if [[ "$READINESS_FLAG" != "true" ]]; then
+            echo "::error::Uplift Readiness Gate FAILED. Dynamics Status: ${DYNAMICS_STATUS}."
+            exit 1
+          else
+            echo "Uplift Readiness Gate PASSED. Dynamics Status: ${DYNAMICS_STATUS}."
+          fi
+
+      - name: 'Upload Governance Artifacts'
+        if: always() # Always run this step, even if previous steps fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-report-${{ github.event.inputs.run_id }}
+          path: |
+            artifacts/governance/uplift_readiness_report.json
+            artifacts/governance/conjecture_timeline.json

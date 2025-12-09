@@ -12,3 +12,12 @@ warnings.warn(
 )
 
 from normalization.taut import *  # noqa: F401,F403
+
+# Explicitly re-export internal functions that some tests depend on
+from normalization.taut import (
+    _evaluate_formula,
+    _evaluate_simple_formula,
+    _evaluate_binary_op,
+    _evaluate_atom,
+    _extract_atoms,
+)

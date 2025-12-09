@@ -23,7 +23,12 @@ import redis
 
 from backend.crypto.auth import get_redis_url_with_auth
 from backend.crypto.core import hash_statement, sha256_hex
-from backend.lean_interface import LeanStatement, sanitize_statement
+from backend.lean_interface import (
+    LeanFailureSignal,
+    LeanStatement,
+    classify_lean_failure,
+    sanitize_statement,
+)
 from backend.lean_mode import (
     LeanMode,
     get_lean_mode,
@@ -262,6 +267,7 @@ class LeanJobResult:
     stderr_hash: str
     module_name: str
     duration_ms: int
+    failure_signal: Optional[LeanFailureSignal] = None
 
 
 def _hash_output(text: Optional[str]) -> str:
@@ -288,7 +294,7 @@ def build_lean_mode_metadata(
     Returns:
         Dictionary with Lean mode metadata
     """
-    return {
+    metadata = {
         "lean_mode": lean_status.effective_mode.value,
         "lean_configured_mode": lean_status.configured_mode.value,
         "lean_available": lean_status.lean_available,
@@ -299,6 +305,13 @@ def build_lean_mode_metadata(
         "job_id": lean_job.job_id,
         "module_name": lean_job.module_name,
     }
+    if lean_job.failure_signal is not None:
+        metadata["lean_failure"] = {
+            "kind": lean_job.failure_signal.kind,
+            "message": lean_job.failure_signal.message,
+            "elapsed_ms": lean_job.failure_signal.elapsed_ms,
+        }
+    return metadata
 
 
 # Import for type hint
@@ -337,6 +350,13 @@ def execute_lean_job(
         duration_ms = int((time.perf_counter() - start) * 1000)
         stdout_hash = _hash_output(result.stdout)
         stderr_hash = _hash_output(result.stderr)
+        failure_signal = None
+        if result.returncode != 0:
+            failure_signal = classify_lean_failure(
+                result.stderr or "",
+                result.returncode,
+                duration_ms,
+            )
         # Symbolic descent law: every Lean run must record its stdout/stderr digest.
         return LeanJobResult(
             job_id=jid,
@@ -347,6 +367,7 @@ def execute_lean_job(
             stderr_hash=stderr_hash,
             module_name=module_name,
             duration_ms=duration_ms,
+            failure_signal=failure_signal,
         )
     finally:
         if cleanup:
@@ -560,5 +581,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-

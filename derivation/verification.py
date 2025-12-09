@@ -40,6 +40,7 @@ from normalization.truthtab import is_tautology as truth_table_is_tautology
 from derivation.bounds import SliceBounds
 from derivation.structure import atom_frozenset
 from derivation.derive_rules import is_known_tautology
+from .noise_guard import VerifierNoiseGuard, global_noise_guard
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,24 +127,57 @@ class StatementVerifier:
     returns verified=False with the method of the last check attempted.
     """
 
-    def __init__(self, bounds: SliceBounds, lean_project_root: Optional[Path] = None) -> None:
+    def __init__(
+        self,
+        bounds: SliceBounds,
+        lean_project_root: Optional[Path] = None,
+        noise_guard: Optional[VerifierNoiseGuard] = None,
+    ) -> None:
         self._bounds = bounds
         self._lean = LeanFallback(lean_project_root, bounds.lean_timeout_s)
+        self._noise_guard = noise_guard or global_noise_guard()
 
     def verify(self, normalized: str) -> VerificationOutcome:
         # Layer 1: Known tautology patterns (instant)
         if is_known_tautology(normalized):
-            return VerificationOutcome(True, "pattern")
+            outcome = VerificationOutcome(True, "pattern")
+            self._record_noise(normalized, outcome, tier_hint="T0")
+            return outcome
 
         # Layer 2: Truth-table evaluation (deterministic, O(2^n) in atoms)
         try:
             if truth_table_is_tautology(normalized):
-                return VerificationOutcome(True, "truth-table")
+                outcome = VerificationOutcome(True, "truth-table")
+                self._record_noise(normalized, outcome, tier_hint="T0")
+                return outcome
         except Exception as exc:
-            return VerificationOutcome(False, "truth-table-error", details=str(exc))
+            outcome = VerificationOutcome(False, "truth-table-error", details=str(exc))
+            self._record_noise(normalized, outcome, tier_hint="T0")
+            return outcome
 
         # Layer 3: Lean fallback (optional, may timeout or be disabled)
-        return self._lean.verify(normalized)
+        outcome = self._lean.verify(normalized)
+        self._record_noise(normalized, outcome, tier_hint="T2")
+        return outcome
+
+    def _record_noise(
+        self,
+        normalized: str,
+        outcome: VerificationOutcome,
+        *,
+        tier_hint: Optional[str] = None,
+    ) -> None:
+        if not self._noise_guard:
+            return
+        try:
+            self._noise_guard.record_verification(
+                normalized,
+                outcome,
+                tier_hint=tier_hint,
+            )
+        except Exception:
+            # Guardrails are best-effort; never block verification on telemetry.
+            pass
 
 
 def _to_lean(normalized: str) -> str:

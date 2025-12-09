@@ -1,0 +1,1393 @@
+{
+  "definitions": [
+    {
+      "content": "A \\textbf{slice} is a named configuration tuple $(\\texttt{atoms}, \\texttt{depth\\_max}, \\texttt{breadth\\_max}, \\texttt{total\\_max})$ with associated gate conditions that define pass/fail criteria.",
+      "label": "def:slice",
+      "line_end": 154,
+      "line_start": 151,
+      "name": "Slice"
+    },
+    {
+      "content": "Each slice specifies:\n\\begin{itemize}[noitemsep]\n    \\item \\texttt{atoms}: Maximum number of propositional atoms\n    \\item \\texttt{depth\\_max}: Maximum derivation tree depth\n    \\item \\texttt{breadth\\_max}: Maximum candidates per derivation round\n    \\item \\texttt{total\\_max}: Maximum total statements generated\n    \\item \\texttt{formula\\_pool}: Size of formula candidate pool (optional)\n    \\item \\texttt{axiom\\_instances}: Number of axiom instances (optional)\n    \\item \\texttt{timeout\\_s}: Cycle ",
+      "label": "def:slice-params",
+      "line_end": 237,
+      "line_start": 224,
+      "name": "Slice Parameters"
+    },
+    {
+      "content": "A slice passes its gates when ALL of the following conditions are met:\n\\begin{enumerate}\n    \\item \\textbf{Coverage}: CI lower bound $\\geq$ \\texttt{ci\\_lower\\_min}\n    \\item \\textbf{Abstention}: Rate $\\leq$ \\texttt{max\\_rate\\_pct}, mass $\\leq$ \\texttt{max\\_mass}\n    \\item \\textbf{Velocity}: Proofs/hour $\\geq$ \\texttt{min\\_pph}, CV $\\leq$ \\texttt{stability\\_cv\\_max}\n    \\item \\textbf{Caps}: Attempts $\\geq$ \\texttt{min\\_attempt\\_mass}, runtime $\\geq$ \\texttt{min\\_runtime\\_minutes}\n\\end{enumerate}",
+      "label": "def:gates",
+      "line_end": 253,
+      "line_start": 244,
+      "name": "Slice Gates"
+    },
+    {
+      "content": "Each cycle produces a telemetry record:\n\\begin{lstlisting}[language=json]\n{\n  \"cycle\": <int>,\n  \"slice\": \"<slice_name>\",\n  \"mode\": \"<baseline|rfl>\",\n  \"seed\": <cycle_seed>,\n  \"item\": \"<chosen_item>\",\n  \"result\": \"<substrate_output>\",\n  \"success\": <bool>,\n  \"label\": \"PHASE II - NOT USED IN PHASE I\"\n}\n\\end{lstlisting}",
+      "label": "def:telemetry",
+      "line_end": 357,
+      "line_start": 342,
+      "name": "Telemetry Record"
+    },
+    {
+      "content": "\\[\n\\mathrm{hash}(s) = \\mathrm{SHA256}(\\mathcal{D} \\| \\mathcal{E}(\\mathcal{N}(s)))\n\\]\nwhere:\n\\begin{itemize}[noitemsep]\n    \\item $\\mathcal{N}$: Normalization function\n    \\item $\\mathcal{E}$: UTF-8 encoding\n    \\item $\\mathcal{D}$: Domain separation tag\n\\end{itemize}",
+      "label": "def:hash-identity",
+      "line_end": 445,
+      "line_start": 434,
+      "name": "Hash Identity"
+    },
+    {
+      "content": "\\begin{align}\n\\Rt &= \\texttt{merkle\\_root}(\\text{reasoning\\_leaves}) \\\\\n\\Ut &= \\texttt{merkle\\_root}(\\text{ui\\_leaves}) \\\\\n\\Ht &= \\mathrm{SHA256}(\\Rt \\| \\Ut)\n\\end{align}",
+      "label": "def:roots",
+      "line_end": 457,
+      "line_start": 450,
+      "name": "Attestation Roots"
+    },
+    {
+      "content": "\\[\np_{\\text{base}} = \\frac{\\text{successful\\_cycles\\_baseline}}{\\text{total\\_cycles\\_baseline}}\n\\]\nwhere a successful cycle has \\texttt{status == \"success\"} AND is not abstained.",
+      "label": "def:p-base",
+      "line_end": 592,
+      "line_start": 586,
+      "name": "$p_{\\text{base}}$"
+    },
+    {
+      "content": "\\[\np_{\\text{rfl}} = \\frac{\\text{successful\\_cycles\\_rfl}}{\\text{total\\_cycles\\_rfl}}\n\\]\nSame success/abstention definitions as $p_{\\text{base}}$, applied to RFL-guided runs.",
+      "label": "def:p-rfl",
+      "line_end": 603,
+      "line_start": 597,
+      "name": "$p_{\\text{rfl}}$"
+    },
+    {
+      "content": "\\[\n\\Delta = p_{\\text{rfl}} - p_{\\text{base}}\n\\]\n\\begin{itemize}[noitemsep]\n    \\item $\\Delta > 0$: RFL outperforms baseline\n    \\item $\\Delta = 0$: No difference (null result)\n    \\item $\\Delta < 0$: Baseline outperforms RFL (negative uplift)\n\\end{itemize}",
+      "label": "def:delta",
+      "line_end": 618,
+      "line_start": 608,
+      "name": "Uplift Delta"
+    },
+    {
+      "content": "Using Wald interval for difference of proportions:\n\\[\n\\text{SE} = \\sqrt{\\frac{p_{\\text{base}}(1-p_{\\text{base}})}{n_{\\text{base}}} + \\frac{p_{\\text{rfl}}(1-p_{\\text{rfl}})}{n_{\\text{rfl}}}}\n\\]\n\\[\n\\text{CI}_{95} = \\Delta \\pm 1.96 \\cdot \\text{SE}\n\\]\n\\textbf{Significance}:\n\\begin{itemize}[noitemsep]\n    \\item CI lower $> 0$: Statistically significant positive uplift\n    \\item CI upper $< 0$: Statistically significant negative uplift\n    \\item CI spans 0: No statistically significant difference\n\\end",
+      "label": "def:ci",
+      "line_end": 638,
+      "line_start": 623,
+      "name": "95\\% Confidence Interval"
+    },
+    {
+      "content": "\\begin{lstlisting}[language=Python]\ndef generate_seed_schedule(initial_seed: int, num_cycles: int) -> List[int]:\n    \"\"\"Generates deterministic per-cycle seeds.\"\"\"\n    rng = random.Random(initial_seed)\n    return [rng.randint(0, 2**32 - 1) for _ in range(num_cycles)]\n\\end{lstlisting}",
+      "label": "def:seed-schedule",
+      "line_end": 733,
+      "line_start": 725,
+      "name": "Seed Schedule"
+    }
+  ],
+  "formulas": [
+    {
+      "content": "(\\texttt{atoms}, \\texttt{depth\\_max}, \\texttt{breadth\\_max}, \\texttt{total\\_max})",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 153
+    },
+    {
+      "content": ">",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 214
+    },
+    {
+      "content": "\\geq",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 248
+    },
+    {
+      "content": "\\leq",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 249
+    },
+    {
+      "content": "\\leq",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 249
+    },
+    {
+      "content": "\\geq",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 250
+    },
+    {
+      "content": "\\leq",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 250
+    },
+    {
+      "content": "\\geq",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 251
+    },
+    {
+      "content": "\\geq",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 251
+    },
+    {
+      "content": "s_i",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 260
+    },
+    {
+      "content": "s_{i+1}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 260
+    },
+    {
+      "content": "\\Rt",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 377
+    },
+    {
+      "content": "\\Ut",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 377
+    },
+    {
+      "content": "\\Ht",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 377
+    },
+    {
+      "content": "\\mathcal{N}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 441
+    },
+    {
+      "content": "\\mathcal{E}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 442
+    },
+    {
+      "content": "\\mathcal{D}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 443
+    },
+    {
+      "content": "\\neq",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 484
+    },
+    {
+      "content": "N \\geq 100",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 485
+    },
+    {
+      "content": "p < 0.05",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 487
+    },
+    {
+      "content": "\\neq",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 487
+    },
+    {
+      "content": "\\Rightarrow",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 488
+    },
+    {
+      "content": "\\Ht",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 488
+    },
+    {
+      "content": "\\Ht",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 517
+    },
+    {
+      "content": "\\rightarrow",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 548
+    },
+    {
+      "content": "\\rightarrow",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 549
+    },
+    {
+      "content": "\\rightarrow",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 550
+    },
+    {
+      "content": "\\Ht",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 550
+    },
+    {
+      "content": "p_{\\text{base}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 571
+    },
+    {
+      "content": "[0,1]",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 571
+    },
+    {
+      "content": "p_{\\text{rfl}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 572
+    },
+    {
+      "content": "[0,1]",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 572
+    },
+    {
+      "content": "\\Delta",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 573
+    },
+    {
+      "content": "[-1,1]",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 573
+    },
+    {
+      "content": "p_{\\text{rfl}} - p_{\\text{base}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 573
+    },
+    {
+      "content": "[-1,1]",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 574
+    },
+    {
+      "content": "\\Delta",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 574
+    },
+    {
+      "content": "p_{\\text{base}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 583
+    },
+    {
+      "content": "p_{\\text{base}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 586
+    },
+    {
+      "content": "p_{\\text{rfl}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 594
+    },
+    {
+      "content": "p_{\\text{rfl}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 597
+    },
+    {
+      "content": "p_{\\text{base}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 602
+    },
+    {
+      "content": "\\Delta",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 605
+    },
+    {
+      "content": "\\Delta > 0",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 614
+    },
+    {
+      "content": "\\Delta = 0",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 615
+    },
+    {
+      "content": "\\Delta < 0",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 616
+    },
+    {
+      "content": "> 0",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 634
+    },
+    {
+      "content": "< 0",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 635
+    },
+    {
+      "content": "\\frac{\\text{Successful Proofs}}{\\text{Duration (hours)}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 707
+    },
+    {
+      "content": "\\max(\\text{statement.depth})",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 708
+    },
+    {
+      "content": "\\frac{\\text{Total} - \\text{Successful}}{\\text{Total}}",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 709
+    },
+    {
+      "content": "i",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 749
+    },
+    {
+      "content": "s_i",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 749
+    },
+    {
+      "content": "i",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 749
+    },
+    {
+      "content": "\\Ht",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 964
+    },
+    {
+      "content": "\\Rt",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 965
+    },
+    {
+      "content": "\\Ut",
+      "formula_type": "inline",
+      "label": null,
+      "line_number": 966
+    },
+    {
+      "content": "0.5em]}\n\\newcommand{\\Ht}{H_t}\n\\newcommand{\\Rt}{R_t}\n\\newcommand{\\Ut}{U_t}\n\n% Theorem environments\n\\theoremstyle{definition}\n\\newtheorem{definition}{Definition}[section]\n\\newtheorem{invariant}{Invariant}[section]\n\n\\title{%\n    \\vspace{-2em}\n    \\textcolor{phaseii}{\\rule{\\textwidth}{2pt}}\\\\[1em]\n    \\textbf{MathLedger Phase II Field Manual}\\\\[0.5em]\n    \\large Operations Guide for U2 Uplift Experiments\\\\[1em]\n    \\textcolor{phaseii}{\\rule{\\textwidth}{2pt}}\n}\n\\author{MathLedger Operations}\n\\date{December 2025}\n\n\\begin{document}\n\n\\maketitle\n\n\\begin{center}\n\\fbox{\\parbox{0.9\\textwidth}{\n\\centering\n\\textbf{\\large\\phaseii}\\\\[0.5em]\nThis document describes Phase II infrastructure and methodology only.\\\\\nNo experimental data has been collected. No uplift claims are made.\\\\\nEvidence interpretation sections remain empty until data exists.\n}}\n\\end{center}\n\n\\tableofcontents\n\\newpage\n\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\\section{Introduction}\n\\label{sec:introduction}\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n\\phaseiilabel\n\nThis Field Manual serves as the canonical reference for Phase II operations within the MathLedger project. It documents:\n\n\\begin{itemize}\n    \\item \\textbf{Infrastructure Description}: System architecture, slice definitions, runner components\n    \\item \\textbf{Experimental Methodology}: Protocols, determinism requirements, success criteria\n    \\item \\textbf{Evidence Interpretation}: \\textit{(Empty until experimental data exists)}\n\\end{itemize}\n\n\\subsection{Document Scope}\n\\label{sec:scope}\n\nThis manual covers:\n\\begin{enumerate}\n    \\item U2 Slice Architecture (Section~\\ref{sec:u2-slices})\n    \\item U2 Runner Overview (Section~\\ref{sec:u2-runner})\n    \\item Determinism Contract (Section~\\ref{sec:determinism})\n    \\item Governance Alignment (Section~\\ref{sec:governance})\n    \\item Success Metric Definitions (Section~\\ref{sec:metrics})\n    \\item Seed Discipline (Section~\\ref{sec:seed-discipline})\n    \\item Example Workflows (Section~\\ref{sec:workflows})\n\\end{enumerate}\n\n\\subsection{Strict Separation Policy}\n\\label{sec:separation}\n\n\\begin{invariant}[Content Separation]\n\\label{inv:separation}\nAll content in this document MUST fall into exactly one of three categories:\n\\begin{enumerate}\n    \\item \\textbf{Infrastructure Description}: How systems are built and configured\n    \\item \\textbf{Experimental Methodology}: How experiments are designed and executed\n    \\item \\textbf{Evidence Interpretation}: What experimental results mean (EMPTY UNTIL DATA EXISTS)\n\\end{enumerate}\n\\end{invariant}\n\n\\newpage\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\\section{U2 Slice Architecture}\n\\label{sec:u2-slices}\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n\n\\phaseiilabel\n\n\\subsection{Overview}\n\\label{sec:slices-overview}\n\nThe U2 experiment framework operates on a curriculum of \\textit{slices}---discrete parameter configurations that define the complexity regime for propositional logic derivation tasks. Slices are defined in \\texttt{config/curriculum.yaml} and organized by the monotonicity constraint on their axes.\n\n\\begin{definition}[Slice]\n\\label{def:slice}\nA \\textbf{slice} is a named configuration tuple $(\\texttt{atoms}, \\texttt{depth\\_max}, \\texttt{breadth\\_max}, \\texttt{total\\_max})$ with associated gate conditions that define pass/fail criteria.\n\\end{definition}\n\n\\subsection{Slice Catalog}\n\\label{sec:slice-catalog}\n\nThe following slices are defined in the propositional logic (PL) curriculum:\n\n\\begin{longtable}{llccccl}\n\\toprule\n\\textbf{Slice Name} & \\textbf{Role} & \\textbf{Atoms} & \\textbf{Depth} & \\textbf{Breadth} & \\textbf{Total} & \\textbf{Regime} \\\\\n\\midrule\n\\endfirsthead\n\\toprule\n\\textbf{Slice Name} & \\textbf{Role} & \\textbf{Atoms} & \\textbf{Depth} & \\textbf{Breadth} & \\textbf{Total} & \\textbf{Regime} \\\\\n\\midrule\n\\endhead\n\\texttt{slice\\_debug\\_uplift} & Debug & 2 & 2 & 8 & 16 & Trivial \\\\\n\\texttt{slice\\_easy\\_fo} & First Organism & 3 & 3 & 300 & 1000 & Trivial \\\\\n\\texttt{slice\\_uplift\\_proto} & Proto-uplift & 3 & 4 & 3 & 10 & Training \\\\\n\\texttt{atoms4-depth4} & Ladder & 4 & 4 & 500 & 2000 & Training \\\\\n\\texttt{atoms4-depth5} & Ladder & 4 & 5 & 1000 & 5000 & Training \\\\\n\\texttt{atoms5-depth6} & Ladder & 5 & 6 & 2000 & 10000 & Training \\\\\n\\texttt{slice\\_medium} & Wide Slice & 5 & 7 & 1500 & 8000 & Training \\\\\n\\texttt{first\\_organism\\_pl2\\_hard} & Stress & 6 & 8 & 2000 & 10000 & Stress \\\\\n\\texttt{slice\\_hard} & Hard (Active) & 7 & 12 & 3000 & 15000 & Stress \\\\\n\\bottomrule\n\\caption{U2 Slice Definitions from \\texttt{config/curriculum.yaml}}\n\\label{tab:slices}\n\\end{longtable}\n\n\\subsection{Complexity Regimes}\n\\label{sec:regimes}\n\nSlices are classified into three complexity regimes:\n\n\\subsubsection{Trivial Regime}\n\\label{sec:regime-trivial}\n\nSlices in this regime serve as sanity checks. The prover should solve these instantly with near-zero abstention. Failure indicates a broken harness, not a learning failure.\n\n\\begin{itemize}\n    \\item \\texttt{slice\\_debug\\_uplift}: Atoms=2, Depth=2\n    \\item \\texttt{slice\\_easy\\_fo}: Atoms=3, Depth=3\n\\end{itemize}\n\n\\subsubsection{Training Regime (Sweet Spot)}\n\\label{sec:regime-training}\n\nCore learning zone where the prover encounters a healthy mix of solvable proofs and challenging edge cases. Abstention rates of 5--15\\% provide sufficient signal for metric variance without stalling the pipeline.\n\n\\begin{itemize}\n    \\item \\texttt{slice\\_uplift\\_proto}: Atoms=3, Depth=4 (tight budget)\n    \\item \\texttt{atoms4-depth4}, \\texttt{atoms4-depth5}: Ladder progression\n    \\item \\texttt{atoms5-depth6}: Current active default\n    \\item \\texttt{slice\\_medium}: Wide slice for RFL experiments\n\\end{itemize}\n\n\\subsubsection{Stress Regime (Abstention Cliff)}\n\\label{sec:regime-stress}\n\nHigh-uncertainty regime ($>$20\\% abstention) where the problem space explodes combinatorially. Tests the system's ability to handle failure gracefully.\n\n\\begin{itemize}\n    \\item \\texttt{first\\_organism\\_pl2\\_hard}: Atoms=6, Depth=8\n    \\item \\texttt{slice\\_hard}: Atoms=7, Depth=12 (currently active)\n\\end{itemize}\n\n\\subsection{Slice Parameters}\n\\label{sec:slice-params}\n\n\\begin{definition}[Slice Parameters]\n\\label{def:slice-params}\nEach slice specifies:\n\\begin{itemize}[noitemsep]\n    \\item \\texttt{atoms}: Maximum number of propositional atoms\n    \\item \\texttt{depth\\_max}: Maximum derivation tree depth\n    \\item \\texttt{breadth\\_max}: Maximum candidates per derivation round\n    \\item \\texttt{total\\_max}: Maximum total statements generated\n    \\item \\texttt{formula\\_pool}: Size of formula candidate pool (optional)\n    \\item \\texttt{axiom\\_instances}: Number of axiom instances (optional)\n    \\item \\texttt{timeout\\_s}: Cycle timeout in seconds\n    \\item \\texttt{lean\\_timeout\\_s}: Lean verification timeout (0.0 = disabled)\n\\end{itemize}\n\\end{definition}\n\n\\subsection{Gate Conditions}\n\\label{sec:gate-conditions}\n\nEach slice defines gates that determine promotion eligibility:\n\n\\begin{definition}[Slice Gates]\n\\label{def:gates}\nA slice passes its gates when ALL of the following conditions are met:\n\\begin{enumerate}\n    \\item \\textbf{Coverage}: CI lower bound $\\geq$ \\texttt{ci\\_lower\\_min}\n    \\item \\textbf{Abstention}: Rate $\\leq$ \\texttt{max\\_rate\\_pct}, mass $\\leq$ \\texttt{max\\_mass}\n    \\item \\textbf{Velocity}: Proofs/hour $\\geq$ \\texttt{min\\_pph}, CV $\\leq$ \\texttt{stability\\_cv\\_max}\n    \\item \\textbf{Caps}: Attempts $\\geq$ \\texttt{min\\_attempt\\_mass}, runtime $\\geq$ \\texttt{min\\_runtime\\_minutes}\n\\end{enumerate}\n\\end{definition}\n\n\\subsection{Monotonicity Invariant}\n\\label{sec:monotonicity}\n\n\\begin{invariant}[Monotonicity]\n\\label{inv:monotonicity}\nSlices MUST be ordered such that for consecutive slices $s_i$ and $s_{i+1}$:\n\\[\n(\\texttt{atoms}_i, \\texttt{depth\\_max}_i) \\leq (\\texttt{atoms}_{i+1}, \\texttt{depth\\_max}_{i+1})",
+      "formula_type": "display",
+      "label": null,
+      "line_number": 59
+    },
+    {
+      "content": "\\mathrm{hash}(s) = \\mathrm{SHA256}(\\mathcal{D} \\| \\mathcal{E}(\\mathcal{N}(s)))",
+      "formula_type": "display",
+      "label": null,
+      "line_number": 436
+    },
+    {
+      "content": "p_{\\text{base}} = \\frac{\\text{successful\\_cycles\\_baseline}}{\\text{total\\_cycles\\_baseline}}",
+      "formula_type": "display",
+      "label": null,
+      "line_number": 588
+    },
+    {
+      "content": "p_{\\text{rfl}} = \\frac{\\text{successful\\_cycles\\_rfl}}{\\text{total\\_cycles\\_rfl}}",
+      "formula_type": "display",
+      "label": null,
+      "line_number": 599
+    },
+    {
+      "content": "\\Delta = p_{\\text{rfl}} - p_{\\text{base}}",
+      "formula_type": "display",
+      "label": null,
+      "line_number": 610
+    },
+    {
+      "content": "\\text{SE} = \\sqrt{\\frac{p_{\\text{base}}(1-p_{\\text{base}})}{n_{\\text{base}}} + \\frac{p_{\\text{rfl}}(1-p_{\\text{rfl}})}{n_{\\text{rfl}}}}",
+      "formula_type": "display",
+      "label": null,
+      "line_number": 626
+    },
+    {
+      "content": "\\text{CI}_{95} = \\Delta \\pm 1.96 \\cdot \\text{SE}",
+      "formula_type": "display",
+      "label": null,
+      "line_number": 629
+    },
+    {
+      "content": "\\Rt &= \\texttt{merkle\\_root}(\\text{reasoning\\_leaves}) \\\\\n\\Ut &= \\texttt{merkle\\_root}(\\text{ui\\_leaves}) \\\\\n\\Ht &= \\mathrm{SHA256}(\\Rt \\| \\Ut)",
+      "formula_type": "align",
+      "label": null,
+      "line_number": 452
+    }
+  ],
+  "invariants": [
+    {
+      "content": "All content in this document MUST fall into exactly one of three categories:\n\\begin{enumerate}\n    \\item \\textbf{Infrastructure Description}: How systems are built and configured\n    \\item \\textbf{Experimental Methodology}: How experiments are designed and executed\n    \\item \\textbf{Evidence Interpretation}: What experimental results mean (EMPTY UNTIL DATA EXISTS)\n\\end{enumerate}",
+      "label": "inv:separation",
+      "line_end": 136,
+      "line_start": 128,
+      "name": "Content Separation"
+    },
+    {
+      "content": "Slices MUST be ordered such that for consecutive slices $s_i$ and $s_{i+1}$:\n\\[\n(\\texttt{atoms}_i, \\texttt{depth\\_max}_i) \\leq (\\texttt{atoms}_{i+1}, \\texttt{depth\\_max}_{i+1})\n\\]\nin lexicographic order. Violations break curriculum ladder progression.",
+      "label": "inv:monotonicity",
+      "line_end": 265,
+      "line_start": 258,
+      "name": "Monotonicity"
+    },
+    {
+      "content": "The Phase II Uplift Evidence Gate is \\textbf{INACTIVE}. No existing logs qualify as uplift evidence. This section defines future eligibility criteria only.",
+      "label": "inv:gate-inactive",
+      "line_end": 473,
+      "line_start": 470,
+      "name": "Gate Status"
+    },
+    {
+      "content": "\\begin{itemize}[noitemsep]\n    \\item Law $\\rightarrow$ No external dependencies (pure)\n    \\item Economy $\\rightarrow$ May import Law\n    \\item Metabolism $\\rightarrow$ May import Law, Economy; must not mutate $\\Ht$\n\\end{itemize}",
+      "label": "inv:layers",
+      "line_end": 552,
+      "line_start": 545,
+      "name": "Layer Dependencies"
+    }
+  ],
+  "labels": [
+    {
+      "context": "\\label{sec:introduction}",
+      "label_type": "section",
+      "line_number": 98,
+      "name": "sec:introduction"
+    },
+    {
+      "context": "\\label{sec:scope}",
+      "label_type": "section",
+      "line_number": 112,
+      "name": "sec:scope"
+    },
+    {
+      "context": "\\label{sec:separation}",
+      "label_type": "section",
+      "line_number": 126,
+      "name": "sec:separation"
+    },
+    {
+      "context": "\\label{inv:separation}",
+      "label_type": "invariant",
+      "line_number": 129,
+      "name": "inv:separation"
+    },
+    {
+      "context": "\\label{sec:u2-slices}",
+      "label_type": "section",
+      "line_number": 141,
+      "name": "sec:u2-slices"
+    },
+    {
+      "context": "\\label{sec:slices-overview}",
+      "label_type": "section",
+      "line_number": 147,
+      "name": "sec:slices-overview"
+    },
+    {
+      "context": "\\label{def:slice}",
+      "label_type": "definition",
+      "line_number": 152,
+      "name": "def:slice"
+    },
+    {
+      "context": "\\label{sec:slice-catalog}",
+      "label_type": "section",
+      "line_number": 157,
+      "name": "sec:slice-catalog"
+    },
+    {
+      "context": "\\label{tab:slices}",
+      "label_type": "table",
+      "line_number": 181,
+      "name": "tab:slices"
+    },
+    {
+      "context": "\\label{sec:regimes}",
+      "label_type": "section",
+      "line_number": 185,
+      "name": "sec:regimes"
+    },
+    {
+      "context": "\\label{sec:regime-trivial}",
+      "label_type": "section",
+      "line_number": 190,
+      "name": "sec:regime-trivial"
+    },
+    {
+      "context": "\\label{sec:regime-training}",
+      "label_type": "section",
+      "line_number": 200,
+      "name": "sec:regime-training"
+    },
+    {
+      "context": "\\label{sec:regime-stress}",
+      "label_type": "section",
+      "line_number": 212,
+      "name": "sec:regime-stress"
+    },
+    {
+      "context": "\\label{sec:slice-params}",
+      "label_type": "section",
+      "line_number": 222,
+      "name": "sec:slice-params"
+    },
+    {
+      "context": "\\label{def:slice-params}",
+      "label_type": "definition",
+      "line_number": 225,
+      "name": "def:slice-params"
+    },
+    {
+      "context": "\\label{sec:gate-conditions}",
+      "label_type": "section",
+      "line_number": 240,
+      "name": "sec:gate-conditions"
+    },
+    {
+      "context": "\\label{def:gates}",
+      "label_type": "definition",
+      "line_number": 245,
+      "name": "def:gates"
+    },
+    {
+      "context": "\\label{sec:monotonicity}",
+      "label_type": "section",
+      "line_number": 256,
+      "name": "sec:monotonicity"
+    },
+    {
+      "context": "\\label{inv:monotonicity}",
+      "label_type": "invariant",
+      "line_number": 259,
+      "name": "inv:monotonicity"
+    },
+    {
+      "context": "\\label{sec:u2-runner}",
+      "label_type": "section",
+      "line_number": 270,
+      "name": "sec:u2-runner"
+    },
+    {
+      "context": "\\label{sec:runner-architecture}",
+      "label_type": "section",
+      "line_number": 276,
+      "name": "sec:runner-architecture"
+    },
+    {
+      "context": "\\label{sec:modes}",
+      "label_type": "section",
+      "line_number": 291,
+      "name": "sec:modes"
+    },
+    {
+      "context": "\\label{sec:mode-baseline}",
+      "label_type": "section",
+      "line_number": 294,
+      "name": "sec:mode-baseline"
+    },
+    {
+      "context": "\\label{sec:mode-rfl}",
+      "label_type": "section",
+      "line_number": 306,
+      "name": "sec:mode-rfl"
+    },
+    {
+      "context": "\\label{sec:runner-components}",
+      "label_type": "section",
+      "line_number": 321,
+      "name": "sec:runner-components"
+    },
+    {
+      "context": "\\label{sec:runner-outputs}",
+      "label_type": "section",
+      "line_number": 333,
+      "name": "sec:runner-outputs"
+    },
+    {
+      "context": "\\label{def:telemetry}",
+      "label_type": "definition",
+      "line_number": 343,
+      "name": "def:telemetry"
+    },
+    {
+      "context": "\\label{sec:determinism}",
+      "label_type": "section",
+      "line_number": 362,
+      "name": "sec:determinism"
+    },
+    {
+      "context": "\\label{sec:prime-directive}",
+      "label_type": "section",
+      "line_number": 368,
+      "name": "sec:prime-directive"
+    },
+    {
+      "context": "\\label{sec:forbidden-primitives}",
+      "label_type": "section",
+      "line_number": 384,
+      "name": "sec:forbidden-primitives"
+    },
+    {
+      "context": "\\label{tab:forbidden}",
+      "label_type": "table",
+      "line_number": 401,
+      "name": "tab:forbidden"
+    },
+    {
+      "context": "\\label{sec:determinism-helpers}",
+      "label_type": "section",
+      "line_number": 405,
+      "name": "sec:determinism-helpers"
+    },
+    {
+      "context": "\\label{sec:determinism-test}",
+      "label_type": "section",
+      "line_number": 419,
+      "name": "sec:determinism-test"
+    },
+    {
+      "context": "\\label{sec:hash-identity}",
+      "label_type": "section",
+      "line_number": 432,
+      "name": "sec:hash-identity"
+    },
+    {
+      "context": "\\label{def:hash-identity}",
+      "label_type": "definition",
+      "line_number": 435,
+      "name": "def:hash-identity"
+    },
+    {
+      "context": "\\label{sec:roots}",
+      "label_type": "section",
+      "line_number": 448,
+      "name": "sec:roots"
+    },
+    {
+      "context": "\\label{def:roots}",
+      "label_type": "definition",
+      "line_number": 451,
+      "name": "def:roots"
+    },
+    {
+      "context": "\\label{sec:governance}",
+      "label_type": "section",
+      "line_number": 462,
+      "name": "sec:governance"
+    },
+    {
+      "context": "\\label{sec:uplift-gate}",
+      "label_type": "section",
+      "line_number": 468,
+      "name": "sec:uplift-gate"
+    },
+    {
+      "context": "\\label{inv:gate-inactive}",
+      "label_type": "invariant",
+      "line_number": 471,
+      "name": "inv:gate-inactive"
+    },
+    {
+      "context": "\\label{sec:eligibility}",
+      "label_type": "section",
+      "line_number": 476,
+      "name": "sec:eligibility"
+    },
+    {
+      "context": "\\label{tab:eligibility}",
+      "label_type": "table",
+      "line_number": 491,
+      "name": "tab:eligibility"
+    },
+    {
+      "context": "\\label{sec:prereg}",
+      "label_type": "section",
+      "line_number": 495,
+      "name": "sec:prereg"
+    },
+    {
+      "context": "\\label{sec:manifest-req}",
+      "label_type": "section",
+      "line_number": 510,
+      "name": "sec:manifest-req"
+    },
+    {
+      "context": "\\label{sec:limitations}",
+      "label_type": "section",
+      "line_number": 522,
+      "name": "sec:limitations"
+    },
+    {
+      "context": "\\label{sec:vibes}",
+      "label_type": "section",
+      "line_number": 535,
+      "name": "sec:vibes"
+    },
+    {
+      "context": "\\label{inv:layers}",
+      "label_type": "invariant",
+      "line_number": 546,
+      "name": "inv:layers"
+    },
+    {
+      "context": "\\label{sec:metrics}",
+      "label_type": "section",
+      "line_number": 557,
+      "name": "sec:metrics"
+    },
+    {
+      "context": "\\label{sec:metric-families}",
+      "label_type": "section",
+      "line_number": 563,
+      "name": "sec:metric-families"
+    },
+    {
+      "context": "\\label{tab:metrics}",
+      "label_type": "table",
+      "line_number": 577,
+      "name": "tab:metrics"
+    },
+    {
+      "context": "\\label{sec:metric-defs}",
+      "label_type": "section",
+      "line_number": 581,
+      "name": "sec:metric-defs"
+    },
+    {
+      "context": "\\label{sec:p-base}",
+      "label_type": "section",
+      "line_number": 584,
+      "name": "sec:p-base"
+    },
+    {
+      "context": "\\label{def:p-base}",
+      "label_type": "definition",
+      "line_number": 587,
+      "name": "def:p-base"
+    },
+    {
+      "context": "\\label{sec:p-rfl}",
+      "label_type": "section",
+      "line_number": 595,
+      "name": "sec:p-rfl"
+    },
+    {
+      "context": "\\label{def:p-rfl}",
+      "label_type": "definition",
+      "line_number": 598,
+      "name": "def:p-rfl"
+    },
+    {
+      "context": "\\label{sec:delta}",
+      "label_type": "section",
+      "line_number": 606,
+      "name": "sec:delta"
+    },
+    {
+      "context": "\\label{def:delta}",
+      "label_type": "definition",
+      "line_number": 609,
+      "name": "def:delta"
+    },
+    {
+      "context": "\\label{sec:ci}",
+      "label_type": "section",
+      "line_number": 621,
+      "name": "sec:ci"
+    },
+    {
+      "context": "\\label{def:ci}",
+      "label_type": "definition",
+      "line_number": 624,
+      "name": "def:ci"
+    },
+    {
+      "context": "\\label{sec:slice-metrics}",
+      "label_type": "section",
+      "line_number": 641,
+      "name": "sec:slice-metrics"
+    },
+    {
+      "context": "\\label{sec:goal-hit}",
+      "label_type": "section",
+      "line_number": 646,
+      "name": "sec:goal-hit"
+    },
+    {
+      "context": "\\label{sec:sparse}",
+      "label_type": "section",
+      "line_number": 661,
+      "name": "sec:sparse"
+    },
+    {
+      "context": "\\label{sec:chain}",
+      "label_type": "section",
+      "line_number": 674,
+      "name": "sec:chain"
+    },
+    {
+      "context": "\\label{sec:multi-goal}",
+      "label_type": "section",
+      "line_number": 689,
+      "name": "sec:multi-goal"
+    },
+    {
+      "context": "\\label{sec:capability}",
+      "label_type": "section",
+      "line_number": 702,
+      "name": "sec:capability"
+    },
+    {
+      "context": "\\label{sec:seed-discipline}",
+      "label_type": "section",
+      "line_number": 715,
+      "name": "sec:seed-discipline"
+    },
+    {
+      "context": "\\label{sec:seed-schedule}",
+      "label_type": "section",
+      "line_number": 721,
+      "name": "sec:seed-schedule"
+    },
+    {
+      "context": "\\label{def:seed-schedule}",
+      "label_type": "definition",
+      "line_number": 726,
+      "name": "def:seed-schedule"
+    },
+    {
+      "context": "\\label{sec:mdap-seed}",
+      "label_type": "section",
+      "line_number": 736,
+      "name": "sec:mdap-seed"
+    },
+    {
+      "context": "\\label{sec:cycle-determinism}",
+      "label_type": "section",
+      "line_number": 747,
+      "name": "sec:cycle-determinism"
+    },
+    {
+      "context": "\\label{sec:seed-provenance}",
+      "label_type": "section",
+      "line_number": 758,
+      "name": "sec:seed-provenance"
+    },
+    {
+      "context": "\\label{sec:workflows}",
+      "label_type": "section",
+      "line_number": 774,
+      "name": "sec:workflows"
+    },
+    {
+      "context": "\\label{sec:workflow-paired}",
+      "label_type": "section",
+      "line_number": 780,
+      "name": "sec:workflow-paired"
+    },
+    {
+      "context": "\\label{sec:workflow-determinism}",
+      "label_type": "section",
+      "line_number": 803,
+      "name": "sec:workflow-determinism"
+    },
+    {
+      "context": "\\label{sec:workflow-metrics}",
+      "label_type": "section",
+      "line_number": 822,
+      "name": "sec:workflow-metrics"
+    },
+    {
+      "context": "\\label{sec:workflow-prereg}",
+      "label_type": "section",
+      "line_number": 848,
+      "name": "sec:workflow-prereg"
+    },
+    {
+      "context": "\\label{sec:workflow-manifest}",
+      "label_type": "section",
+      "line_number": 872,
+      "name": "sec:workflow-manifest"
+    },
+    {
+      "context": "\\label{sec:evidence}",
+      "label_type": "section",
+      "line_number": 886,
+      "name": "sec:evidence"
+    },
+    {
+      "context": "\\label{sec:appendix}",
+      "label_type": "section",
+      "line_number": 914,
+      "name": "sec:appendix"
+    },
+    {
+      "context": "\\label{sec:file-locations}",
+      "label_type": "section",
+      "line_number": 918,
+      "name": "sec:file-locations"
+    },
+    {
+      "context": "\\label{tab:files}",
+      "label_type": "table",
+      "line_number": 937,
+      "name": "tab:files"
+    },
+    {
+      "context": "\\label{sec:label-index}",
+      "label_type": "section",
+      "line_number": 941,
+      "name": "sec:label-index"
+    },
+    {
+      "context": "\\label{sec:terminology}",
+      "label_type": "section",
+      "line_number": 958,
+      "name": "sec:terminology"
+    },
+    {
+      "context": "\\label{tab:terminology}",
+      "label_type": "table",
+      "line_number": 976,
+      "name": "tab:terminology"
+    }
+  ],
+  "sections": [
+    {
+      "label": "sec:introduction",
+      "level": "section",
+      "line_number": 97,
+      "title": "Introduction"
+    },
+    {
+      "label": "sec:scope",
+      "level": "subsection",
+      "line_number": 111,
+      "title": "Document Scope"
+    },
+    {
+      "label": "sec:separation",
+      "level": "subsection",
+      "line_number": 125,
+      "title": "Strict Separation Policy"
+    },
+    {
+      "label": "sec:u2-slices",
+      "level": "section",
+      "line_number": 140,
+      "title": "U2 Slice Architecture"
+    },
+    {
+      "label": "sec:slices-overview",
+      "level": "subsection",
+      "line_number": 146,
+      "title": "Overview"
+    },
+    {
+      "label": "sec:slice-catalog",
+      "level": "subsection",
+      "line_number": 156,
+      "title": "Slice Catalog"
+    },
+    {
+      "label": "sec:regimes",
+      "level": "subsection",
+      "line_number": 184,
+      "title": "Complexity Regimes"
+    },
+    {
+      "label": "sec:regime-trivial",
+      "level": "subsubsection",
+      "line_number": 189,
+      "title": "Trivial Regime"
+    },
+    {
+      "label": "sec:regime-training",
+      "level": "subsubsection",
+      "line_number": 199,
+      "title": "Training Regime (Sweet Spot)"
+    },
+    {
+      "label": "sec:regime-stress",
+      "level": "subsubsection",
+      "line_number": 211,
+      "title": "Stress Regime (Abstention Cliff)"
+    },
+    {
+      "label": "sec:slice-params",
+      "level": "subsection",
+      "line_number": 221,
+      "title": "Slice Parameters"
+    },
+    {
+      "label": "sec:gate-conditions",
+      "level": "subsection",
+      "line_number": 239,
+      "title": "Gate Conditions"
+    },
+    {
+      "label": "sec:monotonicity",
+      "level": "subsection",
+      "line_number": 255,
+      "title": "Monotonicity Invariant"
+    },
+    {
+      "label": "sec:u2-runner",
+      "level": "section",
+      "line_number": 269,
+      "title": "U2 Runner Overview"
+    },
+    {
+      "label": "sec:runner-architecture",
+      "level": "subsection",
+      "line_number": 275,
+      "title": "Architecture"
+    },
+    {
+      "label": "sec:modes",
+      "level": "subsection",
+      "line_number": 290,
+      "title": "Execution Modes"
+    },
+    {
+      "label": "sec:mode-baseline",
+      "level": "subsubsection",
+      "line_number": 293,
+      "title": "Baseline Mode"
+    },
+    {
+      "label": "sec:mode-rfl",
+      "level": "subsubsection",
+      "line_number": 305,
+      "title": "RFL Mode"
+    },
+    {
+      "label": "sec:runner-components",
+      "level": "subsection",
+      "line_number": 320,
+      "title": "Runner Components"
+    },
+    {
+      "label": "sec:runner-outputs",
+      "level": "subsection",
+      "line_number": 332,
+      "title": "Output Artifacts"
+    },
+    {
+      "label": "sec:determinism",
+      "level": "section",
+      "line_number": 361,
+      "title": "Determinism Contract"
+    },
+    {
+      "label": "sec:prime-directive",
+      "level": "subsection",
+      "line_number": 367,
+      "title": "The Prime Directive"
+    },
+    {
+      "label": "sec:forbidden-primitives",
+      "level": "subsection",
+      "line_number": 383,
+      "title": "Forbidden Primitives"
+    },
+    {
+      "label": "sec:determinism-helpers",
+      "level": "subsection",
+      "line_number": 404,
+      "title": "Determinism Helpers"
+    },
+    {
+      "label": "sec:determinism-test",
+      "level": "subsection",
+      "line_number": 418,
+      "title": "Verification Test"
+    },
+    {
+      "label": "sec:hash-identity",
+      "level": "subsection",
+      "line_number": 431,
+      "title": "Hash Identity Formula"
+    },
+    {
+      "label": "sec:roots",
+      "level": "subsection",
+      "line_number": 447,
+      "title": "Attestation Root Computation"
+    },
+    {
+      "label": "sec:governance",
+      "level": "section",
+      "line_number": 461,
+      "title": "Governance Alignment"
+    },
+    {
+      "label": "sec:uplift-gate",
+      "level": "subsection",
+      "line_number": 467,
+      "title": "Phase II Uplift Evidence Gate"
+    },
+    {
+      "label": "sec:eligibility",
+      "level": "subsection",
+      "line_number": 475,
+      "title": "Eligibility Criteria"
+    },
+    {
+      "label": "sec:prereg",
+      "level": "subsection",
+      "line_number": 494,
+      "title": "Preregistration Requirements"
+    },
+    {
+      "label": "sec:manifest-req",
+      "level": "subsection",
+      "line_number": 509,
+      "title": "Manifest Requirements"
+    },
+    {
+      "label": "sec:limitations",
+      "level": "subsection",
+      "line_number": 521,
+      "title": "What Evidence Does NOT Grant"
+    },
+    {
+      "label": "sec:vibes",
+      "level": "subsection",
+      "line_number": 534,
+      "title": "Vibe Boundary Architecture"
+    },
+    {
+      "label": "sec:metrics",
+      "level": "section",
+      "line_number": 556,
+      "title": "Success Metric Definitions"
+    },
+    {
+      "label": "sec:metric-families",
+      "level": "subsection",
+      "line_number": 562,
+      "title": "Core Metric Families"
+    },
+    {
+      "label": "sec:metric-defs",
+      "level": "subsection",
+      "line_number": 580,
+      "title": "Metric Definitions"
+    },
+    {
+      "label": null,
+      "level": "subsubsection",
+      "line_number": 583,
+      "title": "Baseline Success Probability ($p_{\\text{base"
+    },
+    {
+      "label": null,
+      "level": "subsubsection",
+      "line_number": 594,
+      "title": "RFL Success Probability ($p_{\\text{rfl"
+    },
+    {
+      "label": "sec:delta",
+      "level": "subsubsection",
+      "line_number": 605,
+      "title": "Uplift Delta ($\\Delta$)"
+    },
+    {
+      "label": "sec:ci",
+      "level": "subsubsection",
+      "line_number": 620,
+      "title": "Confidence Interval (CI)"
+    },
+    {
+      "label": "sec:slice-metrics",
+      "level": "subsection",
+      "line_number": 640,
+      "title": "Slice-Specific Success Functions"
+    },
+    {
+      "label": "sec:goal-hit",
+      "level": "subsubsection",
+      "line_number": 645,
+      "title": "Goal Hit Metric"
+    },
+    {
+      "label": "sec:sparse",
+      "level": "subsubsection",
+      "line_number": 660,
+      "title": "Sparse Success Metric"
+    },
+    {
+      "label": "sec:chain",
+      "level": "subsubsection",
+      "line_number": 673,
+      "title": "Chain Success Metric"
+    },
+    {
+      "label": "sec:multi-goal",
+      "level": "subsubsection",
+      "line_number": 688,
+      "title": "Multi-Goal Metric"
+    },
+    {
+      "label": "sec:capability",
+      "level": "subsection",
+      "line_number": 701,
+      "title": "Capability Metrics"
+    },
+    {
+      "label": "sec:seed-discipline",
+      "level": "section",
+      "line_number": 714,
+      "title": "Seed Discipline"
+    },
+    {
+      "label": "sec:seed-schedule",
+      "level": "subsection",
+      "line_number": 720,
+      "title": "Seed Schedule Generation"
+    },
+    {
+      "label": "sec:mdap-seed",
+      "level": "subsection",
+      "line_number": 735,
+      "title": "MDAP Epoch Seed"
+    },
+    {
+      "label": "sec:cycle-determinism",
+      "level": "subsection",
+      "line_number": 746,
+      "title": "Per-Cycle Determinism"
+    },
+    {
+      "label": "sec:seed-provenance",
+      "level": "subsection",
+      "line_number": 757,
+      "title": "Seed Provenance in Manifests"
+    },
+    {
+      "label": "sec:workflows",
+      "level": "section",
+      "line_number": 773,
+      "title": "Example Workflows"
+    },
+    {
+      "label": "sec:workflow-paired",
+      "level": "subsection",
+      "line_number": 779,
+      "title": "Running a Paired U2 Experiment"
+    },
+    {
+      "label": "sec:workflow-determinism",
+      "level": "subsection",
+      "line_number": 802,
+      "title": "Validating Determinism"
+    },
+    {
+      "label": "sec:workflow-metrics",
+      "level": "subsection",
+      "line_number": 821,
+      "title": "Computing Uplift Metrics"
+    },
+    {
+      "label": "sec:workflow-prereg",
+      "level": "subsection",
+      "line_number": 847,
+      "title": "Preregistration Workflow"
+    },
+    {
+      "label": "sec:workflow-manifest",
+      "level": "subsection",
+      "line_number": 871,
+      "title": "Manifest Verification"
+    },
+    {
+      "label": "sec:evidence",
+      "level": "section",
+      "line_number": 885,
+      "title": "Evidence Interpretation"
+    },
+    {
+      "label": "sec:appendix",
+      "level": "section",
+      "line_number": 913,
+      "title": "Reference Tables"
+    },
+    {
+      "label": "sec:file-locations",
+      "level": "subsection",
+      "line_number": 917,
+      "title": "File Locations"
+    },
+    {
+      "label": "sec:label-index",
+      "level": "subsection",
+      "line_number": 940,
+      "title": "Label Index"
+    },
+    {
+      "label": "sec:terminology",
+      "level": "subsection",
+      "line_number": 957,
+      "title": "Canonical Terminology"
+    }
+  ],
+  "signature_hash": "9a67e56fc90af4f95eb8b693a1fe1b39db298cdb0883cce23becc5a9a6d78e29",
+  "source_hash": "8b6c3bf3332695452ced2bee06e589c719f29fb30dafa07877604a15d51629e9",
+  "source_path": "C:\\dev\\mathledger\\docs\\fm.tex",
+  "version": "1.0.0"
+}

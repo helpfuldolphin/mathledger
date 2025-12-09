@@ -1,0 +1,281 @@
+--- a/rfl/runner.py
++++ b/rfl/runner.py
+@@ -16,6 +16,7 @@ import numpy as np
+ from typing import List, Dict, Any, Optional, Sequence
+ from pathlib import Path
+ from datetime import datetime
++import time
+
+ # TDA Mind Scanner integration (Phase II Soft Gating)
+ from typing import TYPE_CHECKING
+@@ -23,6 +24,53 @@ if TYPE_CHECKING:
+     from backend.tda.runtime_monitor import TDAMonitor, TDAMonitorResult
+     from backend.tda.reference_profile import ReferenceTDAProfile
+
++
++# ============================================================================
++# Phase II: HSS → Learning Rate Modulation
++# ============================================================================
++
++@dataclass
++class TDAModulationConfig:
++    """
++    Configuration for HSS-based learning rate modulation.
++
++    Phase II: Soft Gating
++    ---------------------
++    η_eff = η_base × f(HSS)
++
++    Where f(HSS) is:
++    - 1.0               if HSS >= θ_warn
++    - λ_soft            if θ_block <= HSS < θ_warn
++    - 0.0 (skip)        if HSS < θ_block
++    """
++    enabled: bool = True
++    theta_warn: float = 0.5        # HSS warning threshold
++    theta_block: float = 0.2       # HSS soft-block threshold
++    lambda_soft: float = 0.3       # Modulation factor in warn zone
++    skip_on_block: bool = True     # Skip learning entirely below θ_block
++
++    def compute_modulation_factor(self, hss: float) -> float:
++        """
++        Compute f(HSS) modulation factor.
++
++        Returns:
++            f in [0.0, 1.0] - multiplier for base learning rate
++        """
++        if hss >= self.theta_warn:
++            return 1.0
++        elif hss >= self.theta_block:
++            return self.lambda_soft
++        else:
++            return 0.0 if self.skip_on_block else self.lambda_soft
++
++    def classify_hss(self, hss: float) -> str:
++        """Classify HSS into OK/WARN/SOFT_BLOCK."""
++        if hss >= self.theta_warn:
++            return "OK"
++        elif hss >= self.theta_block:
++            return "WARN"
++        else:
++            return "SOFT_BLOCK"
++
+
+ from .config import RFLConfig, CurriculumSlice
+ from .experiment import RFLExperiment, ExperimentResult
+@@ -76,6 +124,10 @@ class RunLedgerEntry:
+     tda_pcs: Optional[float] = None
+     tda_drs: Optional[float] = None
+     tda_signal: Optional[str] = None
++    # Phase II: Learning rate modulation
++    eta_base: Optional[float] = None
++    eta_eff: Optional[float] = None
++    hss_class: Optional[str] = None  # "OK", "WARN", "SOFT_BLOCK"
+
+
+ from substrate.bridge.context import AttestedRunContext
+@@ -160,6 +212,12 @@ class RFLRunner:
+         self.tda_profiles: Dict[str, "ReferenceTDAProfile"] = {}
+         self._tda_results: List[Dict[str, Any]] = []
+         self._init_tda_monitor()
++
++        # Phase II: HSS → Learning Rate Modulation
++        self.tda_modulation = TDAModulationConfig()
++        self._modulation_stats: Dict[str, int] = {"OK": 0, "WARN": 0, "SOFT_BLOCK": 0}
++        self._learning_skipped_count: int = 0
++        self._eta_history: List[Dict[str, float]] = []
+
+     def _init_tda_monitor(self) -> None:
+         """Initialize TDA monitor if available and configured."""
+@@ -167,12 +225,14 @@ class RFLRunner:
+             from backend.tda.runtime_monitor import create_monitor, TDAOperationalMode
+             from backend.tda.reference_profile import load_reference_profiles
+             from pathlib import Path
++            import os
+
+             profiles_path = Path("config/tda_profiles/profiles")
+             if profiles_path.exists():
+                 self.tda_profiles = load_reference_profiles(profiles_path)
+
+-            # Create monitor in Shadow mode (Phase I)
+-            self.tda_monitor = create_monitor(mode="shadow")
+-            logger.info("[TDA] Mind Scanner initialized in Shadow Mode")
++            # Create monitor - mode from environment (default: soft for Phase II)
++            tda_mode = os.getenv("MATHLEDGER_TDA_MODE", "soft")
++            self.tda_monitor = create_monitor(mode=tda_mode)
++            logger.info(f"[TDA] Mind Scanner initialized in {tda_mode.upper()} Mode")
+         except ImportError:
+             logger.debug("[TDA] TDA module not available, skipping initialization")
+
+@@ -565,6 +625,12 @@ class RFLRunner:
+         tda_result = self._evaluate_tda_for_attestation(attestation)
+         tda_hss = tda_result.get("hss") if tda_result else None
+
++        # --- Phase II: Learning Rate Modulation ---
++        eta_base = 0.1  # Base learning rate
++        eta_eff, hss_class, learning_allowed = self._compute_modulated_learning_rate(
++            tda_hss, eta_base
++        )
++
+         if policy_update_applied:
+             self.policy_update_count += 1
+             breakdown = attestation.metadata.get("abstention_breakdown", {})
+@@ -574,6 +640,13 @@ class RFLRunner:
+             self.abstention_histogram["attestation_mass"] += int(
+                 round(attestation.abstention_mass)
+             )
+             self.abstention_histogram["attestation_events"] += 1
++
++            # Phase II: Check if learning is allowed by TDA modulation
++            if not learning_allowed:
++                self._learning_skipped_count += 1
++                logger.info(f"[TDA] Learning skipped (HSS={tda_hss:.3f}, class={hss_class})")
++                # Continue but skip weight updates
++                policy_update_applied = False
+
+             # Update policy weights based on verified count (graded reward)
+@@ -596,16 +669,17 @@ class RFLRunner:
+             # Graded reward: how far above/below target
+             reward = verified_count - target_verified
+
+-            # Increased learning rate (10x larger) to make policy matter more
+-            eta = 0.1  # Increased from 0.01 (10x)
++            # Phase II: Use modulated learning rate
++            eta = eta_eff
+
+             # More aggressive update scaling - use reward directly (not normalized)
+             # This makes even small differences in verified count matter more
+             # Use simple heuristics: prefer shorter formulas and moderate depth
+             # Positive reward (verified > target): reinforce current strategy
+             # Negative reward (verified < target): try opposite strategy
+-            if reward > 0:
++            if reward > 0 and learning_allowed:
+                 # Success: prefer shorter formulas (negative len weight)
+                 # and moderate depth (slight positive depth weight)
+                 # Scale by reward magnitude (more proofs = bigger update)
+@@ -614,7 +688,7 @@ class RFLRunner:
+                 self.policy_weights["depth"] += eta * (+0.05) * update_magnitude  # Slight preference for depth
+                 # Strongly reinforce success history feature when we succeed
+                 self.policy_weights["success"] += eta * reward  # Direct scaling by reward
+-            elif reward < 0:
++            elif reward < 0 and learning_allowed:
+                 # Failure: push away from current bias
+                 update_magnitude = min(abs(reward) * 0.5, 2.0)  # Cap at 2.0
+                 self.policy_weights["len"] += eta * (+0.1) * update_magnitude  # Try longer
+@@ -622,7 +696,7 @@ class RFLRunner:
+                 self.policy_weights["success"] += eta * 0.1 * reward  # Small penalty (reward is negative)
+             # If reward == 0, still do a small update to encourage exploration
+-            else:
++            elif learning_allowed:
+                 # Exactly at threshold: small random-walk update to explore
+                 self.policy_weights["len"] += eta * 0.01 * (-0.1)  # Tiny preference for shorter
+                 self.policy_weights["depth"] += eta * 0.01 * (+0.05)  # Tiny preference for depth
+@@ -633,6 +707,14 @@ class RFLRunner:
+             # We never want to penalize successful hashes - only prefer them or ignore them
+             self.policy_weights["success"] = max(0.0, self.policy_weights["success"])
+
++            # Record eta history for telemetry
++            self._eta_history.append({
++                "step_id": step_id[:16],
++                "eta_base": eta_base,
++                "eta_eff": eta_eff,
++                "hss": tda_hss,
++                "hss_class": hss_class,
++            })
+
+         self.abstention_fraction = max(self.abstention_fraction, attestation.abstention_rate)
+
+@@ -657,6 +739,10 @@ class RFLRunner:
+             tda_pcs=tda_pcs,
+             tda_drs=tda_drs,
+             tda_signal=tda_signal,
++            # Phase II fields
++            eta_base=eta_base,
++            eta_eff=eta_eff,
++            hss_class=hss_class,
+         )
+         self.policy_ledger.append(ledger_entry)
+
+@@ -761,6 +847,56 @@ class RFLRunner:
+
+         return result
+
++    # =========================================================================
++    # Phase II: HSS → Learning Rate Modulation
++    # =========================================================================
++
++    def _compute_modulated_learning_rate(
++        self,
++        hss: Optional[float],
++        eta_base: float,
++    ) -> Tuple[float, str, bool]:
++        """
++        Compute modulated learning rate based on HSS.
++
++        Phase II Soft Gating: η_eff = η_base × f(HSS)
++
++        Args:
++            hss: Hallucination Stability Score (or None if unavailable)
++            eta_base: Base learning rate
++
++        Returns:
++            Tuple of (eta_eff, hss_class, learning_allowed)
++        """
++        if hss is None or self.tda_monitor is None:
++            # No TDA available - use full learning rate
++            return eta_base, "NO_TDA", True
++
++        # Compute modulation factor
++        f_hss = self.tda_modulation.compute_modulation_factor(hss)
++        eta_eff = eta_base * f_hss
++
++        # Classify HSS
++        hss_class = self.tda_modulation.classify_hss(hss)
++        self._modulation_stats[hss_class] = self._modulation_stats.get(hss_class, 0) + 1
++
++        # Determine if learning is allowed
++        learning_allowed = f_hss > 0.0
++
++        logger.debug(
++            f"[TDA] Modulation: HSS={hss:.3f}, class={hss_class}, "
++            f"f={f_hss:.2f}, η_eff={eta_eff:.4f}"
++        )
++
++        return eta_eff, hss_class, learning_allowed
++
++    def get_modulation_stats(self) -> Dict[str, Any]:
++        """Get Phase II modulation statistics."""
++        return {
++            "hss_class_distribution": dict(self._modulation_stats),
++            "learning_skipped_count": self._learning_skipped_count,
++            "total_cycles": sum(self._modulation_stats.values()),
++            "modulation_config": {
++                "theta_warn": self.tda_modulation.theta_warn,
++                "theta_block": self.tda_modulation.theta_block,
++                "lambda_soft": self.tda_modulation.lambda_soft,
++            },
++        }
++
+     # =========================================================================
+     # TDA Mind Scanner Shadow Coupling (Phase I)
+     # =========================================================================
+@@ -860,6 +996,10 @@ class RFLRunner:
+             "min_hss": float(np.min(hss_values)) if hss_values else None,
+             "max_hss": float(np.max(hss_values)) if hss_values else None,
+         }
++        # Add Phase II modulation stats
++        summary["modulation"] = self.get_modulation_stats()
++        return summary
++
+
+     def _export_results(self) -> Dict[str, Any]:
+         """
+@@ -920,6 +1060,10 @@ class RFLRunner:
+             "tda_shadow": {
+                 "summary": self.get_tda_summary(),
+             }
++            "tda_phase2": {
++                "modulation_stats": self.get_modulation_stats(),
++                "eta_history": self._eta_history[-100:],  # Last 100 entries
++            },
+         }

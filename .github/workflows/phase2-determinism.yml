@@ -1,0 +1,244 @@
+name: Phase II Determinism Gate
+
+# Phase II Determinism Gate — Enforces PRNG compliance for Phase II code
+#
+# This workflow verifies that all Phase II modules use the DeterministicPRNG
+# framework correctly, with no global random state pollution.
+#
+# Checks:
+#   1. Static Analysis: No Phase II module uses global random functions
+#   2. Cross-Process Determinism: PRNG produces identical output across processes
+#   3. Manifest Attestation: All manifests have valid prng_attestation blocks
+#   4. Lineage Verification: Merkle roots are deterministic
+#
+# Author: Agent A2 (runtime-ops-2)
+
+on:
+  pull_request:
+    branches: [integrate/ledger-v0.1, main]
+    paths:
+      - 'rfl/**'
+      - 'experiments/**'
+      - 'scripts/check_phase2_determinism.py'
+      - 'scripts/reproducibility_probe.py'
+  push:
+    branches: [integrate/ledger-v0.1]
+    paths:
+      - 'rfl/**'
+      - 'experiments/**'
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: "Enable verbose output"
+        required: false
+        default: "false"
+      check_manifests:
+        description: "Directory to check manifests (empty for default)"
+        required: false
+        default: ""
+
+jobs:
+  phase2-prng-compliance:
+    name: PRNG Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run Phase II Determinism Gate
+        id: determinism_check
+        run: |
+          VERBOSE_FLAG=""
+          if [ "${{ github.event.inputs.verbose }}" == "true" ]; then
+            VERBOSE_FLAG="--verbose"
+          fi
+          
+          MANIFEST_FLAG=""
+          if [ -n "${{ github.event.inputs.check_manifests }}" ]; then
+            MANIFEST_FLAG="--check-manifests ${{ github.event.inputs.check_manifests }}"
+          fi
+          
+          uv run python scripts/check_phase2_determinism.py \
+            $VERBOSE_FLAG \
+            $MANIFEST_FLAG \
+            --output artifacts/phase2-determinism-results.json
+
+      - name: Upload determinism results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase2-determinism-results
+          path: artifacts/phase2-determinism-results.json
+          retention-days: 7
+
+  phase2-prng-unit-tests:
+    name: PRNG Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run PRNG unit tests
+        run: |
+          uv run pytest tests/rfl/test_deterministic_prng.py \
+            -v \
+            --tb=short \
+            --junit-xml=artifacts/prng-unit-results.xml
+
+      - name: Run cross-process determinism tests
+        run: |
+          uv run pytest tests/rfl/test_prng_cross_process.py \
+            -v \
+            --tb=short \
+            --junit-xml=artifacts/prng-cross-process-results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prng-test-results
+          path: artifacts/prng-*.xml
+          retention-days: 7
+
+  phase2-lineage-verification:
+    name: Seed Lineage Verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Verify seed lineage determinism
+        run: |
+          uv run python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from rfl.prng import DeterministicPRNG, int_to_hex_seed
+          from rfl.prng.lineage import SeedLineage, SeedReceipt
+          
+          print('Verifying seed lineage determinism...')
+          
+          # Test 1: SeedLineage Merkle root is deterministic
+          master_seed = int_to_hex_seed(42)
+          paths = [
+              ('slice_a', 'baseline', 'cycle_0001'),
+              ('slice_a', 'baseline', 'cycle_0002'),
+              ('slice_b', 'rfl', 'cycle_0001'),
+          ]
+          
+          roots = []
+          for i in range(3):
+              lineage = SeedLineage(master_seed)
+              for path in sorted(paths):
+                  lineage.record(*path)
+              roots.append(lineage.compute_merkle_root())
+          
+          assert len(set(roots)) == 1, f'Merkle roots differ: {roots}'
+          print(f'  ✓ Merkle root deterministic: {roots[0][:16]}...')
+          
+          # Test 2: SeedReceipt verification
+          for path in paths:
+              receipt = SeedReceipt.create(master_seed, path)
+              assert receipt.verify(), f'Receipt verification failed for {path}'
+          print(f'  ✓ {len(paths)} receipts verified')
+          
+          # Test 3: Cross-instance consistency
+          prng1 = DeterministicPRNG(master_seed)
+          prng2 = DeterministicPRNG(master_seed)
+          
+          for path in paths:
+              s1 = prng1.seed_for_path(*path)
+              s2 = prng2.seed_for_path(*path)
+              assert s1 == s2, f'Seed mismatch for {path}: {s1} != {s2}'
+          print(f'  ✓ Cross-instance seeds identical')
+          
+          print()
+          print('✓ All seed lineage verifications passed')
+          "
+
+  phase2-attestation-schema:
+    name: Attestation Schema Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Validate prng_attestation schema
+        run: |
+          uv run python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from rfl.config import RFLConfig
+          from rfl.experiment import ExperimentResult
+          from rfl.provenance import ManifestBuilder
+          
+          print('Validating prng_attestation schema...')
+          
+          # Create a mock config and result
+          config = RFLConfig(experiment_id='test_schema', random_seed=42)
+          
+          # Mock result
+          class MockResult:
+              end_time = '2024-01-01T00:00:00Z'
+              logs = []
+              figures = []
+              def to_dict(self):
+                  return {'status': 'mock'}
+          
+          builder = ManifestBuilder('.')
+          manifest = builder.build(
+              run_index=1,
+              config=config,
+              result=MockResult(),
+              effective_seed=42,
+          )
+          
+          # Validate prng_attestation block
+          assert 'prng_attestation' in manifest, 'Missing prng_attestation block'
+          
+          attest = manifest['prng_attestation']
+          required_fields = [
+              'schema_version',
+              'master_seed_hex',
+              'derivation_scheme',
+              'implementation',
+          ]
+          
+          for field in required_fields:
+              assert field in attest, f'Missing field: {field}'
+          print(f'  ✓ Required fields present: {required_fields}')
+          
+          # Validate master_seed_hex format
+          seed_hex = attest['master_seed_hex']
+          assert len(seed_hex) == 64, f'Invalid seed length: {len(seed_hex)}'
+          int(seed_hex, 16)  # Should not raise
+          print(f'  ✓ master_seed_hex valid: {seed_hex[:16]}...')
+          
+          # Validate implementation includes git ref
+          impl = attest['implementation']
+          assert '@' in impl, f'Implementation missing git ref: {impl}'
+          print(f'  ✓ implementation: {impl}')
+          
+          print()
+          print('✓ prng_attestation schema validation passed')
+          "
+

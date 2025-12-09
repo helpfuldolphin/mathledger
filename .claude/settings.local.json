@@ -24,7 +24,10 @@
       "Bash(find:*)",
       "Bash(uv run:*)",
       "Bash(timeout 30 powershell:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(Select-String \"ERROR|ImportError|ModuleNotFoundError\")",
+      "Bash(Select-Object -First 60)",
+      "Bash(cd:*)"
     ],
     "deny": [],
     "ask": []

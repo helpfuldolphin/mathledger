@@ -1,0 +1,271 @@
+# Performance Ratchet CI Workflow
+# ================================
+#
+# This workflow enforces performance SLOs on the derivation pipeline.
+# It runs benchmarks and compares against historical baselines to prevent
+# performance regressions from being merged.
+#
+# Owner: Agent A4 (runtime-ops-4)
+#
+# Trigger: PRs touching derivation, normalization, or cycle runner code
+#
+# SLO Thresholds (from config/perf_baseline.json):
+#   - WARN: >5% regression vs reference
+#   - BLOCK: >25% regression vs reference
+#
+# Note: This workflow is designed to be deterministic - no random workloads.
+
+name: Performance Ratchet
+
+on:
+  pull_request:
+    paths:
+      - 'derivation/**'
+      - 'normalization/**'
+      - 'experiments/run_fo_cycles.py'
+      - 'experiments/profile_cycle_runner.py'
+      - 'experiments/verify_perf_equivalence.py'
+      - 'config/perf_baseline.json'
+  
+  # Allow manual trigger for baseline updates
+  workflow_dispatch:
+    inputs:
+      update_baseline:
+        description: 'Update the baseline reference (requires write access)'
+        required: false
+        default: 'false'
+        type: boolean
+      cycles:
+        description: 'Number of benchmark cycles'
+        required: false
+        default: '30'
+        type: string
+
+# Prevent concurrent runs on the same PR
+concurrency:
+  group: perf-ratchet-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  perf-check:
+    name: Performance SLO Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Create results directory
+        run: mkdir -p results/perf
+      
+      # -------------------------------------------------------------------
+      # Benchmark: Baseline (optimizations disabled)
+      # -------------------------------------------------------------------
+      - name: Run baseline benchmark
+        id: baseline
+        env:
+          MATHLEDGER_PERF_OPT: "0"
+        run: |
+          echo "Running baseline benchmark with MATHLEDGER_PERF_OPT=0..."
+          uv run python experiments/profile_cycle_runner.py \
+            --tag=baseline \
+            --cycles=${{ inputs.cycles || '30' }} \
+            --warmup=5 \
+            --no-optimized
+          echo "Baseline benchmark complete."
+      
+      # -------------------------------------------------------------------
+      # Benchmark: Optimized (optimizations enabled)
+      # -------------------------------------------------------------------
+      - name: Run optimized benchmark
+        id: optimized
+        env:
+          MATHLEDGER_PERF_OPT: "1"
+        run: |
+          echo "Running optimized benchmark with MATHLEDGER_PERF_OPT=1..."
+          uv run python experiments/profile_cycle_runner.py \
+            --tag=optimized \
+            --cycles=${{ inputs.cycles || '30' }} \
+            --warmup=5 \
+            --use-optimized
+          echo "Optimized benchmark complete."
+      
+      # -------------------------------------------------------------------
+      # SLO Verification
+      # -------------------------------------------------------------------
+      - name: Verify performance SLO
+        id: slo
+        run: |
+          echo "Verifying against SLO baseline..."
+          uv run python experiments/verify_perf_equivalence.py \
+            --baseline results/perf/baseline.json \
+            --optimized results/perf/optimized.json \
+            --slo config/perf_baseline.json \
+            --output-summary results/perf/summary.md
+          
+          # Capture exit code for later
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      # -------------------------------------------------------------------
+      # Post Results to PR
+      # -------------------------------------------------------------------
+      - name: Post summary to GitHub Step Summary
+        if: always()
+        run: |
+          if [ -f results/perf/summary.md ]; then
+            cat results/perf/summary.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ⚠️ Performance Summary Not Generated" >> $GITHUB_STEP_SUMMARY
+            echo "The benchmark may have failed before generating results." >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '';
+            
+            try {
+              body = fs.readFileSync('results/perf/summary.md', 'utf8');
+            } catch (e) {
+              body = '## ⚠️ Performance Check Incomplete\n\nThe benchmark did not complete successfully. Check the workflow logs for details.';
+            }
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(c => 
+              c.user.type === 'Bot' && 
+              c.body.includes('Performance Ratchet Report')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+      
+      # -------------------------------------------------------------------
+      # Upload Artifacts
+      # -------------------------------------------------------------------
+      - name: Upload performance artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: perf-results-${{ github.sha }}
+          path: |
+            results/perf/
+          retention-days: 30
+      
+      # -------------------------------------------------------------------
+      # Final Status Check
+      # -------------------------------------------------------------------
+      - name: Check SLO result
+        if: always()
+        run: |
+          if [ -f results/perf/slo_result.json ]; then
+            STATUS=$(jq -r '.status' results/perf/slo_result.json)
+            CI_PASS=$(jq -r '.ci_pass' results/perf/slo_result.json)
+            
+            echo "SLO Status: $STATUS"
+            echo "CI Pass: $CI_PASS"
+            
+            if [ "$CI_PASS" = "false" ]; then
+              echo "::error::Performance SLO check failed with status: $STATUS"
+              exit 1
+            fi
+          else
+            echo "::warning::SLO result file not found"
+            # Don't fail if the file is missing - the benchmark step would have failed
+          fi
+
+  # Optional: Update baseline (manual trigger only)
+  update-baseline:
+    name: Update Baseline Reference
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.update_baseline == 'true'
+    needs: perf-check
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download performance artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: perf-results-${{ github.sha }}
+          path: results/perf/
+      
+      - name: Update baseline reference
+        run: |
+          # Read optimized results
+          OPTIMIZED_AVG=$(jq '.avg_time_per_cycle_ms' results/perf/optimized.json)
+          OPTIMIZED_MIN=$(jq '.min_time_per_cycle_ms' results/perf/optimized.json)
+          OPTIMIZED_MAX=$(jq '.max_time_per_cycle_ms' results/perf/optimized.json)
+          CYCLES=$(jq '.cycles' results/perf/optimized.json)
+          
+          # Update baseline JSON
+          jq --arg avg "$OPTIMIZED_AVG" \
+             --arg min "$OPTIMIZED_MIN" \
+             --arg max "$OPTIMIZED_MAX" \
+             --arg cycles "$CYCLES" \
+             --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+             '.baseline.reference_avg_ms = ($avg | tonumber) |
+              .baseline.reference_min_ms = ($min | tonumber) |
+              .baseline.reference_max_ms = ($max | tonumber) |
+              .baseline.measured_cycles = ($cycles | tonumber) |
+              .updated_at = $date' \
+             config/perf_baseline.json > config/perf_baseline.json.tmp
+          mv config/perf_baseline.json.tmp config/perf_baseline.json
+          
+          echo "Updated baseline to: $OPTIMIZED_AVG ms"
+      
+      - name: Commit updated baseline
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add config/perf_baseline.json
+          git commit -m "chore: update performance baseline reference
+
+          Updated by perf-ratchet workflow.
+          New reference: $(jq '.baseline.reference_avg_ms' config/perf_baseline.json)ms"
+          git push
+

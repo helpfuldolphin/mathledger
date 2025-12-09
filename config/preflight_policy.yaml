@@ -1,0 +1,36 @@
+# config/preflight_policy.yaml
+#
+# Defines the thresholds for the global health status summary.
+# All policy decisions regarding timeline summaries are derived from this contract.
+schema_version: "1.0"
+
+global_health_policy:
+  # Status: OK
+  # All conditions must be met for status to be OK.
+  ok_thresholds:
+    # The minimum eligibility rate over the latest_runs_window to be considered OK.
+    min_latest_eligibility_rate: 95.0
+    # A REGRESSING trend immediately disqualifies the status from being OK.
+    disallowed_trends:
+      - "REGRESSING"
+
+  # Status: DRIFTING is the intermediate warning state, triggered when the system
+  # is neither OK nor BLOCKED.
+
+  # Status: BLOCKED
+  # Any of these conditions will immediately trigger a BLOCKED status.
+  blocked_criteria:
+    # An eligibility rate below this value is an automatic BLOCK, irrespective of trend.
+    min_latest_eligibility_rate: 80.0
+    # A sequence of N consecutive failed runs indicates a systemic, unresolved issue.
+    consecutive_failures_trigger: 5
+
+  # Parameters governing the analytics engine.
+  timeline_parameters:
+    # The number of most recent runs to consider for the 'latest_eligibility_rate'.
+    latest_runs_window: 20
+    # The minimum number of runs required to compute a meaningful trend.
+    trend_analysis_min_runs: 4
+    # The tolerance (+/-) for eligibility rate changes to be considered STABLE.
+    # A change outside this band is either IMPROVING or REGRESSING.
+    trend_stability_tolerance: 0.05 # 5%

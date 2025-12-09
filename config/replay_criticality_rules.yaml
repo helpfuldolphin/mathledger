@@ -1,0 +1,13 @@
+# PHASE IV - Replay Criticality Rules
+#
+# This file defines which RECON codes are considered "critical".
+# The presence of a recurring incident with any of these codes will
+# mark the replay governance radar as "UNSTABLE" and block promotions.
+
+schema_version: "1.0"
+
+# List of RECON codes that are considered critical failures.
+critical_recon_codes:
+  - "RECON-001"  # Example: Core Substrate Hash Mismatch
+  - "RECON-005"  # Example: Unrecoverable Telemetry Desync
+  - "RECON-009"  # Example: Security-Sensitive Invariant Violation

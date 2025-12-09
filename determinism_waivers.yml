@@ -1,0 +1,12 @@
+# GEMINI-K: Determinism Waiver Whitelist
+#
+# This file contains a list of ticket IDs that are authorized to be used
+# in DETERMINISM-WAIVER comments. The static linter will fail any waiver
+# comment that references a ticket ID not present in this list.
+#
+# Format:
+# - TICKET-ID-123 # Description of why the waiver is justified.
+# - TICKET-ID-456 # Another justification.
+
+# No waivers are currently authorized.
+authorized_waivers: []

@@ -1,0 +1,85 @@
+# PHASE II — NOT RUN IN PHASE I
+name: 'Governance Pipeline'
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_directory:
+        description: 'Path to the directory containing the experiment run artifacts (manifest.json, prereg.yaml, etc.)'
+        required: true
+        default: 'tests/governance/test_data/valid_run_v2'
+
+jobs:
+  verify-governance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: '(G1) Verify Preregistration'
+        id: prereg
+        run: |
+          python scripts/verify_prereg.py \
+            --prereg-file ${{ github.workspace }}/${{ inputs.run_directory }}/prereg.yaml \
+            --experiment-id $(jq -r .experiment_id ${{ github.workspace }}/${{ inputs.run_directory }}/manifest.json) \
+            --json > prereg_result.json
+          echo "exit_code=$?" >> $GITHUB_ENV
+          cat prereg_result.json
+
+      - name: '(G2/EV1) Verify Manifest Integrity'
+        id: integrity
+        if: env.exit_code == 0
+        run: |
+          python scripts/verify_manifest_integrity.py \
+            --manifest ${{ github.workspace }}/${{ inputs.run_directory }}/manifest.json \
+            --prereg-file ${{ github.workspace }}/${{ inputs.run_directory }}/prereg.yaml \
+            --slice-config ${{ github.workspace }}/${{ inputs.run_directory }}/slice.json \
+            --results-file ${{ github.workspace }}/${{ inputs.run_directory }}/results.jsonl \
+            --json > integrity_result.json
+          echo "exit_code=$?" >> $GITHUB_ENV
+          cat integrity_result.json
+
+      - name: '(G3) Verify Determinism Replay & Final Gates'
+        id: gates
+        if: env.exit_code == 0
+        run: |
+          python scripts/verify_uplift_gates.py \
+            --manifest ${{ github.workspace }}/${{ inputs.run_directory }}/manifest.json \
+            --replay-results-file ${{ github.workspace }}/${{ inputs.run_directory }}/replay/results.jsonl \
+            --replay-telemetry-file ${{ github.workspace }}/${{ inputs.run_directory }}/replay/telemetry.log \
+            --json > gates_result.json
+          echo "exit_code=$?" >> $GITHUB_ENV
+          cat gates_result.json
+
+      - name: 'Check for Script Failures'
+        if: env.exit_code != 0
+        run: |
+          echo "A governance script failed with exit code $exit_code. Halting pipeline."
+          exit 1
+          
+      - name: 'Build Governance Receipt'
+        if: success()
+        run: |
+          python backend/governance/receipt_builder.py \
+            --prereg-json prereg_result.json \
+            --manifest-integrity-json integrity_result.json \
+            --uplift-gates-json gates_result.json \
+            --manifest-json ${{ github.workspace }}/${{ inputs.run_directory }}/manifest.json \
+            > governance_receipt.json
+          echo "Governance Receipt:"
+          cat governance_receipt.json
+
+      - name: 'Upload Governance Receipt'
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: governance-receipt
+          path: governance_receipt.json

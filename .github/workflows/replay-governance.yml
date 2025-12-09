@@ -1,0 +1,90 @@
+# PHASE IV — Replay Governance CI Workflow
+name: 'Replay Governance Radar'
+
+on:
+  pull_request:
+    paths:
+      - 'artifacts/replay_receipts.jsonl'
+  workflow_dispatch:
+
+env:
+  # The minimum acceptable determinism rate. A value below this will fail the CI job.
+  DETERMINISM_THRESHOLD: 0.90
+
+jobs:
+  replay-governance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install Dependencies
+        run: pip install pyyaml
+
+      - name: Run Governance Orchestrator
+        id: orchestrator
+        run: |
+          python scripts/replay_governance_orchestrator.py \
+            --receipts-file artifacts/replay_receipts.jsonl \
+            --output-dir artifacts/governance
+        # This assumes a canonical 'replay_receipts.jsonl' is checked in.
+
+      - name: Load Governance Snapshot
+        id: snapshot
+        run: |
+          snapshot_data=$(cat artifacts/governance/replay_governance_snapshot.json)
+          # Escape for multiline output
+          snapshot_data="${snapshot_data//'%'/'%25'}"
+          snapshot_data="${snapshot_data//$'
+'/'%0A'}"
+          snapshot_data="${snapshot_data//$''/'%0D'}"
+          echo "json_data=$snapshot_data" >> $GITHUB_OUTPUT
+
+      - name: Evaluate Governance Gating Rules
+        run: |
+          snapshot='${{ steps.snapshot.outputs.json_data }}'
+          
+          # Extract key fields using jq
+          promotion_ok=$(echo "$snapshot" | jq -r '.promotion_eval.replay_promotion_ok')
+          radar_status=$(echo "$snapshot" | jq -r '.radar.radar_status')
+          determinism_rate_str=$(echo "$snapshot" | jq -r '.director_panel.determinism_rate' | sed 's/%//')
+          determinism_rate=$(echo "scale=4; $determinism_rate_str / 100" | bc)
+
+          echo "--- Governance Evaluation ---"
+          echo "Promotion OK? $promotion_ok"
+          echo "Radar Status: $radar_status"
+          echo "Determinism Rate: $determinism_rate"
+          echo "Threshold: $DETERMINISM_THRESHOLD"
+          echo "---------------------------"
+
+          # Rule 1: Promotion must be OK
+          if [[ "$promotion_ok" != "true" ]]; then
+            echo "❌ FAILURE: Promotion evaluation returned a BLOCK or WARN status."
+            exit 1
+          fi
+
+          # Rule 2: Radar must be STABLE
+          if [[ "$radar_status" != "STABLE" ]]; then
+            echo "❌ FAILURE: Governance radar status is '$radar_status', not 'STABLE'."
+            exit 1
+          fi
+          
+          # Rule 3: Determinism rate must meet threshold
+          if (( $(echo "$determinism_rate < $DETERMINISM_THRESHOLD" | bc -l) )); then
+            echo "❌ FAILURE: Determinism rate $determinism_rate is below the required threshold of $DETERMINISM_THRESHOLD."
+            exit 1
+          fi
+
+          echo "✅ SUCCESS: All replay governance checks passed."
+
+      - name: Upload Governance Snapshot
+        if: always() # Upload even on failure for debugging
+        uses: actions/upload-artifact@v3
+        with:
+          name: replay-governance-snapshot
+          path: artifacts/governance/replay_governance_snapshot.json

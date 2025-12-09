@@ -1224,6 +1224,38 @@ DEFAULT_AST_CONFIG = ASTNormalizationConfig()
 
 
 # ---------------------------------------------------------------------------
+# Budget Summary Helper
+# ---------------------------------------------------------------------------
+
+
+def summarize_budget(stats: PipelineStats) -> Dict[str, Any]:
+    """
+    Summarize budget-related statistics from a pipeline run.
+
+    Args:
+        stats: PipelineStats from a derivation run.
+
+    Returns:
+        Dictionary with budget fields:
+        - timeout_abstentions: Number of timeout-related abstentions
+        - candidates_considered: Total candidates considered
+        - verified: Number successfully verified
+        - rejected: Number rejected
+    """
+    return {
+        "timeout_abstentions": getattr(stats, "timeout_abstentions", 0),
+        "candidates_considered": stats.candidates_considered,
+        "verified": stats.verified,
+        "rejected": stats.rejected,
+        "axioms_seeded": stats.axioms_seeded,
+        "mp_rounds": stats.mp_rounds,
+        "depth_filtered": stats.depth_filtered,
+        "atom_filtered": stats.atom_filtered,
+        "duplicate_filtered": stats.duplicate_filtered,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Module Exports
 # ---------------------------------------------------------------------------
 
@@ -1255,4 +1287,7 @@ __all__ = [
     "NormalizationStrategy",
     "ASTNormalizationConfig",
     "DEFAULT_AST_CONFIG",
+
+    # Budget summary
+    "summarize_budget",
 ]

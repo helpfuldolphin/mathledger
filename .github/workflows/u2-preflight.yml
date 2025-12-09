@@ -1,0 +1,240 @@
+# U2 Pre-Flight Audit Gate
+# PHASE II — NOT RUN IN PHASE I
+#
+# This workflow runs the U2 pre-flight audit checks before any U2 experiment
+# can be used as evidence. It enforces the 25-item checklist from
+# U2_PRE_FLIGHT_AUDIT_PLAYBOOK.md.
+#
+# Exit Codes:
+#   0 - ELIGIBLE or ELIGIBLE_WARNED (audit may proceed)
+#   1 - BLOCKED_FIXABLE or INADMISSIBLE (audit blocked)
+
+name: U2 Pre-Flight Audit Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      experiment_id:
+        description: 'U2 Experiment ID to audit'
+        required: true
+        type: string
+      fail_on_warn:
+        description: 'Fail if warnings present (default: false)'
+        required: false
+        type: boolean
+        default: false
+
+  # Can also be triggered by other workflows
+  workflow_call:
+    inputs:
+      experiment_id:
+        description: 'U2 Experiment ID to audit'
+        required: true
+        type: string
+      fail_on_warn:
+        description: 'Fail if warnings present'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      eligibility_status:
+        description: 'Eligibility status (ELIGIBLE, BLOCKED_FIXABLE, INADMISSIBLE, etc.)'
+        value: ${{ jobs.preflight.outputs.status }}
+      report_path:
+        description: 'Path to the preflight report JSON'
+        value: ${{ jobs.preflight.outputs.report_path }}
+
+env:
+  DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ml:mlpass@localhost:5432/mathledger' }}
+  REDIS_URL: ${{ secrets.REDIS_URL || 'redis://localhost:6379/0' }}
+
+jobs:
+  preflight:
+    name: U2 Pre-Flight Check
+    runs-on: ubuntu-latest
+
+    outputs:
+      status: ${{ steps.preflight.outputs.status }}
+      report_path: ${{ steps.preflight.outputs.report_path }}
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: ml
+          POSTGRES_PASSWORD: mlpass
+          POSTGRES_DB: mathledger
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install psycopg2-binary pyyaml
+          # Install project dependencies if pyproject.toml exists
+          if [ -f pyproject.toml ]; then
+            pip install -e .
+          fi
+
+      - name: Run database migrations
+        run: |
+          # Run migrations to ensure U2 tables exist
+          if [ -f run_all_migrations.py ]; then
+            python run_all_migrations.py
+          fi
+        env:
+          DATABASE_URL: postgresql://ml:mlpass@localhost:5432/mathledger
+
+      - name: Create log directory structure
+        run: |
+          mkdir -p logs/u2/${{ inputs.experiment_id }}
+
+      - name: Run Pre-Flight Checks
+        id: preflight
+        run: |
+          REPORT_PATH="preflight_${{ inputs.experiment_id }}_$(date +%Y%m%d_%H%M%S).json"
+          SNAPSHOT_PATH="preflight_${{ inputs.experiment_id }}_snapshot.json"
+
+          echo "Running pre-flight checks for experiment: ${{ inputs.experiment_id }}"
+          echo "Report will be saved to: $REPORT_PATH"
+
+          # Run preflight script and save JSON report
+          python scripts/u2_preflight.py \
+            --exp-id "${{ inputs.experiment_id }}" \
+            --run-dir "$(pwd)" \
+            --db-url "$DATABASE_URL" \
+            --prereg config/PREREG_UPLIFT_U2.yaml \
+            --output "$REPORT_PATH" \
+            || PREFLIGHT_EXIT=$?
+
+          # Extract status from report
+          if [ -f "$REPORT_PATH" ]; then
+            STATUS=$(python -c "import json; print(json.load(open('$REPORT_PATH'))['eligibility_status'])")
+          else
+            STATUS="UNKNOWN"
+            PREFLIGHT_EXIT=2
+          fi
+
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "report_path=$REPORT_PATH" >> $GITHUB_OUTPUT
+
+          # Generate markdown summary using the --markdown flag
+          python scripts/u2_preflight.py \
+            --exp-id "${{ inputs.experiment_id }}" \
+            --run-dir "$(pwd)" \
+            --db-url "$DATABASE_URL" \
+            --prereg config/PREREG_UPLIFT_U2.yaml \
+            --markdown >> $GITHUB_STEP_SUMMARY \
+            || true  # Don't fail on summary generation
+
+          # Generate snapshot for comparison (useful for tracking remediation)
+          python scripts/u2_preflight.py \
+            --exp-id "${{ inputs.experiment_id }}" \
+            --run-dir "$(pwd)" \
+            --db-url "$DATABASE_URL" \
+            --prereg config/PREREG_UPLIFT_U2.yaml \
+            --snapshot \
+            --output "$SNAPSHOT_PATH" \
+            || true  # Don't fail on snapshot generation
+
+          # Return appropriate exit code
+          exit ${PREFLIGHT_EXIT:-0}
+        env:
+          DATABASE_URL: postgresql://ml:mlpass@localhost:5432/mathledger
+
+      - name: Upload Pre-Flight Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: preflight-report-${{ inputs.experiment_id }}
+          path: |
+            preflight_*.json
+          retention-days: 90
+
+      - name: Check for warnings (optional fail)
+        if: inputs.fail_on_warn && steps.preflight.outputs.status == 'ELIGIBLE_WARNED'
+        run: |
+          echo "::error::Pre-flight passed with warnings but fail_on_warn is enabled"
+          exit 1
+
+      - name: Gate Decision
+        run: |
+          STATUS="${{ steps.preflight.outputs.status }}"
+
+          case "$STATUS" in
+            ELIGIBLE|ELIGIBLE_PARTIAL|ELIGIBLE_WARNED)
+              echo "✅ Pre-flight PASSED: Experiment is audit-eligible"
+              echo "Status: $STATUS"
+              exit 0
+              ;;
+            BLOCKED_FIXABLE)
+              echo "🛑 Pre-flight BLOCKED: Issues must be fixed before audit"
+              echo "Status: $STATUS"
+              echo "See report for required fixes"
+              exit 1
+              ;;
+            INADMISSIBLE)
+              echo "❌ Pre-flight FAILED: Experiment is INADMISSIBLE"
+              echo "Status: $STATUS"
+              echo "FATAL conditions detected - experiment cannot be used as evidence"
+              exit 1
+              ;;
+            *)
+              echo "⚠️ Unknown status: $STATUS"
+              exit 2
+              ;;
+          esac
+
+  # Optional: Run full audit if preflight passes
+  audit-ready:
+    name: Audit Readiness Summary
+    runs-on: ubuntu-latest
+    needs: preflight
+    if: always()
+
+    steps:
+      - name: Summary
+        run: |
+          echo "## Audit Readiness Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Experiment | Status | Ready for Audit |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|-----------------|" >> $GITHUB_STEP_SUMMARY
+
+          STATUS="${{ needs.preflight.outputs.status }}"
+          case "$STATUS" in
+            ELIGIBLE)
+              READY="✅ Yes"
+              ;;
+            ELIGIBLE_PARTIAL)
+              READY="⚠️ Partial"
+              ;;
+            ELIGIBLE_WARNED)
+              READY="⚠️ Yes (with warnings)"
+              ;;
+            BLOCKED_FIXABLE)
+              READY="❌ No (fixable)"
+              ;;
+            INADMISSIBLE)
+              READY="❌ Never"
+              ;;
+            *)
+              READY="❓ Unknown"
+              ;;
+          esac
+
+          echo "| ${{ inputs.experiment_id }} | $STATUS | $READY |" >> $GITHUB_STEP_SUMMARY

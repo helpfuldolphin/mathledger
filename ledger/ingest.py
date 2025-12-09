@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import Dict, Optional, Sequence, Tuple
 
 from psycopg.cursor import Cursor
@@ -23,8 +22,10 @@ from attestation.dual_root import (
     compute_ui_root,
     generate_attestation_metadata,
 )
-from substrate.crypto.hashing import DOMAIN_ROOT, DOMAIN_STMT, hash_block, hash_statement, sha256_hex
+from substrate.crypto.hashing import DOMAIN_ROOT, DOMAIN_STMT, hash_statement, sha256_hex
 from normalization.canon import canonical_bytes, normalize
+from normalization.proof import canonicalize_module_name, canonicalize_proof_text
+from ledger.block_schema import seal_block_schema
 
 
 _SLUG_RE = re.compile(r"[^a-z0-9]+")
@@ -412,12 +413,13 @@ class LedgerIngestor:
         duration_ms: Optional[int],
     ) -> ProofRecord:
         normalized_proof_text = proof_text or ""
+        canonical_proof_text = canonicalize_proof_text(normalized_proof_text)
         payload = {
             "statement_hash": statement.hash,
             "prover": prover or "",
             "status": status or "",
-            "proof_text": normalized_proof_text,
-            "module": module_name or "",
+            "proof_text": canonical_proof_text,
+            "module": canonicalize_module_name(module_name),
             "derivation_rule": derivation_rule or "",
         }
         payload_json = _canonical_json(payload)
@@ -533,7 +535,7 @@ class LedgerIngestor:
             statement_map.setdefault(proof.statement.hash, proof.statement.id)
         statement_hashes = sorted(statement_map.keys())
 
-        proof_entries = sorted(proofs, key=lambda p: p.hash)
+        proof_entries = sorted(proofs, key=lambda p: (p.hash, p.statement.hash))
         reasoning_inputs = [p.hash for p in proof_entries]
         reasoning_root = compute_reasoning_root(reasoning_inputs)
 
@@ -541,29 +543,14 @@ class LedgerIngestor:
         ui_root = compute_ui_root(ui_inputs)
         composite_root = compute_composite_root(reasoning_root, ui_root)
 
-        # Deterministic timestamp derived from the content itself
-        # This ensures that identical content always produces the identical sealed_at time
-        from substrate.repro.determinism import deterministic_timestamp_from_content
-        sealed_at = deterministic_timestamp_from_content(composite_root)
-
-        header_doc = {
-            "block_number": block_number,
-            "system_id": system_id,
-            "reasoning_root": reasoning_root,
-            "ui_root": ui_root,
-            "composite_root": composite_root,
-            "statement_count": len(statement_hashes),
-            "proof_count": len(proof_entries),
-            "sealed_at": sealed_at.isoformat(timespec="microseconds"),
-            "prev_hash": prev_hash,
-            "version": "v2",
-        }
-        header_json = _canonical_json(header_doc)
-        block_hash = hash_block(header_json)
-
-        payload_doc = {
-            "statements": statement_hashes,
-            "proofs": [
+        sealed_schema = seal_block_schema(
+            system_id=system_id,
+            block_number=block_number,
+            reasoning_root=reasoning_root,
+            ui_root=ui_root,
+            composite_root=composite_root,
+            statements=statement_hashes,
+            proofs=[
                 {
                     "hash": proof.hash,
                     "statement_hash": proof.statement.hash,
@@ -571,9 +558,12 @@ class LedgerIngestor:
                 }
                 for proof in proof_entries
             ],
-        }
-        payload_json = _canonical_json(payload_doc)
-        payload_hash = sha256_hex(payload_json, domain=DOMAIN_ROOT)
+            prev_hash=prev_hash,
+        )
+        statement_hashes = sealed_schema.statements
+        sealed_at = sealed_schema.sealed_at
+        payload_hash = sealed_schema.payload_hash
+        block_hash = sealed_schema.block_hash
 
         attestation_metadata = generate_attestation_metadata(
             r_t=reasoning_root,
@@ -627,27 +617,12 @@ class LedgerIngestor:
                 prev_block_id,
                 reasoning_root,
                 reasoning_root,
-                Json(header_doc),
-                Json(statement_hashes),
-                Json(
-                    [
-                        {"position": idx, "hash": hash_}
-                        for idx, hash_ in enumerate(statement_hashes)
-                    ]
-                ),
-                Json(
-                    [
-                        {
-                            "position": idx,
-                            "hash": proof.hash,
-                            "statement_hash": proof.statement.hash,
-                            "status": proof.status,
-                        }
-                        for idx, proof in enumerate(proof_entries)
-                    ]
-                ),
-                len(statement_hashes),
-                len(proof_entries),
+                Json(sealed_schema.header),
+                Json(sealed_schema.statements),
+                Json(sealed_schema.canonical_statements),
+                Json(sealed_schema.canonical_proofs),
+                sealed_schema.header["statement_count"],
+                sealed_schema.header["proof_count"],
                 reasoning_root,
                 ui_root,
                 composite_root,

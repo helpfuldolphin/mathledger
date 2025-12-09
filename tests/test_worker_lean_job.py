@@ -25,7 +25,7 @@ from backend.worker import (
     retry_with_tautology_strategy,
     make_lean_source,
 )
-from backend.lean_interface import sanitize_statement
+from backend.lean_interface import classify_lean_failure, sanitize_statement
 from backend.lean_mode import (
     LeanMode,
     ABSTENTION_SIGNATURE,
@@ -681,3 +681,38 @@ class TestRetryWithTautologyStrategy:
         assert "classical" in result.lean_source
         assert "decide" in result.lean_source
         assert "end ML.Jobs" in result.lean_source
+
+
+class TestLeanFailureSignalClassification:
+    """Unit tests for Lean failure signal parsing."""
+
+    def test_timeout_detection(self):
+        signal = classify_lean_failure(
+            "[TIMEOUT] Execution exceeded 90s for job job_xyz",
+            124,
+            1550,
+        )
+        assert signal.kind == "timeout"
+        assert signal.elapsed_ms == 1550
+        assert "timeout" in signal.message.lower()
+
+    def test_type_error_detection(self):
+        signal = classify_lean_failure(
+            "error: type mismatch, term has type Foo but is expected to have type Bar",
+            1,
+            25,
+        )
+        assert signal.kind == "type_error"
+
+    def test_tactic_failure_detection(self):
+        signal = classify_lean_failure(
+            "tactic failed, there are unsolved goals",
+            1,
+            42,
+        )
+        assert signal.kind == "tactic_failure"
+
+    def test_unknown_fallback(self):
+        signal = classify_lean_failure("", 2, 7)
+        assert signal.kind == "unknown"
+        assert "return code" in signal.message

@@ -21,6 +21,22 @@ from .pipeline import (
     run_slice_for_test,
 )
 from .verification import StatementVerifier, VerificationOutcome
+from .budget_invariants import (
+    SCHEMA_VERSION as BUDGET_SCHEMA_VERSION,
+    build_budget_invariant_snapshot,
+    build_budget_invariant_timeline,
+    summarize_budget_invariants_for_global_health,
+    build_budget_invariants_governance_view,
+    evaluate_budget_release_readiness,
+    build_budget_invariants_director_panel,
+    build_budget_storyline,
+    explain_budget_release_decision,
+)
+try:  # Legacy compatibility: DEBUG_BUDGET_ENABLED was removed in Phase II.
+    from .pipeline import summarize_budget, DEBUG_BUDGET_ENABLED
+except ImportError:
+    from .pipeline import summarize_budget  # type: ignore
+    DEBUG_BUDGET_ENABLED = False  # pragma: no cover
 
 __all__: list[str] = [
     # Constants
@@ -50,4 +66,21 @@ __all__: list[str] = [
     "ASTNormalizationConfig",
     "DEFAULT_AST_CONFIG",
     "NormalizationStrategy",
+    
+    # Budget utilities (Phase II)
+    "DEBUG_BUDGET_ENABLED",
+    "summarize_budget",
+    
+    # Budget invariant governance (Phase III)
+    "BUDGET_SCHEMA_VERSION",
+    "build_budget_invariant_snapshot",
+    "build_budget_invariant_timeline",
+    "summarize_budget_invariants_for_global_health",
+    # Phase IV cross-layer governance
+    "build_budget_invariants_governance_view",
+    "evaluate_budget_release_readiness",
+    "build_budget_invariants_director_panel",
+    # Phase V narrative and forensics
+    "build_budget_storyline",
+    "explain_budget_release_decision",
 ]

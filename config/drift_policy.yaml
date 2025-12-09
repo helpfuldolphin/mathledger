@@ -1,0 +1,51 @@
+# config/drift_policy.yaml
+#
+# Declarative Policy for the DAG Structural Drift Gate.
+# Defines thresholds for WARN and BLOCKED statuses.
+version: "1.1"
+
+# Rules are evaluated top-down. The first rule to match triggers and stops evaluation.
+rules:
+  - name: "CRITICAL: Cycle Introduction"
+    status: BLOCKED
+    conditions:
+      - metric: "new.has_cycles"
+        operator: "=="
+        value: true
+      - metric: "old.has_cycles"
+        operator: "=="
+        value: false
+
+  - name: "CRITICAL: Major Depth Regression with Eligibility Loss"
+    status: BLOCKED
+    conditions:
+      - metric: "comparison.depth_delta"
+        operator: "<"
+        value: -10 # Block if depth drops by 10 or more
+      - metric: "comparison.drift_eligibility_change"
+        operator: "=="
+        value: "ELIGIBLE_TO_INELIGIBLE"
+
+  - name: "WARN: Significant Depth Regression"
+    status: WARN
+    conditions:
+      - metric: "comparison.depth_delta"
+        operator: "<"
+        value: -5 # Warn if depth drops by 5 or more
+  
+  - name: "WARN: Explosive Vertex Growth"
+    status: WARN
+    conditions:
+      - metric: "comparison.vertex_growth_ratio" 
+        operator: ">"
+        value: 0.5 # Warn if vertex count grows by more than 50% in a single change
+
+  - name: "WARN: Drift Eligibility Lost"
+    status: WARN
+    conditions:
+      - metric: "comparison.drift_eligibility_change"
+        operator: "=="
+        value: "ELIGIBLE_TO_INELIGIBLE"
+
+# Default status if no rules match.
+default_status: OK

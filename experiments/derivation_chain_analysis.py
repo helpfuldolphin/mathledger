@@ -11,6 +11,84 @@ Derivation = Dict[str, Any]
 DAG = Dict[str, List[str]]
 
 
+class ChainAnalyzer:
+    """
+    Analyzer for derivation chains from proof logs.
+
+    Provides methods to construct dependency DAGs, compute chain depths,
+    and extract dependency graphs from derivations.
+    """
+
+    def __init__(self, derivations: List[Derivation] = None):
+        """
+        Initialize ChainAnalyzer with optional derivations.
+
+        Args:
+            derivations: Optional list of derivation dictionaries.
+        """
+        self._derivations = derivations or []
+        self._dag: DAG = {}
+        if self._derivations:
+            self._dag = construct_dependency_dag(self._derivations)
+
+    def add_derivations(self, derivations: List[Derivation]) -> None:
+        """Add derivations and rebuild the DAG."""
+        self._derivations.extend(derivations)
+        self._dag = construct_dependency_dag(self._derivations)
+
+    def get_chain_depth(self, target_hash: str) -> int:
+        """
+        Get the maximum chain depth for a target statement.
+
+        Args:
+            target_hash: The hash of the target statement.
+
+        Returns:
+            Maximum chain depth (1 for axioms, more for derived statements).
+        """
+        return compute_chain_depth(target_hash, self._dag)
+
+    def get_dependencies(self, statement_hash: str) -> List[str]:
+        """
+        Get direct dependencies (premises) for a statement.
+
+        Args:
+            statement_hash: Hash of the statement.
+
+        Returns:
+            List of premise hashes.
+        """
+        return self._dag.get(statement_hash, [])
+
+    def get_dag(self) -> DAG:
+        """Return the current dependency DAG."""
+        return self._dag
+
+    def extract_subgraph(self, target_hash: str) -> DAG:
+        """
+        Extract the subgraph of all dependencies for a target.
+
+        Args:
+            target_hash: Hash of the target statement.
+
+        Returns:
+            DAG containing only the target and its transitive dependencies.
+        """
+        subgraph: DAG = {}
+        visited: Set[str] = set()
+
+        def visit(h: str) -> None:
+            if h in visited or h not in self._dag:
+                return
+            visited.add(h)
+            subgraph[h] = self._dag.get(h, [])
+            for premise in self._dag.get(h, []):
+                visit(premise)
+
+        visit(target_hash)
+        return subgraph
+
+
 def construct_dependency_dag(derivations: List[Derivation]) -> DAG:
     """
     Constructs a proof dependency DAG from a list of derivations.

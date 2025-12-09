@@ -16,6 +16,7 @@ from substrate.crypto.hashing import sha256_hex
 from substrate.repro.determinism import deterministic_unix_timestamp
 from attestation.dual_root import (
     AttestationTree,
+    build_composite_commitment,
     build_reasoning_attestation,
     build_ui_attestation,
     compute_composite_root,
@@ -101,7 +102,15 @@ def seal_block(system: str, proofs: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
             "block_number": block_number,
             "sealed_at": sealed_at,
         },
+        reasoning_commitments=reasoning_tree.commitments,
+        ui_commitments=ui_tree.commitments,
+        composite_commitments=build_composite_commitment(
+            h_t,
+            reasoning_tree.commitments,
+            ui_tree.commitments,
+        ),
     )
+    hash_commitments = metadata["hash_commitments"]
 
     return {
         "block_number": block_number,
@@ -113,6 +122,7 @@ def seal_block(system: str, proofs: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
         "reasoning_leaves": _tree_metadata(reasoning_tree),
         "ui_event_count": 0,
         "ui_leaves": _tree_metadata(ui_tree),
+        "hash_commitments": hash_commitments,
     }
 
 
@@ -184,7 +194,15 @@ def seal_block_with_dual_roots(
             "block_number": block_number,
             "sealed_at": sealed_at,
         },
+        reasoning_commitments=reasoning_tree.commitments,
+        ui_commitments=ui_tree.commitments,
+        composite_commitments=build_composite_commitment(
+            composite_attestation_root,
+            reasoning_tree.commitments,
+            ui_tree.commitments,
+        ),
     )
+    hash_commitments = attestation_metadata["hash_commitments"]
 
     return {
         "block_number": block_number,
@@ -199,4 +217,5 @@ def seal_block_with_dual_roots(
         "sealed_at": sealed_at,
         "reasoning_leaves": _tree_metadata(reasoning_tree),
         "ui_leaves": _tree_metadata(ui_tree),
+        "hash_commitments": hash_commitments,
     }

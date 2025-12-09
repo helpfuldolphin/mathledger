@@ -1,0 +1,379 @@
+# Phase Migration Check Workflow
+#
+# Runs phase migration validation on PRs that may constitute phase transitions.
+# This is ADVISORY ONLY by default — does not auto-block PRs.
+#
+# To enable strict mode (hard-fail CI on WARN/FAIL):
+#   - Set STRICT_PHASE_MIGRATION=1 in repository secrets/variables
+#   - Or enable via workflow_dispatch input
+#
+# Author: Agent E4 (doc-ops-4) — Phase Migration Architect
+# Date: 2025-12-06
+
+name: Phase Migration Check
+
+on:
+  pull_request:
+    branches: [main, mvdp-*]
+    paths:
+      # Files that may indicate phase transitions
+      - 'backend/**/*.py'
+      - 'rfl/**/*.py'
+      - 'basis/**/*.py'
+      - 'normalization/**/*.py'
+      - 'attestation/**/*.py'
+      - 'substrate/**/*.py'
+      - 'config/curriculum*.yaml'
+      - 'experiments/prereg/**'
+      - 'backend/lean_proj/**'
+      - 'migration_intent.yaml'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: 'Base ref to compare against'
+        required: false
+        default: 'main'
+      strict_mode:
+        description: 'Enable strict mode (fail on WARN)'
+        type: boolean
+        required: false
+        default: false
+
+# Repository-level opt-in for strict mode
+env:
+  # Set STRICT_PHASE_MIGRATION=1 in repository variables to enable hard-fail
+  STRICT_PHASE_MIGRATION: ${{ vars.STRICT_PHASE_MIGRATION || '0' }}
+
+# Prevent concurrent runs on same PR
+concurrency:
+  group: phase-migration-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phase-impact-report:
+    name: Generate Phase Impact Report
+    runs-on: ubuntu-latest
+    outputs:
+      severity: ${{ steps.impact.outputs.severity }}
+      requires_intent: ${{ steps.impact.outputs.requires_intent }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for diff
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+      
+      - name: Generate Impact Report
+        id: impact
+        run: |
+          python scripts/phase_migration_simulator.py \
+            --impact-report \
+            --base ${{ github.base_ref || 'main' }} \
+            --head ${{ github.sha }} \
+            --output phase_impact_report.json
+          
+          # Extract severity and intent requirement
+          SEVERITY=$(python -c "import json; r=json.load(open('phase_impact_report.json')); print(r.get('overall_severity', 'NONE'))")
+          REQUIRES_INTENT=$(python -c "import json; r=json.load(open('phase_impact_report.json')); print('true' if r.get('requires_migration_intent') else 'false')")
+          
+          echo "severity=$SEVERITY" >> $GITHUB_OUTPUT
+          echo "requires_intent=$REQUIRES_INTENT" >> $GITHUB_OUTPUT
+          
+          echo "### Phase Impact Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Severity:** $SEVERITY" >> $GITHUB_STEP_SUMMARY
+          echo "**Requires Intent:** $REQUIRES_INTENT" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Impact Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-impact-report
+          path: phase_impact_report.json
+
+  migration-simulation:
+    name: Run Migration Simulation
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.sim.outputs.status }}
+      current_phase: ${{ steps.sim.outputs.current_phase }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+      
+      - name: Run Simulation
+        id: sim
+        run: |
+          python scripts/phase_migration_simulator.py \
+            --output migration_sim_result.json \
+            --verbose || true
+          
+          # Extract status
+          STATUS=$(python -c "import json; r=json.load(open('migration_sim_result.json')); print(r.get('overall_status', 'UNKNOWN'))")
+          PHASE=$(python -c "import json; r=json.load(open('migration_sim_result.json')); print(r.get('current_phase', 'unknown'))")
+          
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "current_phase=$PHASE" >> $GITHUB_OUTPUT
+          
+          echo "### Migration Simulation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** $STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "**Current Phase:** $PHASE" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload Simulation Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-sim-result
+          path: migration_sim_result.json
+
+  validate-intent:
+    name: Validate Migration Intent
+    runs-on: ubuntu-latest
+    needs: [phase-impact-report]
+    if: needs.phase-impact-report.outputs.requires_intent == 'true'
+    outputs:
+      found: ${{ steps.intent.outputs.found }}
+      valid: ${{ steps.intent.outputs.valid }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+      
+      - name: Check for Migration Intent
+        id: intent
+        run: |
+          if [ -f "migration_intent.yaml" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            
+            # Validate intent
+            if python tools/validate_migration_intent.py migration_intent.yaml; then
+              echo "valid=true" >> $GITHUB_OUTPUT
+              echo "### Migration Intent" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "✅ **Found and Valid**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "valid=false" >> $GITHUB_OUTPUT
+              echo "### Migration Intent" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "❌ **Found but Invalid**" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+            echo "valid=false" >> $GITHUB_OUTPUT
+            echo "### Migration Intent" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Not Found** (required for critical migrations)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  advisor-check:
+    name: Run Migration Advisor
+    runs-on: ubuntu-latest
+    needs: [phase-impact-report, validate-intent]
+    if: needs.validate-intent.outputs.found == 'true'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+      
+      - name: Download Impact Report
+        uses: actions/download-artifact@v4
+        with:
+          name: phase-impact-report
+      
+      - name: Run Advisor
+        id: advisor
+        run: |
+          python tools/validate_migration_intent.py \
+            --advise \
+            --intent migration_intent.yaml \
+            --report phase_impact_report.json \
+            --json > advisor_result.json || true
+          
+          STATUS=$(python -c "import json; r=json.load(open('advisor_result.json')); print(r.get('status', 'UNKNOWN'))")
+          
+          echo "### Migration Advisor" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** $STATUS" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$STATUS" = "MISALIGNED" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Intent does not match detected impacts" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Upload Advisor Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: advisor-result
+          path: advisor_result.json
+
+  summary:
+    name: Migration Check Summary
+    runs-on: ubuntu-latest
+    needs: [phase-impact-report, migration-simulation, validate-intent]
+    if: always()
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+      
+      - name: Download Impact Report
+        uses: actions/download-artifact@v4
+        with:
+          name: phase-impact-report
+        continue-on-error: true
+      
+      - name: Generate Summary
+        id: summary
+        env:
+          # Merge env var with workflow_dispatch input
+          STRICT_PHASE_MIGRATION: ${{ inputs.strict_mode == true && '1' || env.STRICT_PHASE_MIGRATION }}
+        run: |
+          echo "## Phase Migration Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Show strict mode status
+          if [ "$STRICT_PHASE_MIGRATION" = "1" ]; then
+            echo "🔒 **Strict Mode: ENABLED** (failures and warnings will block merge)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ **Advisory Mode** (results do not block merge)" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "| Check | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Impact Severity | ${{ needs.phase-impact-report.outputs.severity }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Simulation Status | ${{ needs.migration-simulation.outputs.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Current Phase | ${{ needs.migration-simulation.outputs.current_phase }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Intent Required | ${{ needs.phase-impact-report.outputs.requires_intent }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Intent Found | ${{ needs.validate-intent.outputs.found || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Intent Valid | ${{ needs.validate-intent.outputs.valid || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Determine overall status
+          SEVERITY="${{ needs.phase-impact-report.outputs.severity }}"
+          REQUIRES="${{ needs.phase-impact-report.outputs.requires_intent }}"
+          FOUND="${{ needs.validate-intent.outputs.found }}"
+          VALID="${{ needs.validate-intent.outputs.valid }}"
+          VERDICT="PASS"
+          
+          if [ "$SEVERITY" = "CRITICAL" ] && [ "$REQUIRES" = "true" ]; then
+            if [ "$FOUND" != "true" ]; then
+              VERDICT="FAIL"
+              echo "### 🔴 Action Required" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "Critical migration signals detected. Please add \`migration_intent.yaml\` to declare this phase migration." >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "Generate template with:" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+              echo "python tools/pr_migration_linter.py --generate-template > migration_intent.yaml" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "Or run pre-flight checklist:" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+              echo "python tools/phase_migration_check.py --author-check" >> $GITHUB_STEP_SUMMARY
+              echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            elif [ "$VALID" != "true" ]; then
+              VERDICT="FAIL"
+              echo "### 🔴 Intent Invalid" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "The migration_intent.yaml file is invalid. Please fix the errors." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### 🟢 Migration Properly Declared" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "$SEVERITY" = "WARN" ]; then
+            VERDICT="WARN"
+            echo "### 🟡 Warning" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Warning-level migration signals detected. Consider adding a migration_intent.yaml if this PR constitutes a phase transition." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🟢 No Critical Issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "verdict=$VERDICT" >> $GITHUB_OUTPUT
+          
+          # Traffic light summary at top
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "$VERDICT" = "PASS" ]; then
+            echo "### 🟢 PASS" >> $GITHUB_STEP_SUMMARY
+          elif [ "$VERDICT" = "WARN" ]; then
+            echo "### 🟡 WARN" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🔴 FAIL" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Strict Mode Enforcement
+        if: always()
+        env:
+          STRICT_PHASE_MIGRATION: ${{ inputs.strict_mode == true && '1' || env.STRICT_PHASE_MIGRATION }}
+        run: |
+          VERDICT="${{ steps.summary.outputs.verdict }}"
+          
+          if [ "$STRICT_PHASE_MIGRATION" = "1" ]; then
+            echo "🔒 Strict mode enabled — enforcing verdict"
+            if [ "$VERDICT" = "FAIL" ]; then
+              echo "::error::Phase migration check FAILED. See job summary for details."
+              exit 1
+            elif [ "$VERDICT" = "WARN" ]; then
+              echo "::error::Phase migration check has WARNINGS. In strict mode, this blocks merge."
+              exit 1
+            fi
+            echo "✅ Phase migration check passed in strict mode"
+          else
+            echo "ℹ️ Advisory mode — verdict logged but not enforced"
+            echo "   Verdict: $VERDICT"
+            if [ "$VERDICT" = "FAIL" ]; then
+              echo "::warning::Phase migration check FAILED. Review required."
+            elif [ "$VERDICT" = "WARN" ]; then
+              echo "::warning::Phase migration check has WARNINGS."
+            fi
+          fi
+

@@ -1,0 +1,980 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PHASE II — NOT RUN IN PHASE I
+%% 
+%% Field Manual: MathLedger Phase II Operations
+%% 
+%% This document is the single canonical human-facing Phase II manual.
+%% All content describes INFRASTRUCTURE and METHODOLOGY only.
+%% Evidence interpretation remains empty until data exists.
+%%
+%% ABSOLUTE SAFEGUARDS:
+%%   - DO NOT include uplift claims.
+%%   - DO NOT reference Phase I logs.
+%%   - DO NOT alter theoretical definitions.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+
+\geometry{margin=1in}
+
+% Header/Footer
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textbf{PHASE II — NOT RUN IN PHASE I}}
+\rhead{Field Manual v1.0}
+\cfoot{\thepage}
+
+% Colors
+\definecolor{phaseii}{RGB}{180,50,50}
+\definecolor{codeblue}{RGB}{40,80,140}
+\definecolor{codegray}{RGB}{100,100,100}
+
+% Code listings style
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{codeblue},
+    commentstyle=\color{codegray},
+    stringstyle=\color{phaseii},
+    breaklines=true,
+    frame=single,
+    framerule=0.5pt,
+    rulecolor=\color{black!30}
+}
+
+% Custom commands
+\newcommand{\phaseii}{\textcolor{phaseii}{\textbf{PHASE II — NOT RUN IN PHASE I}}}
+\newcommand{\phaseiilabel}{\phaseii\\[0.5em]}
+\newcommand{\Ht}{H_t}
+\newcommand{\Rt}{R_t}
+\newcommand{\Ut}{U_t}
+
+% Theorem environments
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{invariant}{Invariant}[section]
+
+\title{%
+    \vspace{-2em}
+    \textcolor{phaseii}{\rule{\textwidth}{2pt}}\\[1em]
+    \textbf{MathLedger Phase II Field Manual}\\[0.5em]
+    \large Operations Guide for U2 Uplift Experiments\\[1em]
+    \textcolor{phaseii}{\rule{\textwidth}{2pt}}
+}
+\author{MathLedger Operations}
+\date{December 2025}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.9\textwidth}{
+\centering
+\textbf{\large\phaseii}\\[0.5em]
+This document describes Phase II infrastructure and methodology only.\\
+No experimental data has been collected. No uplift claims are made.\\
+Evidence interpretation sections remain empty until data exists.
+}}
+\end{center}
+
+\tableofcontents
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{sec:introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\phaseiilabel
+
+This Field Manual serves as the canonical reference for Phase II operations within the MathLedger project. It documents:
+
+\begin{itemize}
+    \item \textbf{Infrastructure Description}: System architecture, slice definitions, runner components
+    \item \textbf{Experimental Methodology}: Protocols, determinism requirements, success criteria
+    \item \textbf{Evidence Interpretation}: \textit{(Empty until experimental data exists)}
+\end{itemize}
+
+\subsection{Document Scope}
+\label{sec:scope}
+
+This manual covers:
+\begin{enumerate}
+    \item U2 Slice Architecture (Section~\ref{sec:u2-slices})
+    \item U2 Runner Overview (Section~\ref{sec:u2-runner})
+    \item Determinism Contract (Section~\ref{sec:determinism})
+    \item Governance Alignment (Section~\ref{sec:governance})
+    \item Success Metric Definitions (Section~\ref{sec:metrics})
+    \item Seed Discipline (Section~\ref{sec:seed-discipline})
+    \item Example Workflows (Section~\ref{sec:workflows})
+\end{enumerate}
+
+\subsection{Strict Separation Policy}
+\label{sec:separation}
+
+\begin{invariant}[Content Separation]
+\label{inv:separation}
+All content in this document MUST fall into exactly one of three categories:
+\begin{enumerate}
+    \item \textbf{Infrastructure Description}: How systems are built and configured
+    \item \textbf{Experimental Methodology}: How experiments are designed and executed
+    \item \textbf{Evidence Interpretation}: What experimental results mean (EMPTY UNTIL DATA EXISTS)
+\end{enumerate}
+\end{invariant}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{U2 Slice Architecture}
+\label{sec:u2-slices}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\phaseiilabel
+
+\subsection{Overview}
+\label{sec:slices-overview}
+
+The U2 experiment framework operates on a curriculum of \textit{slices}---discrete parameter configurations that define the complexity regime for propositional logic derivation tasks. Slices are defined in \texttt{config/curriculum.yaml} and organized by the monotonicity constraint on their axes.
+
+\begin{definition}[Slice]
+\label{def:slice}
+A \textbf{slice} is a named configuration tuple $(\texttt{atoms}, \texttt{depth\_max}, \texttt{breadth\_max}, \texttt{total\_max})$ with associated gate conditions that define pass/fail criteria.
+\end{definition}
+
+\subsection{Slice Catalog}
+\label{sec:slice-catalog}
+
+The following slices are defined in the propositional logic (PL) curriculum:
+
+\begin{longtable}{llccccl}
+\toprule
+\textbf{Slice Name} & \textbf{Role} & \textbf{Atoms} & \textbf{Depth} & \textbf{Breadth} & \textbf{Total} & \textbf{Regime} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Slice Name} & \textbf{Role} & \textbf{Atoms} & \textbf{Depth} & \textbf{Breadth} & \textbf{Total} & \textbf{Regime} \\
+\midrule
+\endhead
+\texttt{slice\_debug\_uplift} & Debug & 2 & 2 & 8 & 16 & Trivial \\
+\texttt{slice\_easy\_fo} & First Organism & 3 & 3 & 300 & 1000 & Trivial \\
+\texttt{slice\_uplift\_proto} & Proto-uplift & 3 & 4 & 3 & 10 & Training \\
+\texttt{atoms4-depth4} & Ladder & 4 & 4 & 500 & 2000 & Training \\
+\texttt{atoms4-depth5} & Ladder & 4 & 5 & 1000 & 5000 & Training \\
+\texttt{atoms5-depth6} & Ladder & 5 & 6 & 2000 & 10000 & Training \\
+\texttt{slice\_medium} & Wide Slice & 5 & 7 & 1500 & 8000 & Training \\
+\texttt{first\_organism\_pl2\_hard} & Stress & 6 & 8 & 2000 & 10000 & Stress \\
+\texttt{slice\_hard} & Hard (Active) & 7 & 12 & 3000 & 15000 & Stress \\
+\bottomrule
+\caption{U2 Slice Definitions from \texttt{config/curriculum.yaml}}
+\label{tab:slices}
+\end{longtable}
+
+\subsection{Complexity Regimes}
+\label{sec:regimes}
+
+Slices are classified into three complexity regimes:
+
+\subsubsection{Trivial Regime}
+\label{sec:regime-trivial}
+
+Slices in this regime serve as sanity checks. The prover should solve these instantly with near-zero abstention. Failure indicates a broken harness, not a learning failure.
+
+\begin{itemize}
+    \item \texttt{slice\_debug\_uplift}: Atoms=2, Depth=2
+    \item \texttt{slice\_easy\_fo}: Atoms=3, Depth=3
+\end{itemize}
+
+\subsubsection{Training Regime (Sweet Spot)}
+\label{sec:regime-training}
+
+Core learning zone where the prover encounters a healthy mix of solvable proofs and challenging edge cases. Abstention rates of 5--15\% provide sufficient signal for metric variance without stalling the pipeline.
+
+\begin{itemize}
+    \item \texttt{slice\_uplift\_proto}: Atoms=3, Depth=4 (tight budget)
+    \item \texttt{atoms4-depth4}, \texttt{atoms4-depth5}: Ladder progression
+    \item \texttt{atoms5-depth6}: Current active default
+    \item \texttt{slice\_medium}: Wide slice for RFL experiments
+\end{itemize}
+
+\subsubsection{Stress Regime (Abstention Cliff)}
+\label{sec:regime-stress}
+
+High-uncertainty regime ($>$20\% abstention) where the problem space explodes combinatorially. Tests the system's ability to handle failure gracefully.
+
+\begin{itemize}
+    \item \texttt{first\_organism\_pl2\_hard}: Atoms=6, Depth=8
+    \item \texttt{slice\_hard}: Atoms=7, Depth=12 (currently active)
+\end{itemize}
+
+\subsection{Slice Parameters}
+\label{sec:slice-params}
+
+\begin{definition}[Slice Parameters]
+\label{def:slice-params}
+Each slice specifies:
+\begin{itemize}[noitemsep]
+    \item \texttt{atoms}: Maximum number of propositional atoms
+    \item \texttt{depth\_max}: Maximum derivation tree depth
+    \item \texttt{breadth\_max}: Maximum candidates per derivation round
+    \item \texttt{total\_max}: Maximum total statements generated
+    \item \texttt{formula\_pool}: Size of formula candidate pool (optional)
+    \item \texttt{axiom\_instances}: Number of axiom instances (optional)
+    \item \texttt{timeout\_s}: Cycle timeout in seconds
+    \item \texttt{lean\_timeout\_s}: Lean verification timeout (0.0 = disabled)
+\end{itemize}
+\end{definition}
+
+\subsection{Gate Conditions}
+\label{sec:gate-conditions}
+
+Each slice defines gates that determine promotion eligibility:
+
+\begin{definition}[Slice Gates]
+\label{def:gates}
+A slice passes its gates when ALL of the following conditions are met:
+\begin{enumerate}
+    \item \textbf{Coverage}: CI lower bound $\geq$ \texttt{ci\_lower\_min}
+    \item \textbf{Abstention}: Rate $\leq$ \texttt{max\_rate\_pct}, mass $\leq$ \texttt{max\_mass}
+    \item \textbf{Velocity}: Proofs/hour $\geq$ \texttt{min\_pph}, CV $\leq$ \texttt{stability\_cv\_max}
+    \item \textbf{Caps}: Attempts $\geq$ \texttt{min\_attempt\_mass}, runtime $\geq$ \texttt{min\_runtime\_minutes}
+\end{enumerate}
+\end{definition}
+
+\subsection{Monotonicity Invariant}
+\label{sec:monotonicity}
+
+\begin{invariant}[Monotonicity]
+\label{inv:monotonicity}
+Slices MUST be ordered such that for consecutive slices $s_i$ and $s_{i+1}$:
+\[
+(\texttt{atoms}_i, \texttt{depth\_max}_i) \leq (\texttt{atoms}_{i+1}, \texttt{depth\_max}_{i+1})
+\]
+in lexicographic order. Violations break curriculum ladder progression.
+\end{invariant}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{U2 Runner Overview}
+\label{sec:u2-runner}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\phaseiilabel
+
+\subsection{Architecture}
+\label{sec:runner-architecture}
+
+The U2 Runner (\texttt{experiments/run\_uplift\_u2.py}) executes paired uplift experiments comparing baseline (random ordering) against RFL (policy-driven ordering) within a deterministic harness.
+
+\begin{lstlisting}[language=bash,caption=U2 Runner CLI]
+python experiments/run_uplift_u2.py \
+    --slice <slice_name> \
+    --cycles <N> \
+    --seed <integer> \
+    --mode <baseline|rfl> \
+    --out <output_directory> \
+    --config <path/to/curriculum.yaml>
+\end{lstlisting}
+
+\subsection{Execution Modes}
+\label{sec:modes}
+
+\subsubsection{Baseline Mode}
+\label{sec:mode-baseline}
+
+In baseline mode, candidate ordering is determined by seeded random shuffle:
+
+\begin{lstlisting}[language=Python,caption=Baseline Ordering]
+rng = random.Random(cycle_seed)
+ordered_items = list(items)
+rng.shuffle(ordered_items)
+chosen_item = ordered_items[0]
+\end{lstlisting}
+
+\subsubsection{RFL Mode}
+\label{sec:mode-rfl}
+
+In RFL mode, candidate ordering uses policy scoring with verifiable feedback:
+
+\begin{lstlisting}[language=Python,caption=RFL Ordering]
+item_scores = policy.score(items)
+scored_items = sorted(
+    zip(items, item_scores),
+    key=lambda x: x[1],
+    reverse=True
+)
+chosen_item = scored_items[0][0]
+\end{lstlisting}
+
+\subsection{Runner Components}
+\label{sec:runner-components}
+
+\begin{enumerate}
+    \item \textbf{Configuration Loader}: Parses \texttt{config/curriculum\_uplift\_phase2.yaml}
+    \item \textbf{Seed Schedule Generator}: Creates deterministic per-cycle seeds
+    \item \textbf{Policy Engine}: RFL policy scoring and update (mock or real)
+    \item \textbf{Substrate Interface}: Calls \texttt{run\_fo\_cycles.py} for verification
+    \item \textbf{Telemetry Logger}: Writes JSONL cycle records
+    \item \textbf{Manifest Generator}: Produces experiment manifest with hashes
+\end{enumerate}
+
+\subsection{Output Artifacts}
+\label{sec:runner-outputs}
+
+Each run produces:
+
+\begin{itemize}
+    \item \texttt{uplift\_u2\_<slice>\_<mode>.jsonl}: Per-cycle telemetry records
+    \item \texttt{uplift\_u2\_manifest\_<slice>\_<mode>.json}: Experiment manifest
+\end{itemize}
+
+\begin{definition}[Telemetry Record]
+\label{def:telemetry}
+Each cycle produces a telemetry record:
+\begin{lstlisting}[language=json]
+{
+  "cycle": <int>,
+  "slice": "<slice_name>",
+  "mode": "<baseline|rfl>",
+  "seed": <cycle_seed>,
+  "item": "<chosen_item>",
+  "result": "<substrate_output>",
+  "success": <bool>,
+  "label": "PHASE II - NOT USED IN PHASE I"
+}
+\end{lstlisting}
+\end{definition}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Determinism Contract}
+\label{sec:determinism}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\phaseiilabel
+
+\subsection{The Prime Directive}
+\label{sec:prime-directive}
+
+\begin{quote}
+\textit{``Nothing moves without a content hash.''}
+\end{quote}
+
+The experiment path must be \textbf{bit-perfect deterministic}. Any two executions with the same initial seed and input content must produce:
+
+\begin{enumerate}
+    \item Identical Merkle Roots ($\Rt$, $\Ut$, $\Ht$)
+    \item Identical timestamps in all artifacts
+    \item Identical UUIDs/IDs for all entities
+    \item Identical byte sequences for all JSON/log outputs
+\end{enumerate}
+
+\subsection{Forbidden Primitives}
+\label{sec:forbidden-primitives}
+
+The following entropy sources are \textbf{strictly forbidden} in the critical path:
+
+\begin{longtable}{lll}
+\toprule
+\textbf{Forbidden} & \textbf{Replacement} & \textbf{Reason} \\
+\midrule
+\texttt{datetime.now()} & \texttt{deterministic\_timestamp(seed)} & Wall-clock leak \\
+\texttt{datetime.utcnow()} & \texttt{deterministic\_timestamp(seed)} & Wall-clock leak \\
+\texttt{time.time()} & \texttt{deterministic\_unix\_timestamp(seed)} & Execution variance \\
+\texttt{uuid.uuid4()} & \texttt{deterministic\_uuid(content)} & Randomness \\
+\texttt{random.*} & \texttt{SeededRNG(seed)} & Unseeded chaos \\
+\texttt{os.urandom} & \textbf{Forbidden---no equivalent} & Entropy source \\
+\texttt{dict} iteration & \texttt{sorted(d.items())} & Order undefined \\
+\bottomrule
+\caption{Forbidden Primitives and Replacements}
+\label{tab:forbidden}
+\end{longtable}
+
+\subsection{Determinism Helpers}
+\label{sec:determinism-helpers}
+
+Located in \texttt{backend/repro/determinism.py} and \texttt{substrate/repro/determinism.py}:
+
+\begin{lstlisting}[language=Python,caption=Determinism Helpers]
+from backend.repro.determinism import (
+    deterministic_timestamp,
+    deterministic_unix_timestamp,
+    deterministic_uuid,
+    SeededRNG,
+)
+\end{lstlisting}
+
+\subsection{Verification Test}
+\label{sec:determinism-test}
+
+\begin{lstlisting}[language=Python,caption=Determinism Verification]
+def test_bitwise_determinism():
+    """Two runs with same seed must produce identical H_t."""
+    result1 = run_first_organism_deterministic(seed=42)
+    result2 = run_first_organism_deterministic(seed=42)
+    
+    assert result1.composite_root == result2.composite_root
+    assert result1.run_hash == result2.run_hash
+\end{lstlisting}
+
+\subsection{Hash Identity Formula}
+\label{sec:hash-identity}
+
+\begin{definition}[Hash Identity]
+\label{def:hash-identity}
+\[
+\mathrm{hash}(s) = \mathrm{SHA256}(\mathcal{D} \| \mathcal{E}(\mathcal{N}(s)))
+\]
+where:
+\begin{itemize}[noitemsep]
+    \item $\mathcal{N}$: Normalization function
+    \item $\mathcal{E}$: UTF-8 encoding
+    \item $\mathcal{D}$: Domain separation tag
+\end{itemize}
+\end{definition}
+
+\subsection{Attestation Root Computation}
+\label{sec:roots}
+
+\begin{definition}[Attestation Roots]
+\label{def:roots}
+\begin{align}
+\Rt &= \texttt{merkle\_root}(\text{reasoning\_leaves}) \\
+\Ut &= \texttt{merkle\_root}(\text{ui\_leaves}) \\
+\Ht &= \mathrm{SHA256}(\Rt \| \Ut)
+\end{align}
+\end{definition}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Governance Alignment}
+\label{sec:governance}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\phaseiilabel
+
+\subsection{Phase II Uplift Evidence Gate}
+\label{sec:uplift-gate}
+
+\begin{invariant}[Gate Status]
+\label{inv:gate-inactive}
+The Phase II Uplift Evidence Gate is \textbf{INACTIVE}. No existing logs qualify as uplift evidence. This section defines future eligibility criteria only.
+\end{invariant}
+
+\subsection{Eligibility Criteria}
+\label{sec:eligibility}
+
+For an RFL experiment to be considered as potential uplift evidence, ALL of the following must be satisfied:
+
+\begin{longtable}{lll}
+\toprule
+\textbf{Criterion} & \textbf{Requirement} & \textbf{Rationale} \\
+\midrule
+Non-degenerate slice & Verification enabled & 100\% abstention $\neq$ uplift \\
+Minimum cycles & $N \geq 100$ successful & Statistical power \\
+Baseline comparison & Paired run exists & Uplift is relative \\
+Significant difference & $p < 0.05$ or CI excludes 0 & Noise $\neq$ signal \\
+Determinism verified & Same seed $\Rightarrow$ same $\Ht$ & Trust requires reproducibility \\
+\bottomrule
+\caption{Uplift Evidence Eligibility Criteria}
+\label{tab:eligibility}
+\end{longtable}
+
+\subsection{Preregistration Requirements}
+\label{sec:prereg}
+
+Before an experiment can qualify as uplift evidence, the following must be documented \textbf{before} the run:
+
+\begin{enumerate}
+    \item \textbf{Hypothesis}: What specific metric improvement is expected?
+    \item \textbf{Slice Configuration}: Exact slice parameters (depth, atoms, gates)
+    \item \textbf{Success Criteria}: Numeric thresholds that constitute ``uplift''
+    \item \textbf{Seed}: The deterministic seed to be used
+    \item \textbf{Cycle Count}: Planned number of cycles
+\end{enumerate}
+
+Preregistration is stored in \texttt{PREREG\_UPLIFT\_U2.yaml} and hashed before execution.
+
+\subsection{Manifest Requirements}
+\label{sec:manifest-req}
+
+After completion, the experiment must produce:
+
+\begin{itemize}
+    \item \texttt{experiment\_manifest.json} with preregistration hash
+    \item \texttt{baseline\_log.jsonl} and \texttt{rfl\_log.jsonl} in paired directories
+    \item \texttt{attestation.json} for both runs with matching $\Ht$ on replay
+    \item \texttt{statistical\_summary.json} with CI bounds and p-values
+\end{itemize}
+
+\subsection{What Evidence Does NOT Grant}
+\label{sec:limitations}
+
+Even if an experiment passes all criteria, it would:
+
+\begin{itemize}
+    \item \textbf{NOT} automatically promote \texttt{basis/} to production
+    \item \textbf{NOT} override Phase I architectural decisions
+    \item \textbf{NOT} constitute proof of the broader RFL thesis
+\end{itemize}
+
+It would only qualify as \textbf{one input} to future governance discussions.
+
+\subsection{Vibe Boundary Architecture}
+\label{sec:vibes}
+
+MathLedger enforces a three-layer architecture:
+
+\begin{enumerate}
+    \item \textbf{Law Layer}: Pure functions (normalization, hashing, attestation)
+    \item \textbf{Economy Layer}: Derivation engine, Lean interface, proof search
+    \item \textbf{Metabolism Layer}: RFL runner, curriculum gates, policy updates
+\end{enumerate}
+
+\begin{invariant}[Layer Dependencies]
+\label{inv:layers}
+\begin{itemize}[noitemsep]
+    \item Law $\rightarrow$ No external dependencies (pure)
+    \item Economy $\rightarrow$ May import Law
+    \item Metabolism $\rightarrow$ May import Law, Economy; must not mutate $\Ht$
+\end{itemize}
+\end{invariant}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Success Metric Definitions}
+\label{sec:metrics}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\phaseiilabel
+
+\subsection{Core Metric Families}
+\label{sec:metric-families}
+
+The U2 framework uses four core metric families:
+
+\begin{longtable}{llcl}
+\toprule
+\textbf{Metric} & \textbf{Symbol} & \textbf{Range} & \textbf{Description} \\
+\midrule
+Baseline Success Prob. & $p_{\text{base}}$ & $[0,1]$ & Success rate under random policy \\
+RFL Success Prob. & $p_{\text{rfl}}$ & $[0,1]$ & Success rate under RFL policy \\
+Uplift Delta & $\Delta$ & $[-1,1]$ & $p_{\text{rfl}} - p_{\text{base}}$ \\
+Confidence Interval & CI & $[-1,1]$ & 95\% bounds for $\Delta$ \\
+\bottomrule
+\caption{Core Metric Families}
+\label{tab:metrics}
+\end{longtable}
+
+\subsection{Metric Definitions}
+\label{sec:metric-defs}
+
+\subsubsection{Baseline Success Probability ($p_{\text{base}}$)}
+\label{sec:p-base}
+
+\begin{definition}[$p_{\text{base}}$]
+\label{def:p-base}
+\[
+p_{\text{base}} = \frac{\text{successful\_cycles\_baseline}}{\text{total\_cycles\_baseline}}
+\]
+where a successful cycle has \texttt{status == "success"} AND is not abstained.
+\end{definition}
+
+\subsubsection{RFL Success Probability ($p_{\text{rfl}}$)}
+\label{sec:p-rfl}
+
+\begin{definition}[$p_{\text{rfl}}$]
+\label{def:p-rfl}
+\[
+p_{\text{rfl}} = \frac{\text{successful\_cycles\_rfl}}{\text{total\_cycles\_rfl}}
+\]
+Same success/abstention definitions as $p_{\text{base}}$, applied to RFL-guided runs.
+\end{definition}
+
+\subsubsection{Uplift Delta ($\Delta$)}
+\label{sec:delta}
+
+\begin{definition}[Uplift Delta]
+\label{def:delta}
+\[
+\Delta = p_{\text{rfl}} - p_{\text{base}}
+\]
+\begin{itemize}[noitemsep]
+    \item $\Delta > 0$: RFL outperforms baseline
+    \item $\Delta = 0$: No difference (null result)
+    \item $\Delta < 0$: Baseline outperforms RFL (negative uplift)
+\end{itemize}
+\end{definition}
+
+\subsubsection{Confidence Interval (CI)}
+\label{sec:ci}
+
+\begin{definition}[95\% Confidence Interval]
+\label{def:ci}
+Using Wald interval for difference of proportions:
+\[
+\text{SE} = \sqrt{\frac{p_{\text{base}}(1-p_{\text{base}})}{n_{\text{base}}} + \frac{p_{\text{rfl}}(1-p_{\text{rfl}})}{n_{\text{rfl}}}}
+\]
+\[
+\text{CI}_{95} = \Delta \pm 1.96 \cdot \text{SE}
+\]
+\textbf{Significance}:
+\begin{itemize}[noitemsep]
+    \item CI lower $> 0$: Statistically significant positive uplift
+    \item CI upper $< 0$: Statistically significant negative uplift
+    \item CI spans 0: No statistically significant difference
+\end{itemize}
+\end{definition}
+
+\subsection{Slice-Specific Success Functions}
+\label{sec:slice-metrics}
+
+Defined in \texttt{experiments/slice\_success\_metrics.py}:
+
+\subsubsection{Goal Hit Metric}
+\label{sec:goal-hit}
+
+\begin{lstlisting}[language=Python,caption=Goal Hit]
+def compute_goal_hit(
+    verified_statements: List[Statement],
+    target_hashes: Set[str],
+    min_total_verified: int,
+) -> Tuple[bool, float]:
+    """Success when minimum target goals are verified."""
+    verified_hashes = {s['hash'] for s in verified_statements}
+    hits = len(verified_hashes.intersection(target_hashes))
+    return hits >= min_total_verified, float(hits)
+\end{lstlisting}
+
+\subsubsection{Sparse Success Metric}
+\label{sec:sparse}
+
+\begin{lstlisting}[language=Python,caption=Sparse Success]
+def compute_sparse_success(
+    verified_count: int,
+    attempted_count: int,
+    min_verified: int,
+) -> Tuple[bool, float]:
+    """Success based on minimum verified count."""
+    return verified_count >= min_verified, float(verified_count)
+\end{lstlisting}
+
+\subsubsection{Chain Success Metric}
+\label{sec:chain}
+
+\begin{lstlisting}[language=Python,caption=Chain Success]
+def compute_chain_success(
+    verified_statements: List[Statement],
+    dependency_graph: Dict[str, List[str]],
+    chain_target_hash: str,
+    min_chain_length: int,
+) -> Tuple[bool, float]:
+    """Success based on verified dependency chain length."""
+    # Computes longest chain ending at target
+    # Handles cycles by tracking visited nodes
+\end{lstlisting}
+
+\subsubsection{Multi-Goal Metric}
+\label{sec:multi-goal}
+
+\begin{lstlisting}[language=Python,caption=Multi-Goal]
+def compute_multi_goal_success(
+    verified_hashes: Set[str],
+    required_goal_hashes: Set[str],
+) -> Tuple[bool, float]:
+    """Success when ALL required goals are verified."""
+    met_goals = verified_hashes.intersection(required_goal_hashes)
+    return len(met_goals) == len(required_goal_hashes), float(len(met_goals))
+\end{lstlisting}
+
+\subsection{Capability Metrics}
+\label{sec:capability}
+
+Three capability metrics assess prover improvement:
+
+\begin{enumerate}
+    \item \textbf{Proofs per Hour}: $\frac{\text{Successful Proofs}}{\text{Duration (hours)}}$
+    \item \textbf{Max Depth}: $\max(\text{statement.depth})$
+    \item \textbf{Abstention Rate}: $\frac{\text{Total} - \text{Successful}}{\text{Total}}$
+\end{enumerate}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Seed Discipline}
+\label{sec:seed-discipline}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\phaseiilabel
+
+\subsection{Seed Schedule Generation}
+\label{sec:seed-schedule}
+
+Each experiment uses a deterministic seed schedule derived from a single initial seed:
+
+\begin{definition}[Seed Schedule]
+\label{def:seed-schedule}
+\begin{lstlisting}[language=Python]
+def generate_seed_schedule(initial_seed: int, num_cycles: int) -> List[int]:
+    """Generates deterministic per-cycle seeds."""
+    rng = random.Random(initial_seed)
+    return [rng.randint(0, 2**32 - 1) for _ in range(num_cycles)]
+\end{lstlisting}
+\end{definition}
+
+\subsection{MDAP Epoch Seed}
+\label{sec:mdap-seed}
+
+The canonical seed epoch is defined by project convention. Seeds must be:
+
+\begin{enumerate}
+    \item \textbf{Documented}: Recorded in preregistration before execution
+    \item \textbf{Immutable}: Never changed mid-experiment
+    \item \textbf{Reproducible}: Any party can regenerate identical results
+\end{enumerate}
+
+\subsection{Per-Cycle Determinism}
+\label{sec:cycle-determinism}
+
+Each cycle $i$ receives seed $s_i$ from the schedule. All randomized operations within cycle $i$ must use:
+
+\begin{lstlisting}[language=Python,caption=Cycle RNG]
+cycle_seed = seed_schedule[i]
+rng = random.Random(cycle_seed)
+# All random operations use this rng
+\end{lstlisting}
+
+\subsection{Seed Provenance in Manifests}
+\label{sec:seed-provenance}
+
+Manifests record the complete seed schedule:
+
+\begin{lstlisting}[language=json,caption=Manifest Seed Fields]
+{
+  "initial_seed": 42,
+  "deterministic_seed_schedule": [1234, 5678, 9012, ...],
+  "slice_config_hash": "<sha256>",
+  "ht_series_hash": "<sha256>"
+}
+\end{lstlisting}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Example Workflows}
+\label{sec:workflows}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\phaseiilabel
+
+\subsection{Running a Paired U2 Experiment}
+\label{sec:workflow-paired}
+
+A paired experiment runs both baseline and RFL modes with identical seeds:
+
+\begin{lstlisting}[language=bash,caption=Paired Experiment]
+# Run baseline
+python experiments/run_uplift_u2.py \
+    --slice slice_medium \
+    --cycles 100 \
+    --seed 42 \
+    --mode baseline \
+    --out results/u2_paired/
+
+# Run RFL with same seed
+python experiments/run_uplift_u2.py \
+    --slice slice_medium \
+    --cycles 100 \
+    --seed 42 \
+    --mode rfl \
+    --out results/u2_paired/
+\end{lstlisting}
+
+\subsection{Validating Determinism}
+\label{sec:workflow-determinism}
+
+\begin{lstlisting}[language=bash,caption=Determinism Check]
+# First run
+python experiments/run_uplift_u2.py \
+    --slice slice_easy_fo --cycles 10 --seed 42 \
+    --mode baseline --out results/run1/
+
+# Second run (must produce identical output)
+python experiments/run_uplift_u2.py \
+    --slice slice_easy_fo --cycles 10 --seed 42 \
+    --mode baseline --out results/run2/
+
+# Compare hashes
+diff results/run1/uplift_u2_manifest_*.json \
+     results/run2/uplift_u2_manifest_*.json
+\end{lstlisting}
+
+\subsection{Computing Uplift Metrics}
+\label{sec:workflow-metrics}
+
+\begin{lstlisting}[language=Python,caption=Metric Computation]
+from backend.metrics.u2_analysis import (
+    load_u2_experiment,
+    compute_uplift_metrics,
+)
+
+data = load_u2_experiment(
+    baseline_log_path="results/u2/baseline.jsonl",
+    rfl_log_path="results/u2/rfl.jsonl"
+)
+
+result = compute_uplift_metrics(
+    data,
+    bootstrap_seed=42,
+    n_bootstrap=10000,
+    confidence=0.95
+)
+
+print(f"Uplift Delta: {result.metrics['success_rate']['delta']:.3f}")
+print(f"CI: [{result.metrics['success_rate']['ci'][0]:.3f}, "
+      f"{result.metrics['success_rate']['ci'][1]:.3f}]")
+\end{lstlisting}
+
+\subsection{Preregistration Workflow}
+\label{sec:workflow-prereg}
+
+\begin{lstlisting}[language=bash,caption=Preregistration]
+# 1. Create preregistration file
+cat > PREREG_UPLIFT_U2.yaml << EOF
+experiment_id: U2_EXP_001
+description: "Experiment to measure uplift in slice_medium"
+slice_config: "config/curriculum.yaml#slice_medium"
+seed: 42
+cycles: 1000
+success_metrics:
+  - goal_hit
+  - sparse_density
+hypothesis: "RFL will improve success rate by > 5%"
+EOF
+
+# 2. Compute and seal hash BEFORE running
+sha256sum PREREG_UPLIFT_U2.yaml > PREREG_UPLIFT_U2.sha256
+
+# 3. Execute experiment (hash is now immutable)
+python experiments/run_uplift_u2.py ...
+\end{lstlisting}
+
+\subsection{Manifest Verification}
+\label{sec:workflow-manifest}
+
+\begin{lstlisting}[language=bash,caption=Manifest Verification]
+# Verify manifest integrity
+python scripts/verify_manifest_integrity.py \
+    results/u2_paired/uplift_u2_manifest_*.json
+
+# Verify field manual consistency
+python scripts/verify_field_manual_consistency.py
+\end{lstlisting}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Evidence Interpretation}
+\label{sec:evidence}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\phaseiilabel
+
+\begin{center}
+\fbox{\parbox{0.8\textwidth}{
+\centering
+\textbf{\large THIS SECTION IS INTENTIONALLY EMPTY}\\[1em]
+Evidence interpretation will be added only after experimental data exists.\\[0.5em]
+No uplift claims. No Phase I log references. No theoretical alterations.
+}}
+\end{center}
+
+\vspace{2em}
+
+\textit{Reserved for future documentation of:}
+\begin{itemize}
+    \item Experimental results and analysis
+    \item Statistical findings with confidence intervals
+    \item Comparative performance across slices
+    \item Lessons learned and methodology refinements
+\end{itemize}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+\section{Reference Tables}
+\label{sec:appendix}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{File Locations}
+\label{sec:file-locations}
+
+\begin{longtable}{ll}
+\toprule
+\textbf{Component} & \textbf{Path} \\
+\midrule
+Curriculum Config & \texttt{config/curriculum.yaml} \\
+U2 Runner & \texttt{experiments/run\_uplift\_u2.py} \\
+Success Metrics & \texttt{experiments/slice\_success\_metrics.py} \\
+Manifest Generator & \texttt{experiments/manifest.py} \\
+Determinism Helpers & \texttt{backend/repro/determinism.py} \\
+U2 Analysis & \texttt{backend/metrics/u2\_analysis.py} \\
+Preregistration & \texttt{PREREG\_UPLIFT\_U2.yaml} \\
+VSD Phase II Spec & \texttt{docs/VSD\_PHASE\_2.md} \\
+Determinism Contract & \texttt{docs/DETERMINISM\_CONTRACT.md} \\
+Field Manual & \texttt{docs/fm.tex} \\
+Consistency Checker & \texttt{scripts/verify\_field\_manual\_consistency.py} \\
+\bottomrule
+\caption{Key File Locations}
+\label{tab:files}
+\end{longtable}
+
+\subsection{Label Index}
+\label{sec:label-index}
+
+All LaTeX labels in this document follow the pattern \texttt{sec:*}, \texttt{def:*}, \texttt{inv:*}, \texttt{tab:*}.
+
+\begin{itemize}[noitemsep]
+    \item \texttt{sec:introduction} -- Introduction
+    \item \texttt{sec:u2-slices} -- U2 Slice Architecture
+    \item \texttt{sec:u2-runner} -- U2 Runner Overview
+    \item \texttt{sec:determinism} -- Determinism Contract
+    \item \texttt{sec:governance} -- Governance Alignment
+    \item \texttt{sec:metrics} -- Success Metric Definitions
+    \item \texttt{sec:seed-discipline} -- Seed Discipline
+    \item \texttt{sec:workflows} -- Example Workflows
+    \item \texttt{sec:evidence} -- Evidence Interpretation (empty)
+\end{itemize}
+
+\subsection{Canonical Terminology}
+\label{sec:terminology}
+
+\begin{longtable}{ll}
+\toprule
+\textbf{Term} & \textbf{Canonical Usage} \\
+\midrule
+$\Ht$ & Composite attestation root \\
+$\Rt$ & Reasoning tree Merkle root \\
+$\Ut$ & UI tree Merkle root \\
+Slice & Curriculum parameter configuration \\
+Cycle & Single derivation attempt with feedback \\
+Baseline & Random ordering policy \\
+RFL & Reflexive Formal Learning policy \\
+Gate & Promotion eligibility condition \\
+Manifest & Experiment metadata document \\
+Preregistration & Pre-experiment hypothesis record \\
+\bottomrule
+\caption{Canonical Terminology}
+\label{tab:terminology}
+\end{longtable}
+
+\end{document}
+

@@ -1,0 +1,421 @@
+# PHASE II — DIRECTORY STRUCTURE DRIFT MONITORING
+#
+# Agent: E3 (doc-ops-3) — Directory Geometry Analyst
+# Purpose: Monitor directory structure health and detect drift
+#
+# This workflow is READ-ONLY: it only analyzes the repo and produces artifacts.
+# It does not block PRs by default, but logs warnings if drift is detected.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# CI ADVISORY COMMENTS BLUEPRINT
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# This section documents how to interpret and customize CI output.
+#
+# 1. GITHUB STEP SUMMARY
+#    -------------------
+#    The workflow writes markdown to $GITHUB_STEP_SUMMARY, which appears in
+#    the Actions run summary. Key data displayed:
+#
+#    | Metric | Source |
+#    |--------|--------|
+#    | global_risk_score | structure_risk_index.json → global_risk_score |
+#    | HIGH-risk count | structure_risk_index.json → risk_distribution.HIGH |
+#    | Top 3 refactors | artifacts/structure/refactor_candidates.json |
+#    | Drift indicators | structure_risk_index.json → drift_indicators |
+#
+# 2. CUSTOMIZING THRESHOLDS
+#    ----------------------
+#    To change when warnings are emitted, edit the threshold checks in the
+#    "Check for Structure Drift" step:
+#
+#    ```yaml
+#    if [ "$RISK_LEVEL" = "HIGH" ]; then
+#      echo "::warning::..."
+#    ```
+#
+#    Risk levels are computed in scripts/directory_entropy_audit.py:
+#    - entropy_high: 2.0, violations_high: 10 → HIGH
+#    - entropy_medium: 1.0, violations_medium: 3 → MEDIUM
+#    - Otherwise → LOW
+#
+# 3. ADDING NEW SUMMARY SECTIONS
+#    ---------------------------
+#    To add new data to the summary, append markdown like:
+#
+#    ```yaml
+#    echo "### New Section Title" >> $GITHUB_STEP_SUMMARY
+#    echo "| Col1 | Col2 |" >> $GITHUB_STEP_SUMMARY
+#    python3 -c "... extract data ..." >> $GITHUB_STEP_SUMMARY
+#    ```
+#
+# 4. POSTING REFACTOR CANDIDATES
+#    ---------------------------
+#    To show top-3 refactor candidates in the summary, add after risk analysis:
+#
+#    ```yaml
+#    echo "### Top Refactor Candidates" >> $GITHUB_STEP_SUMMARY
+#    python3 -c "
+#    import json
+#    with open('artifacts/structure/refactor_candidates.json') as f:
+#        data = json.load(f)
+#    candidates = data.get('candidates', [])[:3]
+#    for c in candidates:
+#        print(f\"| {c['path']} | {c['risk_score']:.2f} | {c['priority']} |\")
+#    " >> $GITHUB_STEP_SUMMARY
+#    ```
+#
+# 5. NON-BLOCKING BEHAVIOR
+#    ----------------------
+#    This workflow uses continue-on-error: true and ::warning:: annotations
+#    to surface issues without blocking PRs. To make HIGH risk blocking:
+#
+#    ```yaml
+#    - name: Fail on HIGH risk
+#      if: steps.risk_index.outputs.risk_level == 'HIGH'
+#      run: exit 1
+#    ```
+#
+# 6. DRIFT REPORT SCHEMA (v1)
+#    ------------------------
+#    When using --compare, the drift report follows this stable schema:
+#
+#    {
+#      "old_report": "path/to/old.json",
+#      "new_report": "path/to/new.json",
+#      "overall_trend": "improving|degrading|stable",
+#      "max_risk_increase": float,
+#      "max_risk_decrease": float,
+#      "directories_with_increased_risk": [...],  # Sorted alphabetically
+#      "directories_with_decreased_risk": [...],  # Sorted alphabetically
+#      "new_directories": [...],                   # Sorted alphabetically
+#      "removed_directories": [...],               # Sorted alphabetically
+#      "risk_transitions": {"LOW_TO_HIGH": [...], ...}
+#    }
+#
+#    All directory lists are sorted for deterministic diffs.
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Directory Structure Monitor
+
+on:
+  push:
+    branches: [main, mvdp-*]
+  pull_request:
+    branches: [main]
+  # Allow manual trigger for ad-hoc audits
+  workflow_dispatch:
+    inputs:
+      phase_filter:
+        description: 'Filter by phase (phase1, phase2, or all)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - phase1
+          - phase2
+
+jobs:
+  structure-audit:
+    name: Structure Entropy Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100  # For git history analysis
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Install dependencies
+        run: uv sync --frozen
+      
+      - name: Run Directory Entropy Audit
+        id: entropy_audit
+        run: |
+          echo "::group::Running entropy audit..."
+          uv run python scripts/directory_entropy_audit.py \
+            --guardian \
+            --classify \
+            --risk-index \
+            --output directory_entropy_report.json
+          echo "::endgroup::"
+        continue-on-error: true  # Don't fail on boundary violations
+      
+      - name: Run Risk Index Analysis
+        id: risk_index
+        run: |
+          echo "::group::Parsing risk index..."
+          
+          # Extract global risk score from the JSON
+          RISK_SCORE=$(python3 -c "
+          import json
+          with open('structure_risk_index.json') as f:
+              data = json.load(f)
+          print(data['global_risk_score'])
+          ")
+          
+          RISK_LEVEL=$(python3 -c "
+          import json
+          with open('structure_risk_index.json') as f:
+              data = json.load(f)
+          print(data['global_risk_level'])
+          ")
+          
+          HIGH_RISK_COUNT=$(python3 -c "
+          import json
+          with open('structure_risk_index.json') as f:
+              data = json.load(f)
+          print(data['risk_distribution']['HIGH'])
+          ")
+          
+          echo "risk_score=$RISK_SCORE" >> $GITHUB_OUTPUT
+          echo "risk_level=$RISK_LEVEL" >> $GITHUB_OUTPUT
+          echo "high_risk_count=$HIGH_RISK_COUNT" >> $GITHUB_OUTPUT
+          
+          echo "Global Risk Score: $RISK_SCORE ($RISK_LEVEL)"
+          echo "HIGH-risk directories: $HIGH_RISK_COUNT"
+          
+          echo "::endgroup::"
+      
+      - name: Check for Structure Drift
+        id: drift_check
+        run: |
+          RISK_SCORE="${{ steps.risk_index.outputs.risk_score }}"
+          RISK_LEVEL="${{ steps.risk_index.outputs.risk_level }}"
+          HIGH_RISK="${{ steps.risk_index.outputs.high_risk_count }}"
+          
+          echo "## 🏗️ Directory Structure Health Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Global Risk Score | \`$RISK_SCORE\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Risk Level | **$RISK_LEVEL** |" >> $GITHUB_STEP_SUMMARY
+          echo "| HIGH-risk Directories | $HIGH_RISK |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check thresholds and add warnings
+          if [ "$RISK_LEVEL" = "HIGH" ]; then
+            echo "::warning::Directory structure drift detected! Global risk level: HIGH ($RISK_SCORE)"
+            echo "⚠️ **WARNING**: Structure drift detected. Consider reviewing high-entropy directories." >> $GITHUB_STEP_SUMMARY
+          elif [ "$RISK_LEVEL" = "MEDIUM" ]; then
+            echo "::notice::Directory structure has moderate risk ($RISK_SCORE)"
+            echo "📊 Structure health is moderate. Monitor for further drift." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Directory structure is healthy (Risk: $RISK_SCORE)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # List drift indicators
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Drift Indicators" >> $GITHUB_STEP_SUMMARY
+          python3 -c "
+          import json
+          with open('structure_risk_index.json') as f:
+              data = json.load(f)
+          indicators = data.get('drift_indicators', [])
+          if indicators:
+              for ind in indicators:
+                  print(f'- {ind}')
+          else:
+              print('_No drift indicators detected._')
+          " >> $GITHUB_STEP_SUMMARY
+          
+          # Top 3 Refactor Candidates (see CI Advisory Blueprint above)
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Top Refactor Candidates" >> $GITHUB_STEP_SUMMARY
+          if [ -f "artifacts/structure/refactor_candidates.json" ]; then
+            echo "| Directory | Risk | Priority |" >> $GITHUB_STEP_SUMMARY
+            echo "|-----------|------|----------|" >> $GITHUB_STEP_SUMMARY
+            python3 -c "
+          import json
+          with open('artifacts/structure/refactor_candidates.json') as f:
+              data = json.load(f)
+          candidates = data.get('candidates', [])[:3]
+          for c in candidates:
+              path = c.get('path', '')[:40]
+              risk = c.get('risk_score', 0)
+              priority = c.get('priority', 'N/A')
+              print(f'| \`{path}\` | {risk:.2f} | {priority} |')
+          if len(data.get('candidates', [])) > 3:
+              more = len(data.get('candidates', [])) - 3
+              print(f'| ... | _+{more} more_ | |')
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_No refactor candidates generated._" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Phase II Risk Advisory
+        id: phase2_advisory
+        run: |
+          echo "::group::Phase II Risk Analysis..."
+          
+          # Run Phase II specific analysis
+          uv run python scripts/directory_entropy_audit.py \
+            --phase phase2 \
+            --risk-index \
+            --refactor-candidates \
+            --output phase2_entropy_report.json 2>/dev/null || true
+          
+          # Check if Phase II has HIGH risk directories
+          PHASE2_HIGH_RISK=$(python3 -c "
+          import json
+          try:
+              with open('structure_risk_index.json') as f:
+                  data = json.load(f)
+              # Count HIGH risk Phase II directories
+              high_risk = [d for d in data.get('top_risky_directories', []) 
+                          if d.get('risk_level') == 'HIGH']
+              # Check if paths contain phase2 indicators
+              phase2_high = []
+              for d in high_risk:
+                  path = d.get('path', '')
+                  if ('phase2' in path.lower() or 'phase_ii' in path.lower() or 
+                      '/u2' in path or path.startswith('u2') or
+                      'artifacts/u2' in path or 'tests/phase2' in path or
+                      'experiments/u2' in path or 'backend/metrics' in path or
+                      'backend/runner' in path or 'backend/telemetry' in path):
+                      phase2_high.append(path)
+              print(len(phase2_high))
+          except:
+              print(0)
+          ")
+          
+          PHASE2_PATHS=$(python3 -c "
+          import json
+          try:
+              with open('structure_risk_index.json') as f:
+                  data = json.load(f)
+              high_risk = [d for d in data.get('top_risky_directories', []) 
+                          if d.get('risk_level') == 'HIGH']
+              phase2_high = []
+              for d in high_risk:
+                  path = d.get('path', '')
+                  if ('phase2' in path.lower() or 'phase_ii' in path.lower() or 
+                      '/u2' in path or path.startswith('u2') or
+                      'artifacts/u2' in path or 'tests/phase2' in path or
+                      'experiments/u2' in path or 'backend/metrics' in path or
+                      'backend/runner' in path or 'backend/telemetry' in path):
+                      phase2_high.append(path)
+              for p in phase2_high[:5]:
+                  print(p)
+          except:
+              pass
+          ")
+          
+          echo "phase2_high_risk=$PHASE2_HIGH_RISK" >> $GITHUB_OUTPUT
+          
+          # Add Phase II advisory to summary
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Phase II Structural Risk Advisory" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "$PHASE2_HIGH_RISK" -gt 0 ]; then
+            echo "::warning::Phase II Structural Risk: HIGH in $PHASE2_HIGH_RISK directories"
+            echo "⚠️ **Phase II Structural Risk: HIGH in $PHASE2_HIGH_RISK directories**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Affected directories:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "$PHASE2_PATHS" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "_Run \`uv run python scripts/directory_entropy_audit.py --phase phase2 --risk-index --refactor-candidates\` for details._" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Phase II structure is healthy" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "::endgroup::"
+      
+      - name: Upload Audit Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: directory-structure-audit
+          path: |
+            directory_entropy_report.json
+            structure_risk_index.json
+            artifacts/structure/refactor_candidates.json
+          retention-days: 30
+          if-no-files-found: ignore
+      
+      - name: Phase-Specific Analysis (Phase I)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.phase_filter != 'phase2'
+        run: |
+          echo "::group::Phase I Analysis"
+          uv run python scripts/directory_entropy_audit.py \
+            --phase phase1 \
+            --risk-index \
+            --output phase1_entropy_report.json
+          echo "::endgroup::"
+      
+      - name: Phase-Specific Analysis (Phase II)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.phase_filter != 'phase1'
+        run: |
+          echo "::group::Phase II Analysis"
+          uv run python scripts/directory_entropy_audit.py \
+            --phase phase2 \
+            --risk-index \
+            --output phase2_entropy_report.json
+          echo "::endgroup::"
+
+  # Boundary violation check (separate job for clarity)
+  boundary-check:
+    name: Phase Boundary Guardian
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      
+      - name: Install dependencies
+        run: uv sync --frozen
+      
+      - name: Check Phase Boundaries
+        id: boundary_check
+        run: |
+          echo "::group::Running boundary check..."
+          
+          # Run guardian mode only
+          uv run python scripts/directory_entropy_audit.py --guardian --output boundary_report.json || true
+          
+          # Count violations
+          VIOLATIONS=$(python3 -c "
+          import json
+          with open('boundary_report.json') as f:
+              data = json.load(f)
+          print(len(data.get('boundary_violations', [])))
+          ")
+          
+          echo "violations=$VIOLATIONS" >> $GITHUB_OUTPUT
+          
+          if [ "$VIOLATIONS" -gt 0 ]; then
+            echo "::warning::Found $VIOLATIONS phase boundary violation(s)"
+            echo "## ⚠️ Phase Boundary Violations" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Found **$VIOLATIONS** violation(s) where Phase I code imports Phase II modules." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Run \`uv run python scripts/directory_entropy_audit.py --guardian --remediation\` locally for details." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No phase boundary violations detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "::endgroup::"
+

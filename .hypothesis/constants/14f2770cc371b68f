@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\backend\metrics\first_organism_telemetry.py
+# hypothesis_version: 6.148.2
+
+[0.0, 'REDIS_URL', 'abstention_history', 'default', 'duration_history', 'duration_seconds', 'failure', 'ht_history', 'last_abstentions', 'last_ht', 'last_ht_full', 'last_ht_hash', 'last_run_timestamp', 'last_status', 'latency_seconds', 'runs_total', 'success', 'success_history']

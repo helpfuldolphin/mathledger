@@ -1,0 +1,652 @@
+{
+  "check_id": "e7bb020f53e4a198",
+  "timestamp": "2025-12-06T07:16:01.870784+00:00",
+  "base_ref": "main",
+  "head_ref": "HEAD",
+  "impact_report": {
+    "report_id": "d0188fc63f327b89",
+    "timestamp": "2025-12-06T07:16:01.883995+00:00",
+    "base_ref": "main",
+    "head_ref": "HEAD",
+    "current_phase": "phase_i",
+    "impacts": [
+      {
+        "phase": "Determinism contract change",
+        "signals": [
+          {
+            "signal": "determinism_envelope_change",
+            "file_path": "unknown",
+            "line_number": null,
+            "context": "",
+            "severity": "critical"
+          }
+        ],
+        "severity": "CRITICAL",
+        "signal_count": 1
+      },
+      {
+        "phase": "Phase I \u2192 Phase II",
+        "signals": [
+          {
+            "signal": "prereg_addition",
+            "file_path": "unknown",
+            "line_number": null,
+            "context": "",
+            "severity": "warning"
+          }
+        ],
+        "severity": "WARN",
+        "signal_count": 1
+      },
+      {
+        "phase": "Phase II \u2192 Phase IIb",
+        "signals": [
+          {
+            "signal": "lean_toolchain_update",
+            "file_path": "unknown",
+            "line_number": null,
+            "context": "",
+            "severity": "warning"
+          }
+        ],
+        "severity": "WARN",
+        "signal_count": 1
+      }
+    ],
+    "files_changed": [],
+    "overall_severity": "CRITICAL",
+    "requires_migration_intent": true,
+    "summary": {
+      "total_signals": 3,
+      "critical_signals": 1,
+      "warning_signals": 2,
+      "info_signals": 0,
+      "migration_transitions_detected": 3,
+      "files_analyzed": 0,
+      "phase_frontiers_touched": [
+        "Determinism contract change",
+        "Phase I \u2192 Phase II",
+        "Phase II \u2192 Phase IIb"
+      ]
+    }
+  },
+  "impact_severity": "CRITICAL",
+  "simulation_result": {
+    "simulation_id": "8c60916b6033655f",
+    "timestamp": "2025-12-06T07:16:02.369008+00:00",
+    "current_phase": "phase_i",
+    "gates": [
+      {
+        "gate_id": "GATE-I-II",
+        "source_phase": "phase_i",
+        "target_phase": "phase_ii",
+        "passed": false,
+        "preconditions": [
+          {
+            "check_id": "ES-001",
+            "check_name": "attestation_structure",
+            "status": "fail",
+            "message": "Missing attestation fields: ['compositeAttestationRoot', 'reasoningMerkleRoot', 'uiMerkleRoot']",
+            "details": {
+              "missing": [
+                "compositeAttestationRoot",
+                "reasoningMerkleRoot",
+                "uiMerkleRoot"
+              ]
+            }
+          },
+          {
+            "check_id": "ES-002",
+            "check_name": "baseline_logs",
+            "status": "pass",
+            "message": "Baseline logs present with sufficient cycles",
+            "details": {
+              "found": [
+                "fo_baseline.jsonl",
+                "fo_rfl.jsonl"
+              ],
+              "line_counts": {
+                "fo_baseline.jsonl": 1000,
+                "fo_rfl.jsonl": 1000
+              }
+            }
+          },
+          {
+            "check_id": "ES-003",
+            "check_name": "evidence_manifest",
+            "status": "warn",
+            "message": "No evidence manifest found (optional for Phase I)",
+            "details": {
+              "searched": [
+                "C:\\dev\\mathledger\\artifacts\\phase_i_seal\\evidence_manifest.json",
+                "C:\\dev\\mathledger\\artifacts\\first_organism\\manifest.json"
+              ]
+            }
+          },
+          {
+            "check_id": "DC-001",
+            "check_name": "determinism_envelope_file",
+            "status": "pass",
+            "message": "Determinism contract satisfied: normalization/canon.py",
+            "details": {
+              "file": "normalization/canon.py"
+            }
+          },
+          {
+            "check_id": "DC-001",
+            "check_name": "determinism_envelope_file",
+            "status": "pass",
+            "message": "Determinism contract satisfied: attestation/dual_root.py",
+            "details": {
+              "file": "attestation/dual_root.py"
+            }
+          },
+          {
+            "check_id": "DC-001",
+            "check_name": "determinism_envelope_file",
+            "status": "fail",
+            "message": "Forbidden primitives in substrate/repro/determinism.py",
+            "details": {
+              "file": "substrate/repro/determinism.py",
+              "violations": [
+                {
+                  "line": 142,
+                  "pattern": "random\\.\\w+\\(",
+                  "content": "self.rng = np.random.RandomState(seed)"
+                },
+                {
+                  "line": 144,
+                  "pattern": "random\\.\\w+\\(",
+                  "content": "self.rng = random.Random(seed)"
+                }
+              ]
+            }
+          },
+          {
+            "check_id": "SC-001",
+            "check_name": "curriculum_version",
+            "status": "pass",
+            "message": "Curriculum version valid",
+            "details": {
+              "version": 2
+            }
+          },
+          {
+            "check_id": "SC-002",
+            "check_name": "active_slice",
+            "status": "pass",
+            "message": "Active slice 'slice_hard' is valid",
+            "details": {
+              "active": "slice_hard",
+              "total_slices": 9
+            }
+          }
+        ],
+        "blocking_count": 2
+      },
+      {
+        "gate_id": "GATE-II-IIb",
+        "source_phase": "phase_ii",
+        "target_phase": "phase_iib",
+        "passed": true,
+        "preconditions": [
+          {
+            "check_id": "IIb-001",
+            "check_name": "lean_toolchain",
+            "status": "pass",
+            "message": "Lean toolchain present",
+            "details": {
+              "path": "C:\\dev\\mathledger\\backend\\lean_proj\\lakefile.lean"
+            }
+          }
+        ],
+        "blocking_count": 0
+      },
+      {
+        "gate_id": "GATE-II-III",
+        "source_phase": "phase_ii",
+        "target_phase": "phase_iii",
+        "passed": true,
+        "preconditions": [
+          {
+            "check_id": "III-001",
+            "check_name": "crypto_core",
+            "status": "pass",
+            "message": "Crypto core module present",
+            "details": {
+              "path": "C:\\dev\\mathledger\\backend\\crypto\\core.py"
+            }
+          },
+          {
+            "check_id": "BP-001",
+            "check_name": "basis_import_purity",
+            "status": "pass",
+            "message": "No forbidden imports in basis\\__init__.py",
+            "details": {
+              "file": "C:\\dev\\mathledger\\basis\\__init__.py"
+            }
+          },
+          {
+            "check_id": "BP-001",
+            "check_name": "basis_import_purity",
+            "status": "pass",
+            "message": "No forbidden imports in basis\\attestation\\dual.py",
+            "details": {
+              "file": "C:\\dev\\mathledger\\basis\\attestation\\dual.py"
+            }
+          }
+        ],
+        "blocking_count": 0
+      }
+    ],
+    "determinism_checks": [
+      {
+        "check_id": "DC-001",
+        "check_name": "determinism_envelope_file",
+        "status": "pass",
+        "message": "Determinism contract satisfied: normalization/canon.py",
+        "details": {
+          "file": "normalization/canon.py"
+        }
+      },
+      {
+        "check_id": "DC-001",
+        "check_name": "determinism_envelope_file",
+        "status": "pass",
+        "message": "Determinism contract satisfied: attestation/dual_root.py",
+        "details": {
+          "file": "attestation/dual_root.py"
+        }
+      },
+      {
+        "check_id": "DC-001",
+        "check_name": "determinism_envelope_file",
+        "status": "fail",
+        "message": "Forbidden primitives in substrate/repro/determinism.py",
+        "details": {
+          "file": "substrate/repro/determinism.py",
+          "violations": [
+            {
+              "line": 142,
+              "pattern": "random\\.\\w+\\(",
+              "content": "self.rng = np.random.RandomState(seed)"
+            },
+            {
+              "line": 144,
+              "pattern": "random\\.\\w+\\(",
+              "content": "self.rng = random.Random(seed)"
+            }
+          ]
+        }
+      },
+      {
+        "check_id": "DC-001",
+        "check_name": "determinism_envelope_file",
+        "status": "fail",
+        "message": "Forbidden primitives in backend/repro/determinism.py",
+        "details": {
+          "file": "backend/repro/determinism.py",
+          "violations": [
+            {
+              "line": 140,
+              "pattern": "random\\.\\w+\\(",
+              "content": "self.rng = np.random.RandomState(seed)"
+            },
+            {
+              "line": 142,
+              "pattern": "random\\.\\w+\\(",
+              "content": "self.rng = random.Random(seed)"
+            }
+          ]
+        }
+      },
+      {
+        "check_id": "DC-001",
+        "check_name": "determinism_envelope_file",
+        "status": "pass",
+        "message": "Determinism contract satisfied: backend/axiom_engine/derive.py",
+        "details": {
+          "file": "backend/axiom_engine/derive.py"
+        }
+      },
+      {
+        "check_id": "DC-001",
+        "check_name": "determinism_envelope_file",
+        "status": "fail",
+        "message": "Forbidden primitives in rfl/runner.py",
+        "details": {
+          "file": "rfl/runner.py",
+          "violations": [
+            {
+              "line": 9,
+              "pattern": "random\\.\\w+\\(",
+              "content": "This module uses scoped numpy RNG instances instead of global np.random.seed()."
+            },
+            {
+              "line": 298,
+              "pattern": "random\\.\\w+\\(",
+              "content": "This method uses a scoped DeterministicPRNG instead of global np.random.seed()."
+            },
+            {
+              "line": 302,
+              "pattern": "random\\.\\w+\\(",
+              "content": "The legacy np.random.seed() call has been removed to prevent global state"
+            },
+            {
+              "line": 1127,
+              "pattern": "datetime\\.utcnow\\(\\)",
+              "content": "start_time = self.run_results[0].start_time if self.run_results else datetime.utcnow().isoformat() +"
+            },
+            {
+              "line": 1128,
+              "pattern": "datetime\\.utcnow\\(\\)",
+              "content": "end_time = self.run_results[-1].end_time if self.run_results else datetime.utcnow().isoformat() + \"Z"
+            }
+          ]
+        }
+      },
+      {
+        "check_id": "DC-001",
+        "check_name": "determinism_envelope_file",
+        "status": "pass",
+        "message": "Determinism contract satisfied: basis/logic/normalizer.py",
+        "details": {
+          "file": "basis/logic/normalizer.py"
+        }
+      },
+      {
+        "check_id": "DC-001",
+        "check_name": "determinism_envelope_file",
+        "status": "pass",
+        "message": "Determinism contract satisfied: basis/crypto/hash.py",
+        "details": {
+          "file": "basis/crypto/hash.py"
+        }
+      },
+      {
+        "check_id": "DC-001",
+        "check_name": "determinism_envelope_file",
+        "status": "pass",
+        "message": "Determinism contract satisfied: basis/attestation/dual.py",
+        "details": {
+          "file": "basis/attestation/dual.py"
+        }
+      },
+      {
+        "check_id": "DC-002",
+        "check_name": "determinism_helpers",
+        "status": "pass",
+        "message": "All determinism helpers present",
+        "details": {
+          "found": [
+            "deterministic_timestamp",
+            "deterministic_uuid",
+            "SeededRNG"
+          ]
+        }
+      }
+    ],
+    "evidence_chain": [
+      {
+        "check_id": "ES-001",
+        "check_name": "attestation_structure",
+        "status": "fail",
+        "message": "Missing attestation fields: ['compositeAttestationRoot', 'reasoningMerkleRoot', 'uiMerkleRoot']",
+        "details": {
+          "missing": [
+            "compositeAttestationRoot",
+            "reasoningMerkleRoot",
+            "uiMerkleRoot"
+          ]
+        }
+      },
+      {
+        "check_id": "ES-002",
+        "check_name": "baseline_logs",
+        "status": "pass",
+        "message": "Baseline logs present with sufficient cycles",
+        "details": {
+          "found": [
+            "fo_baseline.jsonl",
+            "fo_rfl.jsonl"
+          ],
+          "line_counts": {
+            "fo_baseline.jsonl": 1000,
+            "fo_rfl.jsonl": 1000
+          }
+        }
+      },
+      {
+        "check_id": "ES-003",
+        "check_name": "evidence_manifest",
+        "status": "warn",
+        "message": "No evidence manifest found (optional for Phase I)",
+        "details": {
+          "searched": [
+            "C:\\dev\\mathledger\\artifacts\\phase_i_seal\\evidence_manifest.json",
+            "C:\\dev\\mathledger\\artifacts\\first_organism\\manifest.json"
+          ]
+        }
+      }
+    ],
+    "slice_validation": [
+      {
+        "check_id": "SC-001",
+        "check_name": "curriculum_version",
+        "status": "pass",
+        "message": "Curriculum version valid",
+        "details": {
+          "version": 2
+        }
+      },
+      {
+        "check_id": "SC-002",
+        "check_name": "active_slice",
+        "status": "pass",
+        "message": "Active slice 'slice_hard' is valid",
+        "details": {
+          "active": "slice_hard",
+          "total_slices": 9
+        }
+      },
+      {
+        "check_id": "SC-003",
+        "check_name": "slice_monotonicity",
+        "status": "pass",
+        "message": "Slice monotonicity satisfied",
+        "details": {
+          "slices_checked": 9
+        }
+      },
+      {
+        "check_id": "SC-004",
+        "check_name": "slice_gates",
+        "status": "pass",
+        "message": "All slices have complete gate definitions",
+        "details": {
+          "slices_checked": 9
+        }
+      }
+    ],
+    "preregistration_checks": [
+      {
+        "check_id": "PR-001",
+        "check_name": "preregistration_schema",
+        "status": "fail",
+        "message": "Error parsing preregistration: expected a single document in the stream\n  in \"C:\\dev\\mathledger\\experiments\\prereg\\PREREG_UPLIFT_U2.yaml\", line 9, column 1\nbut found another document\n  in \"C:\\dev\\mathledger\\experiments\\prereg\\PREREG_UPLIFT_U2.yaml\", line 67, column 1",
+        "details": {}
+      }
+    ],
+    "boundary_purity": [
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\__init__.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\__init__.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\attestation\\dual.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\attestation\\dual.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\attestation\\__init__.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\attestation\\__init__.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\core\\types.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\core\\types.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\core\\__init__.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\core\\__init__.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\crypto\\hash.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\crypto\\hash.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\crypto\\__init__.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\crypto\\__init__.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\curriculum\\ladder.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\curriculum\\ladder.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\curriculum\\__init__.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\curriculum\\__init__.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\ledger\\block.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\ledger\\block.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\ledger\\__init__.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\ledger\\__init__.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\logic\\normalizer.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\logic\\normalizer.py"
+        }
+      },
+      {
+        "check_id": "BP-001",
+        "check_name": "basis_import_purity",
+        "status": "pass",
+        "message": "No forbidden imports in basis\\logic\\__init__.py",
+        "details": {
+          "file": "C:\\dev\\mathledger\\basis\\logic\\__init__.py"
+        }
+      },
+      {
+        "check_id": "BP-002",
+        "check_name": "hermetic_mode_check",
+        "status": "pass",
+        "message": "No hermetic violations detected",
+        "details": {}
+      },
+      {
+        "check_id": "BP-003",
+        "check_name": "lean_isolation_check",
+        "status": "pass",
+        "message": "Lean calls properly isolated",
+        "details": {}
+      }
+    ],
+    "overall_status": "BLOCKED",
+    "summary": {
+      "total_checks": 33,
+      "passed": 27,
+      "failed": 5,
+      "warnings": 1,
+      "skipped": 0,
+      "gates": {
+        "GATE-I-II": {
+          "ready": false,
+          "blocking_failures": 2
+        },
+        "GATE-II-IIb": {
+          "ready": true,
+          "blocking_failures": 0
+        },
+        "GATE-II-III": {
+          "ready": true,
+          "blocking_failures": 0
+        }
+      },
+      "next_available_migrations": [
+        "phase_iib",
+        "phase_iii"
+      ]
+    }
+  },
+  "simulation_status": "BLOCKED",
+  "current_phase": "phase_i",
+  "intent_found": false,
+  "intent_valid": false,
+  "intent_validation": null,
+  "advisor_result": null,
+  "advisor_status": null,
+  "verdict": "FAIL",
+  "summary": "Critical migration signals detected without migration_intent.yaml",
+  "recommendations": [
+    "Critical migration signals detected but no migration_intent.yaml found"
+  ]
+}

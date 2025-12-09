@@ -1,0 +1,17 @@
+{
+    "default": {
+        "required_level": "L2_domain_coverage",
+        "allow_l3_regression": false,
+        "description": "Default policy for all metrics unless overridden. Requires full conformance up to L2 and permits no L3 regressions."
+    },
+    "uplift_u2": {
+        "required_level": "L2_domain_coverage",
+        "allow_l3_regression": true,
+        "description": "Policy for U2 uplift metrics. L3 regressions are tolerated to allow for experimental churn, but core determinism is required."
+    },
+    "legacy_metrics": {
+        "required_level": "L1_deterministic",
+        "allow_l3_regression": true,
+        "description": "Lenient policy for older, less critical metrics."
+    }
+}

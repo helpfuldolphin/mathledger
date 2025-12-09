@@ -1,0 +1,6 @@
+{
+    "stagnation_std_thresh": 0.01,
+    "trend_tau_thresh": -0.2,
+    "oscillation_omega_thresh": 0.3,
+    "step_size_thresh": 0.1
+}

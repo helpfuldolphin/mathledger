@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\derivation\structure.py
+# hypothesis_version: 6.148.2
+
+[8192, '(', ')', '->', '/\\', '\\/', '~']

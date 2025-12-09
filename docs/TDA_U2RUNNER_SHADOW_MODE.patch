@@ -1,0 +1,201 @@
+--- a/experiments/u2/runner.py
++++ b/experiments/u2/runner.py
+@@ -47,6 +47,13 @@ from __future__ import annotations
+ import hashlib
+ import json
+ import random
++import time
++from typing import Any, Callable, Dict, List, Optional, Tuple
++
++# TDA Mind Scanner integration (Phase I Shadow Mode)
++from typing import TYPE_CHECKING
++if TYPE_CHECKING:
++    from backend.tda.runtime_monitor import TDAMonitor, TDAMonitorResult
+
+ from .logging import U2TraceLogger
+ from . import schema
+@@ -1252,6 +1259,7 @@ class U2Config:
+     snapshot_dir: Optional[Path] = None
+     output_dir: Optional[Path] = None
+     slice_config: Dict[str, Any] = field(default_factory=dict)
++    tda_monitor: Optional["TDAMonitor"] = None  # Phase I: TDA Mind Scanner
+
+     def __post_init__(self):
+         if self.mode not in ("baseline", "rfl"):
+@@ -1260,6 +1268,8 @@ class U2Config:
+             self.snapshot_dir = Path(self.snapshot_dir)
+         if self.output_dir is not None and not isinstance(self.output_dir, Path):
+             self.output_dir = Path(self.output_dir)
++        # Note: tda_monitor is not serialized to dict for JSON output
++        # It is an optional runtime injection point
+
+     def to_dict(self) -> Dict[str, Any]:
+         """Convert to dictionary."""
+@@ -1272,6 +1282,7 @@ class U2Config:
+             "snapshot_dir": str(self.snapshot_dir) if self.snapshot_dir else None,
+             "output_dir": str(self.output_dir) if self.output_dir else None,
+             "slice_config": self.slice_config,
++            "tda_enabled": self.tda_monitor is not None,
+         }
+
+
+@@ -1357,6 +1368,9 @@ class U2Runner:
+         self.config = config
+         self.cycle_index = 0
+         self.ht_series: List[Dict[str, Any]] = []
++
++        # TDA Mind Scanner (Phase I: Shadow Mode)
++        self.tda_monitor: Optional["TDAMonitor"] = config.tda_monitor
+
+         # Generate seed schedule
+         self.seed_schedule = generate_seed_schedule(
+@@ -1375,6 +1389,11 @@ class U2Runner:
+
+         # Main RNG for non-policy operations
+         self._rng = random.Random(config.master_seed)
++
++        # TDA evaluation history (Phase I telemetry)
++        self._tda_results: List[Dict[str, Any]] = []
++        self._recent_states: List[Any] = []  # For embedding extraction
++        self._state_window_size: int = 50
+
+     def run_cycle(
+         self,
+@@ -1415,6 +1434,9 @@ class U2Runner:
+
+         # --- Execution ---
+         success, result = execute_fn(chosen_item, cycle_seed)
++
++        # --- TDA Evaluation (Phase I: Shadow Mode) ---
++        tda_result = self._evaluate_tda(chosen_item, success, result)
+
+         # --- Policy Update ---
+         if self.config.mode == "rfl" and self.policy is not None:
+@@ -1438,6 +1460,14 @@ class U2Runner:
+             "label": "PHASE II — NOT USED IN PHASE I",
+         }
+         self.ht_series.append(telemetry_record)
++
++        # Append TDA telemetry if available
++        if tda_result is not None:
++            telemetry_record.update({
++                "tda_hss": tda_result.get("hss"),
++                "tda_signal": tda_result.get("signal"),
++                "tda_computation_ms": tda_result.get("computation_time_ms"),
++            })
+
+         # Advance cycle
+         self.cycle_index += 1
+@@ -1451,5 +1481,112 @@ class U2Runner:
+             result=result if isinstance(result, dict) else {"raw": str(result)},
+             success=success,
+         )
++
++    # =========================================================================
++    # TDA Mind Scanner Integration (Phase I: Shadow Mode)
++    # =========================================================================
++
++    def _evaluate_tda(
++        self,
++        item: str,
++        success: bool,
++        result: Any,
++    ) -> Optional[Dict[str, Any]]:
++        """
++        Evaluate TDA Mind Scanner on current proof attempt.
++
++        Phase I (Shadow Mode): Compute HSS and log to telemetry.
++        No gating actions are taken - purely observational.
++
++        Returns:
++            TDA result dict or None if monitor not configured.
++        """
++        if self.tda_monitor is None:
++            return None
++
++        try:
++            # Track state for embedding extraction
++            self._track_state(item, success, result)
++
++            # Extract local DAG (if available)
++            local_dag = self._extract_local_dag(item)
++
++            # Get state embeddings
++            embeddings = self._get_state_embeddings()
++
++            # Evaluate
++            tda_result = self.tda_monitor.evaluate_proof_attempt(
++                slice_name=self.config.slice_name,
++                local_dag=local_dag,
++                embeddings=embeddings,
++            )
++
++            # Convert to dict for telemetry
++            result_dict = tda_result.to_dict()
++
++            # Store for analysis
++            self._tda_results.append({
++                "cycle": self.cycle_index,
++                "item": item,
++                "success": success,
++                **result_dict,
++            })
++
++            return result_dict
++
++        except Exception as e:
++            # Phase I: Fail silently, log warning
++            import logging
++            logging.getLogger("U2Runner").warning(
++                f"TDA evaluation error at cycle {self.cycle_index}: {e}"
++            )
++            return None
++
++    def _track_state(self, item: str, success: bool, result: Any) -> None:
++        """Track state for embedding window."""
++        state = {
++            "text": item,
++            "success": success,
++            "cycle": self.cycle_index,
++        }
++        self._recent_states.append(state)
++
++        # Trim to window size
++        if len(self._recent_states) > self._state_window_size:
++            self._recent_states = self._recent_states[-self._state_window_size:]
++
++    def _extract_local_dag(self, target_hash: str) -> Any:
++        """
++        Extract local proof neighborhood for TDA analysis.
++
++        Returns NetworkX DiGraph or None if not available.
++        """
++        try:
++            import networkx as nx
++
++            # Create simple DAG from recent states
++            G = nx.DiGraph()
++            for i, state in enumerate(self._recent_states):
++                G.add_node(f"state_{i}", text=state["text"])
++                if i > 0:
++                    G.add_edge(f"state_{i-1}", f"state_{i}")
++
++            return G
++        except ImportError:
++            return None
++
++    def _get_state_embeddings(self) -> Dict[str, Any]:
++        """Get embeddings for recent reasoning states."""
++        try:
++            from backend.axiom_engine.features import extract_statement_features
++
++            embeddings = {}
++            for i, state in enumerate(self._recent_states):
++                key = f"state_{i}"
++                embeddings[key] = extract_statement_features(state["text"])
++
++            return embeddings
++        except ImportError:
++            return {}
+
+     def maybe_save_snapshot(self) -> Optional[Path]:

@@ -1,0 +1,308 @@
+--- a/experiments/u2/runner.py
++++ b/experiments/u2/runner.py
+@@ -47,6 +47,7 @@ from __future__ import annotations
+ import hashlib
+ import json
+ import random
++import time
+ from dataclasses import dataclass, field, asdict
+ from pathlib import Path
+ from typing import Any, Callable, Dict, List, Optional, Tuple
+@@ -55,6 +56,61 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
+ from typing import TYPE_CHECKING
+ if TYPE_CHECKING:
+     from backend.tda.runtime_monitor import TDAMonitor, TDAMonitorResult
++    from backend.tda.reference_profile import ReferenceTDAProfile
++
++
++# ============================================================================
++# Phase II: HSS-Integrated Planner Reweighting
++# ============================================================================
++
++@dataclass
++class TDAPlannerConfig:
++    """
++    Configuration for HSS-based candidate reweighting in planner.
++
++    Phase II: Soft Gating
++    ---------------------
++    score' = score × (α + β × HSS)
++
++    Where:
++    - α = base_weight (default 0.5) - minimum weight regardless of HSS
++    - β = hss_weight (default 0.5) - HSS contribution to weight
++    - score' is clamped to [min_score, max_score]
++
++    This re-weighs candidates based on structural integrity without
++    abandoning any branches. Low HSS candidates are deprioritized
++    but remain in the search space.
++    """
++    enabled: bool = True
++    base_weight: float = 0.5       # α: minimum weight factor
++    hss_weight: float = 0.5        # β: HSS contribution factor
++    min_score: float = 0.01        # Floor for reweighted scores
++    max_score: float = 10.0        # Ceiling for reweighted scores
++    use_per_candidate_hss: bool = False  # If True, compute HSS per candidate
++
++    def compute_reweighted_score(
++        self,
++        base_score: float,
++        hss: float,
++    ) -> float:
++        """
++        Compute reweighted score: score' = score × (α + β × HSS)
++
++        Args:
++            base_score: Original candidate score from policy.
++            hss: Hallucination Stability Score [0, 1].
++
++        Returns:
++            Reweighted score clamped to [min_score, max_score].
++        """
++        if not self.enabled:
++            return base_score
++
++        # Ensure HSS is in valid range
++        hss = max(0.0, min(1.0, hss))
++
++        # Compute reweighted score
++        weight = self.base_weight + self.hss_weight * hss
++        score_prime = base_score * weight
++
++        # Clamp to bounds
++        return max(self.min_score, min(self.max_score, score_prime))
+
+ from .logging import U2TraceLogger
+ from . import schema
+@@ -1252,6 +1308,8 @@ class U2Config:
+     snapshot_dir: Optional[Path] = None
+     output_dir: Optional[Path] = None
+     slice_config: Dict[str, Any] = field(default_factory=dict)
++    # Phase II: TDA Planner Integration
++    tda_planner_config: Optional[TDAPlannerConfig] = None
+     tda_monitor: Optional["TDAMonitor"] = None  # Phase I/II: TDA Mind Scanner
+
+     def __post_init__(self):
+@@ -1261,6 +1319,9 @@ class U2Config:
+             self.snapshot_dir = Path(self.snapshot_dir)
+         if self.output_dir is not None and not isinstance(self.output_dir, Path):
+             self.output_dir = Path(self.output_dir)
++        # Initialize default planner config if not provided
++        if self.tda_planner_config is None:
++            self.tda_planner_config = TDAPlannerConfig()
+
+     def to_dict(self) -> Dict[str, Any]:
+         """Convert to dictionary."""
+@@ -1275,6 +1336,12 @@ class U2Config:
+             "output_dir": str(self.output_dir) if self.output_dir else None,
+             "slice_config": self.slice_config,
+             "tda_enabled": self.tda_monitor is not None,
++            "tda_planner": {
++                "enabled": self.tda_planner_config.enabled if self.tda_planner_config else False,
++                "base_weight": self.tda_planner_config.base_weight if self.tda_planner_config else 0.5,
++                "hss_weight": self.tda_planner_config.hss_weight if self.tda_planner_config else 0.5,
++            } if self.tda_planner_config else None,
+         }
+
+
+@@ -1369,6 +1436,9 @@ class U2Runner:
+         # TDA Mind Scanner (Phase I/II)
+         self.tda_monitor: Optional["TDAMonitor"] = config.tda_monitor
+
++        # Phase II: Planner configuration
++        self.tda_planner_config = config.tda_planner_config or TDAPlannerConfig()
++
+         # Generate seed schedule
+         self.seed_schedule = generate_seed_schedule(
+             config.master_seed,
+@@ -1393,6 +1463,14 @@ class U2Runner:
+         self._tda_results: List[Dict[str, Any]] = []
+         self._recent_states: List[Any] = []  # For embedding extraction
+         self._state_window_size: int = 50
++
++        # Phase II: Planner reweighting statistics
++        self._reweighting_stats: Dict[str, Any] = {
++            "total_candidates": 0,
++            "reweighted_candidates": 0,
++            "mean_hss_at_reweight": [],
++            "score_deltas": [],
++        }
+
+     def run_cycle(
+         self,
+@@ -1415,6 +1493,9 @@ class U2Runner:
+         cycle_seed = self.seed_schedule[self.cycle_index]
+         rng = random.Random(cycle_seed)
+
++        # --- Phase II: Get current HSS for planner reweighting ---
++        current_hss = self._get_current_hss_estimate()
++
+         # --- Ordering Step (INV-RUN-1: delegated to cycle_orchestrator) ---
+         strategy = get_ordering_strategy(self.config.mode, self.policy)
+         ordered_items = strategy.order(items, rng)
+@@ -1423,6 +1504,10 @@ class U2Runner:
+         if self.config.mode == "rfl" and self.policy is not None:
+             scores = self.policy.score(ordered_items)
+         else:
+             scores = [1.0] * len(ordered_items)
++
++        # --- Phase II: Apply HSS-based reweighting ---
++        reweighted_scores, reweighting_applied = self._apply_hss_reweighting(
++            ordered_items, scores, current_hss, rng
++        )
+
+-        chosen_item = ordered_items[0]
++        # Select item based on reweighted scores
++        if reweighting_applied:
++            # Sort by reweighted score (descending)
++            scored_items = list(zip(ordered_items, reweighted_scores))
++            scored_items.sort(key=lambda x: x[1], reverse=True)
++            chosen_item = scored_items[0][0]
++        else:
++            chosen_item = ordered_items[0]
+
+         # --- Execution ---
+         success, result = execute_fn(chosen_item, cycle_seed)
+@@ -1449,6 +1534,8 @@ class U2Runner:
+             "result": str(result),
+             "success": success,
+             "label": "PHASE II — NOT USED IN PHASE I",
++            "tda_reweighting_applied": reweighting_applied,
++            "current_hss": current_hss,
+         }
+         self.ht_series.append(telemetry_record)
+
+@@ -1458,6 +1545,8 @@ class U2Runner:
+             telemetry_record.update({
+                 "tda_hss": tda_result.get("hss"),
+                 "tda_signal": tda_result.get("signal"),
+                 "tda_computation_ms": tda_result.get("computation_time_ms"),
++                "tda_sns": tda_result.get("sns"),
++                "tda_pcs": tda_result.get("pcs"),
++                "tda_drs": tda_result.get("drs"),
+             })
+
+         # Advance cycle
+@@ -1472,6 +1561,88 @@ class U2Runner:
+             success=success,
+         )
+
++    # =========================================================================
++    # Phase II: HSS-Integrated Planner Reweighting
++    # =========================================================================
++
++    def _get_current_hss_estimate(self) -> float:
++        """
++        Get current HSS estimate for planner reweighting.
++
++        Uses the most recent TDA evaluation result, or a default
++        value if no evaluations have been performed yet.
++
++        Returns:
++            HSS value in [0, 1].
++        """
++        if self._tda_results:
++            # Use most recent HSS
++            return self._tda_results[-1].get("hss", 0.5)
++        return 0.5  # Default: neutral HSS
++
++    def _apply_hss_reweighting(
++        self,
++        items: List[str],
++        scores: List[float],
++        hss: float,
++        rng: random.Random,
++    ) -> Tuple[List[float], bool]:
++        """
++        Apply HSS-based reweighting to candidate scores.
++
++        Phase II: score' = score × (α + β × HSS)
++
++        Args:
++            items: Ordered list of candidate items.
++            scores: Original scores from policy (or uniform 1.0).
++            hss: Current HSS estimate.
++            rng: Random generator for determinism.
++
++        Returns:
++            Tuple of (reweighted_scores, reweighting_applied).
++        """
++        if not self.tda_planner_config.enabled:
++            return scores, False
++
++        if self.tda_monitor is None:
++            return scores, False
++
++        reweighted_scores = []
++        score_deltas = []
++
++        for item, score in zip(items, scores):
++            # Compute reweighted score
++            new_score = self.tda_planner_config.compute_reweighted_score(score, hss)
++            reweighted_scores.append(new_score)
++            score_deltas.append(new_score - score)
++
++        # Update statistics
++        self._reweighting_stats["total_candidates"] += len(items)
++        self._reweighting_stats["reweighted_candidates"] += len(items)
++        self._reweighting_stats["mean_hss_at_reweight"].append(hss)
++        self._reweighting_stats["score_deltas"].extend(score_deltas)
++
++        return reweighted_scores, True
++
++    def get_reweighting_stats(self) -> Dict[str, Any]:
++        """Get Phase II planner reweighting statistics."""
++        hss_values = self._reweighting_stats["mean_hss_at_reweight"]
++        deltas = self._reweighting_stats["score_deltas"]
++
++        return {
++            "total_candidates": self._reweighting_stats["total_candidates"],
++            "reweighted_candidates": self._reweighting_stats["reweighted_candidates"],
++            "mean_hss": float(np.mean(hss_values)) if hss_values else 0.0,
++            "std_hss": float(np.std(hss_values)) if hss_values else 0.0,
++            "mean_score_delta": float(np.mean(deltas)) if deltas else 0.0,
++            "planner_config": {
++                "enabled": self.tda_planner_config.enabled,
++                "base_weight": self.tda_planner_config.base_weight,
++                "hss_weight": self.tda_planner_config.hss_weight,
++                "min_score": self.tda_planner_config.min_score,
++                "max_score": self.tda_planner_config.max_score,
++            },
++        }
++
+     # =========================================================================
+     # TDA Mind Scanner Integration (Phase I: Shadow Mode)
+     # =========================================================================
+@@ -1560,6 +1731,32 @@ class U2Runner:
+             return {}
+
++    def get_phase2_summary(self) -> Dict[str, Any]:
++        """Get comprehensive Phase II statistics."""
++        return {
++            "tda_evaluations": len(self._tda_results),
++            "reweighting": self.get_reweighting_stats(),
++            "hss_distribution": self._compute_hss_distribution(),
++        }
++
++    def _compute_hss_distribution(self) -> Dict[str, Any]:
++        """Compute HSS distribution statistics."""
++        if not self._tda_results:
++            return {"count": 0}
++
++        hss_values = [r.get("hss", 0.0) for r in self._tda_results]
++        import numpy as np
++
++        return {
++            "count": len(hss_values),
++            "mean": float(np.mean(hss_values)),
++            "std": float(np.std(hss_values)),
++            "min": float(np.min(hss_values)),
++            "max": float(np.max(hss_values)),
++            "p25": float(np.percentile(hss_values, 25)),
++            "p50": float(np.percentile(hss_values, 50)),
++            "p75": float(np.percentile(hss_values, 75)),
++        }
++
+     def maybe_save_snapshot(self) -> Optional[Path]:
+         """
+         Save snapshot if at interval boundary.

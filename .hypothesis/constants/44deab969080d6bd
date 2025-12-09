@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\substrate\crypto\core.py
+# hypothesis_version: 6.148.2
+
+[b'\x00', b'\x01', b'\x02', b'\x03', ',', ':', '[', ']', 'ascii', 'false', 'null', 'true', 'utf-8', '{', '}']

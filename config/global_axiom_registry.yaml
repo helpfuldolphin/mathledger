@@ -1,0 +1,16 @@
+# Global Axiom Registry v1.0
+# This file contains the canonical list of recognized axioms.
+# The GlobalDagBuilder uses this list to distinguish between valid axioms
+# and true "dangling" premises.
+
+axioms:
+  - hash: "axiom_hash_001"
+    content: "Reflexivity of Equality: for all x, x = x"
+  - hash: "axiom_hash_002"
+    content: "Symmetry of Equality: for all x, y, if x = y then y = x"
+  - hash: "axiom_hash_003"
+    content: "Transitivity of Equality: for all x, y, z, if x = y and y = z then x = z"
+  - hash: "modus_ponens_axiom"
+    content: "Modus Ponens: (P and (P implies Q)) implies Q"
+  - hash: "instantiation_axiom"
+    content: "Universal Instantiation: For all x, P(x) implies P(c)"

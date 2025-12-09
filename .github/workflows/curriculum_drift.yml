@@ -1,0 +1,88 @@
+# File: .github/workflows/curriculum_drift.yml
+name: "Curriculum Drift Oracle"
+
+on:
+  pull_request:
+    paths:
+      - 'config/curriculum_uplift_phase2.yaml'
+
+jobs:
+  pedagogy-seal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history
+
+      - name: Set up Python and uv
+        uses: ammaraskar/setup-python@v1
+        with:
+          python-version: '3.11'
+          uv-version: 'latest'
+
+      - name: Install Dependencies
+        run: |
+          uv pip install pyyaml deepdiff
+
+      - name: Run Drift Oracle
+        id: drift_oracle
+        run: |
+          uv run python experiments/curriculum_linter_v3.py \
+            --drift-check \
+            --base-commit ${{ github.event.pull_request.base.sha }} \
+            --head-commit ${{ github.event.pull_request.head.sha }} \
+            --drift-report artifacts/drift/drift_report.json \
+            --ci
+        continue-on-error: true # Ensure next step runs to post comment
+
+      - name: Upload Drift Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: drift-report
+          path: artifacts/drift/drift_report.json
+
+      - name: Post Drift Report to PR
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const driftReport = JSON.parse(fs.readFileSync('artifacts/drift/drift_report.json', 'utf8'));
+            const { summary } = driftReport;
+            const conclusion = steps.drift_oracle.outcome === 'failure' ? '❌ CRITICAL' : '✅ PASS';
+
+            let commentBody = `### Oracle Drift Report: ${conclusion}\n\n`;
+            commentBody += `Comparing 	este${summary.base_commit.slice(0,7)}	este to 	este${summary.head_commit.slice(0,7)}	este\n\n`;
+            commentBody += `| Status | Count |\n`;
+            commentBody += `|:---|:---|
+`;
+            comment_body += `| **CRITICAL** | ${summary.severity_counts.CRITICAL} |
+`
+            commentBody += `| **WARNING**  | ${summary.severity_counts.WARNING} |
+`
+            commentBody += `| Slices Added | ${summary.slices_added.length} |
+`;
+            commentBody += `| Slices Removed | ${summary.slices_removed.length} |
+`;
+            commentBody += `| Slices Modified | ${summary.slices_modified.length} |
+
+`;
+
+            if (summary.severity_counts.CRITICAL > 0) {
+              commentBody += `**Action Required:** This PR will be blocked until all CRITICAL drifts are resolved.\n`
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+
+      - name: Fail CI on Critical Drift
+        if: steps.drift_oracle.outcome == 'failure'
+        run: |
+          echo "CI gate failed due to CRITICAL curriculum drift."
+          exit 1

@@ -1,0 +1,2 @@
+{"ts": "2025-12-06T10:00:00.123Z", "run_id": "abc-123", "slice": "U2_env_A", "mode": "rfl", "cycle": 1, "success": true, "metric_type": "duration", "metric_value": 1.1, "H_t": "a1a2a3a4a5a6a7a8a1a2a3a4a5a6a7a8a1a2a3a4a5a6a7a8a1a2a3a4a5a6a7a8", "is_l2_event": true}
+{"ts": "2025-12-06T10:00:01.456Z", "run_id": "abc-123", "slice": "U2_env_A", "mode": "rfl", "cycle": 2, "success": false, "metric_type": "duration", "metric_value": 1.2}

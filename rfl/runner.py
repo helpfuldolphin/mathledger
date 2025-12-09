@@ -37,6 +37,12 @@ from .bootstrap_stats import (
 from .audit import RFLAuditLog, SymbolicDescentGradient, StepIdComputation
 from .experiment_logging import RFLExperimentLogger
 from .provenance import ManifestBuilder
+from derivation.noise_guard import VerifierNoiseGuard, global_noise_guard
+
+# Phase VII CORTEX: TDA Governance Hook (optional integration)
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from backend.tda.runner_hook import TDAGovernanceHook
 
 # ---------------- Logger ----------------
 logging.basicConfig(
@@ -69,9 +75,27 @@ class RunLedgerEntry:
     # Attestation-specific fields (optional, populated by run_with_attestation)
     attestation_slice_id: Optional[str] = None  # Original slice_id from attestation
     composite_root: Optional[str] = None  # H_t for traceability
+    epsilon_total: Optional[float] = None
+    noise_guard_reason: Optional[str] = None
 
 
 from substrate.bridge.context import AttestedRunContext
+
+
+@dataclass
+class AttestationInput:
+    """Input data for an attested RFL run.
+
+    Contains the cryptographic roots and metrics from the previous
+    attestation chain step, used to continue the chain deterministically.
+    """
+    composite_root: str
+    reasoning_root: str
+    ui_root: str
+    abstention_rate: float
+    abstention_mass: float
+    slice_name: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -182,6 +206,28 @@ class RFLRunner:
             except Exception as e:
                 logger.warning(f"[WARN] Telemetry: Redis not available for metrics: {e}")
                 self._redis_client = None
+
+        # Phase-II verifier noise stabilizer (best-effort)
+        self.noise_guard: Optional[VerifierNoiseGuard] = global_noise_guard()
+
+        # Phase VII CORTEX: TDA Governance Hook (optional)
+        # Register via register_tda_hook() before running experiments
+        self._tda_hook: Optional["TDAGovernanceHook"] = None
+        self._tda_block_count: int = 0
+
+    def register_tda_hook(self, hook: "TDAGovernanceHook") -> None:
+        """
+        Register TDA governance hook for cycle boundary evaluation.
+
+        Phase VII CORTEX Integration: When registered, the hook's
+        on_cycle_complete() is called after each attestation evaluation.
+        In HARD mode, should_block=True will abandon the cycle.
+
+        Args:
+            hook: TDAGovernanceHook instance from backend.tda.runner_hook
+        """
+        self._tda_hook = hook
+        logger.info(f"[TDA-GATE] Registered TDA hook (mode={hook.mode.value})")
 
     def _increment_metric(self, key: str, amount: float = 1.0):
         if self._redis_client:
@@ -447,7 +493,8 @@ class RFLRunner:
             derive_steps=int(slice_cfg.derive_steps),
             max_breadth=int(slice_cfg.max_breadth),
             max_total=int(slice_cfg.max_total),
-            abstention_breakdown=dict(result.abstention_breakdown)
+            abstention_breakdown=dict(result.abstention_breakdown),
+            epsilon_total=self.noise_guard.epsilon_total() if self.noise_guard else None,
         )
 
         self.policy_ledger.append(entry)
@@ -541,6 +588,25 @@ class RFLRunner:
 
         reward = max(0.0, 1.0 - max(attestation.abstention_rate, 0.0))
         symbolic_descent = -abstention_rate_delta
+        guard = self.noise_guard
+        guard_reason: Optional[str] = None
+        epsilon_total: Optional[float] = None
+        epsilon_scale = 1.0
+        if guard:
+            epsilon_total = guard.epsilon_total()
+            epsilon_scale = max(0.0, 1.0 - epsilon_total)
+            if policy_update_applied:
+                allowed, guard_reason = guard.guard_feedback(symbolic_descent)
+                if not allowed:
+                    logger.warning(
+                        "[NOISE-GUARD] Suppressing policy update (reason=%s, epsilon=%.5f)",
+                        guard_reason,
+                        epsilon_total or 0.0,
+                    )
+                    policy_update_applied = False
+            # Clamp symbolic descent used for ledgering to guard window
+            symbolic_descent = max(-guard.delta_h_bound(), min(symbolic_descent, guard.delta_h_bound()))
+            reward *= epsilon_scale
 
         if policy_update_applied:
             self.policy_update_count += 1
@@ -629,6 +695,8 @@ class RFLRunner:
             abstention_breakdown=dict(attestation.metadata.get("abstention_breakdown", {})),
             attestation_slice_id=attestation.slice_id,
             composite_root=attestation.composite_root,
+            epsilon_total=epsilon_total,
+            noise_guard_reason=guard_reason,
         )
         self.policy_ledger.append(ledger_entry)
 
@@ -677,6 +745,58 @@ class RFLRunner:
             result=result,
             metrics_cartographer_data=None  # Can be enhanced to pull from sidecar/redis
         )
+
+        # ===== Phase VII CORTEX: TDA GOVERNANCE HOOK =====
+        # Evaluate hard gate AFTER logging but BEFORE returning
+        # This is the BLOCKING CALL: if TDA says block, abort the cycle
+        if self._tda_hook is not None:
+            # Build telemetry from attestation for TDA evaluation
+            tda_telemetry = {
+                "abstention_rate": attestation.abstention_rate,
+                "abstention_mass": attestation.abstention_mass,
+                "composite_root": attestation.composite_root,
+                "slice_name": slice_cfg.name,
+                "policy_update_applied": policy_update_applied,
+                "success": True,  # Attestation validated successfully
+            }
+
+            # Build cycle result with TDA metrics (if available)
+            # For now, derive HSS from abstention_rate as proxy
+            # HSS = 1.0 - abstention_rate (higher is better)
+            tda_cycle_result = {
+                "hss": max(0.0, 1.0 - attestation.abstention_rate),
+                "sns": float(attestation.metadata.get("sns", 0.0)),
+                "pcs": float(attestation.metadata.get("pcs", 0.0)),
+                "drs": float(attestation.metadata.get("drs", 0.0)),
+            }
+
+            tda_decision = self._tda_hook.on_cycle_complete(
+                cycle_index=self.first_organism_runs_total,
+                success=True,
+                cycle_result=tda_cycle_result,
+                telemetry=tda_telemetry,
+            )
+            self._tda_block_count = self._tda_hook.get_block_count()
+
+            # **BLOCKING CALL**: if TDA says block, do not proceed
+            if tda_decision.should_block:
+                # Mark result as TDA-blocked
+                result.policy_update_applied = False
+                # Revert policy update if it was applied
+                if policy_update_applied:
+                    self.policy_update_count -= 1
+                    logger.warning(
+                        "[TDA-GATE] Cycle %d policy update REVERTED due to TDA block",
+                        self.first_organism_runs_total,
+                    )
+                # Add TDA block info to ledger entry
+                ledger_entry.noise_guard_reason = (
+                    f"TDA_BLOCK: {tda_decision.reason}"
+                    if not ledger_entry.noise_guard_reason
+                    else f"{ledger_entry.noise_guard_reason}; TDA_BLOCK: {tda_decision.reason}"
+                )
+                ledger_entry.status = "tda_blocked"
+        # ===== END Phase VII CORTEX =====
 
         return result
 
@@ -992,6 +1112,8 @@ class RFLRunner:
                 "summary": self._summarize_policy_ledger()
             },
             "dual_attestation": self.dual_attestation_records,
+            # Phase VII CORTEX: TDA Governance Export
+            "tda_governance": self._tda_hook.get_summary_for_export() if self._tda_hook else None,
             "metabolism_verification": {
                 "passed": self.metabolism_passed,
                 "message": self.metabolism_message,

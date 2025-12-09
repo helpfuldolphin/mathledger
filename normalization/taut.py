@@ -9,6 +9,42 @@ from itertools import product
 import re
 
 
+class TruthTableTimeout(Exception):
+    """
+    Raised when truth table evaluation exceeds the allowed time/complexity limit.
+
+    This can happen for formulas with many atoms (2^n combinations to check).
+    """
+    pass
+
+
+# Internal cache for truth table oracle results (for performance)
+_truth_table_cache: Dict[str, bool] = {}
+
+
+def clear_oracle_cache() -> None:
+    """
+    Clear the truth table oracle cache.
+
+    This is useful for testing to ensure no state leakage between tests.
+    """
+    global _truth_table_cache
+    _truth_table_cache.clear()
+
+
+def get_oracle_cache_info() -> Dict[str, Any]:
+    """
+    Get information about the oracle cache state.
+
+    Returns:
+        Dictionary with cache statistics (size, etc.)
+    """
+    return {
+        "size": len(_truth_table_cache),
+        "entries": list(_truth_table_cache.keys())[:10],  # First 10 entries
+    }
+
+
 def truth_table_is_tautology(formula_ascii: str) -> bool:
     """
     Check if a propositional formula is a tautology using truth table.

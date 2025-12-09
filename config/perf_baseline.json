@@ -1,0 +1,66 @@
+{
+  "$schema": "config/perf_baseline_schema.json",
+  "version": "1.1.0",
+  "description": "Performance SLO baseline for derivation pipeline with component-level granularity",
+  "updated_at": "2024-12-06T12:00:00Z",
+  "updated_by": "A4-runtime-ops-4",
+  
+  "baseline": {
+    "reference_avg_ms": 250.0,
+    "reference_min_ms": 200.0,
+    "reference_max_ms": 350.0,
+    "measured_cycles": 50,
+    "slice_name": "slice_medium",
+    "mode": "baseline"
+  },
+  
+  "slo": {
+    "max_regression_pct": 10.0,
+    "warn_regression_pct": 5.0,
+    "block_regression_pct": 25.0,
+    "min_improvement_pct": 0.0
+  },
+  
+  "tolerance": {
+    "jitter_allowance_pct": 3.0,
+    "min_cycles_for_validity": 20,
+    "outlier_trim_pct": 5.0
+  },
+  
+  "component_slos": {
+    "_comment": "Per-component SLO thresholds (optional). Components are auto-classified from profiler data.",
+    "scoring": {
+      "warn_regression_pct": 10.0,
+      "block_regression_pct": 30.0
+    },
+    "derivation": {
+      "warn_regression_pct": 8.0,
+      "block_regression_pct": 25.0
+    },
+    "verification": {
+      "warn_regression_pct": 5.0,
+      "block_regression_pct": 20.0
+    },
+    "persistence": {
+      "warn_regression_pct": 15.0,
+      "block_regression_pct": 40.0
+    },
+    "policy": {
+      "warn_regression_pct": 10.0,
+      "block_regression_pct": 30.0
+    }
+  },
+  
+  "metadata": {
+    "last_major_change": "Added component-level SLO thresholds and narrative generation",
+    "environment": "CI runner ubuntu-latest",
+    "notes": [
+      "Baseline measured with MATHLEDGER_PERF_OPT=0",
+      "Optimized measured with MATHLEDGER_PERF_OPT=1 (default)",
+      "Tolerance bands account for CI environment variability",
+      "Component classification uses filename/function pattern matching",
+      "SLO config is validated at runtime; invalid configs fail fast"
+    ]
+  }
+}
+

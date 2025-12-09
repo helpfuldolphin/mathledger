@@ -1,0 +1,31 @@
+# PQ Hash Governance & Epoch Policy
+#
+# Defines algorithm transitions for dual-root attestation:
+# - legacy_sha256: SHA-256 only, dual commitments optional
+# - transition_dual_commit: SHA-256 + SHA3-256 allowed, dual commitments required
+# - pq_only: SHA3-256 only, legacy hash optional (deprecated)
+epochs:
+  - name: legacy_sha256
+    start_block: 0
+    end_block: 999999
+    allowed_algorithms:
+      - sha256
+    require_dual_commitment: false
+    require_legacy_hash: true
+
+  - name: transition_dual_commit
+    start_block: 1000000
+    end_block: 1499999
+    allowed_algorithms:
+      - sha256
+      - sha3-256
+    require_dual_commitment: true
+    require_legacy_hash: true
+
+  - name: pq_only
+    start_block: 1500000
+    end_block: null
+    allowed_algorithms:
+      - sha3-256
+    require_dual_commitment: true
+    require_legacy_hash: true

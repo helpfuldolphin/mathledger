@@ -1,0 +1,348 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "complexity": {
+    "jackknife_bca": "O(n^2) when n < 20",
+    "space": "O(n_bootstrap)",
+    "time": "O(n_bootstrap * n)"
+  },
+  "constraints": {
+    "bootstrap_range": [
+      1000,
+      100000
+    ],
+    "determinism": "Same inputs + seed MUST produce identical outputs",
+    "minimum_sample_size": 2,
+    "no_os_randomness": "All randomness from seeded numpy.random.Generator(PCG64)",
+    "paired_design": "Resamples preserve (baseline[i], rfl[i]) pairs"
+  },
+  "determinism_guarantee": true,
+  "formula_specification_sha256": "0fed5ebe97be44f7e2f8410731a28cace3a4ed904092bc809dfce3faad3acfd2",
+  "functions": {
+    "compute_confidence_band": {
+      "description": "Compute confidence band for visualization (NOT inference)",
+      "parameters": {
+        "confidence": {
+          "default": 0.95,
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "n_bootstrap": {
+          "default": 1000,
+          "minimum": 100,
+          "type": "integer"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "series": {
+          "items": {
+            "type": "number"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "returns": {
+        "fields": {
+          "center": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "lower": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "n_bootstrap": {
+            "type": "integer"
+          },
+          "seed": {
+            "type": "integer"
+          },
+          "upper": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array"
+          }
+        },
+        "type": "ConfidenceBand"
+      }
+    },
+    "detect_bootstrap_leakage": {
+      "description": "Detect seed invariance violations and numerical instability",
+      "parameters": {
+        "baseline_values": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "epsilon": {
+          "default": 1e-10,
+          "type": "number"
+        },
+        "n_bootstrap": {
+          "default": 1000,
+          "type": "integer"
+        },
+        "rfl_values": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "seeds": {
+          "default": [
+            0,
+            42,
+            123,
+            999,
+            65536
+          ],
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "returns": {
+        "fields": {
+          "epsilon_stable": {
+            "type": "boolean"
+          },
+          "epsilon_window": {
+            "type": "number"
+          },
+          "is_constant_series": {
+            "type": "boolean"
+          },
+          "leakage_detected": {
+            "type": "boolean"
+          },
+          "max_delta_variance": {
+            "type": "number"
+          },
+          "seed_invariant": {
+            "type": "boolean"
+          },
+          "seeds_tested": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "warning_message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "LeakageDetectionResult"
+      }
+    },
+    "paired_bootstrap_delta": {
+      "description": "Compute bootstrap CI for paired mean difference",
+      "parameters": {
+        "baseline_values": {
+          "description": "Baseline metric values",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "type": "array"
+        },
+        "n_bootstrap": {
+          "description": "Number of bootstrap resamples",
+          "maximum": 100000,
+          "minimum": 1000,
+          "type": "integer"
+        },
+        "rfl_values": {
+          "description": "RFL/treatment metric values",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "type": "array"
+        },
+        "seed": {
+          "description": "Random seed for determinism",
+          "type": "integer"
+        }
+      },
+      "returns": {
+        "fields": {
+          "CI_high": {
+            "description": "Upper CI bound",
+            "type": "number"
+          },
+          "CI_low": {
+            "description": "Lower CI bound",
+            "type": "number"
+          },
+          "delta_mean": {
+            "description": "Point estimate",
+            "type": "number"
+          },
+          "distribution_summary": {
+            "type": "DistributionSummary"
+          },
+          "method": {
+            "enum": [
+              "percentile",
+              "BCa",
+              "percentile_fallback"
+            ],
+            "type": "string"
+          },
+          "seed": {
+            "type": "integer"
+          }
+        },
+        "type": "PairedBootstrapResult"
+      }
+    },
+    "profile_bootstrap": {
+      "description": "Profile bootstrap with timing, memory, and histogram",
+      "parameters": {
+        "baseline_values": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "n_bootstrap": {
+          "type": "integer"
+        },
+        "n_histogram_bins": {
+          "default": 50,
+          "type": "integer"
+        },
+        "rfl_values": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "seed": {
+          "type": "integer"
+        }
+      },
+      "returns": {
+        "fields": {
+          "execution_time_ms": {
+            "type": "number"
+          },
+          "histogram": {
+            "type": "BootstrapHistogram"
+          },
+          "memory_allocated_bytes": {
+            "type": "integer"
+          },
+          "memory_per_resample_bytes": {
+            "type": "number"
+          },
+          "n_bootstrap": {
+            "type": "integer"
+          },
+          "n_samples": {
+            "type": "integer"
+          },
+          "peak_memory_bytes": {
+            "type": "integer"
+          },
+          "seed": {
+            "type": "integer"
+          },
+          "time_per_resample_us": {
+            "type": "number"
+          }
+        },
+        "type": "BootstrapProfile"
+      }
+    }
+  },
+  "title": "Bootstrap Engine Contract",
+  "types": {
+    "BootstrapHistogram": {
+      "fields": {
+        "bins": {
+          "items": {
+            "fields": {
+              "count": {
+                "type": "integer"
+              },
+              "density": {
+                "type": "number"
+              },
+              "left_edge": {
+                "type": "number"
+              },
+              "right_edge": {
+                "type": "number"
+              }
+            },
+            "type": "HistogramBin"
+          },
+          "type": "array"
+        },
+        "max_value": {
+          "type": "number"
+        },
+        "mean": {
+          "type": "number"
+        },
+        "min_value": {
+          "type": "number"
+        },
+        "n_total": {
+          "type": "integer"
+        },
+        "std": {
+          "type": "number"
+        }
+      }
+    },
+    "DistributionSummary": {
+      "fields": {
+        "n_bootstrap": {
+          "type": "integer"
+        },
+        "n_samples": {
+          "type": "integer"
+        },
+        "percentile_25": {
+          "type": "number"
+        },
+        "percentile_2_5": {
+          "type": "number"
+        },
+        "percentile_50": {
+          "type": "number"
+        },
+        "percentile_75": {
+          "type": "number"
+        },
+        "percentile_97_5": {
+          "type": "number"
+        },
+        "skewness": {
+          "type": "number"
+        },
+        "std": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "version": "1.1.0"
+}

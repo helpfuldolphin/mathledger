@@ -1,0 +1,3247 @@
+{
+  "blast_radius": {
+    "allblue_lanes": [],
+    "curriculum": [],
+    "curriculum_uplift_phase2": [],
+    "default": [],
+    "experiment_manifest_schema": [],
+    "manifest": [],
+    "production": [],
+    "quick": [],
+    "quick_test": [],
+    "verifier_budget_phase2": []
+  },
+  "commit_hash": "",
+  "content_hash": "6316a0846c0608900e48a64d2b0bd69c676912430d7337912a4d74d94dcba7e9",
+  "drifts": [],
+  "generated_at": "2025-12-06T05:23:04.580093+00:00",
+  "nodes": [
+    {
+      "cluster_distribution": {
+        "configuration": 32,
+        "governance": 4,
+        "identity": 1,
+        "metric": 10,
+        "structural": 20,
+        "success": 24,
+        "temporal": 8
+      },
+      "field_count": 99,
+      "fields": [
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slices",
+          "path": "slices"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slice_uplift_dependency",
+          "path": "slices.slice_uplift_dependency"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "budget",
+          "path": "slices.slice_uplift_dependency.budget"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_candidates_per_cycle",
+          "path": "slices.slice_uplift_dependency.budget.max_candidates_per_cycle"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_cycles_per_run",
+          "path": "slices.slice_uplift_dependency.budget.max_cycles_per_run"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "description",
+          "path": "slices.slice_uplift_dependency.description"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "formula_pool_entries",
+          "path": "slices.slice_uplift_dependency.formula_pool_entries"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "parameters",
+          "path": "slices.slice_uplift_dependency.parameters"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "atoms",
+          "path": "slices.slice_uplift_dependency.parameters.atoms"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "axiom_instances",
+          "path": "slices.slice_uplift_dependency.parameters.axiom_instances"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "breadth_max",
+          "path": "slices.slice_uplift_dependency.parameters.breadth_max"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_max",
+          "path": "slices.slice_uplift_dependency.parameters.depth_max"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_min",
+          "path": "slices.slice_uplift_dependency.parameters.depth_min"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "formula_pool",
+          "path": "slices.slice_uplift_dependency.parameters.formula_pool"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "lean_timeout_s",
+          "path": "slices.slice_uplift_dependency.parameters.lean_timeout_s"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "timeout_s",
+          "path": "slices.slice_uplift_dependency.parameters.timeout_s"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "total_max",
+          "path": "slices.slice_uplift_dependency.parameters.total_max"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "object",
+          "name": "success_metric",
+          "path": "slices.slice_uplift_dependency.success_metric"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "kind",
+          "path": "slices.slice_uplift_dependency.success_metric.kind"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "parameters",
+          "path": "slices.slice_uplift_dependency.success_metric.parameters"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "required_goal_count",
+          "path": "slices.slice_uplift_dependency.success_metric.parameters.required_goal_count"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "uplift",
+          "path": "slices.slice_uplift_dependency.uplift"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "experiment_family",
+          "path": "slices.slice_uplift_dependency.uplift.experiment_family"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "boolean",
+          "name": "not_allowed_in_phase_I",
+          "path": "slices.slice_uplift_dependency.uplift.not_allowed_in_phase_I"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "phase",
+          "path": "slices.slice_uplift_dependency.uplift.phase"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slice_uplift_goal",
+          "path": "slices.slice_uplift_goal"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "budget",
+          "path": "slices.slice_uplift_goal.budget"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_candidates_per_cycle",
+          "path": "slices.slice_uplift_goal.budget.max_candidates_per_cycle"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_cycles_per_run",
+          "path": "slices.slice_uplift_goal.budget.max_cycles_per_run"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "description",
+          "path": "slices.slice_uplift_goal.description"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "formula_pool_entries",
+          "path": "slices.slice_uplift_goal.formula_pool_entries"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "parameters",
+          "path": "slices.slice_uplift_goal.parameters"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "atoms",
+          "path": "slices.slice_uplift_goal.parameters.atoms"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "axiom_instances",
+          "path": "slices.slice_uplift_goal.parameters.axiom_instances"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "breadth_max",
+          "path": "slices.slice_uplift_goal.parameters.breadth_max"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_max",
+          "path": "slices.slice_uplift_goal.parameters.depth_max"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_min",
+          "path": "slices.slice_uplift_goal.parameters.depth_min"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "formula_pool",
+          "path": "slices.slice_uplift_goal.parameters.formula_pool"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "lean_timeout_s",
+          "path": "slices.slice_uplift_goal.parameters.lean_timeout_s"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "timeout_s",
+          "path": "slices.slice_uplift_goal.parameters.timeout_s"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "total_max",
+          "path": "slices.slice_uplift_goal.parameters.total_max"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "object",
+          "name": "success_metric",
+          "path": "slices.slice_uplift_goal.success_metric"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "kind",
+          "path": "slices.slice_uplift_goal.success_metric.kind"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "parameters",
+          "path": "slices.slice_uplift_goal.success_metric.parameters"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "min_goal_hits",
+          "path": "slices.slice_uplift_goal.success_metric.parameters.min_goal_hits"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "min_total_verified",
+          "path": "slices.slice_uplift_goal.success_metric.parameters.min_total_verified"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "uplift",
+          "path": "slices.slice_uplift_goal.uplift"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "experiment_family",
+          "path": "slices.slice_uplift_goal.uplift.experiment_family"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "boolean",
+          "name": "not_allowed_in_phase_I",
+          "path": "slices.slice_uplift_goal.uplift.not_allowed_in_phase_I"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "phase",
+          "path": "slices.slice_uplift_goal.uplift.phase"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slice_uplift_sparse",
+          "path": "slices.slice_uplift_sparse"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "budget",
+          "path": "slices.slice_uplift_sparse.budget"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_candidates_per_cycle",
+          "path": "slices.slice_uplift_sparse.budget.max_candidates_per_cycle"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_cycles_per_run",
+          "path": "slices.slice_uplift_sparse.budget.max_cycles_per_run"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "description",
+          "path": "slices.slice_uplift_sparse.description"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "formula_pool_entries",
+          "path": "slices.slice_uplift_sparse.formula_pool_entries"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "parameters",
+          "path": "slices.slice_uplift_sparse.parameters"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "atoms",
+          "path": "slices.slice_uplift_sparse.parameters.atoms"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "axiom_instances",
+          "path": "slices.slice_uplift_sparse.parameters.axiom_instances"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "breadth_max",
+          "path": "slices.slice_uplift_sparse.parameters.breadth_max"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_max",
+          "path": "slices.slice_uplift_sparse.parameters.depth_max"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_min",
+          "path": "slices.slice_uplift_sparse.parameters.depth_min"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "formula_pool",
+          "path": "slices.slice_uplift_sparse.parameters.formula_pool"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "lean_timeout_s",
+          "path": "slices.slice_uplift_sparse.parameters.lean_timeout_s"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "timeout_s",
+          "path": "slices.slice_uplift_sparse.parameters.timeout_s"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "total_max",
+          "path": "slices.slice_uplift_sparse.parameters.total_max"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "object",
+          "name": "success_metric",
+          "path": "slices.slice_uplift_sparse.success_metric"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "kind",
+          "path": "slices.slice_uplift_sparse.success_metric.kind"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "parameters",
+          "path": "slices.slice_uplift_sparse.success_metric.parameters"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "min_verified",
+          "path": "slices.slice_uplift_sparse.success_metric.parameters.min_verified"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "uplift",
+          "path": "slices.slice_uplift_sparse.uplift"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "experiment_family",
+          "path": "slices.slice_uplift_sparse.uplift.experiment_family"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "boolean",
+          "name": "not_allowed_in_phase_I",
+          "path": "slices.slice_uplift_sparse.uplift.not_allowed_in_phase_I"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "phase",
+          "path": "slices.slice_uplift_sparse.uplift.phase"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slice_uplift_tree",
+          "path": "slices.slice_uplift_tree"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "budget",
+          "path": "slices.slice_uplift_tree.budget"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_candidates_per_cycle",
+          "path": "slices.slice_uplift_tree.budget.max_candidates_per_cycle"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_cycles_per_run",
+          "path": "slices.slice_uplift_tree.budget.max_cycles_per_run"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "description",
+          "path": "slices.slice_uplift_tree.description"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "formula_pool_entries",
+          "path": "slices.slice_uplift_tree.formula_pool_entries"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "parameters",
+          "path": "slices.slice_uplift_tree.parameters"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "atoms",
+          "path": "slices.slice_uplift_tree.parameters.atoms"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "axiom_instances",
+          "path": "slices.slice_uplift_tree.parameters.axiom_instances"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "breadth_max",
+          "path": "slices.slice_uplift_tree.parameters.breadth_max"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_max",
+          "path": "slices.slice_uplift_tree.parameters.depth_max"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_min",
+          "path": "slices.slice_uplift_tree.parameters.depth_min"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "formula_pool",
+          "path": "slices.slice_uplift_tree.parameters.formula_pool"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "lean_timeout_s",
+          "path": "slices.slice_uplift_tree.parameters.lean_timeout_s"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "timeout_s",
+          "path": "slices.slice_uplift_tree.parameters.timeout_s"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "total_max",
+          "path": "slices.slice_uplift_tree.parameters.total_max"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "object",
+          "name": "success_metric",
+          "path": "slices.slice_uplift_tree.success_metric"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "kind",
+          "path": "slices.slice_uplift_tree.success_metric.kind"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "parameters",
+          "path": "slices.slice_uplift_tree.success_metric.parameters"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "min_chain_length",
+          "path": "slices.slice_uplift_tree.success_metric.parameters.min_chain_length"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "uplift",
+          "path": "slices.slice_uplift_tree.uplift"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "experiment_family",
+          "path": "slices.slice_uplift_tree.uplift.experiment_family"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "boolean",
+          "name": "not_allowed_in_phase_I",
+          "path": "slices.slice_uplift_tree.uplift.not_allowed_in_phase_I"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "phase",
+          "path": "slices.slice_uplift_tree.uplift.phase"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "version",
+          "path": "version"
+        }
+      ],
+      "name": "curriculum_uplift_phase2",
+      "raw_hash": "33911e99a11599f380db2523c18d68c020b7bc62f2d3d2a734f67f4172bf7836",
+      "schema_type": "yaml",
+      "source_file": "config\\curriculum_uplift_phase2.yaml",
+      "version": "2.1.0"
+    },
+    {
+      "cluster_distribution": {
+        "identity": 1,
+        "structural": 5,
+        "success": 6,
+        "temporal": 10
+      },
+      "field_count": 22,
+      "fields": [
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "defaults",
+          "path": "defaults"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "number",
+          "name": "cycle_budget_s",
+          "path": "defaults.cycle_budget_s"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_candidates_per_cycle",
+          "path": "defaults.max_candidates_per_cycle"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "taut_timeout_s",
+          "path": "defaults.taut_timeout_s"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slices",
+          "path": "slices"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slice_uplift_dependency",
+          "path": "slices.slice_uplift_dependency"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "number",
+          "name": "cycle_budget_s",
+          "path": "slices.slice_uplift_dependency.cycle_budget_s"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_candidates_per_cycle",
+          "path": "slices.slice_uplift_dependency.max_candidates_per_cycle"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "taut_timeout_s",
+          "path": "slices.slice_uplift_dependency.taut_timeout_s"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slice_uplift_goal",
+          "path": "slices.slice_uplift_goal"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "number",
+          "name": "cycle_budget_s",
+          "path": "slices.slice_uplift_goal.cycle_budget_s"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_candidates_per_cycle",
+          "path": "slices.slice_uplift_goal.max_candidates_per_cycle"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "taut_timeout_s",
+          "path": "slices.slice_uplift_goal.taut_timeout_s"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slice_uplift_sparse",
+          "path": "slices.slice_uplift_sparse"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "number",
+          "name": "cycle_budget_s",
+          "path": "slices.slice_uplift_sparse.cycle_budget_s"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_candidates_per_cycle",
+          "path": "slices.slice_uplift_sparse.max_candidates_per_cycle"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "taut_timeout_s",
+          "path": "slices.slice_uplift_sparse.taut_timeout_s"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "slice_uplift_tree",
+          "path": "slices.slice_uplift_tree"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "number",
+          "name": "cycle_budget_s",
+          "path": "slices.slice_uplift_tree.cycle_budget_s"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_candidates_per_cycle",
+          "path": "slices.slice_uplift_tree.max_candidates_per_cycle"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "taut_timeout_s",
+          "path": "slices.slice_uplift_tree.taut_timeout_s"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "version",
+          "path": "version"
+        }
+      ],
+      "name": "verifier_budget_phase2",
+      "raw_hash": "b6fc16f1b3588c07da207bf3f0aaadafee8fccd1e28017a2d2aa2b569430fc1a",
+      "schema_type": "yaml",
+      "source_file": "config\\verifier_budget_phase2.yaml",
+      "version": "1"
+    },
+    {
+      "cluster_distribution": {
+        "configuration": 7,
+        "identity": 2,
+        "metric": 4,
+        "structural": 7,
+        "success": 3,
+        "temporal": 2
+      },
+      "field_count": 25,
+      "fields": [
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "systems",
+          "path": "systems"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "pl",
+          "path": "systems.pl"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "active",
+          "path": "systems.pl.active"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "description",
+          "path": "systems.pl.description"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "invariants",
+          "path": "systems.pl.invariants"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "boolean",
+          "name": "attestation_required",
+          "path": "systems.pl.invariants.attestation_required"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "attestation_window_minutes",
+          "path": "systems.pl.invariants.attestation_window_minutes"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "monotonic_axes",
+          "path": "systems.pl.invariants.monotonic_axes"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<object>",
+          "name": "slices",
+          "path": "systems.pl.slices"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "object",
+          "name": "gates",
+          "path": "systems.pl.slices[].gates"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "abstention",
+          "path": "systems.pl.slices[].gates.abstention"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "caps",
+          "path": "systems.pl.slices[].gates.caps"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "coverage",
+          "path": "systems.pl.slices[].gates.coverage"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "object",
+          "name": "velocity",
+          "path": "systems.pl.slices[].gates.velocity"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "name",
+          "path": "systems.pl.slices[].name"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "params",
+          "path": "systems.pl.slices[].params"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "atoms",
+          "path": "systems.pl.slices[].params.atoms"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "axiom_instances",
+          "path": "systems.pl.slices[].params.axiom_instances"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "breadth_max",
+          "path": "systems.pl.slices[].params.breadth_max"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_max",
+          "path": "systems.pl.slices[].params.depth_max"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "formula_pool",
+          "path": "systems.pl.slices[].params.formula_pool"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "lean_timeout_s",
+          "path": "systems.pl.slices[].params.lean_timeout_s"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "seconds",
+            "timeout value"
+          ],
+          "field_type": "number",
+          "name": "timeout_s",
+          "path": "systems.pl.slices[].params.timeout_s"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "total_max",
+          "path": "systems.pl.slices[].params.total_max"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "version",
+          "path": "version"
+        }
+      ],
+      "name": "curriculum",
+      "raw_hash": "9973a01b2a4fed7d8a232cb4b694680e2ff3c94b170d0e75500ca4ef5ac2373e",
+      "schema_type": "yaml",
+      "source_file": "config\\curriculum.yaml",
+      "version": "2"
+    },
+    {
+      "cluster_distribution": {
+        "configuration": 10,
+        "governance": 2,
+        "identity": 3,
+        "metric": 1,
+        "structural": 3,
+        "success": 1,
+        "temporal": 1
+      },
+      "field_count": 21,
+      "fields": [
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "archive",
+          "path": "archive"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "format",
+          "path": "archive.format"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "location",
+          "path": "archive.location"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "retention_days",
+          "path": "archive.retention_days"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "description",
+          "path": "description"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "object",
+          "name": "epoch_seal",
+          "path": "epoch_seal"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "algorithm",
+          "path": "epoch_seal.algorithm"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "canonicalization",
+          "path": "epoch_seal.canonicalization"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "components",
+          "path": "epoch_seal.components"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<object>",
+          "name": "lanes",
+          "path": "lanes"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "artifacts",
+          "path": "lanes[].artifacts"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "id",
+          "path": "lanes[].id"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "name",
+          "path": "lanes[].name"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "boolean",
+          "name": "required",
+          "path": "lanes[].required"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "type",
+          "path": "lanes[].type"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "verification",
+          "path": "lanes[].verification"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "fields",
+          "path": "lanes[].verification.fields"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "method",
+          "path": "lanes[].verification.method"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "object",
+          "name": "pass_criteria",
+          "path": "lanes[].verification.pass_criteria"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "string",
+          "name": "overall_status",
+          "path": "lanes[].verification.pass_criteria.overall_status"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "version",
+          "path": "version"
+        }
+      ],
+      "name": "allblue_lanes",
+      "raw_hash": "c9f92a69c207f6a287c41ed7fd21925fb857a42d7ae95aa5b3025497ad9c4376",
+      "schema_type": "json",
+      "source_file": "config\\allblue_lanes.json",
+      "version": "1.0"
+    },
+    {
+      "cluster_distribution": {
+        "configuration": 14,
+        "governance": 4,
+        "identity": 1,
+        "seed": 1,
+        "structural": 6,
+        "success": 10
+      },
+      "field_count": 36,
+      "fields": [
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "data_requirements",
+          "path": "data_requirements"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "min_policy_changes",
+          "path": "data_requirements.min_policy_changes"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound"
+          ],
+          "field_type": "integer",
+          "name": "min_runs",
+          "path": "data_requirements.min_runs"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "required_columns",
+          "path": "data_requirements.required_columns"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "description",
+          "path": "description"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "estimation",
+          "path": "estimation"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "bootstrap_replicates",
+          "path": "estimation.bootstrap_replicates"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "number",
+          "name": "confidence_level",
+          "path": "estimation.confidence_level"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "method",
+          "path": "estimation.method"
+        },
+        {
+          "cluster": "seed",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "seed",
+          "path": "estimation.seed"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "number",
+          "name": "significance_threshold",
+          "path": "estimation.significance_threshold"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "graph_structure",
+          "path": "graph_structure"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<object>",
+          "name": "edges",
+          "path": "graph_structure.edges"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "source",
+          "path": "graph_structure.edges[].source"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "string",
+          "name": "target",
+          "path": "graph_structure.edges[].target"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<object>",
+          "name": "nodes",
+          "path": "graph_structure.nodes"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "name",
+          "path": "graph_structure.nodes[].name"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "type",
+          "path": "graph_structure.nodes[].type"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "handoff",
+          "path": "handoff"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "codex_m_artifacts",
+          "path": "handoff.codex_m_artifacts"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "boolean",
+          "name": "push_on_pass",
+          "path": "handoff.push_on_pass"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [
+            "file path"
+          ],
+          "field_type": "object",
+          "name": "output_paths",
+          "path": "output_paths"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "causal_summary",
+          "path": "output_paths.causal_summary"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "estimates_json",
+          "path": "output_paths.estimates_json"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "graphviz_dot",
+          "path": "output_paths.graphviz_dot"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "string",
+          "name": "policy_memo_template",
+          "path": "output_paths.policy_memo_template"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "schema",
+          "path": "schema"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "object",
+          "name": "seals",
+          "path": "seals"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "object",
+          "name": "abstain_criteria",
+          "path": "seals.abstain_criteria"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "number",
+          "name": "high_instability_cv",
+          "path": "seals.abstain_criteria.high_instability_cv"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "insufficient_policy_changes",
+          "path": "seals.abstain_criteria.insufficient_policy_changes"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "insufficient_runs",
+          "path": "seals.abstain_criteria.insufficient_runs"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "object",
+          "name": "pass_criteria",
+          "path": "seals.pass_criteria"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "number",
+          "name": "max_p_value",
+          "path": "seals.pass_criteria.max_p_value"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound",
+            "seconds",
+            "file path"
+          ],
+          "field_type": "integer",
+          "name": "min_significant_paths",
+          "path": "seals.pass_criteria.min_significant_paths"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "minimum bound",
+            "seconds"
+          ],
+          "field_type": "number",
+          "name": "min_stability_cv",
+          "path": "seals.pass_criteria.min_stability_cv"
+        }
+      ],
+      "name": "default",
+      "raw_hash": "8860c6ecaab95172ffab4cec483b6740ddda4fc55aa3e7b1495ebecda12ae974",
+      "schema_type": "json",
+      "source_file": "config\\causal\\default.json",
+      "version": ""
+    },
+    {
+      "cluster_distribution": {
+        "configuration": 13,
+        "identity": 3,
+        "metric": 1,
+        "seed": 1,
+        "structural": 13,
+        "success": 6
+      },
+      "field_count": 37,
+      "fields": [
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "bootstrap_config",
+          "path": "bootstrap_config"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "number",
+          "name": "confidence_level",
+          "path": "bootstrap_config.confidence_level"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "method",
+          "path": "bootstrap_config.method"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "n_experiments",
+          "path": "bootstrap_config.n_experiments"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "n_replicates",
+          "path": "bootstrap_config.n_replicates"
+        },
+        {
+          "cluster": "seed",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "seed",
+          "path": "bootstrap_config.seed"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "commit_template",
+          "path": "commit_template"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "abstain",
+          "path": "commit_template.abstain"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "string",
+          "name": "fail",
+          "path": "commit_template.fail"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "string",
+          "name": "pass",
+          "path": "commit_template.pass"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "data_source",
+          "path": "data_source"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "db_config",
+          "path": "data_source.db_config"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "database",
+          "path": "data_source.db_config.database"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "host",
+          "path": "data_source.db_config.host"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "null",
+          "name": "password",
+          "path": "data_source.db_config.password"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "port",
+          "path": "data_source.db_config.port"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "user",
+          "path": "data_source.db_config.user"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "boolean",
+          "name": "fallback_to_db",
+          "path": "data_source.fallback_to_db"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "mode",
+          "path": "data_source.mode"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [
+            "file path"
+          ],
+          "field_type": "string",
+          "name": "path",
+          "path": "data_source.path"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "experiment_name",
+          "path": "experiment_name"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "array<object>",
+          "name": "metrics",
+          "path": "metrics"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "number",
+          "name": "baseline",
+          "path": "metrics[].baseline"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "experiments",
+          "path": "metrics[].experiments"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "name",
+          "path": "metrics[].name"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "number",
+          "name": "weight",
+          "path": "metrics[].weight"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "metrologist",
+          "path": "metrologist"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "output",
+          "path": "output"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "artifacts_dir",
+          "path": "output.artifacts_dir"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "coverage_file",
+          "path": "output.coverage_file"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "results_file",
+          "path": "output.results_file"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "visualization_file",
+          "path": "output.visualization_file"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "object",
+          "name": "pass_criteria",
+          "path": "pass_criteria"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "number",
+          "name": "coverage_lower_bound",
+          "path": "pass_criteria.coverage_lower_bound"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "description",
+          "path": "pass_criteria.description"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "number",
+          "name": "uplift_lower_bound",
+          "path": "pass_criteria.uplift_lower_bound"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "version",
+          "path": "version"
+        }
+      ],
+      "name": "production",
+      "raw_hash": "418dc5aa5050999ee64069ffcf456ebcc1f51918988acc189d715aaec59456c4",
+      "schema_type": "json",
+      "source_file": "config\\rfl\\production.json",
+      "version": "1.0.0"
+    },
+    {
+      "cluster_distribution": {
+        "configuration": 11,
+        "identity": 3,
+        "metric": 1,
+        "seed": 1,
+        "structural": 9,
+        "success": 5
+      },
+      "field_count": 30,
+      "fields": [
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "bootstrap_config",
+          "path": "bootstrap_config"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "number",
+          "name": "confidence_level",
+          "path": "bootstrap_config.confidence_level"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "method",
+          "path": "bootstrap_config.method"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "n_experiments",
+          "path": "bootstrap_config.n_experiments"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "n_replicates",
+          "path": "bootstrap_config.n_replicates"
+        },
+        {
+          "cluster": "seed",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "seed",
+          "path": "bootstrap_config.seed"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "commit_template",
+          "path": "commit_template"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "string",
+          "name": "fail",
+          "path": "commit_template.fail"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "string",
+          "name": "pass",
+          "path": "commit_template.pass"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "data_source",
+          "path": "data_source"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "boolean",
+          "name": "fallback_to_db",
+          "path": "data_source.fallback_to_db"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "mode",
+          "path": "data_source.mode"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [
+            "file path"
+          ],
+          "field_type": "string",
+          "name": "path",
+          "path": "data_source.path"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "experiment_name",
+          "path": "experiment_name"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "array<object>",
+          "name": "metrics",
+          "path": "metrics"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "number",
+          "name": "baseline",
+          "path": "metrics[].baseline"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "experiments",
+          "path": "metrics[].experiments"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "name",
+          "path": "metrics[].name"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "number",
+          "name": "weight",
+          "path": "metrics[].weight"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "metrologist",
+          "path": "metrologist"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "output",
+          "path": "output"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "artifacts_dir",
+          "path": "output.artifacts_dir"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "coverage_file",
+          "path": "output.coverage_file"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "results_file",
+          "path": "output.results_file"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "visualization_file",
+          "path": "output.visualization_file"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "object",
+          "name": "pass_criteria",
+          "path": "pass_criteria"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "number",
+          "name": "coverage_lower_bound",
+          "path": "pass_criteria.coverage_lower_bound"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "description",
+          "path": "pass_criteria.description"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "number",
+          "name": "uplift_lower_bound",
+          "path": "pass_criteria.uplift_lower_bound"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "version",
+          "path": "version"
+        }
+      ],
+      "name": "quick",
+      "raw_hash": "d0916f80af75ef2f1bad0457f163f71f5ce09fdae8d43d5238c825785c4cae75",
+      "schema_type": "json",
+      "source_file": "config\\rfl\\quick.json",
+      "version": "1.0.0"
+    },
+    {
+      "cluster_distribution": {
+        "configuration": 4,
+        "identity": 2,
+        "metric": 1,
+        "seed": 1,
+        "structural": 4,
+        "success": 4
+      },
+      "field_count": 16,
+      "fields": [
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "artifacts_dir",
+          "path": "artifacts_dir"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "bootstrap_replicates",
+          "path": "bootstrap_replicates"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "number",
+          "name": "confidence_level",
+          "path": "confidence_level"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "coverage_file",
+          "path": "coverage_file"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "number",
+          "name": "coverage_threshold",
+          "path": "coverage_threshold"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "curves_file",
+          "path": "curves_file"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_max",
+          "path": "depth_max"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "integer",
+          "name": "derive_steps",
+          "path": "derive_steps"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "experiment_id",
+          "path": "experiment_id"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_breadth",
+          "path": "max_breadth"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_total",
+          "path": "max_total"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "num_runs",
+          "path": "num_runs"
+        },
+        {
+          "cluster": "seed",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "integer",
+          "name": "random_seed",
+          "path": "random_seed"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "string",
+          "name": "results_file",
+          "path": "results_file"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "system_id",
+          "path": "system_id"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "number",
+          "name": "uplift_threshold",
+          "path": "uplift_threshold"
+        }
+      ],
+      "name": "quick_test",
+      "raw_hash": "813c4f1e0d687d3f73a2a97ed6a0a0975bb3d4a37b616b3293464f1830e387b9",
+      "schema_type": "json",
+      "source_file": "config\\rfl\\quick_test.json",
+      "version": ""
+    },
+    {
+      "cluster_distribution": {
+        "configuration": 16,
+        "identity": 6,
+        "metric": 7,
+        "seed": 2,
+        "structural": 8,
+        "success": 5,
+        "temporal": 1
+      },
+      "field_count": 45,
+      "fields": [
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "artifacts",
+          "path": "artifacts"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "data",
+          "path": "artifacts.data"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "logs",
+          "path": "artifacts.logs"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "array<string>",
+          "name": "plots",
+          "path": "artifacts.plots"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "object",
+          "name": "configuration",
+          "path": "configuration"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [
+            "file path"
+          ],
+          "field_type": "string",
+          "name": "config_path",
+          "path": "configuration.config_path"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "snapshot",
+          "path": "configuration.snapshot"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "curriculum_slice",
+          "path": "configuration.snapshot.curriculum_slice"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "end_run",
+          "path": "configuration.snapshot.curriculum_slice.end_run"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "name",
+          "path": "configuration.snapshot.curriculum_slice.name"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "start_run",
+          "path": "configuration.snapshot.curriculum_slice.start_run"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "depth_max",
+          "path": "configuration.snapshot.depth_max"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "integer",
+          "name": "derive_steps",
+          "path": "configuration.snapshot.derive_steps"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "experiment_id",
+          "path": "configuration.snapshot.experiment_id"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_breadth",
+          "path": "configuration.snapshot.max_breadth"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_total",
+          "path": "configuration.snapshot.max_total"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "num_runs",
+          "path": "configuration.snapshot.num_runs"
+        },
+        {
+          "cluster": "seed",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "integer",
+          "name": "random_seed",
+          "path": "configuration.snapshot.random_seed"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "system_id",
+          "path": "configuration.snapshot.system_id"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "execution",
+          "path": "execution"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "command",
+          "path": "execution.command"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "dependencies",
+          "path": "execution.dependencies"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "numpy",
+          "path": "execution.dependencies.numpy"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "psycopg",
+          "path": "execution.dependencies.psycopg"
+        },
+        {
+          "cluster": "seed",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "integer",
+          "name": "effective_seed",
+          "path": "execution.effective_seed"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "python_version",
+          "path": "execution.python_version"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "experiment_id",
+          "path": "experiment_id"
+        },
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "string",
+          "name": "manifest_version",
+          "path": "manifest_version"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "provenance",
+          "path": "provenance"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "git_branch",
+          "path": "provenance.git_branch"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "git_commit",
+          "path": "provenance.git_commit"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "machine",
+          "path": "provenance.machine"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "string",
+          "name": "user",
+          "path": "provenance.user"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [],
+          "field_type": "object",
+          "name": "results",
+          "path": "results"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "abstentions",
+          "path": "results.abstentions"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "number",
+          "name": "duration_seconds",
+          "path": "results.duration_seconds"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "failed_proofs",
+          "path": "results.failed_proofs"
+        },
+        {
+          "cluster": "success",
+          "constraints": [
+            "maximum bound"
+          ],
+          "field_type": "integer",
+          "name": "max_depth",
+          "path": "results.max_depth"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "number",
+          "name": "mean_depth",
+          "path": "results.mean_depth"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "string",
+          "name": "status",
+          "path": "results.status"
+        },
+        {
+          "cluster": "success",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "successful_proofs",
+          "path": "results.successful_proofs"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [],
+          "field_type": "number",
+          "name": "throughput_proofs_per_hour",
+          "path": "results.throughput_proofs_per_hour"
+        },
+        {
+          "cluster": "metric",
+          "constraints": [
+            "seconds"
+          ],
+          "field_type": "integer",
+          "name": "total_statements",
+          "path": "results.total_statements"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "integer",
+          "name": "run_index",
+          "path": "run_index"
+        },
+        {
+          "cluster": "temporal",
+          "constraints": [
+            "ISO date format"
+          ],
+          "field_type": "string",
+          "name": "timestamp_utc",
+          "path": "timestamp_utc"
+        }
+      ],
+      "name": "experiment_manifest_schema",
+      "raw_hash": "842f1b5566aea8ae362113d4ba6978b534d43ee0b2d2c3817824b1dfeb850b71",
+      "schema_type": "json",
+      "source_file": "docs\\evidence\\experiment_manifest_schema.json",
+      "version": "1.0"
+    },
+    {
+      "cluster_distribution": {
+        "configuration": 3,
+        "governance": 1,
+        "identity": 1,
+        "seed": 1,
+        "structural": 1
+      },
+      "field_count": 7,
+      "fields": [
+        {
+          "cluster": "identity",
+          "constraints": [],
+          "field_type": "str",
+          "name": "experiment_id",
+          "path": "ManifestGenerator.experiment_id"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "str",
+          "name": "experiment_type",
+          "path": "ManifestGenerator.experiment_type"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "str",
+          "name": "description",
+          "path": "ManifestGenerator.description"
+        },
+        {
+          "cluster": "structural",
+          "constraints": [
+            "file path"
+          ],
+          "field_type": "Path",
+          "name": "config_path",
+          "path": "ManifestGenerator.config_path"
+        },
+        {
+          "cluster": "seed",
+          "constraints": [],
+          "field_type": "str",
+          "name": "mdap_seed",
+          "path": "ManifestGenerator.mdap_seed"
+        },
+        {
+          "cluster": "governance",
+          "constraints": [],
+          "field_type": "bool",
+          "name": "is_hermetic",
+          "path": "ManifestGenerator.is_hermetic"
+        },
+        {
+          "cluster": "configuration",
+          "constraints": [],
+          "field_type": "bool",
+          "name": "is_no_network",
+          "path": "ManifestGenerator.is_no_network"
+        }
+      ],
+      "name": "manifest",
+      "raw_hash": "343928e12f80c3a4c167b6cf8fb8da5099bc57d6eab3c060d5fe5c6d332f86e5",
+      "schema_type": "python",
+      "source_file": "experiments\\manifest.py",
+      "version": ""
+    }
+  ],
+  "relationships": [
+    {
+      "confidence": 0.2,
+      "evidence": "Schemas share 7 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "max_candidates_per_cycle",
+        "slice_uplift_dependency",
+        "slice_uplift_goal",
+        "slice_uplift_sparse",
+        "slice_uplift_tree",
+        "slices",
+        "version"
+      ],
+      "source_schema": "curriculum_uplift_phase2",
+      "target_schema": "verifier_budget_phase2"
+    },
+    {
+      "confidence": 0.2391304347826087,
+      "evidence": "Schemas share 11 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "atoms",
+        "axiom_instances",
+        "breadth_max",
+        "depth_max",
+        "description",
+        "formula_pool",
+        "lean_timeout_s",
+        "slices",
+        "timeout_s",
+        "total_max",
+        "version"
+      ],
+      "source_schema": "curriculum_uplift_phase2",
+      "target_schema": "curriculum"
+    },
+    {
+      "confidence": 0.0392156862745098,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "version"
+      ],
+      "source_schema": "curriculum_uplift_phase2",
+      "target_schema": "allblue_lanes"
+    },
+    {
+      "confidence": 0.014925373134328358,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description"
+      ],
+      "source_schema": "curriculum_uplift_phase2",
+      "target_schema": "default"
+    },
+    {
+      "confidence": 0.029850746268656716,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "version"
+      ],
+      "source_schema": "curriculum_uplift_phase2",
+      "target_schema": "production"
+    },
+    {
+      "confidence": 0.03333333333333333,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "version"
+      ],
+      "source_schema": "curriculum_uplift_phase2",
+      "target_schema": "quick"
+    },
+    {
+      "confidence": 0.02127659574468085,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "depth_max"
+      ],
+      "source_schema": "curriculum_uplift_phase2",
+      "target_schema": "quick_test"
+    },
+    {
+      "confidence": 0.013333333333333334,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "depth_max"
+      ],
+      "source_schema": "curriculum_uplift_phase2",
+      "target_schema": "experiment_manifest_schema"
+    },
+    {
+      "confidence": 0.02631578947368421,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description"
+      ],
+      "source_schema": "curriculum_uplift_phase2",
+      "target_schema": "manifest"
+    },
+    {
+      "confidence": 0.06060606060606061,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "slices",
+        "version"
+      ],
+      "source_schema": "verifier_budget_phase2",
+      "target_schema": "curriculum"
+    },
+    {
+      "confidence": 0.03333333333333333,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "version"
+      ],
+      "source_schema": "verifier_budget_phase2",
+      "target_schema": "allblue_lanes"
+    },
+    {
+      "confidence": 0.021739130434782608,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "version"
+      ],
+      "source_schema": "verifier_budget_phase2",
+      "target_schema": "production"
+    },
+    {
+      "confidence": 0.02564102564102564,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "version"
+      ],
+      "source_schema": "verifier_budget_phase2",
+      "target_schema": "quick"
+    },
+    {
+      "confidence": 0.06976744186046512,
+      "evidence": "Schemas share 3 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "name",
+        "version"
+      ],
+      "source_schema": "curriculum",
+      "target_schema": "allblue_lanes"
+    },
+    {
+      "confidence": 0.03389830508474576,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "name"
+      ],
+      "source_schema": "curriculum",
+      "target_schema": "default"
+    },
+    {
+      "confidence": 0.05084745762711865,
+      "evidence": "Schemas share 3 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "name",
+        "version"
+      ],
+      "source_schema": "curriculum",
+      "target_schema": "production"
+    },
+    {
+      "confidence": 0.057692307692307696,
+      "evidence": "Schemas share 3 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "name",
+        "version"
+      ],
+      "source_schema": "curriculum",
+      "target_schema": "quick"
+    },
+    {
+      "confidence": 0.025,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "depth_max"
+      ],
+      "source_schema": "curriculum",
+      "target_schema": "quick_test"
+    },
+    {
+      "confidence": 0.029850746268656716,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "depth_max",
+        "name"
+      ],
+      "source_schema": "curriculum",
+      "target_schema": "experiment_manifest_schema"
+    },
+    {
+      "confidence": 0.03225806451612903,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description"
+      ],
+      "source_schema": "curriculum",
+      "target_schema": "manifest"
+    },
+    {
+      "confidence": 0.09615384615384616,
+      "evidence": "Schemas share 5 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "method",
+        "name",
+        "pass_criteria",
+        "type"
+      ],
+      "source_schema": "allblue_lanes",
+      "target_schema": "default"
+    },
+    {
+      "confidence": 0.09433962264150944,
+      "evidence": "Schemas share 5 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "method",
+        "name",
+        "pass_criteria",
+        "version"
+      ],
+      "source_schema": "allblue_lanes",
+      "target_schema": "production"
+    },
+    {
+      "confidence": 0.10869565217391304,
+      "evidence": "Schemas share 5 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description",
+        "method",
+        "name",
+        "pass_criteria",
+        "version"
+      ],
+      "source_schema": "allblue_lanes",
+      "target_schema": "quick"
+    },
+    {
+      "confidence": 0.031746031746031744,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "artifacts",
+        "name"
+      ],
+      "source_schema": "allblue_lanes",
+      "target_schema": "experiment_manifest_schema"
+    },
+    {
+      "confidence": 0.037037037037037035,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description"
+      ],
+      "source_schema": "allblue_lanes",
+      "target_schema": "manifest"
+    },
+    {
+      "confidence": 0.08955223880597014,
+      "evidence": "Schemas share 6 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "confidence_level",
+        "description",
+        "method",
+        "name",
+        "pass_criteria",
+        "seed"
+      ],
+      "source_schema": "default",
+      "target_schema": "production"
+    },
+    {
+      "confidence": 0.1,
+      "evidence": "Schemas share 6 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "confidence_level",
+        "description",
+        "method",
+        "name",
+        "pass_criteria",
+        "seed"
+      ],
+      "source_schema": "default",
+      "target_schema": "quick"
+    },
+    {
+      "confidence": 0.04,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "bootstrap_replicates",
+        "confidence_level"
+      ],
+      "source_schema": "default",
+      "target_schema": "quick_test"
+    },
+    {
+      "confidence": 0.012658227848101266,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "name"
+      ],
+      "source_schema": "default",
+      "target_schema": "experiment_manifest_schema"
+    },
+    {
+      "confidence": 0.023809523809523808,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description"
+      ],
+      "source_schema": "default",
+      "target_schema": "manifest"
+    },
+    {
+      "confidence": 0.8108108108108109,
+      "evidence": "Schemas share 30 fields (81.1% Jaccard similarity)",
+      "relation_type": "equivalent",
+      "shared_fields": [
+        "artifacts_dir",
+        "baseline",
+        "bootstrap_config",
+        "commit_template",
+        "confidence_level",
+        "coverage_file",
+        "coverage_lower_bound",
+        "data_source",
+        "description",
+        "experiment_name",
+        "experiments",
+        "fail",
+        "fallback_to_db",
+        "method",
+        "metrics",
+        "metrologist",
+        "mode",
+        "n_experiments",
+        "n_replicates",
+        "name",
+        "output",
+        "pass",
+        "pass_criteria",
+        "path",
+        "results_file",
+        "seed",
+        "uplift_lower_bound",
+        "version",
+        "visualization_file",
+        "weight"
+      ],
+      "source_schema": "production",
+      "target_schema": "quick"
+    },
+    {
+      "confidence": 0.08163265306122448,
+      "evidence": "Schemas share 4 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "artifacts_dir",
+        "confidence_level",
+        "coverage_file",
+        "results_file"
+      ],
+      "source_schema": "production",
+      "target_schema": "quick_test"
+    },
+    {
+      "confidence": 0.02531645569620253,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "name",
+        "user"
+      ],
+      "source_schema": "production",
+      "target_schema": "experiment_manifest_schema"
+    },
+    {
+      "confidence": 0.023255813953488372,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description"
+      ],
+      "source_schema": "production",
+      "target_schema": "manifest"
+    },
+    {
+      "confidence": 0.09523809523809523,
+      "evidence": "Schemas share 4 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "artifacts_dir",
+        "confidence_level",
+        "coverage_file",
+        "results_file"
+      ],
+      "source_schema": "quick",
+      "target_schema": "quick_test"
+    },
+    {
+      "confidence": 0.0136986301369863,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "name"
+      ],
+      "source_schema": "quick",
+      "target_schema": "experiment_manifest_schema"
+    },
+    {
+      "confidence": 0.027777777777777776,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "description"
+      ],
+      "source_schema": "quick",
+      "target_schema": "manifest"
+    },
+    {
+      "confidence": 0.15384615384615385,
+      "evidence": "Schemas share 8 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "depth_max",
+        "derive_steps",
+        "experiment_id",
+        "max_breadth",
+        "max_total",
+        "num_runs",
+        "random_seed",
+        "system_id"
+      ],
+      "source_schema": "quick_test",
+      "target_schema": "experiment_manifest_schema"
+    },
+    {
+      "confidence": 0.045454545454545456,
+      "evidence": "Schemas share 1 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "experiment_id"
+      ],
+      "source_schema": "quick_test",
+      "target_schema": "manifest"
+    },
+    {
+      "confidence": 0.04081632653061224,
+      "evidence": "Schemas share 2 fields with low overlap",
+      "relation_type": "references",
+      "shared_fields": [
+        "config_path",
+        "experiment_id"
+      ],
+      "source_schema": "experiment_manifest_schema",
+      "target_schema": "manifest"
+    }
+  ],
+  "version": "1.0.0"
+}

@@ -1,0 +1,67 @@
+{
+  "report_id": "0e43956903cadae3",
+  "timestamp": "2025-12-09T08:18:02.947155+00:00",
+  "base_ref": "main",
+  "head_ref": "HEAD",
+  "current_phase": "phase_i",
+  "impacts": [
+    {
+      "phase": "Determinism contract change",
+      "signals": [
+        {
+          "signal": "determinism_envelope_change",
+          "file_path": "unknown",
+          "line_number": null,
+          "context": "",
+          "severity": "critical"
+        }
+      ],
+      "severity": "CRITICAL",
+      "signal_count": 1
+    },
+    {
+      "phase": "Phase I \u2192 Phase II",
+      "signals": [
+        {
+          "signal": "prereg_addition",
+          "file_path": "unknown",
+          "line_number": null,
+          "context": "",
+          "severity": "warning"
+        }
+      ],
+      "severity": "WARN",
+      "signal_count": 1
+    },
+    {
+      "phase": "Phase II \u2192 Phase IIb",
+      "signals": [
+        {
+          "signal": "lean_toolchain_update",
+          "file_path": "unknown",
+          "line_number": null,
+          "context": "",
+          "severity": "warning"
+        }
+      ],
+      "severity": "WARN",
+      "signal_count": 1
+    }
+  ],
+  "files_changed": [],
+  "overall_severity": "CRITICAL",
+  "requires_migration_intent": true,
+  "summary": {
+    "total_signals": 3,
+    "critical_signals": 1,
+    "warning_signals": 2,
+    "info_signals": 0,
+    "migration_transitions_detected": 3,
+    "files_analyzed": 0,
+    "phase_frontiers_touched": [
+      "Determinism contract change",
+      "Phase I \u2192 Phase II",
+      "Phase II \u2192 Phase IIb"
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\derivation\verification.py
+# hypothesis_version: 6.148.2
+
+[' → ', ' ∧ ', ' ∨ ', '(p : Prop)', '->', '.lean', '/\\', '1', 'LEAN_EXE', 'LeanFallback', 'StatementVerifier', 'VerificationOutcome', '\\/', 'lean', 'lean-disabled', 'lean-error', 'lean-timeout', 'pattern', 'tmp_path', 'truth-table', 'truth-table-error', 'w', '~', '¬']

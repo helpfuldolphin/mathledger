@@ -1,0 +1,350 @@
+# AUTO-GENERATED CI CHECK — Schema Documentation Consistency
+# Agent: doc-ops-2 (E2) — Schema Cartographer & Blast-Radius Oracle
+#
+# This workflow ensures schema documentation stays in sync with source schemas.
+# If schema docs differ from auto-generated version → FAIL.
+#
+# Jobs:
+#   1. schema-docs-check: Verify SCHEMA_REFERENCE.md and SCHEMA_DIFF_REPORT.md
+#   2. schema-ontology-check: Verify ontology consistency and detect regressions
+#   3. schema-blast-radius: Compute and report downstream impact
+#   4. schema-change-brief: Generate human-readable change summary for PR review (informational only)
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+# REVIEWER WORKFLOW
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# When reviewing schema changes in a PR:
+#
+#   1. Download SCHEMA_CHANGE_BRIEF.md artifact from CI
+#      - Check "Impact Summary" section for severity (BLOCK/WARN/INFO)
+#      - Review "Per-Schema Impact" for specific change reasons
+#
+#   2. For deeper analysis, run locally:
+#      uv run python scripts/schema_ontology_builder.py --explain-consumers <schema_file>
+#      - Shows which files consume the schema and how many fields they access
+#
+#   3. Check safe-to-merge advisory:
+#      uv run python scripts/schema_ontology_builder.py --safe-to-merge
+#      - Returns advisory hint; does NOT gate CI
+#
+# IMPORTANT: Severity levels are ADVISORY ONLY. This workflow never fails CI
+# based solely on impact severity. Reviewers decide whether to proceed.
+#
+# Trigger: Push/PR affecting schema files or documentation
+
+name: Schema Docs Check
+
+on:
+  push:
+    branches: [main, mvdp-*]
+    paths:
+      - 'config/**/*.yaml'
+      - 'config/**/*.json'
+      - 'docs/evidence/**/*.json'
+      - 'experiments/manifest.py'
+      - 'scripts/generate_schema_docs.py'
+      - 'scripts/schema_ontology_builder.py'
+      - 'docs/SCHEMA_REFERENCE.md'
+      - 'docs/SCHEMA_DIFF_REPORT.md'
+      - 'docs/schema_ontology.json'
+      - 'docs/schema_ontology.dot'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'config/**/*.yaml'
+      - 'config/**/*.json'
+      - 'docs/evidence/**/*.json'
+      - 'experiments/manifest.py'
+      - 'scripts/generate_schema_docs.py'
+      - 'scripts/schema_ontology_builder.py'
+      - 'docs/SCHEMA_REFERENCE.md'
+      - 'docs/SCHEMA_DIFF_REPORT.md'
+      - 'docs/schema_ontology.json'
+      - 'docs/schema_ontology.dot'
+  workflow_dispatch:
+
+jobs:
+  # ==========================================================================
+  # JOB 1: Schema Documentation Consistency
+  # ==========================================================================
+  schema-docs-check:
+    name: Verify Schema Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Check schema documentation consistency
+        id: check
+        run: |
+          echo "::group::Running schema docs check"
+          uv run python scripts/generate_schema_docs.py --check
+          echo "::endgroup::"
+
+      - name: Report failure instructions
+        if: failure()
+        run: |
+          echo "::error::Schema documentation is out of sync with source schemas!"
+          echo ""
+          echo "To fix this issue, run locally:"
+          echo "  uv run python scripts/generate_schema_docs.py"
+          echo ""
+          echo "Then commit the updated documentation files:"
+          echo "  git add docs/SCHEMA_REFERENCE.md docs/SCHEMA_DIFF_REPORT.md"
+          echo "  git commit -m 'docs: regenerate schema documentation'"
+          exit 1
+
+      - name: Success summary
+        if: success()
+        run: |
+          echo "✅ Schema documentation is up to date!"
+          echo ""
+          echo "Files verified:"
+          echo "  - docs/SCHEMA_REFERENCE.md"
+          echo "  - docs/SCHEMA_DIFF_REPORT.md"
+
+  # ==========================================================================
+  # JOB 2: Schema Ontology & Regression Check
+  # ==========================================================================
+  schema-ontology-check:
+    name: Schema Ontology & Regression Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Check for schema regressions
+        id: regression
+        run: |
+          echo "::group::Running schema regression check"
+          uv run python scripts/schema_ontology_builder.py --regression-check --verbose
+          echo "::endgroup::"
+
+      - name: Generate ontology artifacts
+        if: always()
+        run: |
+          echo "::group::Generating ontology outputs"
+          uv run python scripts/schema_ontology_builder.py --verbose
+          echo "::endgroup::"
+
+      - name: Upload ontology artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-ontology
+          path: |
+            docs/schema_ontology.json
+            docs/schema_ontology.dot
+            docs/SCHEMA_REGRESSION_REPORT.md
+          retention-days: 30
+
+      - name: Report regression failure
+        if: failure()
+        run: |
+          echo "::error::Schema regression detected!"
+          echo ""
+          echo "Breaking changes were detected in schema structure."
+          echo "Review the SCHEMA_REGRESSION_REPORT.md for details."
+          echo ""
+          echo "If this change is intentional, update the baseline:"
+          echo "  uv run python scripts/schema_ontology_builder.py --save-baseline"
+          exit 1
+
+  # ==========================================================================
+  # JOB 3: Schema Blast Radius Computation
+  # ==========================================================================
+  schema-blast-radius:
+    name: Compute Schema Blast Radius
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for diff
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Detect changed schema files
+        id: changed
+        run: |
+          # Get list of changed schema files in this PR
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(yaml|json)$' | grep -E '^config/|^docs/evidence/' || true)
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compute blast radius
+        if: steps.changed.outputs.has_changes == 'true'
+        id: blast
+        run: |
+          echo "::group::Computing blast radius"
+          uv run python scripts/schema_ontology_builder.py --blast-radius
+          echo "::endgroup::"
+
+      - name: Generate blast radius comment
+        if: steps.changed.outputs.has_changes == 'true'
+        run: |
+          echo "## 💥 Schema Blast Radius Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Changed Schema Files" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.changed.outputs.changed_files }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Potentially Affected Downstream Files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Run \`uv run python scripts/schema_ontology_builder.py --blast-radius\` locally for full details." >> $GITHUB_STEP_SUMMARY
+
+      - name: No schema changes detected
+        if: steps.changed.outputs.has_changes == 'false'
+        run: |
+          echo "ℹ️ No schema file changes detected in this PR."
+          echo "## Schema Blast Radius" >> $GITHUB_STEP_SUMMARY
+          echo "No schema files were modified in this PR." >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================================================
+  # JOB 4: Schema Change Brief (Informational - No CI Failure)
+  # ==========================================================================
+  schema-change-brief:
+    name: Generate Schema Change Brief
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv sync --frozen
+
+      - name: Detect changed schema files
+        id: changed
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(yaml|json|py)$' | grep -E '^config/|^docs/evidence/|^experiments/manifest\.py' || true)
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Regenerate current ontology
+        if: steps.changed.outputs.has_changes == 'true'
+        run: |
+          echo "::group::Building current ontology"
+          uv run python scripts/schema_ontology_builder.py --verbose
+          echo "::endgroup::"
+
+      - name: Generate schema change brief
+        if: steps.changed.outputs.has_changes == 'true'
+        run: |
+          echo "::group::Generating change brief with impact scoring"
+          uv run python scripts/schema_ontology_builder.py --change-brief
+          echo "::endgroup::"
+
+      - name: Run safe-to-merge advisory check
+        if: steps.changed.outputs.has_changes == 'true'
+        id: safe_check
+        run: |
+          echo "::group::Running safe-to-merge advisory"
+          uv run python scripts/schema_ontology_builder.py --safe-to-merge
+          echo "::endgroup::"
+        # Note: This is advisory only, we don't fail on exit code
+
+      - name: Upload change brief artifact
+        if: steps.changed.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-change-brief
+          path: docs/SCHEMA_CHANGE_BRIEF.md
+          retention-days: 30
+
+      - name: Add change brief to PR summary
+        if: steps.changed.outputs.has_changes == 'true'
+        run: |
+          echo "## 📋 Schema Change Brief" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat docs/SCHEMA_CHANGE_BRIEF.md >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Reviewer Actions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Download** the \`schema-change-brief\` artifact for the full report" >> $GITHUB_STEP_SUMMARY
+          echo "2. **For deeper analysis**, run locally:" >> $GITHUB_STEP_SUMMARY
+          echo "   \`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "   uv run python scripts/schema_ontology_builder.py --explain-consumers <schema_file>" >> $GITHUB_STEP_SUMMARY
+          echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Check advisory**: \`uv run python scripts/schema_ontology_builder.py --safe-to-merge\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> ⚠️ **Note**: Impact severity is advisory only. This check does not fail CI." >> $GITHUB_STEP_SUMMARY
+
+      - name: No changes to report
+        if: steps.changed.outputs.has_changes == 'false'
+        run: |
+          echo "## 📋 Schema Change Brief" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "No schema files were modified in this PR." >> $GITHUB_STEP_SUMMARY

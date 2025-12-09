@@ -1,0 +1,377 @@
+{
+  "label": "PHASE II — SYNTHETIC TEST DATA ONLY",
+  "registry_version": "1.0.0",
+  "schema_version": "registry_v2",
+  "description": "Canonical registry of synthetic universes for stress-testing U2 analytics",
+  "warning": "ALL scenarios are SYNTHETIC. Do NOT interpret as real uplift evidence.",
+  "expected_scenario_count": 15,
+  "categories": {
+    "correlation": {
+      "description": "Intra-class correlation patterns",
+      "purpose": "Test independence assumptions"
+    },
+    "drift": {
+      "description": "Temporal probability drift patterns",
+      "purpose": "Test time-series analysis robustness"
+    },
+    "mixed": {
+      "description": "Combined noise patterns",
+      "purpose": "Test real-world-like complexity"
+    },
+    "rare_event": {
+      "description": "Shock and burst events",
+      "purpose": "Test extreme event handling"
+    },
+    "uplift": {
+      "description": "Base uplift patterns without noise",
+      "purpose": "Validate uplift direction detection"
+    }
+  },
+  "scenarios": {
+    "synthetic_null_uplift": {
+      "version": "1.0",
+      "description": "No difference between baseline and RFL",
+      "category": "uplift",
+      "ci_sweep_included": true,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "classes": ["class_a", "class_b", "class_c"],
+        "probabilities": {
+          "baseline": {"class_a": 0.75, "class_b": 0.60, "class_c": 0.45},
+          "rfl": {"class_a": 0.75, "class_b": 0.60, "class_c": 0.45}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.0},
+        "rare_events": []
+      }
+    },
+    "synthetic_positive_uplift": {
+      "version": "1.0",
+      "description": "RFL outperforms baseline by ~20pp",
+      "category": "uplift",
+      "ci_sweep_included": true,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "classes": ["class_a", "class_b", "class_c"],
+        "probabilities": {
+          "baseline": {"class_a": 0.60, "class_b": 0.45, "class_c": 0.30},
+          "rfl": {"class_a": 0.80, "class_b": 0.65, "class_c": 0.50}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.0},
+        "rare_events": []
+      }
+    },
+    "synthetic_negative_uplift": {
+      "version": "1.0",
+      "description": "Baseline outperforms RFL (regression)",
+      "category": "uplift",
+      "ci_sweep_included": false,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "classes": ["class_a", "class_b", "class_c"],
+        "probabilities": {
+          "baseline": {"class_a": 0.85, "class_b": 0.70, "class_c": 0.55},
+          "rfl": {"class_a": 0.60, "class_b": 0.45, "class_c": 0.30}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.0},
+        "rare_events": []
+      }
+    },
+    "synthetic_drift_monotonic": {
+      "version": "1.0",
+      "description": "Linear degradation over time",
+      "category": "drift",
+      "ci_sweep_included": false,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.80, "class_b": 0.65, "class_c": 0.50}
+        },
+        "drift": {"mode": "monotonic", "slope": 0.0005, "direction": "down"},
+        "correlation": {"rho": 0.0},
+        "rare_events": []
+      }
+    },
+    "synthetic_drift_cyclical": {
+      "version": "1.0",
+      "description": "Sinusoidal probability oscillation",
+      "category": "drift",
+      "ci_sweep_included": true,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.65, "class_b": 0.55, "class_c": 0.45}
+        },
+        "drift": {"mode": "cyclical", "amplitude": 0.15, "period": 100},
+        "correlation": {"rho": 0.0},
+        "rare_events": [],
+        "temporal_drift": {
+          "success_drift": {
+            "mode": "sinusoidal",
+            "period": 100,
+            "amplitude": 0.15,
+            "enabled": true
+          },
+          "confusability_drift": {
+            "mode": "sinusoidal",
+            "period": 150,
+            "amplitude": 0.10,
+            "enabled": true
+          },
+          "abstention_drift": null
+        }
+      }
+    },
+    "synthetic_drift_shock": {
+      "version": "1.0",
+      "description": "Sudden probability drop at cycle 250",
+      "category": "drift",
+      "ci_sweep_included": false,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.75, "class_b": 0.65, "class_c": 0.55}
+        },
+        "drift": {"mode": "shock", "shock_cycle": 250, "shock_delta": -0.30},
+        "correlation": {"rho": 0.0},
+        "rare_events": []
+      }
+    },
+    "synthetic_correlation_low": {
+      "version": "1.0",
+      "description": "Low intra-class correlation (rho=0.2)",
+      "category": "correlation",
+      "ci_sweep_included": false,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.70, "class_b": 0.55, "class_c": 0.40}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.2, "mode": "class"},
+        "rare_events": []
+      }
+    },
+    "synthetic_correlation_high": {
+      "version": "1.0",
+      "description": "High intra-class correlation (rho=0.7)",
+      "category": "correlation",
+      "ci_sweep_included": true,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.70, "class_b": 0.55, "class_c": 0.40}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.7, "mode": "class"},
+        "rare_events": []
+      }
+    },
+    "synthetic_catastrophic": {
+      "version": "1.0",
+      "description": "Catastrophic system failure at cycle 200",
+      "category": "rare_event",
+      "ci_sweep_included": true,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.85, "class_b": 0.75, "class_c": 0.65}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.0},
+        "rare_events": [
+          {
+            "type": "catastrophic_collapse",
+            "trigger_cycle": 200,
+            "magnitude": -0.60,
+            "duration": 200
+          }
+        ]
+      }
+    },
+    "synthetic_sudden_uplift": {
+      "version": "1.0",
+      "description": "Breakthrough spike at cycle 150",
+      "category": "rare_event",
+      "ci_sweep_included": false,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.50, "class_b": 0.40, "class_c": 0.30}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.0},
+        "rare_events": [
+          {
+            "type": "sudden_uplift",
+            "trigger_cycle": 150,
+            "magnitude": 0.35,
+            "duration": 100,
+            "recovery_rate": 0.02
+          }
+        ]
+      }
+    },
+    "synthetic_outlier_bursts": {
+      "version": "1.0",
+      "description": "Sporadic class-specific failures",
+      "category": "rare_event",
+      "ci_sweep_included": false,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.75, "class_b": 0.65, "class_c": 0.55}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.0},
+        "rare_events": [
+          {"type": "class_outlier_burst", "affected_class": "class_a", "trigger_probability": 0.03, "magnitude": -0.45, "duration": 5},
+          {"type": "class_outlier_burst", "affected_class": "class_b", "trigger_probability": 0.02, "magnitude": -0.40, "duration": 4},
+          {"type": "class_outlier_burst", "affected_class": "class_c", "trigger_probability": 0.01, "magnitude": -0.35, "duration": 3}
+        ]
+      }
+    },
+    "synthetic_intermittent": {
+      "version": "1.0",
+      "description": "Random transient failures (5% per cycle)",
+      "category": "rare_event",
+      "ci_sweep_included": false,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.80, "class_b": 0.70, "class_c": 0.60}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.0},
+        "rare_events": [
+          {"type": "intermittent_failure", "trigger_probability": 0.05, "magnitude": -0.50, "duration": 3}
+        ]
+      }
+    },
+    "synthetic_recovery": {
+      "version": "1.0",
+      "description": "Collapse at 150, recovery spike at 300",
+      "category": "rare_event",
+      "ci_sweep_included": false,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.75, "class_b": 0.65, "class_c": 0.55}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.0},
+        "rare_events": [
+          {"type": "catastrophic_collapse", "trigger_cycle": 150, "magnitude": -0.50, "duration": 100},
+          {"type": "recovery_spike", "trigger_cycle": 300, "magnitude": 0.40, "duration": 50, "recovery_rate": 0.03}
+        ]
+      }
+    },
+    "synthetic_variance": {
+      "version": "1.0",
+      "description": "Per-cycle and per-item variance",
+      "category": "mixed",
+      "ci_sweep_included": false,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.70, "class_b": 0.55, "class_c": 0.40}
+        },
+        "drift": {"mode": "none"},
+        "correlation": {"rho": 0.0},
+        "variance": {"per_cycle_sigma": 0.05, "per_item_sigma": 0.03},
+        "rare_events": []
+      }
+    },
+    "synthetic_mixed_chaos": {
+      "version": "1.0",
+      "description": "Drift + correlation + rare events combined",
+      "category": "mixed",
+      "ci_sweep_included": true,
+      "parameters": {
+        "seed": 42,
+        "num_cycles": 500,
+        "probabilities": {
+          "baseline": {"class_a": 0.65, "class_b": 0.55, "class_c": 0.45},
+          "rfl": {"class_a": 0.70, "class_b": 0.60, "class_c": 0.50}
+        },
+        "drift": {"mode": "cyclical", "amplitude": 0.10, "period": 150},
+        "correlation": {"rho": 0.3, "mode": "class"},
+        "variance": {"per_cycle_sigma": 0.02},
+        "rare_events": [
+          {"type": "intermittent_failure", "trigger_probability": 0.02, "magnitude": -0.40, "duration": 5}
+        ],
+        "temporal_drift": {
+          "success_drift": {
+            "mode": "sinusoidal",
+            "period": 150,
+            "amplitude": 0.10,
+            "enabled": true
+          },
+          "confusability_drift": {
+            "mode": "linear",
+            "slope": 0.0005,
+            "enabled": true
+          },
+          "abstention_drift": {
+            "mode": "step",
+            "step_cycles": [200, 400],
+            "step_values": [0.05, 0.10],
+            "enabled": true
+          }
+        }
+      }
+    }
+  },
+  "ci_sweep_scenarios": [
+    "synthetic_null_uplift",
+    "synthetic_positive_uplift",
+    "synthetic_drift_cyclical",
+    "synthetic_correlation_high",
+    "synthetic_catastrophic",
+    "synthetic_mixed_chaos"
+  ],
+  "causal_links": {
+    "synthetic_null_uplift": ["synthetic_drift_monotonic", "synthetic_drift_cyclical", "synthetic_correlation_low"],
+    "synthetic_drift_cyclical": ["synthetic_mixed_chaos"],
+    "synthetic_correlation_high": ["synthetic_mixed_chaos"]
+  },
+  "temporal_drift_schema": {
+    "label": "PHASE II — SYNTHETIC TEST DATA ONLY",
+    "version": "1.0",
+    "description": "Optional temporal drift for confusability, success, and abstention patterns",
+    "modes": ["none", "sinusoidal", "linear", "step"],
+    "fields": {
+      "mode": "Drift mode (none, sinusoidal, linear, step)",
+      "period": "Oscillation period for sinusoidal mode (cycles)",
+      "amplitude": "Maximum deviation from base value",
+      "slope": "Rate of change per cycle (linear mode)",
+      "step_cycles": "Cycles at which steps occur (step mode)",
+      "step_values": "Values at each step (step mode)",
+      "enabled": "Whether drift is active (default: false)"
+    }
+  },
+  "metadata": {
+    "created": "2025-12-06",
+    "author": "C3 curriculum-builder-3",
+    "purpose": "Stress-testing U2 uplift analysis infrastructure",
+    "version": "2.0",
+    "features": ["temporal_drift", "causal_links", "realism_envelope"]
+  }
+}
+

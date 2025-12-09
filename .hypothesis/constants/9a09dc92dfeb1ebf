@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\substrate\dag\schema_validator.py
+# hypothesis_version: 6.148.2
+
+['child_hash', 'child_statement_id', 'created_at', 'edge_index', 'extra_columns', 'issues', 'missing_columns', 'no_child_identifier', 'no_parent_identifier', 'parent_hash', 'parent_statement_id', 'proof_id', 'proof_parents', 'table_missing', 'valid']

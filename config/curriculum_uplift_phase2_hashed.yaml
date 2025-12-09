@@ -1,0 +1,285 @@
+version: 2.1.0
+systems:
+- name: pl
+  slices:
+  - name: slice_uplift_goal
+    description: Goal-conditioned uplift slice. Success requires hitting specific
+      target formula(s) while also producing a minimum total of verified proofs. Random
+      exploration hits targets 10-30% of the time; RFL should learn to prioritize
+      goal-overlapping candidates for 40-70% success.
+    uplift:
+      phase: II
+      experiment_family: U2
+      not_allowed_in_phase_I: true
+    parameters:
+      atoms: 4
+      depth_min: 2
+      depth_max: 5
+      breadth_max: 40
+      total_max: 200
+      formula_pool: 16
+      axiom_instances: 24
+      timeout_s: 1.0
+      lean_timeout_s: 0.0
+    success_metric:
+      kind: goal_hit
+      parameters:
+        min_goal_hits: 1
+        min_total_verified: 3
+      target_hashes:
+      - 1065e56b3c644ae6f05a947337e6a8afa7e968866b353a1930a94950ac4826cf
+      - 585da70da38accec90f544ebd2e947683717cf4b8c1c8e21393710d30b8da67a
+    budget:
+      max_candidates_per_cycle: 40
+      max_cycles_per_run: 500
+    formula_pool_entries:
+    - formula: p
+      hash: 60dfc2070e0cda45e71bfbbe0f51497e247eb2667b983843203ccb932bb5de9b
+    - formula: q
+      hash: 0c90faf28890f9bf1883806f0adbbc433f26f87a75849099ff1dec519aa00679
+    - formula: r
+      hash: db4f89d1ef53b21e73b7360c02a632e9116bda3bb87c1262293125cd2b76e6ed
+    - formula: s
+      hash: dc94d220830d8f3e09882b1d4aa06230a7c42889c6205e6ffe56fe6536540dbd
+    - formula: p->q
+      hash: f426de9401e40a834a6b46d25faf6d2a3b84941c0ab63a659e155bffb8d56f4b
+    - formula: q->r
+      hash: e8c50e4871e3194bb66788b978fcfbb6e6695d065656285e9a9faf363fd82e13
+    - formula: r->s
+      hash: 0c30f85b2788d6dc1162f26d6ec096afafbab689c5f3454597c7d19e255d4555
+    - formula: p->(q->r)
+      hash: a4cc3ffe8f7d0a96323ce358795a4d87a6922f54b4cf12ff4c981dc44952f813
+    - formula: (p->q)->(p->r)
+      hash: decbdd82a1a4efbc240815bd4db1a33af3f1284e2cb01903c23ed90ab19295db
+    - formula: p|~p
+      hash: fe791cabd26e312b3c5a858deeb4a5bfe9e9b95dc7d05165642e8e4dd62c7db1
+    - formula: (p->q)->((q->r)->(p->r))
+      hash: 585da70da38accec90f544ebd2e947683717cf4b8c1c8e21393710d30b8da67a
+    - formula: ~(p&~p)
+      hash: c9957c315ffe7b5fa539a985688f7936d1bf3f6835e3a6b6fa10eff862f239e2
+    - formula: (p&q)->p
+      hash: 2156363847557681a448579969100a04383c13430b89dfe5d64021bbaaaf3608
+    - formula: p->(q->p)
+      hash: 248e2c30377c23e7a10d20d203eef09b9a136c30729ece89910908a0f36c89b1
+    - formula: ((p->q)->p)->p
+      hash: 1065e56b3c644ae6f05a947337e6a8afa7e968866b353a1930a94950ac4826cf
+    - formula: (p->(q->r))->((p->q)->(p->r))
+      hash: 126133877ec5b3029a44ee5e515f315af0512d3d9442373d78d61f445033bf09
+  - name: slice_uplift_sparse
+    description: Sparse reward uplift slice. Large candidate space with few provable
+      formulas. Success requires finding at least 5 verified statements within budget.
+      Baseline wastes resources on dead zones (20-50% success); RFL should learn to
+      identify productive regions (50-80% success).
+    uplift:
+      phase: II
+      experiment_family: U2
+      not_allowed_in_phase_I: true
+    parameters:
+      atoms: 5
+      depth_min: 3
+      depth_max: 7
+      breadth_max: 40
+      total_max: 300
+      formula_pool: 24
+      axiom_instances: 32
+      timeout_s: 1.0
+      lean_timeout_s: 0.0
+    success_metric:
+      kind: sparse_success
+      parameters:
+        min_verified: 5
+    budget:
+      max_candidates_per_cycle: 40
+      max_cycles_per_run: 500
+    formula_pool_entries:
+    - formula: p
+      hash: 60dfc2070e0cda45e71bfbbe0f51497e247eb2667b983843203ccb932bb5de9b
+    - formula: q
+      hash: 0c90faf28890f9bf1883806f0adbbc433f26f87a75849099ff1dec519aa00679
+    - formula: r
+      hash: db4f89d1ef53b21e73b7360c02a632e9116bda3bb87c1262293125cd2b76e6ed
+    - formula: s
+      hash: dc94d220830d8f3e09882b1d4aa06230a7c42889c6205e6ffe56fe6536540dbd
+    - formula: t
+      hash: e3993528729dc56e2c694f61c34c2e286b178167cf736b80f98552be51c07660
+    - formula: p->q
+      hash: f426de9401e40a834a6b46d25faf6d2a3b84941c0ab63a659e155bffb8d56f4b
+    - formula: q->r
+      hash: e8c50e4871e3194bb66788b978fcfbb6e6695d065656285e9a9faf363fd82e13
+    - formula: r->s
+      hash: 0c30f85b2788d6dc1162f26d6ec096afafbab689c5f3454597c7d19e255d4555
+    - formula: s->t
+      hash: 2256f29795e846e051baf9416bb66421b1ad8986a0f7cc32a51dee47977dba41
+    - formula: p->(q->p)
+      hash: 248e2c30377c23e7a10d20d203eef09b9a136c30729ece89910908a0f36c89b1
+    - formula: (p->q)->(p->r)
+      hash: decbdd82a1a4efbc240815bd4db1a33af3f1284e2cb01903c23ed90ab19295db
+    - formula: p|~p
+      hash: fe791cabd26e312b3c5a858deeb4a5bfe9e9b95dc7d05165642e8e4dd62c7db1
+    - formula: ~(p&~p)
+      hash: c9957c315ffe7b5fa539a985688f7936d1bf3f6835e3a6b6fa10eff862f239e2
+    - formula: (p&q)->p
+      hash: 2156363847557681a448579969100a04383c13430b89dfe5d64021bbaaaf3608
+    - formula: (p&q)->q
+      hash: 4010428067e3a85b07ec5dee205f0be625611af4b559a6c6323ee9397eec1e5e
+    - formula: p->(p|q)
+      hash: acbec242f5b7491bab93606a658cbaaefecaa63f71847fbeeb5cf8ff222e4e79
+    - formula: q->(p|q)
+      hash: 6add170fc5ee143bcc427b9ef9ac05466c0b0cf057dc408a5aaafd8be248bb17
+    - formula: (p->r)->((q->r)->((p|q)->r))
+      hash: 7f720fd126d332a2272d260a70e9b3bd20574e0132557e23a6b41825b4b53e0a
+    - formula: ((p->q)->p)->p
+      hash: 1065e56b3c644ae6f05a947337e6a8afa7e968866b353a1930a94950ac4826cf
+    - formula: (p->(q->r))->((p->q)->(p->r))
+      hash: 126133877ec5b3029a44ee5e515f315af0512d3d9442373d78d61f445033bf09
+    - formula: ~p->(p->q)
+      hash: dfca7db375d100330a2fbe8e7abfc67e3aeb5de601f7eca2fd828e4284ee8a47
+    - formula: (p->q)->(~q->~p)
+      hash: 238f9bf13867c9d379fd52afb78ed3cf32162cdd86d595374b6f0f6b8844e4d2
+    - formula: p->~~p
+      hash: 62d3b5853b75fc9693dd4e1bf871201c2dc19ef626f695ed9c1059ed96d2c319
+    - formula: ~~p->p
+      hash: 0cb6501d3217af3d2733a8b2ae355ca7dda8b922af5db082b1a203b3b63d378b
+  - name: slice_uplift_tree
+    description: Chain depth uplift slice. Success requires proving a target formula
+      via a derivation chain of at least 3 intermediate steps. Random exploration
+      rarely builds the right intermediates (10-30% success); RFL should learn to
+      construct useful lemma chains (40-70% success).
+    uplift:
+      phase: II
+      experiment_family: U2
+      not_allowed_in_phase_I: true
+    parameters:
+      atoms: 4
+      depth_min: 2
+      depth_max: 6
+      breadth_max: 30
+      total_max: 180
+      formula_pool: 20
+      axiom_instances: 28
+      timeout_s: 1.5
+      lean_timeout_s: 0.0
+    success_metric:
+      kind: chain_success
+      parameters:
+        min_chain_length: 3
+      chain_target_hash: 70c27f099d2df5e934ec33d4ba0497c691b3cfa6eae8d949de27fe3d45bb859d
+    budget:
+      max_candidates_per_cycle: 30
+      max_cycles_per_run: 500
+    formula_pool_entries:
+    - formula: p
+      hash: 60dfc2070e0cda45e71bfbbe0f51497e247eb2667b983843203ccb932bb5de9b
+    - formula: q
+      hash: 0c90faf28890f9bf1883806f0adbbc433f26f87a75849099ff1dec519aa00679
+    - formula: r
+      hash: db4f89d1ef53b21e73b7360c02a632e9116bda3bb87c1262293125cd2b76e6ed
+    - formula: s
+      hash: dc94d220830d8f3e09882b1d4aa06230a7c42889c6205e6ffe56fe6536540dbd
+    - formula: p->q
+      hash: f426de9401e40a834a6b46d25faf6d2a3b84941c0ab63a659e155bffb8d56f4b
+    - formula: q->r
+      hash: e8c50e4871e3194bb66788b978fcfbb6e6695d065656285e9a9faf363fd82e13
+    - formula: r->s
+      hash: 0c30f85b2788d6dc1162f26d6ec096afafbab689c5f3454597c7d19e255d4555
+    - formula: p->r
+      hash: e5d6f6712577d58c2d79bb7dbd189dfe797e6d32b924fdb1de867b5cbf261c2b
+    - formula: q->s
+      hash: 93eb0e2f9efb4a377fd716df3661799d062bf9e3e757d6ef81be5273564c28f6
+    - formula: p->s
+      hash: 70c27f099d2df5e934ec33d4ba0497c691b3cfa6eae8d949de27fe3d45bb859d
+    - formula: (p->q)->(q->r)->(p->r)
+      hash: 585da70da38accec90f544ebd2e947683717cf4b8c1c8e21393710d30b8da67a
+    - formula: p->(q->p)
+      hash: 248e2c30377c23e7a10d20d203eef09b9a136c30729ece89910908a0f36c89b1
+    - formula: (p->(q->r))->((p->q)->(p->r))
+      hash: 126133877ec5b3029a44ee5e515f315af0512d3d9442373d78d61f445033bf09
+    - formula: ((p->q)->p)->p
+      hash: 1065e56b3c644ae6f05a947337e6a8afa7e968866b353a1930a94950ac4826cf
+    - formula: p|~p
+      hash: fe791cabd26e312b3c5a858deeb4a5bfe9e9b95dc7d05165642e8e4dd62c7db1
+    - formula: ~(p&~p)
+      hash: c9957c315ffe7b5fa539a985688f7936d1bf3f6835e3a6b6fa10eff862f239e2
+    - formula: (p&q)->p
+      hash: 2156363847557681a448579969100a04383c13430b89dfe5d64021bbaaaf3608
+    - formula: (p&q)->q
+      hash: 4010428067e3a85b07ec5dee205f0be625611af4b559a6c6323ee9397eec1e5e
+    - formula: p->(p|q)
+      hash: acbec242f5b7491bab93606a658cbaaefecaa63f71847fbeeb5cf8ff222e4e79
+    - formula: (p->r)->((q->r)->((p|q)->r))
+      hash: 7f720fd126d332a2272d260a70e9b3bd20574e0132557e23a6b41825b4b53e0a
+  - name: slice_uplift_dependency
+    description: Multi-goal dependency uplift slice. Success requires proving ALL
+      specified subgoals within the same cycle. Random exploration may prove some
+      but miss others (5-20% joint success); RFL should learn to coordinate effort
+      across targets (30-60% success).
+    uplift:
+      phase: II
+      experiment_family: U2
+      not_allowed_in_phase_I: true
+    parameters:
+      atoms: 5
+      depth_min: 2
+      depth_max: 6
+      breadth_max: 40
+      total_max: 250
+      formula_pool: 22
+      axiom_instances: 30
+      timeout_s: 1.0
+      lean_timeout_s: 0.0
+    success_metric:
+      kind: multi_goal_success
+      parameters:
+        required_goal_count: 3
+      required_goal_hashes:
+      - fe791cabd26e312b3c5a858deeb4a5bfe9e9b95dc7d05165642e8e4dd62c7db1
+      - c9957c315ffe7b5fa539a985688f7936d1bf3f6835e3a6b6fa10eff862f239e2
+      - 2156363847557681a448579969100a04383c13430b89dfe5d64021bbaaaf3608
+    budget:
+      max_candidates_per_cycle: 40
+      max_cycles_per_run: 500
+    formula_pool_entries:
+    - formula: p
+      hash: 60dfc2070e0cda45e71bfbbe0f51497e247eb2667b983843203ccb932bb5de9b
+    - formula: q
+      hash: 0c90faf28890f9bf1883806f0adbbc433f26f87a75849099ff1dec519aa00679
+    - formula: r
+      hash: db4f89d1ef53b21e73b7360c02a632e9116bda3bb87c1262293125cd2b76e6ed
+    - formula: s
+      hash: dc94d220830d8f3e09882b1d4aa06230a7c42889c6205e6ffe56fe6536540dbd
+    - formula: t
+      hash: e3993528729dc56e2c694f61c34c2e286b178167cf736b80f98552be51c07660
+    - formula: p->q
+      hash: f426de9401e40a834a6b46d25faf6d2a3b84941c0ab63a659e155bffb8d56f4b
+    - formula: q->r
+      hash: e8c50e4871e3194bb66788b978fcfbb6e6695d065656285e9a9faf363fd82e13
+    - formula: r->s
+      hash: 0c30f85b2788d6dc1162f26d6ec096afafbab689c5f3454597c7d19e255d4555
+    - formula: s->t
+      hash: 2256f29795e846e051baf9416bb66421b1ad8986a0f7cc32a51dee47977dba41
+    - formula: p|~p
+      hash: fe791cabd26e312b3c5a858deeb4a5bfe9e9b95dc7d05165642e8e4dd62c7db1
+    - formula: ~(p&~p)
+      hash: c9957c315ffe7b5fa539a985688f7936d1bf3f6835e3a6b6fa10eff862f239e2
+    - formula: (p&q)->p
+      hash: 2156363847557681a448579969100a04383c13430b89dfe5d64021bbaaaf3608
+    - formula: p->(q->p)
+      hash: 248e2c30377c23e7a10d20d203eef09b9a136c30729ece89910908a0f36c89b1
+    - formula: (p->q)->(~q->~p)
+      hash: 238f9bf13867c9d379fd52afb78ed3cf32162cdd86d595374b6f0f6b8844e4d2
+    - formula: (p->(q->r))->((p->q)->(p->r))
+      hash: 126133877ec5b3029a44ee5e515f315af0512d3d9442373d78d61f445033bf09
+    - formula: ((p->q)->p)->p
+      hash: 1065e56b3c644ae6f05a947337e6a8afa7e968866b353a1930a94950ac4826cf
+    - formula: p->~~p
+      hash: 62d3b5853b75fc9693dd4e1bf871201c2dc19ef626f695ed9c1059ed96d2c319
+    - formula: ~~p->p
+      hash: 0cb6501d3217af3d2733a8b2ae355ca7dda8b922af5db082b1a203b3b63d378b
+    - formula: (p->r)->((q->r)->((p|q)->r))
+      hash: 7f720fd126d332a2272d260a70e9b3bd20574e0132557e23a6b41825b4b53e0a
+    - formula: p->(p|q)
+      hash: acbec242f5b7491bab93606a658cbaaefecaa63f71847fbeeb5cf8ff222e4e79
+    - formula: q->(p|q)
+      hash: 6add170fc5ee143bcc427b9ef9ac05466c0b0cf057dc408a5aaafd8be248bb17
+    - formula: (p&q)->q
+      hash: 4010428067e3a85b07ec5dee205f0be625611af4b559a6c6323ee9397eec1e5e

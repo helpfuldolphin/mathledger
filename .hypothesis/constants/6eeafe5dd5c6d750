@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\derivation\axioms.py
+# hypothesis_version: 6.148.2
+
+['K', 'S', '\\b([a-z])\\b', 'p -> (q -> p)']

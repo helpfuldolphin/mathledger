@@ -1,0 +1,12 @@
+# PHASE II — NOT RUN IN PHASE I
+# Curriculum Uplift for Phase 2
+# This file defines the curriculum parameters for the Phase II uplift experiments.
+# It is intended to be consumed by the U2 runner.
+
+- curriculum_id: C2_UPLIFT_STANDARD_01
+  description: "Standard curriculum for evaluating baseline uplift across all slices."
+  learning_rate: 0.001
+  difficulty_ramp: "linear"
+  target_formulas:
+    - "phase2_target_A"
+    - "phase2_target_B"

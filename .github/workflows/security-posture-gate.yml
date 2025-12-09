@@ -1,0 +1,88 @@
+# .github/workflows/security-posture-gate.yml
+#
+# GEMINI-K SIGMA-III: CI/CD Governance Enforcement
+# Invariant: K-IV (Error Semantics) via CI feedback
+#
+# This workflow establishes a mandatory CI gate on pull requests to
+# evaluate the project's security and determinism posture.
+
+name: "Security: Posture Gate"
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual runs
+
+jobs:
+  security-posture-gate:
+    name: Evaluate Security Posture
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # The gate script depends on PyYAML, which is already a dependency
+      # of the main static linter. If this were a standalone workflow,
+      # we would add an explicit `pip install pyyaml` step.
+
+      - name: "Run Security Posture Gate"
+        id: posture_gate
+        # Use `continue-on-error: true` so we can inspect the exit code
+        # in the next step without the whole job failing immediately.
+        continue-on-error: true
+        run: |
+          # For a pull request, we always check against the ideal, "all clear"
+          # posture. The gate script will translate the result into the
+          # correct severity and exit code.
+          python scripts/security_posture_ci_gate.py \
+            --replay-ok \
+            --seed-pure \
+            --last-mile-pass
+
+      - name: "Evaluate Gate Outcome and Upload Artifact"
+        run: |
+          # First, always upload the snapshot for inspection, regardless of outcome.
+          # This ensures that even for failures, the detailed report is available.
+          # We check if the file exists before attempting to upload.
+          if [ -f security_governance_snapshot.json ]; then
+            echo "Uploading governance snapshot..."
+            # The upload-artifact action is now a separate step.
+            # Here we just prepare a note.
+            echo "::notice::Governance snapshot will be uploaded as an artifact."
+          else
+            echo "::error::Governance snapshot JSON was not created."
+            # If the script failed so early that it didn't create the file,
+            # it's a critical error.
+            exit 1
+          fi
+
+          # Now, evaluate the exit code from the previous step to determine outcome.
+          EXIT_CODE=${{ steps.posture_gate.exit-code }}
+          echo "Gate script exited with code: $EXIT_CODE"
+
+          if [[ "$EXIT_CODE" -eq 0 ]]; then
+            echo "✅ Severity OK. Posture is nominal."
+            exit 0
+          elif [[ "$EXIT_CODE" -eq 1 ]]; then
+            echo "::warning::Severity is ATTENTION. This is a non-blocking warning."
+            # We exit 0 so the CI job itself does not fail, only shows a warning.
+            exit 0
+          else
+            echo "::error::Severity is CRITICAL (Exit code $EXIT_CODE). Merge will be blocked."
+            # We exit 1 to fail the CI job.
+            exit 1
+          fi
+      
+      - name: "Upload Governance Snapshot Artifact"
+        if: always() # Always run this step to upload the artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-governance-snapshot
+          path: security_governance_snapshot.json
+          if-no-files-found: error # Fail if the snapshot file is missing

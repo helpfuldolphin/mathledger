@@ -5,8 +5,13 @@ Policy inference system for guided derivation.
 import json
 import os
 import hashlib
-from typing import List, Tuple, Any, Dict
+from pathlib import Path
+from typing import List, Tuple, Any, Dict, Optional
 import numpy as np
+
+POLICY_MANIFEST_FILE = "policy.manifest.json"
+LEGACY_METADATA_FILE = "policy.json"
+
 
 class PolicyInference:
     """Policy-guided action ranking for derivation."""
@@ -18,26 +23,13 @@ class PolicyInference:
 
     @classmethod
     def load(cls, policy_path: str) -> 'PolicyInference':
-        """Load policy from file."""
-        if not os.path.exists(policy_path):
+        """Load policy metadata from weights, manifest, or legacy JSON."""
+        resolved_path = Path(policy_path)
+        if not resolved_path.exists():
             raise FileNotFoundError(f"Policy file not found: {policy_path}")
 
-        # Load policy metadata
-        policy_dir = os.path.dirname(policy_path)
-        policy_json_path = os.path.join(policy_dir, "policy.json")
-
-        if os.path.exists(policy_json_path):
-            with open(policy_json_path, 'r') as f:
-                policy_data = json.load(f)
-            model_hash = policy_data.get("hash", "unknown")
-        else:
-            # Fallback: compute hash from binary file
-            with open(policy_path, 'rb') as f:
-                content = f.read()
-            model_hash = hashlib.sha256(content).hexdigest()
-            policy_data = {"hash": model_hash, "version": "v1"}
-
-        return cls(policy_data, model_hash)
+        metadata, model_hash = _load_metadata(resolved_path)
+        return cls(metadata, model_hash)
 
     def rank_actions(self, candidates: List[Any], state_context: Dict[str, Any] = None) -> List[Tuple[Any, float]]:
         """
@@ -78,3 +70,48 @@ class PolicyInference:
     def get_hash(self) -> str:
         """Get policy hash for metrics."""
         return self.hash
+
+
+def _load_metadata(path: Path) -> Tuple[Dict[str, Any], str]:
+    """Load manifest or legacy metadata, computing a hash if needed."""
+    manifest_path = _find_manifest(path)
+    if manifest_path:
+        with manifest_path.open("r", encoding="utf-8") as handle:
+            manifest = json.load(handle)
+        policy_section = manifest.get("policy", {})
+        model_hash = policy_section.get("hash", "unknown")
+        version = policy_section.get("version", manifest.get("version", "v1"))
+        policy_section.setdefault("version", version)
+        return policy_section, model_hash
+
+    base_dir = path.parent if path.is_file() else path
+    legacy_path = base_dir / LEGACY_METADATA_FILE
+    if legacy_path.exists():
+        with legacy_path.open("r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        model_hash = data.get("hash", "unknown")
+        return data, model_hash
+
+    # Fall back to hashing the weights directly.
+    model_hash = _sha256(path)
+    return {"hash": model_hash, "version": "v1"}, model_hash
+
+
+def _find_manifest(path: Path) -> Optional[Path]:
+    """Locate manifest file relative to supplied policy path."""
+    if path.is_file() and path.name == POLICY_MANIFEST_FILE:
+        return path
+    base_dir = path.parent if path.is_file() else path
+    candidate = base_dir / POLICY_MANIFEST_FILE
+    if candidate.exists():
+        return candidate
+    return None
+
+
+def _sha256(path: Path) -> str:
+    """Return SHA-256 hash of the provided file."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()

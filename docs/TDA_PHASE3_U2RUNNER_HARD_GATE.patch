@@ -1,0 +1,260 @@
+--- a/experiments/u2/runner.py
++++ b/experiments/u2/runner.py
+@@ -47,6 +47,7 @@ from __future__ import annotations
+ import hashlib
+ import json
+ import random
++import time
+ from dataclasses import dataclass, field, asdict
+ from pathlib import Path
+ from typing import Any, Callable, Dict, List, Optional, Tuple
+@@ -56,6 +57,42 @@ from typing import TYPE_CHECKING
+ if TYPE_CHECKING:
+     from backend.tda.runtime_monitor import TDAMonitor, TDAMonitorResult
+     from backend.tda.reference_profile import ReferenceTDAProfile
++
++
++# ============================================================================
++# Phase III: ProofOutcome Enumeration
++# ============================================================================
++
++class ProofOutcome(Enum):
++    """
++    Outcome of a proof attempt.
++
++    Phase III introduces ABANDONED_TDA for TDA hard gate blocks.
++    """
++    VERIFIED = "verified"
++    FAILED = "failed"
++    TIMEOUT = "timeout"
++    ERROR = "error"
++    SKIPPED = "skipped"
++    ABANDONED_TDA = "abandoned_tda"  # Phase III: TDA hard gate block
++
++    def is_success(self) -> bool:
++        """Returns True if the outcome represents successful verification."""
++        return self == ProofOutcome.VERIFIED
++
++    def is_blocked(self) -> bool:
++        """Returns True if the outcome was blocked by TDA."""
++        return self == ProofOutcome.ABANDONED_TDA
++
++    def allows_learning(self) -> bool:
++        """Returns True if this outcome should contribute to policy learning."""
++        # Don't learn from TDA blocks - they represent hallucinations
++        return self not in (ProofOutcome.ABANDONED_TDA, ProofOutcome.ERROR)
++
++    def requires_lean(self) -> bool:
++        """Returns True if this outcome required Lean verification."""
++        # TDA blocks never reach Lean
++        return self not in (ProofOutcome.ABANDONED_TDA, ProofOutcome.SKIPPED)
++
+
+ from .logging import U2TraceLogger
+ from . import schema
+@@ -1308,6 +1345,11 @@ class U2Config:
+     snapshot_dir: Optional[Path] = None
+     output_dir: Optional[Path] = None
+     slice_config: Dict[str, Any] = field(default_factory=dict)
++    # Phase II: TDA Planner Integration
++    tda_planner_config: Optional[TDAPlannerConfig] = None
++    # Phase III: Hard Gate Configuration
++    tda_hard_gate_enabled: bool = False
++    tda_fail_open: bool = False  # Phase III default: fail-closed
+     tda_monitor: Optional["TDAMonitor"] = None  # Phase I/II/III: TDA Mind Scanner
+
+     def __post_init__(self):
+@@ -1336,6 +1378,11 @@ class U2Config:
+             "output_dir": str(self.output_dir) if self.output_dir else None,
+             "slice_config": self.slice_config,
+             "tda_enabled": self.tda_monitor is not None,
++            "tda_hard_gate": {
++                "enabled": self.tda_hard_gate_enabled,
++                "fail_open": self.tda_fail_open,
++            },
++            "tda_pipeline_hash": self._compute_tda_pipeline_hash(),
+             "tda_planner": {
+                 "enabled": self.tda_planner_config.enabled if self.tda_planner_config else False,
+                 "base_weight": self.tda_planner_config.base_weight if self.tda_planner_config else 0.5,
+@@ -1343,6 +1390,18 @@ class U2Config:
+             } if self.tda_planner_config else None,
+         }
+
++    def _compute_tda_pipeline_hash(self) -> Optional[str]:
++        """Compute TDA pipeline hash for attestation binding."""
++        if self.tda_monitor is None:
++            return None
++        try:
++            from backend.tda.governance import compute_tda_pipeline_hash
++            return compute_tda_pipeline_hash(
++                self.tda_monitor.cfg,
++                self.tda_monitor.slice_ref_profiles,
++            )
++        except Exception:
++            return None
+
+ @dataclass
+ class CycleResult:
+@@ -1358,6 +1417,11 @@ class CycleResult:
+     tda_result: Optional[Dict[str, Any]] = None
+     telemetry: Optional[Dict[str, Any]] = None
+     error: Optional[str] = None
++    # Phase III: Hard Gate Fields
++    outcome: Optional[ProofOutcome] = None
++    tda_gate_enforced: bool = False
++    lean_submission_avoided: bool = False
++    policy_update_avoided: bool = False
+
+
+ class U2Runner:
+@@ -1436,6 +1500,15 @@ class U2Runner:
+         # TDA Mind Scanner (Phase I/II/III)
+         self.tda_monitor: Optional["TDAMonitor"] = config.tda_monitor
+
++        # Phase III: Hard Gate Configuration
++        self.tda_hard_gate_enabled = config.tda_hard_gate_enabled
++        self._tda_pipeline_hash: Optional[str] = config._compute_tda_pipeline_hash()
++
++        # Phase III: Hard Gate Statistics
++        self._hard_gate_stats: Dict[str, int] = {
++            "blocked_count": 0,
++            "lean_submissions_avoided": 0,
++        }
+
+         # Phase II: Planner configuration
+         self.tda_planner_config = config.tda_planner_config or TDAPlannerConfig()
+@@ -1493,6 +1566,28 @@ class U2Runner:
+         cycle_seed = self.seed_schedule[self.cycle_index]
+         rng = random.Random(cycle_seed)
+
++        # --- Phase III: Hard Gate Check (before any execution) ---
++        if self._should_apply_hard_gate():
++            hard_gate_result = self._evaluate_hard_gate(items, rng)
++            if hard_gate_result is not None:
++                # ABANDON: Do not execute, do not learn
++                self._hard_gate_stats["blocked_count"] += 1
++                self._hard_gate_stats["lean_submissions_avoided"] += 1
++
++                self.cycle_index += 1
++                return CycleResult(
++                    cycle=self.cycle_index - 1,
++                    chosen_item=None,
++                    success=False,
++                    result="ABANDONED_TDA",
++                    tda_result=hard_gate_result.to_dict(),
++                    outcome=ProofOutcome.ABANDONED_TDA,
++                    tda_gate_enforced=True,
++                    lean_submission_avoided=True,
++                    policy_update_avoided=True,
++                    error=f"TDA hard gate: HSS={hard_gate_result.hss:.3f} < {self.tda_monitor.cfg.hss_block_threshold}",
++                )
++
+         # --- Phase II: Get current HSS for planner reweighting ---
+         current_hss = self._get_current_hss_estimate()
+
+@@ -1534,6 +1629,7 @@ class U2Runner:
+             "result": str(result),
+             "success": success,
+             "label": "PHASE II — NOT USED IN PHASE I",
++            "outcome": ProofOutcome.VERIFIED.value if success else ProofOutcome.FAILED.value,
+             "tda_reweighting_applied": reweighting_applied,
+             "current_hss": current_hss,
+         }
+@@ -1559,8 +1655,54 @@ class U2Runner:
+         return CycleResult(
+             cycle=self.cycle_index,
+             chosen_item=chosen_item,
+             success=success,
++            outcome=ProofOutcome.VERIFIED if success else ProofOutcome.FAILED,
+         )
+
++    # =========================================================================
++    # Phase III: Hard Gate Enforcement
++    # =========================================================================
++
++    def _should_apply_hard_gate(self) -> bool:
++        """Check if hard gate enforcement should be applied."""
++        if self.tda_monitor is None:
++            return False
++        if not self.tda_hard_gate_enabled:
++            return False
++        from backend.tda.runtime_monitor import TDAOperationalMode
++        return self.tda_monitor.cfg.mode == TDAOperationalMode.HARD
++
++    def _evaluate_hard_gate(
++        self,
++        items: List[str],
++        rng: random.Random,
++    ) -> Optional["TDAMonitorResult"]:
++        """
++        Evaluate hard gate before cycle execution.
++
++        Returns:
++            TDAMonitorResult if blocked, None if OK to proceed.
++        """
++        # Build current DAG snapshot for TDA evaluation
++        dag = self._build_current_dag()
++        embeddings = self._get_current_embeddings()
++
++        result = self.tda_monitor.evaluate_proof_attempt(
++            slice_name=self.config.slice_name,
++            local_dag=dag,
++            embeddings=embeddings,
++        )
++
++        if self.tda_monitor.should_block(result):
++            return result
++        return None
++
++    def get_hard_gate_stats(self) -> Dict[str, Any]:
++        """Get Phase III hard gate statistics."""
++        return {
++            "blocked_count": self._hard_gate_stats["blocked_count"],
++            "lean_submissions_avoided": self._hard_gate_stats["lean_submissions_avoided"],
++            "tda_pipeline_hash": self._tda_pipeline_hash,
++        }
++
+     # =========================================================================
+     # Phase II: HSS-Integrated Planner Reweighting
+     # =========================================================================
+@@ -1731,6 +1873,12 @@ class U2Runner:
+         return {
+             "tda_evaluations": len(self._tda_results),
+             "reweighting": self.get_reweighting_stats(),
++            "hard_gate": self.get_hard_gate_stats(),
+             "hss_distribution": self._compute_hss_distribution(),
+         }
+
++    def get_phase3_summary(self) -> Dict[str, Any]:
++        """Get comprehensive Phase III statistics."""
++        return {
++            **self.get_phase2_summary(),
++            "hard_gate": self.get_hard_gate_stats(),
++            "governance": self._compute_governance_summary(),
++        }
++
++    def _compute_governance_summary(self) -> Dict[str, Any]:
++        """Compute Phase III governance summary."""
++        if not self._tda_results:
++            return {"governance_signal": "HEALTHY", "structural_health": 1.0}
++
++        from backend.tda.governance import summarize_tda_for_global_health
++        from backend.tda.runtime_monitor import TDAMonitorResult
++
++        # Convert dict results back to TDAMonitorResult for summary
++        results = []
++        for r in self._tda_results:
++            results.append(TDAMonitorResult(
++                hss=r.get("hss", 0.5),
++                sns=r.get("sns", 0.0),
++                pcs=r.get("pcs", 0.0),
++                drs=r.get("drs", 0.0),
++                signal=r.get("signal", "OK"),
++                block=r.get("block", False),
++                warn=r.get("warn", False),
++            ))
++
++        return summarize_tda_for_global_health(results, self.tda_monitor.cfg)
+
+     def maybe_save_snapshot(self) -> Optional[Path]:
+         """

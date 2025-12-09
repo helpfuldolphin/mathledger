@@ -1,0 +1,44 @@
+# Phase-II Imperfect Verifier noise guard configuration.
+# Tuned for Codex-Verification-Stabilizer defaults. Paths are workspace-relative.
+
+version: 1
+
+window:
+  size: 1024              # Sliding window for Wilson/timeout calculations
+  persist_every: 64       # Persist telemetry snapshot every N events
+
+channels:
+  timeout_weight: 1.0
+  tier_weight: 1.0
+  queue_weight: 1.0
+  flip_weight: 1.0
+
+timeout:
+  target: 0.01            # Expected timeout rate baseline
+  cusum_drift: 0.0025     # Drift factor for positive CUSUM
+  alarm: 0.25             # Guard-band for timeout-noisy state
+
+epsilon:
+  alert: 0.02             # Threshold for per-tier FP Wilson alerting
+  cap: 0.25               # Hard cap for epsilon_total before halting updates
+
+sprt:
+  baseline: 0.001         # H0 false-positive rate
+  delta: 0.004            # H1 = baseline + delta
+  eta: 9.0                # LLR boundary for instability
+
+delta_h_budget: 0.2       # Base |ΔH| clamp before epsilon scaling
+
+tier_costs:
+  T0: 1.0
+  T1: 2.0
+  T2: 4.0
+tier_budget: 2.0          # Max weighted routing cost
+
+error_signatures:
+  max_tracked: 256        # Cap on canonical signature cache
+  collapse_threshold: 3   # Buckets per hash before freezing updates
+
+paths:
+  metrics: metrics/verifier_noise_window.json
+  state: artifacts/verifier_noise_guard.json

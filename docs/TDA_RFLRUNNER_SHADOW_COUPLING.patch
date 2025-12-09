@@ -1,0 +1,228 @@
+--- a/rfl/runner.py
++++ b/rfl/runner.py
+@@ -16,6 +16,13 @@ import numpy as np
+ from typing import List, Dict, Any, Optional, Sequence
+ from pathlib import Path
+ from datetime import datetime
++import time
++
++# TDA Mind Scanner integration (Phase I Shadow Coupling)
++from typing import TYPE_CHECKING
++if TYPE_CHECKING:
++    from backend.tda.runtime_monitor import TDAMonitor, TDAMonitorResult
++    from backend.tda.reference_profile import ReferenceTDAProfile
+
+ from .config import RFLConfig, CurriculumSlice
+ from .experiment import RFLExperiment, ExperimentResult
+@@ -69,6 +76,12 @@ class RunLedgerEntry:
+     composite_root: Optional[str] = None  # H_t for traceability
+     epsilon_total: Optional[float] = None
+     noise_guard_reason: Optional[str] = None
++    # TDA Mind Scanner fields (Phase I Shadow Mode)
++    tda_hss: Optional[float] = None
++    tda_sns: Optional[float] = None
++    tda_pcs: Optional[float] = None
++    tda_drs: Optional[float] = None
++    tda_signal: Optional[str] = None
+
+
+ from substrate.bridge.context import AttestedRunContext
+@@ -91,6 +104,7 @@ class RFLRunner:
+     def __init__(self, config: RFLConfig):
+         """
+         Initialize RFL runner.
++        Optionally accepts TDA monitor for Shadow Mode coupling.
+
+         Args:
+             config: RFL experiment configuration
+@@ -160,6 +174,29 @@ class RFLRunner:
+         # Phase-II verifier noise stabilizer (best-effort)
+         self.noise_guard: Optional[VerifierNoiseGuard] = global_noise_guard()
+
++        # TDA Mind Scanner (Phase I: Shadow Coupling)
++        self.tda_monitor: Optional["TDAMonitor"] = None
++        self.tda_profiles: Dict[str, "ReferenceTDAProfile"] = {}
++        self._tda_results: List[Dict[str, Any]] = []
++        self._init_tda_monitor()
++
++    def _init_tda_monitor(self) -> None:
++        """Initialize TDA monitor if available and configured."""
++        try:
++            from backend.tda.runtime_monitor import create_monitor, TDAOperationalMode
++            from backend.tda.reference_profile import load_reference_profiles
++            from pathlib import Path
++
++            profiles_path = Path("config/tda_profiles/profiles")
++            if profiles_path.exists():
++                self.tda_profiles = load_reference_profiles(profiles_path)
++
++            # Create monitor in Shadow mode (Phase I)
++            self.tda_monitor = create_monitor(mode="shadow")
++            logger.info("[TDA] Mind Scanner initialized in Shadow Mode")
++        except ImportError:
++            logger.debug("[TDA] TDA module not available, skipping initialization")
+
+     def _increment_metric(self, key: str, amount: float = 1.0):
+         if self._redis_client:
+@@ -462,6 +499,8 @@ class RFLRunner:
+         Consume a sealed dual-attestation payload (Hₜ, Rₜ, Uₜ) so the verification ladder (proof/abstain)
+         materializes symbolic descent as described in the whitepaper.
+
++        Phase I: Also runs TDA Mind Scanner in shadow mode for telemetry.
++
+         NOTE: FO hermetic and Wide Slice experiments do NOT depend on a live Lean kernel;
+         they exercise the 'lean-disabled' abstention mode for deterministic behavior.
+         The abstention_metrics in the attestation context reflect deterministic abstention
+@@ -565,6 +604,10 @@ class RFLRunner:
+             symbolic_descent = max(-guard.delta_h_bound(), min(symbolic_descent, guard.delta_h_bound()))
+             reward *= epsilon_scale
+
++        # --- TDA Mind Scanner Evaluation (Phase I: Shadow Mode) ---
++        tda_result = self._evaluate_tda_for_attestation(attestation)
++        tda_hss = tda_result.get("hss") if tda_result else None
++
+         if policy_update_applied:
+             self.policy_update_count += 1
+             breakdown = attestation.metadata.get("abstention_breakdown", {})
+@@ -632,10 +675,17 @@ class RFLRunner:
+
+         self.abstention_fraction = max(self.abstention_fraction, attestation.abstention_rate)
+
++        # Include TDA telemetry in ledger entry
++        tda_hss = tda_result.get("hss") if tda_result else None
++        tda_sns = tda_result.get("sns") if tda_result else None
++        tda_pcs = tda_result.get("pcs") if tda_result else None
++        tda_drs = tda_result.get("drs") if tda_result else None
++        tda_signal = tda_result.get("signal") if tda_result else None
++
+         ledger_entry = RunLedgerEntry(
+             run_id=step_id,
+             slice_name=slice_cfg.name,
+-            status="attestation",
++            status="attestation_tda_shadow" if tda_result else "attestation",
+             coverage_rate=float(attestation.metadata.get("coverage_rate", 0.0)),
+             novelty_rate=float(attestation.metadata.get("novelty_rate", 0.0)),
+             throughput=float(attestation.metadata.get("throughput", 0.0)),
+@@ -652,6 +702,11 @@ class RFLRunner:
+             composite_root=attestation.composite_root,
+             epsilon_total=epsilon_total,
+             noise_guard_reason=guard_reason,
++            tda_hss=tda_hss,
++            tda_sns=tda_sns,
++            tda_pcs=tda_pcs,
++            tda_drs=tda_drs,
++            tda_signal=tda_signal,
+         )
+         self.policy_ledger.append(ledger_entry)
+
+@@ -706,6 +761,80 @@ class RFLRunner:
+
+         return result
+
++    # =========================================================================
++    # TDA Mind Scanner Shadow Coupling (Phase I)
++    # =========================================================================
++
++    def _evaluate_tda_for_attestation(
++        self,
++        attestation: AttestedRunContext,
++    ) -> Optional[Dict[str, Any]]:
++        """
++        Evaluate TDA Mind Scanner on attestation payload.
++
++        Phase I (Shadow Mode): Compute HSS and include in telemetry.
++        No policy gating - purely observational coupling.
++
++        Returns:
++            TDA result dict or None if monitor not configured.
++        """
++        if self.tda_monitor is None:
++            return None
++
++        try:
++            import time
++            start_time = time.perf_counter()
++
++            # Extract proof DAG from attestation metadata
++            local_dag = self._extract_dag_from_attestation(attestation)
++
++            # Extract embeddings from statement hashes
++            embeddings = self._extract_embeddings_from_attestation(attestation)
++
++            # Get reference profile for slice
++            slice_name = attestation.slice_id or "default"
++            ref_profile = self.tda_profiles.get(slice_name)
++
++            # Evaluate
++            tda_result = self.tda_monitor.evaluate_proof_attempt(
++                slice_name=slice_name,
++                local_dag=local_dag,
++                embeddings=embeddings,
++                ref_profile=ref_profile,
++            )
++
++            # Convert to dict
++            result_dict = tda_result.to_dict()
++            result_dict["computation_time_ms"] = (time.perf_counter() - start_time) * 1000
++
++            # Store for analysis
++            self._tda_results.append({
++                "step_id": attestation.composite_root[:16],
++                "slice": slice_name,
++                **result_dict,
++            })
++
++            return result_dict
++
++        except Exception as e:
++            logger.debug(f"[TDA] Evaluation error: {e}")
++            return None
++
++    def _extract_dag_from_attestation(self, attestation: AttestedRunContext) -> Any:
++        """Extract DAG from attestation metadata (stub for Phase I)."""
++        # In Phase I, we may not have full DAG access
++        # Return minimal structure for HSS computation
++        return None
++
++    def _extract_embeddings_from_attestation(
++        self,
++        attestation: AttestedRunContext,
++    ) -> Dict[str, Any]:
++        """Extract embeddings from attestation (stub for Phase I)."""
++        # In Phase I, embeddings come from statement hash
++        statement_hash = attestation.statement_hash
++        return {statement_hash: [0.0] * 19}  # Placeholder embedding
++
+     def _resolve_slice(self, slice_name: Optional[str]) -> CurriculumSlice:
+         if slice_name:
+             for slice_cfg in self.config.curriculum:
+@@ -960,6 +1089,17 @@ class RFLRunner:
+             "curriculum_counts": dict(slice_counts)
+         }
+
++    def get_tda_summary(self) -> Dict[str, Any]:
++        """Get TDA Mind Scanner summary for Phase I analysis."""
++        if not self._tda_results:
++            return {"enabled": False, "evaluations": 0}
++
++        hss_values = [r["hss"] for r in self._tda_results if "hss" in r]
++        return {
++            "enabled": True,
++            "evaluations": len(self._tda_results),
++            "mean_hss": float(np.mean(hss_values)) if hss_values else None,
++            "min_hss": float(np.min(hss_values)) if hss_values else None,
++            "max_hss": float(np.max(hss_values)) if hss_values else None,
++        }
++
+     def _export_results(self) -> Dict[str, Any]:
+         """
+         Export complete results to JSON files.
+@@ -1014,6 +1154,9 @@ class RFLRunner:
+             "metabolism_verification": {
+                 "passed": self.metabolism_passed,
+                 "message": self.metabolism_message,
++            },
++            "tda_shadow": {
++                "summary": self.get_tda_summary(),
+             }
+         }

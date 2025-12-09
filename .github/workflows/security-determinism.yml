@@ -1,0 +1,44 @@
+# .github/workflows/security-determinism.yml
+#
+# GEMINI-K SIGMA-III: CI/CD Governance Enforcement
+# Invariant: K-I (Static Purity)
+#
+# This workflow establishes a mandatory CI gate to enforce determinism
+# by statically analyzing all Python code for forbidden patterns that
+# could introduce non-determinism.
+
+name: "Security: Determinism Check"
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  static-determinism-check:
+    name: Static Randomness Linter
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Specify a version consistent with the project
+
+      - name: "Run Randomness Static Linter"
+        id: run-linter
+        run: |
+          echo "GEMINI-K: Scanning all .py files for violations of Invariant K-I..."
+          # Find all python files, excluding the .venv directory, and pass them to the linter.
+          # The xargs command handles a large number of files gracefully.
+          find . -path ./.venv -prune -o -type f -name "*.py" -print0 | xargs -0 --no-run-if-empty python backend/security/randomness_static_linter.py
+
+      - name: "Verify Linter Result"
+        if: failure()
+        run: |
+          echo "::error::GEMINI-K: Linter FAILED. Forbidden randomness patterns detected. See logs above for details."
+          exit 1

@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\normalization\taut.py
+# hypothesis_version: 6.148.2
+
+[1000.0, 1024, '(', '()', ')', '->', '/\\', '0', '1', 'TT_ORACLE_DIAGNOSTIC', 'TruthTableTimeout', '\\/', '\\b([a-z])\\b', '_evaluate_formula', '_extract_atoms', 'clear_oracle_cache', 'extract_atoms', 'false', 'is_tautology', 'normalize', 'true', '~']

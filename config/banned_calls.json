@@ -1,0 +1,27 @@
+{
+  "banned_calls": [
+    {
+      "module": "random",
+      "function": "random",
+      "message": "Use a PRNG instance derived from the master seed via the DeterministicPRNG class."
+    },
+    {
+      "module": "random",
+      "function": "randint",
+      "message": "Use a PRNG instance derived from the master seed via the DeterministicPRNG class."
+    },
+    {
+      "module": "random",
+      "function": "shuffle",
+      "message": "Use a PRNG instance derived from the master seed via the DeterministicPRNG class."
+    },
+    {
+      "module": "random",
+      "function": "choice",
+      "message": "Use a PRNG instance derived from the master seed via the DeterministicPRNG class."
+    }
+  ],
+  "allowed_paths": [
+    "tests/"
+  ]
+}

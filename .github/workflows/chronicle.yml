@@ -1,0 +1,69 @@
+# .github/workflows/chronicle.yml
+name: "Curriculum Chronicle & Promotion Gate"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'artifacts/drift/**' # Trigger when new drift reports are created
+
+jobs:
+  analyze_and_gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python and uv
+        uses: ammaraskar/setup-python@v1
+        with:
+          python-version: '3.11'
+          uv-version: 'latest'
+
+      - name: Install Dependencies
+        run: uv pip install pyyaml deepdiff
+
+      - name: Run Chronicle Processor
+        id: chronicle
+        run: |
+          uv run python scripts/curriculum_drift_chronicle.py \
+            --reports-glob "artifacts/drift/*.json" \
+            --output-panel "artifacts/curriculum/curriculum_director_panel.json" \
+            --history-file "artifacts/curriculum/drift_chronicle_history.jsonl" \
+            ${{ github.event_name == 'push' && '--append-history' || '' }}
+
+      - name: Post PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const panel = JSON.parse(fs.readFileSync('artifacts/curriculum/curriculum_director_panel.json', 'utf8'));
+            const statusMap = {"GREEN": "✅", "AMBER": "⚠️", "RED": "❌"};
+
+            let commentBody = `### 📜 Curriculum Chronicle Report\n\n`;
+            commentBody += `**${statusMap[panel.status_light] || '❔'} ${panel.headline}**\n\n`;
+            
+            if (panel.recurrent_problem_paths.length > 0) {
+              commentBody += `**Recurrent Critical Drifts:**\n`;
+              for (const path of panel.recurrent_problem_paths) {
+                commentBody += `- \
+`;
+              }
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+            
+      - name: Commit History File
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore: Update curriculum drift chronicle history"
+          file_pattern: "artifacts/curriculum/drift_chronicle_history.jsonl"

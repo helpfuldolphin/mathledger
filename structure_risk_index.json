@@ -1,0 +1,148 @@
+{
+  "timestamp": "2025-12-06T19:14:03.601205Z",
+  "global_risk_score": 0.4023,
+  "global_risk_level": "MEDIUM",
+  "top_risky_directories": [
+    {
+      "path": "tests/metrics",
+      "risk_score": 0.5544,
+      "risk_level": "MEDIUM",
+      "entropy": 0.5907,
+      "violations": 3,
+      "contributing_factors": [
+        "Medium violations (3)"
+      ]
+    },
+    {
+      "path": "artifacts/phase_ii/fo_series_1/fo_1000_rfl",
+      "risk_score": 0.5457,
+      "risk_level": "MEDIUM",
+      "entropy": 0.9095,
+      "violations": 0,
+      "contributing_factors": []
+    },
+    {
+      "path": "tests/phase2/metrics",
+      "risk_score": 0.5,
+      "risk_level": "MEDIUM",
+      "entropy": 1.0853,
+      "violations": 3,
+      "contributing_factors": [
+        "Medium entropy (1.09)",
+        "Medium violations (3)",
+        "Forbidden files: 1",
+        "Unexpected files: 1"
+      ]
+    },
+    {
+      "path": "tests/env",
+      "risk_score": 0.4467,
+      "risk_level": "MEDIUM",
+      "entropy": 0.3,
+      "violations": 2,
+      "contributing_factors": [
+        "Minor violations (2)"
+      ]
+    },
+    {
+      "path": "artifacts/phase_ii/fo_series_1/fo_1000_baseline",
+      "risk_score": 0.42,
+      "risk_level": "MEDIUM",
+      "entropy": 0.7,
+      "violations": 0,
+      "contributing_factors": []
+    },
+    {
+      "path": "artifacts/u2/ENV_A",
+      "risk_score": 0.42,
+      "risk_level": "MEDIUM",
+      "entropy": 0.7,
+      "violations": 0,
+      "contributing_factors": []
+    },
+    {
+      "path": "artifacts/u2/ENV_B",
+      "risk_score": 0.42,
+      "risk_level": "MEDIUM",
+      "entropy": 0.7,
+      "violations": 0,
+      "contributing_factors": []
+    },
+    {
+      "path": "artifacts/u2/ENV_C",
+      "risk_score": 0.42,
+      "risk_level": "MEDIUM",
+      "entropy": 0.7,
+      "violations": 0,
+      "contributing_factors": []
+    },
+    {
+      "path": "artifacts/u2/ENV_D",
+      "risk_score": 0.42,
+      "risk_level": "MEDIUM",
+      "entropy": 0.7,
+      "violations": 0,
+      "contributing_factors": []
+    },
+    {
+      "path": "backend/metrics",
+      "risk_score": 0.4009,
+      "risk_level": "MEDIUM",
+      "entropy": 0.4459,
+      "violations": 1,
+      "contributing_factors": [
+        "Minor violations (1)"
+      ]
+    },
+    {
+      "path": "backend/promotion",
+      "risk_score": 0.3886,
+      "risk_level": "MEDIUM",
+      "entropy": 0.4255,
+      "violations": 1,
+      "contributing_factors": [
+        "Minor violations (1)"
+      ]
+    },
+    {
+      "path": "experiments/synthetic_uplift",
+      "risk_score": 0.256,
+      "risk_level": "LOW",
+      "entropy": 0.4267,
+      "violations": 0,
+      "contributing_factors": []
+    },
+    {
+      "path": "artifacts/phase_ii",
+      "risk_score": 0.24,
+      "risk_level": "LOW",
+      "entropy": 0.4,
+      "violations": 0,
+      "contributing_factors": []
+    },
+    {
+      "path": "experiments/synthetic_uplift/generated/demo_catastrophic",
+      "risk_score": 0.24,
+      "risk_level": "LOW",
+      "entropy": 0.4,
+      "violations": 0,
+      "contributing_factors": []
+    },
+    {
+      "path": "experiments/synthetic_uplift/generated/demo_corr",
+      "risk_score": 0.24,
+      "risk_level": "LOW",
+      "entropy": 0.4,
+      "violations": 0,
+      "contributing_factors": []
+    }
+  ],
+  "phase_filter": "phase2",
+  "total_directories_analyzed": 41,
+  "risk_distribution": {
+    "LOW": 30,
+    "MEDIUM": 11,
+    "HIGH": 0
+  },
+  "drift_indicators": []
+}

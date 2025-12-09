@@ -1,0 +1,226 @@
+# ==============================================================================
+# Uplift Governance Verifier CI
+# ==============================================================================
+# STATUS: PHASE II — IMPLEMENTATION
+#
+# Runs governance_verifier on any summary.json files in Evidence Packs.
+# Fails CI when status == "FAIL" (INVALIDATING violations detected).
+#
+# Triggers:
+#   - Push to main/integrate branches with changes to results/ or evidence/
+#   - Pull requests with changes to results/ or evidence/
+#   - Manual workflow dispatch
+# ==============================================================================
+
+name: Uplift Governance Verifier
+
+on:
+  push:
+    branches:
+      - main
+      - 'integrate/**'
+    paths:
+      - 'results/**'
+      - 'evidence/**'
+      - 'backend/analytics/governance_verifier.py'
+      - 'scripts/run_governance_verifier.py'
+      - '.github/workflows/uplift-governance.yml'
+  pull_request:
+    paths:
+      - 'results/**'
+      - 'evidence/**'
+      - 'backend/analytics/governance_verifier.py'
+      - 'scripts/run_governance_verifier.py'
+  workflow_dispatch:
+    inputs:
+      summary_path:
+        description: 'Path to summary.json file to verify'
+        required: false
+        default: ''
+      fail_on_warn:
+        description: 'Fail CI on warnings (not just INVALIDATING)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  governance-verify:
+    name: Verify Governance Rules
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Find summary files
+        id: find-summaries
+        run: |
+          # Find all summary.json files in results/ and evidence/ directories
+          SUMMARIES=""
+
+          # Check for manual input first
+          if [ -n "${{ github.event.inputs.summary_path }}" ]; then
+            SUMMARIES="${{ github.event.inputs.summary_path }}"
+          else
+            # Auto-discover summary files
+            for dir in results evidence; do
+              if [ -d "$dir" ]; then
+                found=$(find "$dir" -name "summary.json" -type f 2>/dev/null || true)
+                if [ -n "$found" ]; then
+                  SUMMARIES="$SUMMARIES $found"
+                fi
+              fi
+            done
+          fi
+
+          # Trim whitespace
+          SUMMARIES=$(echo "$SUMMARIES" | xargs)
+
+          if [ -z "$SUMMARIES" ]; then
+            echo "No summary.json files found to verify"
+            echo "summaries=" >> $GITHUB_OUTPUT
+            echo "count=0" >> $GITHUB_OUTPUT
+          else
+            echo "Found summary files: $SUMMARIES"
+            echo "summaries=$SUMMARIES" >> $GITHUB_OUTPUT
+            echo "count=$(echo $SUMMARIES | wc -w)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Governance Verifier
+        if: steps.find-summaries.outputs.count != '0'
+        id: verify
+        run: |
+          FAIL_ON_WARN="${{ github.event.inputs.fail_on_warn }}"
+          EXIT_CODE=0
+          RESULTS_DIR="governance-results"
+          mkdir -p "$RESULTS_DIR"
+
+          for summary in ${{ steps.find-summaries.outputs.summaries }}; do
+            echo "=============================================="
+            echo "Verifying: $summary"
+            echo "=============================================="
+
+            # Derive paths for related files
+            DIR=$(dirname "$summary")
+            MANIFEST=""
+            TELEMETRY=""
+            PREREG=""
+
+            # Look for manifest.json in same directory
+            if [ -f "$DIR/manifest.json" ]; then
+              MANIFEST="--manifest $DIR/manifest.json"
+            fi
+
+            # Look for telemetry_summary.json in same directory
+            if [ -f "$DIR/telemetry_summary.json" ]; then
+              TELEMETRY="--telemetry $DIR/telemetry_summary.json"
+            fi
+
+            # Look for prereg YAML in config/
+            PREREG_FILE=$(find config -name "PREREG_*.yaml" -type f 2>/dev/null | head -1 || true)
+            if [ -n "$PREREG_FILE" ]; then
+              PREREG="--prereg $PREREG_FILE"
+            fi
+
+            # Generate output filename
+            OUTPUT_NAME=$(echo "$summary" | tr '/' '_' | sed 's/.json$/_verdict.json/')
+            OUTPUT_PATH="$RESULTS_DIR/$OUTPUT_NAME"
+
+            # Run verifier
+            set +e
+            python scripts/run_governance_verifier.py \
+              --summary "$summary" \
+              $MANIFEST \
+              $TELEMETRY \
+              $PREREG \
+              --output "$OUTPUT_PATH"
+            RESULT=$?
+            set -e
+
+            echo ""
+            echo "Verdict written to: $OUTPUT_PATH"
+
+            # Check result
+            if [ $RESULT -ne 0 ]; then
+              echo "::error file=$summary::GOVERNANCE FAIL - INVALIDATING violations detected"
+              EXIT_CODE=1
+            else
+              # Check for warnings if fail_on_warn is set
+              if [ "$FAIL_ON_WARN" = "true" ]; then
+                STATUS=$(python -c "import json; v=json.load(open('$OUTPUT_PATH')); print(v.get('status',''))")
+                if [ "$STATUS" = "WARN" ]; then
+                  echo "::warning file=$summary::GOVERNANCE WARN - Warnings detected (fail_on_warn enabled)"
+                  EXIT_CODE=1
+                fi
+              fi
+            fi
+
+            echo ""
+          done
+
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+
+      - name: Upload verdict artifacts
+        if: steps.find-summaries.outputs.count != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-verdicts
+          path: governance-results/
+          retention-days: 30
+
+      - name: Summary
+        if: steps.find-summaries.outputs.count != '0'
+        run: |
+          echo "## Governance Verification Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          for verdict in governance-results/*_verdict.json; do
+            if [ -f "$verdict" ]; then
+              STATUS=$(python -c "import json; v=json.load(open('$verdict')); print(v.get('status','UNKNOWN'))")
+              RULES=$(python -c "import json; v=json.load(open('$verdict')); print(v.get('rules_checked',0))")
+              INVALID=$(python -c "import json; v=json.load(open('$verdict')); print(len(v.get('invalidating_rules',[])))")
+              WARNS=$(python -c "import json; v=json.load(open('$verdict')); print(len(v.get('warnings',[])))")
+
+              ICON="✅"
+              if [ "$STATUS" = "FAIL" ]; then
+                ICON="❌"
+              elif [ "$STATUS" = "WARN" ]; then
+                ICON="⚠️"
+              fi
+
+              echo "### $ICON $(basename $verdict .json)" >> $GITHUB_STEP_SUMMARY
+              echo "- **Status**: $STATUS" >> $GITHUB_STEP_SUMMARY
+              echo "- **Rules Checked**: $RULES" >> $GITHUB_STEP_SUMMARY
+              echo "- **INVALIDATING**: $INVALID" >> $GITHUB_STEP_SUMMARY
+              echo "- **Warnings**: $WARNS" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Check final status
+        if: steps.find-summaries.outputs.count != '0'
+        run: |
+          if [ "${{ steps.verify.outputs.exit_code }}" != "0" ]; then
+            echo "::error::Governance verification failed - see artifacts for details"
+            exit 1
+          fi
+          echo "All governance checks passed!"
+
+      - name: Skip notification
+        if: steps.find-summaries.outputs.count == '0'
+        run: |
+          echo "::notice::No summary.json files found to verify. Skipping governance checks."
+          echo "## Governance Verification Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "No summary.json files found in results/ or evidence/ directories." >> $GITHUB_STEP_SUMMARY

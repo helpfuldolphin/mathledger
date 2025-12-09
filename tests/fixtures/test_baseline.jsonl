@@ -1,0 +1,2 @@
+{"cycle": 0, "derivations": [{"hash": "aaaa", "premises": [], "normalized": "p"}]}
+{"cycle": 1, "derivations": [{"hash": "bbbb", "premises": ["aaaa"], "normalized": "p -> q"}]}

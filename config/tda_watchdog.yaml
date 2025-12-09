@@ -1,0 +1,159 @@
+# TDA Watchdog Configuration — Phase VI Auto-Watchdog
+#
+# Operation CORTEX: Phase VI Auto-Watchdog & Global Health Coupler
+# ================================================================
+#
+# This configuration file defines alerting thresholds for the TDA
+# autonomous watchdog daemon. Thresholds are applied to aggregated
+# TDA governance snapshots to determine system health status.
+#
+# Status Classification:
+#   OK        - All metrics within normal bounds
+#   ATTENTION - Elevated metrics requiring monitoring
+#   ALERT     - Critical metrics requiring immediate action
+#
+# Usage:
+#   python scripts/tda_watchdog.py \
+#       --governance-log artifacts/tda/*.json \
+#       --config config/tda_watchdog.yaml \
+#       --output artifacts/tda/watchdog_report.json
+
+# Schema version for this configuration format
+schema_version: "1.0.0"
+
+# ==============================================================================
+# Block Rate Thresholds
+# ==============================================================================
+# Block rate is the fraction of cycles blocked by the TDA hard gate (0.0-1.0)
+
+block_rate:
+  # Maximum block rate for OK status
+  # Below this threshold: no alert generated
+  max_ok: 0.05
+
+  # Maximum block rate for ATTENTION status
+  # Between max_ok and max_attention: ATTENTION alert
+  # Above max_attention: ALERT
+  max_attention: 0.15
+
+  # Alert codes for block rate violations
+  alert_codes:
+    elevated: "TDA_BLOCK_RATE_ELEVATED"
+    high: "TDA_BLOCK_RATE_HIGH"
+
+# ==============================================================================
+# Mean HSS Thresholds
+# ==============================================================================
+# HSS (Hallucination Stability Score) measures proof structure stability (0.0-1.0)
+# Higher is better; lower values indicate potential issues
+
+mean_hss:
+  # Minimum mean HSS for OK status
+  # Above this threshold: no alert generated
+  min_ok: 0.6
+
+  # Minimum mean HSS for ATTENTION status
+  # Between min_attention and min_ok: ATTENTION alert
+  # Below min_attention: ALERT
+  min_attention: 0.4
+
+  # Alert codes for HSS violations
+  alert_codes:
+    low: "TDA_MEAN_HSS_LOW"
+    critical: "TDA_MEAN_HSS_CRITICAL"
+
+# ==============================================================================
+# HSS Trend Thresholds
+# ==============================================================================
+# Degrading HSS trend over time indicates potential calibration drift
+
+hss_trend:
+  # Alert on degrading trend
+  alert_on_degrading: true
+
+  # Alert code for degrading trend
+  alert_code: "TDA_HSS_TREND_DEGRADING"
+
+# ==============================================================================
+# Golden Alignment Thresholds
+# ==============================================================================
+# Golden alignment reflects calibration health against reference golden set
+
+golden_alignment:
+  # Alert on DRIFTING alignment
+  alert_on_drifting: true
+
+  # Alert on BROKEN alignment
+  alert_on_broken: true
+
+  # Alert codes
+  alert_codes:
+    drifting: "TDA_GOLDEN_ALIGNMENT_DRIFTING"
+    broken: "TDA_GOLDEN_ALIGNMENT_BROKEN"
+
+# ==============================================================================
+# Exception Window Thresholds
+# ==============================================================================
+# Exception windows indicate operator overrides of the hard gate
+
+exception_windows:
+  # Maximum active exception windows before alerting
+  max_active_ok: 0
+
+  # Alert code
+  alert_code: "TDA_EXCEPTION_WINDOW_ACTIVE"
+
+# ==============================================================================
+# Signal Strength Configuration
+# ==============================================================================
+# Minimum number of runs required for confident signal classification
+
+signal_strength:
+  # Minimum runs for strong signal
+  # Below this, signals are marked as "weak" and may be less reliable
+  min_runs_for_strong_signal: 10
+
+  # Alert code for weak signal
+  alert_code: "TDA_WEAK_SIGNAL"
+
+# ==============================================================================
+# Combined Alert Rules
+# ==============================================================================
+# Rules for escalating to ALERT status based on combined conditions
+
+combined_rules:
+  # ALERT if block_rate >= threshold AND hss_trend == DEGRADING
+  block_rate_with_degrading_trend:
+    enabled: true
+    block_rate_threshold: 0.2
+    alert_code: "TDA_COMBINED_BLOCK_AND_DEGRADING"
+
+  # ALERT if exception windows active AND golden alignment not ALIGNED
+  exception_with_alignment_drift:
+    enabled: true
+    alert_code: "TDA_EXCEPTION_WITH_ALIGNMENT_DRIFT"
+
+# ==============================================================================
+# Output Configuration
+# ==============================================================================
+
+output:
+  # Include detailed metrics in report
+  include_metrics: true
+
+  # Include raw snapshot data in report
+  include_raw_snapshot: false
+
+  # Timestamp format
+  timestamp_format: "iso8601"
+
+# ==============================================================================
+# Logging Configuration
+# ==============================================================================
+
+logging:
+  # Log level for watchdog daemon
+  level: "INFO"
+
+  # Log format
+  format: "%(asctime)s [%(levelname)s] %(message)s"

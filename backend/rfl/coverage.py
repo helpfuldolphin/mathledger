@@ -9,6 +9,7 @@ import warnings
 from rfl.coverage import (  # noqa: F401
     CoverageMetrics,
     CoverageTracker,
+    compute_statement_hash,
     load_baseline_from_db,
 )
 
@@ -21,5 +22,6 @@ warnings.warn(
 __all__ = [
     "CoverageMetrics",
     "CoverageTracker",
+    "compute_statement_hash",
     "load_baseline_from_db",
 ]

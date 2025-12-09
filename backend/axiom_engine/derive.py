@@ -19,6 +19,7 @@ Also prints precise diagnostics on psycopg errors:
 
 from backend.repro.determinism import deterministic_timestamp
 from backend.repro.determinism import deterministic_unix_timestamp
+from backend.axiom_engine.policy import load_policy_manifest
 
 _GLOBAL_SEED = 0
 
@@ -245,43 +246,57 @@ def _persist_block(cur, merkle_root: str, leafs: list[dict]) -> int:
     return int(cur.fetchone()[0])
 
 
-def _set_policy_hash_in_db(policy_hash: str) -> None:
-    """Best-effort: write the active policy hash into policy_settings; tolerate schema differences."""
+def _set_policy_metadata_in_db(policy_hash: str, policy_version: Optional[str]) -> None:
+    """Best-effort: write policy hash/version into policy_settings with schema tolerance."""
     db_url = os.getenv("DATABASE_URL")
     if not db_url or not psycopg:
         return
     try:
         with psycopg.connect(db_url, connect_timeout=5) as conn, conn.cursor() as cur:
             cols = _get_table_columns(cur, "policy_settings")
-            if "key" in cols and "value" in cols:
-                # Try with updated_at
-                try:
-                    cur.execute(
-                        """
-                        INSERT INTO policy_settings (key, value)
-                        VALUES ('active_policy_hash', %s)
-                        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
-                        """,
-                        (policy_hash,),
-                    )
-                except Exception:
-                    # Fallback without updated_at
-                    cur.execute(
-                        """
-                        INSERT INTO policy_settings (key, value)
-                        VALUES ('active_policy_hash', %s)
-                        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
-                        """,
-                        (policy_hash,),
-                    )
-            elif "policy_hash" in cols:
-                cur.execute(
-                    "INSERT INTO policy_settings (policy_hash) VALUES (%s)",
-                    (policy_hash,),
-                )
+            _upsert_policy_setting(cur, cols, "active_policy_hash", policy_hash)
+            if policy_version:
+                _upsert_policy_setting(cur, cols, "active_policy_version", policy_version)
             conn.commit()
     except Exception as e:
         print(f"POLICY_DB_ERROR={e}", flush=True)
+
+
+def _upsert_policy_setting(cur, cols: List[str], key: str, value: str) -> None:
+    """Insert or update a key/value pair in policy_settings."""
+    if "key" in cols and "value" in cols:
+        try:
+            cur.execute(
+                """
+                INSERT INTO policy_settings (key, value)
+                VALUES (%s, %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+                """,
+                (key, value),
+            )
+        except Exception:
+            cur.execute(
+                """
+                INSERT INTO policy_settings (key, value)
+                VALUES (%s, %s)
+                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+                """,
+                (key, value),
+            )
+    elif key == "active_policy_hash" and "policy_hash" in cols:
+        cur.execute(
+            "INSERT INTO policy_settings (policy_hash) VALUES (%s)",
+            (value,),
+        )
+
+
+def _extract_policy_metadata(policy_path: str) -> tuple[Optional[str], Optional[str]]:
+    """Load manifest metadata (hash, version) if available."""
+    manifest = load_policy_manifest(policy_path)
+    if manifest:
+        policy_section = manifest.get("policy", {})
+        return policy_section.get("hash"), policy_section.get("version")
+    return None, None
 
 
 # ------------------------- smoke runner (PL) -------------------------
@@ -611,13 +626,21 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Optional: load policy and write policy hash to DB
     policy_hash = None
+    policy_version: Optional[str] = None
     if args.policy:
+        manifest_hash, manifest_version = _extract_policy_metadata(args.policy)
         try:
             from scripts.policy_inference import PolicyInference
+
             policy = PolicyInference.load(args.policy)
-            policy_hash = policy.hash
-            print(f"POLICY_LOADED={policy_hash[:16]}...", flush=True)
-            _set_policy_hash_in_db(policy_hash)
+            policy_hash = manifest_hash or policy.hash
+            policy_version = manifest_version or getattr(policy, "version", None)
+            if policy_hash:
+                print(f"POLICY_LOADED={policy_hash[:16]}...", flush=True)
+            if policy_version:
+                print(f"POLICY_VERSION={policy_version}", flush=True)
+            if policy_hash:
+                _set_policy_metadata_in_db(policy_hash, policy_version)
         except Exception as e:
             print(f"POLICY_ERROR={e}", flush=True)
             # Not fatal for smoke

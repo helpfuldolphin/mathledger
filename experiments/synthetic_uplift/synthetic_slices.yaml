@@ -1,0 +1,180 @@
+# ==============================================================================
+# PHASE II — SYNTHETIC TEST DATA ONLY
+# ==============================================================================
+# This file defines SYNTHETIC slices for stress-testing the U2 uplift pipeline.
+#
+# NOT derived from real derivations; NOT part of Evidence Pack.
+# These slices are designed to produce KNOWN, DETERMINISTIC uplift patterns
+# for validating that the analysis infrastructure works correctly.
+#
+# All synthetic data produced using this config must:
+# - Be stored in experiments/synthetic_uplift/ directory ONLY
+# - Never be confused with real Phase I or Phase II logs
+# - Be clearly labeled "SYNTHETIC" in all outputs
+# ==============================================================================
+
+version: "synthetic_v1"
+label: "PHASE II — SYNTHETIC TEST DATA ONLY"
+
+# Global defaults for synthetic generation
+defaults:
+  seed_base: 42
+  cycles_default: 100
+  formula_classes:
+    - class_a  # Easy formulas
+    - class_b  # Medium formulas
+    - class_c  # Hard formulas
+
+# ==============================================================================
+# SYNTHETIC SLICES
+# ==============================================================================
+slices:
+
+  # ---------------------------------------------------------------------------
+  # synthetic_easy: Near-trivial world where both baseline and RFL succeed almost always
+  # Expected outcome: uplift ≈ 0 (no meaningful difference)
+  # ---------------------------------------------------------------------------
+  synthetic_easy:
+    description: "Near-trivial synthetic world. Both modes have high success rates."
+    expected_uplift: 0.0  # No uplift expected
+    expected_direction: "null"  # Neither significantly better
+    
+    # Success probabilities per formula class
+    # Format: baseline_prob, rfl_prob
+    probabilities:
+      baseline:
+        class_a: 0.95
+        class_b: 0.90
+        class_c: 0.85
+      rfl:
+        class_a: 0.95
+        class_b: 0.90
+        class_c: 0.85
+    
+    # Items in this synthetic world
+    items:
+      - id: "synth_easy_001"
+        class: "class_a"
+        complexity: 1
+      - id: "synth_easy_002"
+        class: "class_a"
+        complexity: 1
+      - id: "synth_easy_003"
+        class: "class_b"
+        complexity: 2
+      - id: "synth_easy_004"
+        class: "class_b"
+        complexity: 2
+      - id: "synth_easy_005"
+        class: "class_c"
+        complexity: 3
+      - id: "synth_easy_006"
+        class: "class_c"
+        complexity: 3
+
+    prereg_hash: "synthetic_easy_v1_deadbeef"
+
+  # ---------------------------------------------------------------------------
+  # synthetic_shifted: RFL simulated to outperform baseline
+  # Expected outcome: positive uplift (RFL success rate > baseline)
+  # ---------------------------------------------------------------------------
+  synthetic_shifted:
+    description: "RFL-favoring synthetic world. RFL has significantly higher success rates."
+    expected_uplift: 0.15  # ~15 percentage points uplift expected
+    expected_direction: "positive"  # RFL outperforms baseline
+    
+    # Success probabilities per formula class
+    # RFL consistently beats baseline by ~15-20pp
+    probabilities:
+      baseline:
+        class_a: 0.70
+        class_b: 0.50
+        class_c: 0.30
+      rfl:
+        class_a: 0.90
+        class_b: 0.70
+        class_c: 0.50
+    
+    items:
+      - id: "synth_shift_001"
+        class: "class_a"
+        complexity: 1
+      - id: "synth_shift_002"
+        class: "class_a"
+        complexity: 1
+      - id: "synth_shift_003"
+        class: "class_b"
+        complexity: 2
+      - id: "synth_shift_004"
+        class: "class_b"
+        complexity: 2
+      - id: "synth_shift_005"
+        class: "class_c"
+        complexity: 3
+      - id: "synth_shift_006"
+        class: "class_c"
+        complexity: 3
+      - id: "synth_shift_007"
+        class: "class_b"
+        complexity: 2
+      - id: "synth_shift_008"
+        class: "class_c"
+        complexity: 3
+
+    prereg_hash: "synthetic_shifted_v1_cafebabe"
+
+  # ---------------------------------------------------------------------------
+  # synthetic_regression: RFL simulated to underperform baseline
+  # Expected outcome: negative uplift (baseline success rate > RFL)
+  # This is intentionally designed to detect regressions in RFL policy
+  # ---------------------------------------------------------------------------
+  synthetic_regression:
+    description: "Baseline-favoring synthetic world. Baseline has higher success rates."
+    expected_uplift: -0.25  # ~25 percentage points regression expected
+    expected_direction: "negative"  # Baseline outperforms RFL
+    
+    # Success probabilities per formula class
+    # Baseline consistently beats RFL by ~25-35pp (widened gap)
+    probabilities:
+      baseline:
+        class_a: 0.90
+        class_b: 0.80
+        class_c: 0.70
+      rfl:
+        class_a: 0.55
+        class_b: 0.45
+        class_c: 0.35
+    
+    items:
+      - id: "synth_regr_001"
+        class: "class_a"
+        complexity: 1
+      - id: "synth_regr_002"
+        class: "class_b"
+        complexity: 2
+      - id: "synth_regr_003"
+        class: "class_c"
+        complexity: 3
+      - id: "synth_regr_004"
+        class: "class_a"
+        complexity: 1
+      - id: "synth_regr_005"
+        class: "class_b"
+        complexity: 2
+      - id: "synth_regr_006"
+        class: "class_c"
+        complexity: 3
+
+    prereg_hash: "synthetic_regression_v1_deadc0de"
+
+# ==============================================================================
+# METADATA
+# ==============================================================================
+metadata:
+  created: "2025-12-06"
+  purpose: "Stress-testing U2 uplift analysis infrastructure"
+  warning: |
+    ALL DATA GENERATED FROM THIS CONFIG IS SYNTHETIC.
+    Do NOT use for real uplift claims.
+    Do NOT mix with Phase I evidence.
+

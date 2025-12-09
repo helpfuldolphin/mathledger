@@ -1,0 +1,121 @@
+# .github/workflows/hash_observatory.yml
+name: Hash Consistency Observatory CI
+
+on:
+  pull_request:
+    paths:
+      - 'config/**'
+      - 'scripts/**'
+      - '.github/workflows/hash_observatory.yml'
+  push:
+    branches:
+      - main
+
+jobs:
+  hash-lineage-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: pip install pyyaml
+
+      - name: 'STAGE 0: Compile Source Curriculum'
+        id: compile
+        run: |
+          python scripts/compile_curriculum.py \
+            --source config/curriculum_uplift_phase2.yaml \
+            --output config/curriculum_uplift_phase2_hashed.yaml
+        
+      - name: 'CI-HELPER: Generate Preregistration File for All Slices'
+        id: generate-prereg
+        run: |
+          python -c "
+          import yaml, json, hashlib
+          from collections import OrderedDict
+          
+          def get_hash(data):
+              c = data.copy(); c.pop('name', None)
+              s = json.dumps(c, sort_keys=True, separators=(',', ':'))
+              return hashlib.sha256(s.encode()).hexdigest()
+
+          try:
+              with open('config/curriculum_uplift_phase2_hashed.yaml', 'r') as f:
+                  curriculum = yaml.safe_load(f)
+          except FileNotFoundError:
+              print('::error::Compiled curriculum not found. Cannot generate prereg file.')
+              exit(1)
+          
+          prereg_data = []
+          slices = curriculum.get('systems', [{}])[0].get('slices', [])
+          if not slices:
+              print('::warning::No slices found in compiled curriculum to generate prereg file.')
+          
+          for i, slice_data in enumerate(slices):
+              prereg_data.append({
+                  'experiment_id': f'EXP_CI_{i+1:03}',
+                  'slice_name': slice_data['name'],
+                  'slice_config_hash': get_hash(slice_data)
+              })
+          
+          with open('prereg_ci.yaml', 'w') as f:
+              yaml.dump(prereg_data, f)
+          "
+      
+      - name: 'STAGE 1: Generate Execution Manifest for All Slices'
+        id: generate-manifest
+        run: |
+          ALL_EXP_IDS=$(python -c "import yaml; print(' '.join([e['experiment_id'] for e in yaml.safe_load(open('prereg_ci.yaml'))])) if __import__('pathlib').Path('prereg_ci.yaml').exists() else print('')")
+          if [ -z "$ALL_EXP_IDS" ]; then
+            echo "No experiments to add to manifest. Skipping."
+            # Create an empty manifest so later steps don't fail on file-not-found
+            echo '{"experiment_bindings": [], "metadata": {}}' > manifest_ci.json
+          else
+            python scripts/generate_execution_manifest.py \
+              $ALL_EXP_IDS \
+              --config config/curriculum_uplift_phase2_hashed.yaml \
+              --prereg prereg_ci.yaml \
+              --output manifest_ci.json
+          fi
+
+      - name: 'STAGE 2: Run Auditor and Generate Integrity-Only Summary'
+        id: audit
+        run: |
+          # This is the main gate. The workflow will fail if this script exits non-zero.
+          python scripts/hash_reconciliation_auditor.py \
+            --config config/curriculum_uplift_phase2_hashed.yaml \
+            --prereg prereg_ci.yaml \
+            --manifest manifest_ci.json \
+            --integrity-only > audit_summary.json
+
+      - name: 'STAGE 3: Run History Builder'
+        id: history
+        # This runs after the main audit gate to record the result of the run.
+        # It runs the same auditor again internally.
+        run: |
+          python scripts/hash_observatory_history.py
+          
+      - name: 'Upload Audit Summary Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-summary
+          path: audit_summary.json
+          
+      - name: 'Upload History Log Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hash-observatory-history
+          path: artifacts/hash_observatory/history.jsonl
+          if-no-files-found: error # Fail if the history script didn't produce the log
+
+      - name: 'Display Audit Summary'
+        run: |
+          echo "--- Audit Summary ---"
+          cat audit_summary.json
+          echo "---------------------"

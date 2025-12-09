@@ -51,6 +51,7 @@ from experiments.u2.runner import (
     TracedExperimentContext,
     run_with_traces,
 )
+from experiments.u2.policy import summarize_lean_failures_for_global_health
 from experiments.u2.snapshots import (
     SnapshotData,
     SnapshotValidationError,
@@ -60,6 +61,11 @@ from experiments.u2.snapshots import (
     save_snapshot,
     find_latest_snapshot,
     rotate_snapshots,
+)
+from experiments.u2.snapshot_history import (
+    build_multi_run_snapshot_history,
+    plan_future_runs,
+    summarize_snapshot_plans_for_u2_orchestrator,
 )
 from experiments.u2.logging import U2TraceLogger, CORE_EVENTS, ALL_EVENT_TYPES
 from experiments.u2 import schema as trace_schema
@@ -71,6 +77,8 @@ from experiments.u2 import schema as trace_schema
 
 def metric_arithmetic_simple(item: str, result: Any) -> bool:
     """Success is when the python eval matches the expected result."""
+    lean_failure_summary: Optional[Dict[str, Any]] = None
+
     try:
         # A mock 'correct' result is simply the eval of the string.
         return eval(item) == result
@@ -180,10 +188,11 @@ def run_experiment(
     trace_ctx: Optional[TracedExperimentContext] = None,
     snapshot_keep: int = 5,
     trace_events: Optional[set] = None,
+    snapshot_plan_event: Optional[trace_schema.SnapshotPlanEvent] = None,
 ):
     """
     Main function to run the uplift experiment with snapshot support.
-    
+
     Args:
         slice_name: Name of the experiment slice
         cycles: Total number of cycles to run
@@ -284,14 +293,14 @@ def run_experiment(
         except Exception as e:
             print(f"ERROR: Failed to load snapshot: {e}", file=sys.stderr)
             sys.exit(1)
-    
+
     # 4. Create execution function
     execute_fn = create_execute_fn(slice_name)
-    
+
     # 5. Output files
     results_path = out_dir / f"uplift_u2_{slice_name}_{mode}.jsonl"
     manifest_path = out_dir / f"uplift_u2_manifest_{slice_name}_{mode}.json"
-    
+
     # 6. Main Loop
     # Open in append mode if restoring, write mode otherwise
     file_mode = "a" if restore_from else "w"
@@ -315,6 +324,11 @@ def run_experiment(
                 initial_seed=seed,
             )
         )
+        
+        # Emit snapshot plan event if provided (from --auto-resume)
+        if snapshot_plan_event is not None:
+            trace_logger.log_snapshot_plan(snapshot_plan_event)
+        
         print(f"INFO: Trace logging enabled: {trace_log_path}")
     
     # Use external trace context if provided (for run_with_traces wrapper)
@@ -366,6 +380,9 @@ def run_experiment(
                         if deleted:
                             print(f"INFO: Rotated {len(deleted)} old snapshot(s)")
     finally:
+        lean_failure_summary = summarize_lean_failures_for_global_health(
+            getattr(runner, "lean_failure_signals", []),
+        )
         # Close trace logger if we opened it
         if trace_logger is not None:
             # Emit session end
@@ -379,6 +396,7 @@ def run_experiment(
                     ht_series_hash=None,
                     total_cycles=cycles,
                     completed_cycles=runner.cycle_index,
+                    lean_failure_summary=lean_failure_summary,
                 )
             )
             trace_logger.__exit__(None, None, None)
@@ -424,6 +442,9 @@ def run_experiment(
             "taut_timeout_s": budget.taut_timeout_s,
             "max_candidates_per_cycle": budget.max_candidates_per_cycle,
         } if budget is not None else None,
+        "lean_failures": lean_failure_summary or summarize_lean_failures_for_global_health(
+            getattr(runner, "lean_failure_signals", []),
+        ),
     }
 
     with open(manifest_path, "w") as manifest_f:
@@ -527,6 +548,17 @@ Exit Codes:
         default=5,
         help="Number of snapshots to keep (rotation policy). Default: 5. Set to 0 to disable rotation."
     )
+    parser.add_argument(
+        "--auto-resume",
+        action="store_true",
+        help="Automatically select best snapshot from snapshot-root for resuming. Uses multi-run planning."
+    )
+    parser.add_argument(
+        "--snapshot-root",
+        type=str,
+        default=None,
+        help="Root directory containing multiple run directories for auto-resume planning."
+    )
     
     # Trace logging (PHASE II telemetry)
     parser.add_argument(
@@ -555,6 +587,16 @@ Exit Codes:
         print("       Use --resume to auto-discover the latest snapshot,", file=sys.stderr)
         print("       or --restore-from to specify a specific snapshot file.", file=sys.stderr)
         sys.exit(1)
+    
+    if args.auto_resume and (args.resume or args.restore_from):
+        print("ERROR: --auto-resume is mutually exclusive with --resume and --restore-from.", file=sys.stderr)
+        print("       --auto-resume uses multi-run planning to select the best snapshot.", file=sys.stderr)
+        sys.exit(1)
+    
+    if args.auto_resume and not args.snapshot_root:
+        print("ERROR: --auto-resume requires --snapshot-root to be specified.", file=sys.stderr)
+        print("       --snapshot-root should point to a directory containing multiple run directories.", file=sys.stderr)
+        sys.exit(1)
 
     config_path = Path(args.config)
     out_dir = Path(args.out)
@@ -577,7 +619,55 @@ Exit Codes:
 
     # Handle --resume: auto-discover latest snapshot
     restore_from: Optional[Path] = None
-    if args.resume:
+    snapshot_plan_event: Optional[trace_schema.SnapshotPlanEvent] = None
+    
+    if args.auto_resume:
+        # Multi-run planning mode
+        snapshot_root = Path(args.snapshot_root)
+        if not snapshot_root.exists():
+            print(f"ERROR: Snapshot root directory not found: {snapshot_root}", file=sys.stderr)
+            sys.exit(1)
+        
+        # Discover run directories
+        run_dirs = [str(d) for d in snapshot_root.iterdir() if d.is_dir()]
+        
+        if not run_dirs:
+            print(f"WARNING: No run directories found in {snapshot_root}", file=sys.stderr)
+            print(f"         Starting new run.", file=sys.stderr)
+            snapshot_plan_event = trace_schema.SnapshotPlanEvent(
+                status="NEW_RUN",
+                preferred_run_id=None,
+                preferred_snapshot_path=None,
+                total_runs_analyzed=0,
+            )
+        else:
+            # Build multi-run history and plan
+            print(f"INFO: Analyzing {len(run_dirs)} run(s) for auto-resume planning...")
+            multi_history = build_multi_run_snapshot_history(run_dirs)
+            plan = plan_future_runs(multi_history, target_coverage=10.0)
+            orchestrator_summary = summarize_snapshot_plans_for_u2_orchestrator(plan)
+            
+            # Emit snapshot plan event
+            snapshot_plan_event = trace_schema.SnapshotPlanEvent(
+                status=orchestrator_summary["status"],
+                preferred_run_id=orchestrator_summary.get("preferred_run_id"),
+                preferred_snapshot_path=orchestrator_summary.get("preferred_snapshot_path"),
+                total_runs_analyzed=multi_history["run_count"],
+            )
+            
+            # Log decision
+            print(f"INFO: Auto-resume decision: {orchestrator_summary['status']}")
+            if orchestrator_summary["status"] == "RESUME":
+                restore_from = Path(orchestrator_summary["preferred_snapshot_path"])
+                print(f"INFO: Selected snapshot: {restore_from}")
+                print(f"      From run: {orchestrator_summary.get('preferred_run_id', 'unknown')}")
+            elif orchestrator_summary["status"] == "NEW_RUN":
+                print(f"INFO: Starting new run (no suitable resume points found)")
+                print(f"      Message: {orchestrator_summary['details']['message']}")
+            else:
+                print(f"INFO: No action needed")
+    
+    elif args.resume:
         latest = find_latest_snapshot(snapshot_dir)
         if latest is None:
             print(f"ERROR: No snapshot found in {snapshot_dir}", file=sys.stderr)
@@ -604,6 +694,7 @@ Exit Codes:
         trace_log_path=trace_log_path,
         snapshot_keep=args.snapshot_keep,
         trace_events=trace_events,
+        snapshot_plan_event=snapshot_plan_event,
     )
 
 if __name__ == "__main__":

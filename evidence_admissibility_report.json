@@ -1,0 +1,45 @@
+{
+  "decision_id": "fc6fc822-2304-4be4-8a8b-c86ab7aedaf2",
+  "executed_at": "2025-12-06T20:09:29.488638Z",
+  "executor": "admissibility_engine",
+  "dossier_path": "run_20251205_1",
+  "dossier_hash": "1cbeeee8c850b5d99b3be7256ba0d1bf62b33f1afe6b0167b5a89b169b888b2a",
+  "governance_report_hash": "400f291a8dc32e36c459d11d4253609cc79b3c49958b4df308a5d473044934a0",
+  "phases_executed": {
+    "phase_1_governance": {
+      "executed": true,
+      "passed": false
+    },
+    "phase_2_artifacts": {
+      "executed": false,
+      "passed": false
+    },
+    "phase_3_structure": {
+      "executed": false,
+      "passed": false
+    },
+    "phase_4_integrity": {
+      "executed": false,
+      "passed": false
+    },
+    "phase_5_relationships": {
+      "executed": false,
+      "passed": false
+    }
+  },
+  "verdict": {
+    "status": "NOT_ADMISSIBLE",
+    "reason": "Dossier hash mismatch",
+    "code": "HE-GV4"
+  },
+  "error_count": 1,
+  "errors": [
+    {
+      "error_id": "HE-GV4",
+      "message": "Dossier hash mismatch",
+      "offending_artifact_id": "A8",
+      "phase": 1
+    }
+  ],
+  "execution_time_ms": 0
+}

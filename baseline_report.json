@@ -1,0 +1,3732 @@
+{
+  "timestamp": "2025-12-06T08:22:11.996941Z",
+  "project_root": "C:\\dev\\mathledger",
+  "report_hash": "6fcd7e8898fe0646",
+  "total_directories": 300,
+  "total_files": 1745,
+  "global_entropy": 0.4297,
+  "directory_scores": [
+    {
+      "directory": "backend/lean_proj/ML/Jobs",
+      "total_entropy": 6.6,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 44,
+      "unexpected_files": [
+        "job_0529026ce8c5.lean",
+        "job_1bffa7361376.lean",
+        "job_2242d8a1ed16.lean",
+        "job_47335c00da58.lean",
+        "job_473590e44a18.lean",
+        "job_4802a4815ae5.lean",
+        "job_57719d23e9a4.lean",
+        "job_7fe03f601daa.lean",
+        "job_9ce6dbb51b10.lean",
+        "job_a0205b2608fb.lean",
+        "job_a20fe5465103.lean",
+        "job_b3d7e155682e.lean",
+        "job_b488b8f60400.lean",
+        "job_c03a698c3ca5.lean",
+        "job_c75cb5ab22e8.lean",
+        "job_cb3127a68060.lean",
+        "job_d3c635a95177.lean",
+        "job_d8b0e26931e7.lean",
+        "job_e5d917bd64e0.lean",
+        "job_e7393291b7d2.lean",
+        "job_e943415c7b4a.lean",
+        "job_eb3e9dddeaa0.lean"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "job_0529026ce8c5.lean",
+        "job_1bffa7361376.lean",
+        "job_2242d8a1ed16.lean",
+        "job_47335c00da58.lean",
+        "job_473590e44a18.lean",
+        "job_4802a4815ae5.lean",
+        "job_57719d23e9a4.lean",
+        "job_7fe03f601daa.lean",
+        "job_9ce6dbb51b10.lean",
+        "job_a0205b2608fb.lean",
+        "job_a20fe5465103.lean",
+        "job_b3d7e155682e.lean",
+        "job_b488b8f60400.lean",
+        "job_c03a698c3ca5.lean",
+        "job_c75cb5ab22e8.lean",
+        "job_cb3127a68060.lean",
+        "job_d3c635a95177.lean",
+        "job_d8b0e26931e7.lean",
+        "job_e5d917bd64e0.lean",
+        "job_e7393291b7d2.lean",
+        "job_e943415c7b4a.lean",
+        "job_eb3e9dddeaa0.lean"
+      ],
+      "file_count": 22
+    },
+    {
+      "directory": "docs",
+      "total_entropy": 6.2888,
+      "extension_entropy": 0.7813,
+      "naming_entropy": 0.9208,
+      "violation_count": 38,
+      "unexpected_files": [
+        "DASHBOARD_TELEMETRY_V2.patch",
+        "fm.aux",
+        "fm.log",
+        "fm.out",
+        "fm.toc",
+        "schema_ontology.dot"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "basis_promotion_wave1.md",
+        "basis_promotion_wave1_PROPOSAL.md",
+        "canonical_basis_plan.md",
+        "causal_analysis.md",
+        "cognitive_systems_theory.md",
+        "curriculum_gate_equations.md",
+        "curriculum_wide_sample.json",
+        "DASHBOARD_TELEMETRY_V2.patch",
+        "edge_setup.md",
+        "first_organism_env_hardening_plan.md",
+        "fm.aux",
+        "fm.log",
+        "fm.out",
+        "fm.pdf",
+        "fm.tex",
+        "fm.toc",
+        "fm_canonical.json",
+        "grafana_dashboard_guide.md",
+        "metrics_linter_message_spec.md",
+        "onepager_fol.pdf",
+        "onepager_fol.tex",
+        "onepager_fol_summary.md",
+        "onepager_pl2.pdf",
+        "onepager_pl2.tex",
+        "progress.md",
+        "reflexive_substrate_brief.md",
+        "reflexive_verification_playbook.md",
+        "rfl_validation_report.md",
+        "schema_ontology.dot",
+        "schema_ontology.json",
+        "theory_packs.md",
+        "whitepaper.md"
+      ],
+      "file_count": 146
+    },
+    {
+      "directory": "backend/ui/templates",
+      "total_entropy": 2.9755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 18,
+      "unexpected_files": [
+        "blocks.html",
+        "block_detail.html",
+        "dashboard.html",
+        "dashboard_metrics_partial.html",
+        "dashboard_recent_proofs_partial.html",
+        "dashboard_search_partial.html",
+        "dashboard_worker_status_partial.html",
+        "heartbeat.html",
+        "statement_detail.html"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "blocks.html",
+        "block_detail.html",
+        "dashboard.html",
+        "dashboard_metrics_partial.html",
+        "dashboard_recent_proofs_partial.html",
+        "dashboard_search_partial.html",
+        "dashboard_worker_status_partial.html",
+        "heartbeat.html",
+        "statement_detail.html"
+      ],
+      "file_count": 9
+    },
+    {
+      "directory": "artifacts/wpv5",
+      "total_entropy": 2.7187,
+      "extension_entropy": 3.027,
+      "naming_entropy": 1.5262,
+      "violation_count": 7,
+      "unexpected_files": [
+        "Email_Kalai.md",
+        "EVIDENCE.md",
+        "README_EVAL.md",
+        "whitepaper.aux",
+        "whitepaper.fdb_latexmk",
+        "whitepaper.fls",
+        "whitepaper.out"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 13
+    },
+    {
+      "directory": "tests/interop",
+      "total_entropy": 2.4509,
+      "extension_entropy": 1.6645,
+      "naming_entropy": 1.9502,
+      "violation_count": 8,
+      "unexpected_files": [
+        "mathledger_client.test.js",
+        "README.md",
+        "Test-APIContracts.ps1"
+      ],
+      "forbidden_files": [
+        "README.md"
+      ],
+      "naming_violations": [
+        "mathledger_client.test.js",
+        "README.md",
+        "run_all_tests.py",
+        "Test-APIContracts.ps1"
+      ],
+      "file_count": 7
+    },
+    {
+      "directory": "docs/ci",
+      "total_entropy": 2.3731,
+      "extension_entropy": 0.9637,
+      "naming_entropy": 1.1255,
+      "violation_count": 11,
+      "unexpected_files": [
+        "ci-uv-install-fix.patch",
+        "composite-da-v4.patch",
+        "perf-gate-v2-workflow.patch",
+        "perf-gate-workflow.patch",
+        "workflow_baseline_persistence.yml"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "ci-uv-install-fix.patch",
+        "composite-da-v4.patch",
+        "local_dev.md",
+        "perf-gate-v2-workflow.patch",
+        "perf-gate-workflow.patch",
+        "workflow_baseline_persistence.yml"
+      ],
+      "file_count": 21
+    },
+    {
+      "directory": "backend/lean_proj",
+      "total_entropy": 2.355,
+      "extension_entropy": 1.371,
+      "naming_entropy": 1.5219,
+      "violation_count": 9,
+      "unexpected_files": [
+        "lake-manifest.json",
+        "lakefile.lean",
+        "Main.lean",
+        "ML.lean"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "lake-manifest.json",
+        "lakefile.lean",
+        "lean-toolchain",
+        "Main.lean",
+        "ML.lean"
+      ],
+      "file_count": 5
+    },
+    {
+      "directory": "artifacts/repro/manual_review",
+      "total_entropy": 2.2267,
+      "extension_entropy": 0.7732,
+      "naming_entropy": 0.3912,
+      "violation_count": 12,
+      "unexpected_files": [
+        "backend_integration_benchmark.py.patch",
+        "backend_integration_bridge_v2.py.patch",
+        "backend_integration_generate_report.py.patch",
+        "backend_integration_latency_profiler.py.patch",
+        "backend_integration_metrics.py.patch",
+        "backend_integration_middleware.py.patch",
+        "backend_orchestrator_app.py.patch",
+        "backend_testing_hermetic.py.patch",
+        "backend_testing_hermetic_v2.py.patch",
+        "backend_testing_no_network.py.patch",
+        "backend_worker.py.patch",
+        "README.md"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 13
+    },
+    {
+      "directory": "scripts",
+      "total_entropy": 2.1915,
+      "extension_entropy": 0.9289,
+      "naming_entropy": 1.0666,
+      "violation_count": 10,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "audit_evidence_pack_v1.py",
+        "build_u2_evidence_dossier.py",
+        "export_pl2_dataset.py",
+        "hermetic-validate-v2.py",
+        "patch_schema_v1.py",
+        "phase3_validation.py",
+        "proof_dag_u2_audit.py",
+        "validate_u2_environment.py",
+        "wpv5_make_plots.py",
+        "wpv5_make_table.py"
+      ],
+      "file_count": 130
+    },
+    {
+      "directory": "config",
+      "total_entropy": 2.149,
+      "extension_entropy": 2.0588,
+      "naming_entropy": 0.9183,
+      "violation_count": 7,
+      "unexpected_files": [
+        "curriculum.yaml.bak",
+        "first_organism.env.template"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "curriculum.yaml.bak",
+        "curriculum_uplift_phase2.yaml",
+        "curriculum_uplift_phase2_hashed.yaml",
+        "first_organism.env.template",
+        "verifier_budget_phase2.yaml"
+      ],
+      "file_count": 9
+    },
+    {
+      "directory": "backend/orchestrator",
+      "total_entropy": 2.0547,
+      "extension_entropy": 1.7925,
+      "naming_entropy": 1.4591,
+      "violation_count": 6,
+      "unexpected_files": [
+        "app.py.bak",
+        "pyproject.toml",
+        "uv.lock"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "app.py.bak",
+        "pyproject.toml",
+        "uv.lock"
+      ],
+      "file_count": 6
+    },
+    {
+      "directory": "docs/patches",
+      "total_entropy": 1.9601,
+      "extension_entropy": 1.9219,
+      "naming_entropy": 0.971,
+      "violation_count": 6,
+      "unexpected_files": [
+        "determinism-fixes.diff",
+        "verification-gate-v34.patch",
+        "verification-v2-workflow.yml"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "determinism-fixes.diff",
+        "verification-gate-v34.patch",
+        "verification-v2-workflow.yml"
+      ],
+      "file_count": 5
+    },
+    {
+      "directory": "tests/integration",
+      "total_entropy": 1.7479,
+      "extension_entropy": 0.5304,
+      "naming_entropy": 1.1191,
+      "violation_count": 8,
+      "unexpected_files": [
+        "conftest.py.bak",
+        "SKIP_REASON_MATRIX.md"
+      ],
+      "forbidden_files": [
+        "SKIP_REASON_MATRIX.md"
+      ],
+      "naming_violations": [
+        "conftest.py.bak",
+        "first_organism_conftest.py",
+        "run_integration_tests.py",
+        "SKIP_REASON_MATRIX.md",
+        "test_bridge_v2.py"
+      ],
+      "file_count": 22
+    },
+    {
+      "directory": "tests",
+      "total_entropy": 1.5857,
+      "extension_entropy": 0.2913,
+      "naming_entropy": 0.3972,
+      "violation_count": 9,
+      "unexpected_files": [
+        "test_mp_derivation.py.bak",
+        "_test_derive.py.disabled",
+        "_test_derive_function.py.disabled"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "test_federation_v4.py",
+        "test_first_organism_harness_v2.py",
+        "test_hermetic_v2.py",
+        "test_mp_derivation.py.bak",
+        "_test_derive.py.disabled",
+        "_test_derive_function.py.disabled"
+      ],
+      "file_count": 71
+    },
+    {
+      "directory": "docs/ci/patches",
+      "total_entropy": 1.4434,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.8113,
+      "violation_count": 8,
+      "unexpected_files": [
+        "baseline_persistence.patch",
+        "baseline_verification.patch",
+        "ci-velocity-v2.patch",
+        "ci_workflows.patch"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "baseline_persistence.patch",
+        "baseline_verification.patch",
+        "ci-velocity-v2.patch",
+        "ci_workflows.patch"
+      ],
+      "file_count": 4
+    },
+    {
+      "directory": "backend",
+      "total_entropy": 1.3567,
+      "extension_entropy": 0.7732,
+      "naming_entropy": 0.9913,
+      "violation_count": 5,
+      "unexpected_files": [
+        "lakefile.lean",
+        "lean_control_sandbox_plan.md"
+      ],
+      "forbidden_files": [
+        "lean_control_sandbox_plan.md"
+      ],
+      "naming_violations": [
+        "lakefile.lean",
+        "lean_control_sandbox_plan.md"
+      ],
+      "file_count": 13
+    },
+    {
+      "directory": "mathledger_basis_repo",
+      "total_entropy": 1.3519,
+      "extension_entropy": 2.4056,
+      "naming_entropy": 1.2988,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 8
+    },
+    {
+      "directory": "docs/methods",
+      "total_entropy": 1.2928,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 1.585,
+      "violation_count": 3,
+      "unexpected_files": [
+        "checksums.txt"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "auto_manifest.md",
+        "checksums.txt"
+      ],
+      "file_count": 3
+    },
+    {
+      "directory": "substrate/lean",
+      "total_entropy": 1.2925,
+      "extension_entropy": 1.7925,
+      "naming_entropy": 1.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "backend/governance",
+      "total_entropy": 1.2394,
+      "extension_entropy": 0.5917,
+      "naming_entropy": 1.8424,
+      "violation_count": 3,
+      "unexpected_files": [
+        "README.md"
+      ],
+      "forbidden_files": [
+        "README.md"
+      ],
+      "naming_violations": [
+        "README.md"
+      ],
+      "file_count": 7
+    },
+    {
+      "directory": "backend/ledger/v4",
+      "total_entropy": 1.2245,
+      "extension_entropy": 0.8113,
+      "naming_entropy": 1.5,
+      "violation_count": 3,
+      "unexpected_files": [
+        "README.md"
+      ],
+      "forbidden_files": [
+        "README.md"
+      ],
+      "naming_violations": [
+        "README.md"
+      ],
+      "file_count": 4
+    },
+    {
+      "directory": "apps/ui",
+      "total_entropy": 1.145,
+      "extension_entropy": 2.171,
+      "naming_entropy": 0.9219,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 10
+    },
+    {
+      "directory": "backend/rfl",
+      "total_entropy": 1.1321,
+      "extension_entropy": 0.5436,
+      "naming_entropy": 1.5488,
+      "violation_count": 3,
+      "unexpected_files": [
+        "README.md"
+      ],
+      "forbidden_files": [
+        "README.md"
+      ],
+      "naming_violations": [
+        "README.md"
+      ],
+      "file_count": 8
+    },
+    {
+      "directory": "tests/qa",
+      "total_entropy": 1.1305,
+      "extension_entropy": 0.5436,
+      "naming_entropy": 0.5436,
+      "violation_count": 5,
+      "unexpected_files": [
+        "test_exporter_v1.py.bak"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "test_exporter_v1.py",
+        "test_exporter_v1.py.bak",
+        "test_exporter_v1_export.py",
+        "test_metrics_lint_v1.py"
+      ],
+      "file_count": 8
+    },
+    {
+      "directory": "tests/phase2/metrics",
+      "total_entropy": 1.0853,
+      "extension_entropy": 0.5033,
+      "naming_entropy": 1.4466,
+      "violation_count": 3,
+      "unexpected_files": [
+        "CI_BATTERY_RECOMMENDATION.md"
+      ],
+      "forbidden_files": [
+        "CI_BATTERY_RECOMMENDATION.md"
+      ],
+      "naming_violations": [
+        "CI_BATTERY_RECOMMENDATION.md"
+      ],
+      "file_count": 9
+    },
+    {
+      "directory": "scripts/db",
+      "total_entropy": 1.084,
+      "extension_entropy": 1.585,
+      "naming_entropy": 0.0,
+      "violation_count": 3,
+      "unexpected_files": [
+        "repair_migrations.md"
+      ],
+      "forbidden_files": [
+        "repair_migrations.md"
+      ],
+      "naming_violations": [
+        "repair_migrations.md"
+      ],
+      "file_count": 3
+    },
+    {
+      "directory": "config/rfl",
+      "total_entropy": 1.0745,
+      "extension_entropy": 0.8113,
+      "naming_entropy": 1.5,
+      "violation_count": 2,
+      "unexpected_files": [
+        "README.md"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "README.md"
+      ],
+      "file_count": 4
+    },
+    {
+      "directory": "dist/basis_vault/docs/patches",
+      "total_entropy": 1.0601,
+      "extension_entropy": 1.9219,
+      "naming_entropy": 0.971,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "tmp",
+      "total_entropy": 1.0537,
+      "extension_entropy": 1.8911,
+      "naming_entropy": 0.9911,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 9
+    },
+    {
+      "directory": "tools/devin_e_toolbox",
+      "total_entropy": 1.0116,
+      "extension_entropy": 1.2366,
+      "naming_entropy": 1.7232,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 15
+    },
+    {
+      "directory": "docs/workflows",
+      "total_entropy": 1.0,
+      "extension_entropy": 1.0,
+      "naming_entropy": 1.0,
+      "violation_count": 2,
+      "unexpected_files": [
+        "weekly-proof-of-build.yml"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "weekly-proof-of-build.yml"
+      ],
+      "file_count": 2
+    },
+    {
+      "directory": "derivation",
+      "total_entropy": 0.9957,
+      "extension_entropy": 1.2516,
+      "naming_entropy": 1.65,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 12
+    },
+    {
+      "directory": "ops",
+      "total_entropy": 0.9564,
+      "extension_entropy": 1.6494,
+      "naming_entropy": 0.9887,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 16
+    },
+    {
+      "directory": "artifacts/phase_ii/fo_series_1/fo_1000_rfl",
+      "total_entropy": 0.9095,
+      "extension_entropy": 1.585,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "ops/first_organism",
+      "total_entropy": 0.9095,
+      "extension_entropy": 1.585,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "ops/microagents",
+      "total_entropy": 0.9095,
+      "extension_entropy": 1.585,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "results",
+      "total_entropy": 0.8613,
+      "extension_entropy": 0.8825,
+      "naming_entropy": 0.6944,
+      "violation_count": 2,
+      "unexpected_files": [
+        "tt_oracle_optimization_report.md",
+        "uplift_u1_debug.log"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 75
+    },
+    {
+      "directory": "docs/progress",
+      "total_entropy": 0.85,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 3,
+      "unexpected_files": [
+        "agent_ledger.jsonl"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "agent_ledger.jsonl",
+        "pr_assessment.json"
+      ],
+      "file_count": 2
+    },
+    {
+      "directory": "attestation",
+      "total_entropy": 0.8428,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 1.585,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "statistical",
+      "total_entropy": 0.8428,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 1.585,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "dist/basis_vault",
+      "total_entropy": 0.8428,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 1.585,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "dist/basis_vault/docs/methods",
+      "total_entropy": 0.8428,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 1.585,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "ledger",
+      "total_entropy": 0.8355,
+      "extension_entropy": 0.65,
+      "naming_entropy": 1.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "backend/logic",
+      "total_entropy": 0.8053,
+      "extension_entropy": 0.7219,
+      "naming_entropy": 0.7219,
+      "violation_count": 2,
+      "unexpected_files": [
+        "canon.py.bak"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "canon.py.bak"
+      ],
+      "file_count": 5
+    },
+    {
+      "directory": "artifacts/rfl",
+      "total_entropy": 0.7928,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 0.9183,
+      "violation_count": 1,
+      "unexpected_files": [
+        "validation_summary.md"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "normalization",
+      "total_entropy": 0.7894,
+      "extension_entropy": 0.5917,
+      "naming_entropy": 1.8424,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 7
+    },
+    {
+      "directory": "artifacts/figures",
+      "total_entropy": 0.778,
+      "extension_entropy": 1.2917,
+      "naming_entropy": 0.3712,
+      "violation_count": 1,
+      "unexpected_files": [
+        "README_FIGURES.md"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 14
+    },
+    {
+      "directory": "curriculum",
+      "total_entropy": 0.7745,
+      "extension_entropy": 0.8113,
+      "naming_entropy": 1.5,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "ops/logs",
+      "total_entropy": 0.7728,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 1.3516,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 9
+    },
+    {
+      "directory": "apps/ui/src/app",
+      "total_entropy": 0.765,
+      "extension_entropy": 1.371,
+      "naming_entropy": 0.7219,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "backend/axiom_engine",
+      "total_entropy": 0.7505,
+      "extension_entropy": 0.2975,
+      "naming_entropy": 1.105,
+      "violation_count": 2,
+      "unexpected_files": [
+        "derive.py.bak"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "derive.py.bak"
+      ],
+      "file_count": 19
+    },
+    {
+      "directory": "mathledger.egg-info",
+      "total_entropy": 0.7453,
+      "extension_entropy": 0.7219,
+      "naming_entropy": 1.5219,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "mathledger_basis_repo/mathledger_basis.egg-info",
+      "total_entropy": 0.7453,
+      "extension_entropy": 0.7219,
+      "naming_entropy": 1.5219,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "dist/basis_vault/docs/ci",
+      "total_entropy": 0.7231,
+      "extension_entropy": 0.9637,
+      "naming_entropy": 1.1255,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 21
+    },
+    {
+      "directory": "docs/evidence",
+      "total_entropy": 0.7179,
+      "extension_entropy": 0.8113,
+      "naming_entropy": 0.8113,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "experiment_manifest_schema.json"
+      ],
+      "file_count": 4
+    },
+    {
+      "directory": "infra",
+      "total_entropy": 0.7,
+      "extension_entropy": 1.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "interface",
+      "total_entropy": 0.7,
+      "extension_entropy": 1.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "substrate",
+      "total_entropy": 0.7,
+      "extension_entropy": 1.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "artifacts/phase_ii/fo_series_1/fo_1000_baseline",
+      "total_entropy": 0.7,
+      "extension_entropy": 1.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "artifacts/u2/ENV_A",
+      "total_entropy": 0.7,
+      "extension_entropy": 1.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/docs/workflows",
+      "total_entropy": 0.7,
+      "extension_entropy": 1.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "docs/prereg",
+      "total_entropy": 0.7,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 2,
+      "unexpected_files": [
+        "PREREG_UPLIFT_U2.yaml.sig"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "PREREG_UPLIFT_U2.yaml.sig"
+      ],
+      "file_count": 2
+    },
+    {
+      "directory": "ops/microtasks",
+      "total_entropy": 0.7,
+      "extension_entropy": 1.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "artifacts/metrics",
+      "total_entropy": 0.6822,
+      "extension_entropy": 0.5917,
+      "naming_entropy": 0.9852,
+      "violation_count": 1,
+      "unexpected_files": [
+        "latest_report.txt"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 7
+    },
+    {
+      "directory": "rfl",
+      "total_entropy": 0.661,
+      "extension_entropy": 0.4395,
+      "naming_entropy": 1.6172,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 11
+    },
+    {
+      "directory": "ops/tools",
+      "total_entropy": 0.6428,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "services/wrapper",
+      "total_entropy": 0.6428,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "experiments/prereg",
+      "total_entropy": 0.634,
+      "extension_entropy": 1.585,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "tests/metrics",
+      "total_entropy": 0.6275,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.5917,
+      "violation_count": 3,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "test_u2_analysis.py",
+        "test_u2_behavior_atlas.py",
+        "test_u2_cross_slice_analysis.py"
+      ],
+      "file_count": 7
+    },
+    {
+      "directory": "experiments",
+      "total_entropy": 0.6186,
+      "extension_entropy": 0.8664,
+      "naming_entropy": 0.9067,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 87
+    },
+    {
+      "directory": "backend/orchestrator/templates",
+      "total_entropy": 0.6,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 4,
+      "unexpected_files": [
+        "blocks.html",
+        "lemmas.html"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "blocks.html",
+        "lemmas.html"
+      ],
+      "file_count": 2
+    },
+    {
+      "directory": "docs/audits",
+      "total_entropy": 0.5913,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.971,
+      "violation_count": 2,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "formal_verifier_health_20251104.md",
+        "formal_verifier_health_20251104_remediation.md"
+      ],
+      "file_count": 5
+    },
+    {
+      "directory": "backend/ledger/consensus",
+      "total_entropy": 0.5755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 2,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "celestial_dossier_v2.py",
+        "harmony_v1_1.py"
+      ],
+      "file_count": 3
+    },
+    {
+      "directory": "docs/qa",
+      "total_entropy": 0.5755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 2,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "hygiene_checklist.md",
+        "metrics_lint_v1.md"
+      ],
+      "file_count": 3
+    },
+    {
+      "directory": "tests/fixtures",
+      "total_entropy": 0.5755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 2,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "first_organism.py",
+        "lean_integration.py"
+      ],
+      "file_count": 3
+    },
+    {
+      "directory": "artifacts/narrative",
+      "total_entropy": 0.5745,
+      "extension_entropy": 1.0613,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [
+        "bucket_report.md"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 8
+    },
+    {
+      "directory": "backend/integration",
+      "total_entropy": 0.5717,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.4056,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "bridge_v2.py"
+      ],
+      "file_count": 8
+    },
+    {
+      "directory": "reports",
+      "total_entropy": 0.5623,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 0.65,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "artifacts/atlas",
+      "total_entropy": 0.5623,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 0.65,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "dist/basis_vault/docs",
+      "total_entropy": 0.5548,
+      "extension_entropy": 0.5216,
+      "naming_entropy": 1.1539,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 45
+    },
+    {
+      "directory": "artifacts/experiments/rfl_logs",
+      "total_entropy": 0.55,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [
+        "validation_report.txt"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "experiments/synthetic_uplift",
+      "total_entropy": 0.4782,
+      "extension_entropy": 0.8659,
+      "naming_entropy": 0.4395,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 11
+    },
+    {
+      "directory": "backend/metrics",
+      "total_entropy": 0.4684,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0613,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "u2_analysis.py"
+      ],
+      "file_count": 8
+    },
+    {
+      "directory": "configs",
+      "total_entropy": 0.455,
+      "extension_entropy": 0.65,
+      "naming_entropy": 0.65,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "rfl/verification",
+      "total_entropy": 0.455,
+      "extension_entropy": 0.65,
+      "naming_entropy": 0.65,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "backend/frontier",
+      "total_entropy": 0.45,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.5,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "backend/repro",
+      "total_entropy": 0.45,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.5,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "configs/rfl",
+      "total_entropy": 0.45,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 3,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "r0.yaml",
+        "r1.yaml",
+        "r2.yaml"
+      ],
+      "file_count": 3
+    },
+    {
+      "directory": "rfl/prng",
+      "total_entropy": 0.45,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.5,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "tests/plugins",
+      "total_entropy": 0.45,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "first_organism_telemetry_hook.py"
+      ],
+      "file_count": 2
+    },
+    {
+      "directory": "backend/promotion",
+      "total_entropy": 0.4255,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "u2_evidence.py"
+      ],
+      "file_count": 3
+    },
+    {
+      "directory": "backend/testing",
+      "total_entropy": 0.4255,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "hermetic_v2.py"
+      ],
+      "file_count": 3
+    },
+    {
+      "directory": "docs/fleet",
+      "total_entropy": 0.4255,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "mirror_auditor_operational_report.md"
+      ],
+      "file_count": 3
+    },
+    {
+      "directory": "backend/dag",
+      "total_entropy": 0.4113,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.371,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "backend/ledger",
+      "total_entropy": 0.4113,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.371,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "backend/tools",
+      "total_entropy": 0.4113,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.371,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "artifacts/repro",
+      "total_entropy": 0.41,
+      "extension_entropy": 0.65,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [
+        "entropy_free_process.md"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "bootstrap_output",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "ci_verification",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "metrics",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "artifacts/phase_ii",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "artifacts/u2/analysis",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/docs/progress",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "experiments/synthetic_uplift/generated/demo_catastrophic",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "experiments/synthetic_uplift/generated/demo_corr",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "experiments/synthetic_uplift/generated/demo_cyclical",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "experiments/synthetic_uplift/generated/demo_shock",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "tools/crypto",
+      "total_entropy": 0.4,
+      "extension_entropy": 1.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "backend/causal",
+      "total_entropy": 0.3886,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.2955,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 10
+    },
+    {
+      "directory": "backend/crypto",
+      "total_entropy": 0.3755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.2516,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "paper",
+      "total_entropy": 0.3673,
+      "extension_entropy": 0.9183,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "docs/perf",
+      "total_entropy": 0.3666,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.7219,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "modus_ponens_indexing.md"
+      ],
+      "file_count": 5
+    },
+    {
+      "directory": "artifacts/uplift_figs",
+      "total_entropy": 0.3245,
+      "extension_entropy": 0.8113,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "tests/phase2/metrics_adversarial",
+      "total_entropy": 0.3184,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0613,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 8
+    },
+    {
+      "directory": "artifacts/synthetic",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "backend/api",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "backend/basis",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "backend/consensus",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "backend/fol_eq",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "backend/models",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "backend/lean_proj/ML",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 2,
+      "unexpected_files": [
+        "Jobs.lean"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "Jobs.lean"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "basis/attestation",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "basis/core",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "basis/crypto",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "basis/curriculum",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "basis/ledger",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "basis/logic",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/basis/attestation",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/basis/core",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/basis/crypto",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/basis/curriculum",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/basis/ledger",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/basis/logic",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "docs/build",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 2,
+      "unexpected_files": [
+        "onepager_pl2.compile.log"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "onepager_pl2.compile.log"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "docs/ci/workflows",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 2,
+      "unexpected_files": [
+        "hermetic-matrix-health.yml"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "hermetic-matrix-health.yml"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "interface/api/routes",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "mathledger_basis_repo/basis/attestation",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "mathledger_basis_repo/basis/core",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "mathledger_basis_repo/basis/crypto",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "mathledger_basis_repo/basis/curriculum",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "mathledger_basis_repo/basis/ledger",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "mathledger_basis_repo/basis/logic",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "results/uplift_u1",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "scripts/sql",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 2,
+      "unexpected_files": [
+        "001_blocks.sql"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [
+        "001_blocks.sql"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "substrate/auth",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "substrate/bridge",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "substrate/repro",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "substrate/security",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "tests/derivation",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "tests/experiments",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 2,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "test_curriculum_loader_v2.py",
+        "test_curriculum_uplift_phase2_decoys.py"
+      ],
+      "file_count": 7
+    },
+    {
+      "directory": "tests/statistical",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "tests/unit",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "tests/backend/verification",
+      "total_entropy": 0.3,
+      "extension_entropy": 0.0,
+      "naming_entropy": 1.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/docs/audits",
+      "total_entropy": 0.2913,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.971,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "tests/experiments/u2",
+      "total_entropy": 0.2907,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.469,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "test_u2_trace_logging.py"
+      ],
+      "file_count": 10
+    },
+    {
+      "directory": "artifacts/phase_ii/uplift_visualizations",
+      "total_entropy": 0.2888,
+      "extension_entropy": 0.7219,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "templates",
+      "total_entropy": 0.2755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "apps/ui/src/lib",
+      "total_entropy": 0.2755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "dist/basis_vault/docs/fleet",
+      "total_entropy": 0.2755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "dist/basis_vault/docs/qa",
+      "total_entropy": 0.2755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "interface/api",
+      "total_entropy": 0.2755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "services/wrapper/adapters",
+      "total_entropy": 0.2755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "substrate/crypto",
+      "total_entropy": 0.2755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "substrate/dag",
+      "total_entropy": 0.2755,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.9183,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "tests/verification",
+      "total_entropy": 0.2598,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.8659,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 11
+    },
+    {
+      "directory": "backend/substrate",
+      "total_entropy": 0.2589,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.8631,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 7
+    },
+    {
+      "directory": "artifacts/atlas/dossiers",
+      "total_entropy": 0.2434,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.8113,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "backend/phase_ix",
+      "total_entropy": 0.2434,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.8113,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "dist/basis_vault/docs/ci/patches",
+      "total_entropy": 0.2434,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.8113,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "tests/experiments/decoys",
+      "total_entropy": 0.2434,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.8113,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "dist/basis_vault/docs/perf",
+      "total_entropy": 0.2166,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.7219,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "experiments/decoys",
+      "total_entropy": 0.2166,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.7219,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "experiments/synthetic_uplift/tests",
+      "total_entropy": 0.2166,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.7219,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "experiments/u2/runtime",
+      "total_entropy": 0.2166,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.7219,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "experiments/u2",
+      "total_entropy": 0.195,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.65,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "backend/verification",
+      "total_entropy": 0.1631,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.5436,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 8
+    },
+    {
+      "directory": "tools/repro",
+      "total_entropy": 0.151,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.5033,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 9
+    },
+    {
+      "directory": "migrations",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "baseline_20251019.sql"
+      ],
+      "file_count": 22
+    },
+    {
+      "directory": "artifacts/ship",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [
+        "gate_smoke_pr_body.md"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/phase_ii/fo_series_1",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [
+        "FIGURES_CATALOG_v2.md"
+      ],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "backend/runner",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "u2_runner.py"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "backend/security",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "u2_security.py"
+      ],
+      "file_count": 5
+    },
+    {
+      "directory": "backend/telemetry",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "u2_schema.py"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "docs/devxp",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "rebase_safely.md"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/curriculum",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "test_curriculum_linter_v3.py"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/env",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "test_validate_u2_environment.py"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/helpers",
+      "total_entropy": 0.15,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 1,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [
+        "dag_assertions.py"
+      ],
+      "file_count": 1
+    },
+    {
+      "directory": "tools/perf",
+      "total_entropy": 0.1407,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.469,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 10
+    },
+    {
+      "directory": "artifacts/phase_ii/topology",
+      "total_entropy": 0.1291,
+      "extension_entropy": 0.3228,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 34
+    },
+    {
+      "directory": "tests/rfl",
+      "total_entropy": 0.1241,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.4138,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 12
+    },
+    {
+      "directory": "allblue_archive",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "analysis",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "archive",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "basis",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "cli",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "exports",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "logs",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "schemas",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tools",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 34
+    },
+    {
+      "directory": "ui",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "apps/ui/e2e",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "apps/ui/public",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "apps/ui/scripts",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "apps/ui/src/components",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "apps/ui/src/components/__tests__",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "apps/ui/test/fixtures",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/continuity",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/first_organism",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/governance",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "artifacts/guidance",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "artifacts/keys",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/perf",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/phase2",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/policy",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/spec",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "artifacts/experiments/rfl/R0",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "artifacts/phase_ii/decoy_confusability",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/phase_ii/metric_contracts",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 5
+    },
+    {
+      "directory": "artifacts/phase_ii/fo_series_1/fo_1000_baseline/run_20251130_import",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/phase_ii/fo_series_1/fo_1000_baseline/run_20251130_import/data",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/phase_ii/fo_series_1/fo_1000_rfl/run_20251130_import",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/phase_ii/fo_series_1/fo_1000_rfl/run_20251130_import/data",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/phase_ii/fo_series_1/fo_1000_rfl/run_20251130_import/figures",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/phase_ii/fo_series_1/fo_1000_rfl/run_20251130_import/proofs",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/phase_ii/topology/evolution_frames/baseline",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 10
+    },
+    {
+      "directory": "artifacts/phase_ii/topology/evolution_frames/rfl",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 10
+    },
+    {
+      "directory": "artifacts/repro/attestation_history",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/rfl/experiments/rfl/fo-cycle-experiment",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/rfl/experiments/rfl/rfl_law_test",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "artifacts/rfl/experiments/rfl/schema_validation_test",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "backend/analytics",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "backend/audit",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "backend/bridge",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "backend/generator",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "backend/ht",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "basis/docs",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "config/causal",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "dist/basis_vault/basis",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "dist/basis_vault/basis/docs",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "dist/basis_vault/docs/architecture",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "dist/basis_vault/docs/build",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "dist/basis_vault/docs/db",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "dist/basis_vault/docs/devxp",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "dist/basis_vault/docs/evidence",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "dist/basis_vault/docs/integration",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/docs/no_network",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "dist/basis_vault/docs/ops",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "dist/basis_vault/docs/repro",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "dist/basis_vault/docs/security",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "dist/basis_vault/docs/ci/workflows",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "docs/architecture",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 6
+    },
+    {
+      "directory": "docs/db",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "docs/integration",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "docs/no_network",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "docs/ops",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "docs/repro",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "docs/security",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "docs/evidence/manifests",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 10
+    },
+    {
+      "directory": "experiments/results",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "experiments/rfl",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "experiments/rfl/analysis",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "experiments/rfl/configs",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "logs/nightly-20251125-231828",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "logs/nightly-20251126-234426",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "mathledger_basis_repo/basis",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "mathledger_basis_repo/docs",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "mathledger_basis_repo/ops",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "mathledger_basis_repo/tests",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "mathledger_basis_repo/basis/docs",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "ops/audit",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "paper/data",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "paper/sections",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "results/uplift_u1_test",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "scripts/rfl",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "scripts/telemetry",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "substrate/logic",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "substrate/lean/ML",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "substrate/lean/ML/Jobs",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 22
+    },
+    {
+      "directory": "tests/analysis",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/analytics",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/audit",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "tests/backend",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/dag",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/devxp",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/dynamics",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/frontier",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "tests/governance",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "tests/ht",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/perf",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "tests/phase2",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/security",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tests/substrate",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "tests/telemetry",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tools/ci",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 10
+    },
+    {
+      "directory": "tools/ci-local",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    },
+    {
+      "directory": "tools/docs",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 4
+    },
+    {
+      "directory": "tools/hermetic",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 2
+    },
+    {
+      "directory": "tools/simulation",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 3
+    },
+    {
+      "directory": "ui/src/lib",
+      "total_entropy": 0.0,
+      "extension_entropy": 0.0,
+      "naming_entropy": 0.0,
+      "violation_count": 0,
+      "unexpected_files": [],
+      "forbidden_files": [],
+      "naming_violations": [],
+      "file_count": 1
+    }
+  ],
+  "boundary_violations": [],
+  "remediation_suggestions": [],
+  "archetype_classifications": [],
+  "mutation_events": [],
+  "summary": {
+    "high_entropy_directories": [
+      "backend/lean_proj/ML/Jobs",
+      "docs",
+      "backend/ui/templates",
+      "artifacts/wpv5",
+      "tests/interop"
+    ],
+    "boundary_violation_count": 0,
+    "affected_phase_i_files": [],
+    "archetype_distribution": {},
+    "low_confidence_classifications": [],
+    "total_violations": 297,
+    "mutation_summary": {}
+  }
+}

@@ -1407,6 +1407,135 @@ def pytest_configure(config):
     )
 
 
+# ---------------------------------------------------------------------------
+# First Organism API Client
+# ---------------------------------------------------------------------------
+@dataclass
+class UIEventResponse:
+    """Response from posting a UI event."""
+    event_id: str
+    timestamp: int
+    leaf_hash: str
+
+
+@dataclass
+class UIEventEntry:
+    """Entry in the UI events list."""
+    event_id: str
+    timestamp: int
+    leaf_hash: str
+
+
+@dataclass
+class UIEventsListResponse:
+    """Response from listing UI events."""
+    events: List[UIEventEntry]
+
+
+@dataclass
+class DerivationSimulationResponse:
+    """Response from derivation simulation."""
+    triggered: bool
+    job_id: str
+    status: str
+
+
+class FirstOrganismApiClient:
+    """
+    Typed API client for First Organism integration tests.
+
+    Wraps TestClient with typed request/response methods for the
+    First Organism API surface.
+    """
+
+    def __init__(self, client: TestClient, api_key: str = "devkey"):
+        """
+        Initialize the API client.
+
+        Args:
+            client: FastAPI TestClient
+            api_key: API key for authenticated endpoints
+        """
+        self._client = client
+        self._headers = {"X-API-Key": api_key}
+
+    def post_ui_event(self, payload: Dict[str, Any]) -> UIEventResponse:
+        """
+        Post a UI event and return typed response.
+
+        Args:
+            payload: Event payload dictionary
+
+        Returns:
+            UIEventResponse with event_id, timestamp, and leaf_hash
+        """
+        response = self._client.post(
+            "/ui-events",
+            json=payload,
+            headers=self._headers,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return UIEventResponse(
+            event_id=data.get("event_id", ""),
+            timestamp=data.get("timestamp", 0),
+            leaf_hash=data.get("leaf_hash", ""),
+        )
+
+    def list_ui_events(self) -> UIEventsListResponse:
+        """
+        List all UI events.
+
+        Returns:
+            UIEventsListResponse with list of events
+        """
+        response = self._client.get("/ui-events", headers=self._headers)
+        response.raise_for_status()
+        data = response.json()
+        events = [
+            UIEventEntry(
+                event_id=e.get("event_id", ""),
+                timestamp=e.get("timestamp", 0),
+                leaf_hash=e.get("leaf_hash", ""),
+            )
+            for e in data.get("events", [])
+        ]
+        return UIEventsListResponse(events=events)
+
+    def simulate_derivation(self) -> DerivationSimulationResponse:
+        """
+        Trigger a derivation simulation.
+
+        Returns:
+            DerivationSimulationResponse with trigger status
+        """
+        response = self._client.post(
+            "/simulate-derivation",
+            headers=self._headers,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return DerivationSimulationResponse(
+            triggered=data.get("triggered", False),
+            job_id=data.get("job_id", ""),
+            status=data.get("status", ""),
+        )
+
+
+@pytest.fixture()
+def api_client(test_client: TestClient) -> FirstOrganismApiClient:
+    """
+    Provide a typed First Organism API client.
+
+    Args:
+        test_client: FastAPI TestClient fixture
+
+    Returns:
+        FirstOrganismApiClient instance
+    """
+    return FirstOrganismApiClient(test_client)
+
+
 def pytest_collection_modifyitems(config, items):
     """
     Automatically apply first_organism and wide_slice marker handling.

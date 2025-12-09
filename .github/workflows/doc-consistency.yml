@@ -1,0 +1,438 @@
+# Documentation Consistency CI Gate
+#
+# PHASE II — NOT RUN IN PHASE I
+# No uplift claims are made.
+#
+# This workflow ensures documentation consistency across the codebase,
+# enforcing terminology alignment with VSD_PHASE_2.md and PREREG_UPLIFT_U2.yaml.
+
+name: Documentation Consistency
+
+on:
+  push:
+    branches: [main, mvdp-*]
+    paths:
+      - 'docs/**'
+      - 'experiments/**'
+      - 'backend/**'
+      - 'scripts/**'
+      - 'config/**'
+      - '.github/workflows/doc-consistency.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'experiments/**'
+      - 'backend/**'
+      - 'scripts/**'
+      - 'config/**'
+      - '.github/workflows/doc-consistency.yml'
+
+jobs:
+  doc-sync-scan:
+    name: Documentation Synchronization Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+      
+      - name: Run Documentation Consistency Scanner
+        id: scan
+        run: |
+          python scripts/doc_sync_scanner.py \
+            --root . \
+            --output doc_scan_results.json \
+            --ci-mode \
+            --verbose
+      
+      - name: Upload scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: doc-scan-results
+          path: doc_scan_results.json
+          retention-days: 30
+      
+      - name: Check for errors
+        if: failure()
+        run: |
+          echo "Documentation consistency check failed!"
+          echo "Review doc_scan_results.json for details."
+          exit 1
+
+  term-mapping-check:
+    name: Verify Term Mapping
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Verify PHASE2_TERM_MAPPING.md exists
+        run: |
+          if [ ! -f "docs/PHASE2_TERM_MAPPING.md" ]; then
+            echo "ERROR: docs/PHASE2_TERM_MAPPING.md not found!"
+            exit 1
+          fi
+      
+      - name: Verify mapping file content
+        run: |
+          if ! grep -q "Phase II Terminology Mapping" docs/PHASE2_TERM_MAPPING.md; then
+            echo "ERROR: PHASE2_TERM_MAPPING.md missing required header!"
+            exit 1
+          fi
+          
+          if ! grep -q "PHASE II — NOT RUN IN PHASE I" docs/PHASE2_TERM_MAPPING.md; then
+            echo "ERROR: PHASE2_TERM_MAPPING.md missing Phase II marker!"
+            exit 1
+          fi
+
+  docstring-compliance:
+    name: Docstring Compliance
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Check Phase II markers in key files
+        run: |
+          # Check that experiments/loaders.py has Phase II marker
+          if [ -f "experiments/loaders.py" ]; then
+            if ! grep -q "PHASE II" experiments/loaders.py; then
+              echo "WARNING: experiments/loaders.py may need Phase II marker"
+            fi
+          fi
+          
+          # Check that backend/runner/u2_runner.py has Phase II marker
+          if [ -f "backend/runner/u2_runner.py" ]; then
+            if ! grep -q "PHASE II" backend/runner/u2_runner.py; then
+              echo "WARNING: backend/runner/u2_runner.py may need Phase II marker"
+            fi
+          fi
+
+  doc-sync-tests:
+    name: Documentation Sync Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+      
+      - name: Run doc synchronization tests
+        run: |
+          pytest tests/test_doc_synchronization.py -v -m "not slow" --tb=short
+
+  governance-drift-predict:
+    name: Governance Drift Prediction
+    runs-on: ubuntu-latest
+    # Non-blocking: continues even if prediction finds issues
+    continue-on-error: true
+    needs: [doc-sync-scan]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+      
+      - name: Download scan results
+        uses: actions/download-artifact@v4
+        with:
+          name: doc-scan-results
+          path: artifacts/doc_sync_history/
+      
+      - name: Rename scan artifact for history
+        run: |
+          mkdir -p artifacts/doc_sync_history
+          if [ -f "artifacts/doc_sync_history/doc_scan_results.json" ]; then
+            mv artifacts/doc_sync_history/doc_scan_results.json \
+               artifacts/doc_sync_history/doc_scan_$(date +%Y%m%d_%H%M%S).json
+          fi
+      
+      - name: Run Governance Drift Predictor
+        id: predict
+        run: |
+          python scripts/doc_sync_predictor.py \
+            --history-dir artifacts/doc_sync_history \
+            --output governance_drift_forecast.json \
+            --verbose \
+            --ci-mode
+      
+      - name: Upload drift forecast
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-forecast
+          path: governance_drift_forecast.json
+          retention-days: 30
+      
+      - name: Report drift summary
+        if: always()
+        run: |
+          if [ -f "governance_drift_forecast.json" ]; then
+            echo "=== Drift Forecast Summary ==="
+            python -c "
+import json
+with open('governance_drift_forecast.json') as f:
+    data = json.load(f)
+print(f'Forecast ID: {data.get(\"forecast_id\", \"N/A\")[:16]}...')
+print(f'High-risk files: {data.get(\"high_risk_file_count\", 0)}')
+print(f'Trend: {data.get(\"trending_violations\", \"unknown\")}')
+print(f'Total drift magnitude: {data.get(\"total_drift_magnitude\", 0):.2f}')
+"
+          fi
+
+  lint-pr-description:
+    name: Lint PR Description
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+      
+      - name: Get PR description
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            const fs = require('fs');
+            fs.writeFileSync('pr_description.txt', pr.data.body || '');
+            return pr.data.body || '';
+      
+      - name: Lint PR description
+        run: |
+          if [ -f "pr_description.txt" ]; then
+            python scripts/doc_sync_predictor.py --lint-pr pr_description.txt || true
+          fi
+
+  drift-prediction-tests:
+    name: Drift Prediction Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+      
+      - name: Run drift prediction tests
+        run: |
+          pytest tests/test_doc_drift_predictor.py -v -m "not slow" --tb=short
+
+  governance-drift-radar:
+    name: Governance Drift Radar
+    runs-on: ubuntu-latest
+    # Informational only - never fails CI
+    continue-on-error: true
+    needs: [doc-sync-scan]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for term timeline
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+      
+      - name: Download scan results
+        uses: actions/download-artifact@v4
+        with:
+          name: doc-scan-results
+          path: artifacts/doc_sync_history/
+      
+      - name: Prepare scan history
+        run: |
+          mkdir -p artifacts/doc_sync_history
+          if [ -f "artifacts/doc_sync_history/doc_scan_results.json" ]; then
+            mv artifacts/doc_sync_history/doc_scan_results.json \
+               artifacts/doc_sync_history/doc_scan_$(date +%Y%m%d_%H%M%S).json
+          fi
+      
+      - name: Run Drift Radar
+        id: radar
+        run: |
+          python scripts/doc_sync_predictor.py \
+            --radar \
+            --history-dir artifacts/doc_sync_history \
+            --top-k 5
+      
+      - name: Export Vocabulary Index
+        run: |
+          python scripts/doc_sync_predictor.py --export-vocab-index
+      
+      - name: Generate Governance Watch List
+        run: |
+          python scripts/doc_sync_predictor.py \
+            --watch-list \
+            --stability-threshold 0.6 \
+            --history 50
+      
+      - name: Upload governance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-radar
+          path: |
+            artifacts/governance/drift_forecast.json
+            artifacts/governance/drift_radar_summary.json
+            artifacts/governance/governance_vocabulary_index.json
+            artifacts/governance/governance_watch_list.json
+            artifacts/governance/term_stability_profile.json
+          retention-days: 30
+      
+      - name: Print Radar Summary
+        if: always()
+        run: |
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════════════╗"
+          echo "║              GOVERNANCE DRIFT RADAR SUMMARY                      ║"
+          echo "╚══════════════════════════════════════════════════════════════════╝"
+          echo ""
+          if [ -f "artifacts/governance/drift_radar_summary.json" ]; then
+            python -c "
+import json
+with open('artifacts/governance/drift_radar_summary.json') as f:
+    data = json.load(f)
+print(data.get('message', 'No radar message'))
+print()
+print(f'Radar ID: {data.get(\"radar_id\", \"N/A\")}')
+print(f'High-risk files: {data.get(\"high_risk_file_count\", 0)}')
+print(f'Overall trend: {data.get(\"overall_trend\", \"unknown\")}')
+if data.get('top_risk_files'):
+    print()
+    print('Top risk files:')
+    for f in data['top_risk_files'][:3]:
+        print(f'  - {f[\"file\"]}: risk={f[\"risk\"]}, trend={f[\"trend\"]}')
+"
+          else
+            echo "Radar summary not generated (insufficient history)"
+          fi
+          echo ""
+          echo "See artifacts/governance/ for full details."
+      
+      - name: Write GitHub Step Summary
+        if: always()
+        run: |
+          echo "## 📡 Governance Drift Radar" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Radar summary
+          if [ -f "artifacts/governance/drift_radar_summary.json" ]; then
+            python -c "
+import json
+with open('artifacts/governance/drift_radar_summary.json') as f:
+    data = json.load(f)
+print('### Drift Summary')
+print(f'- **Radar ID:** \`{data.get(\"radar_id\", \"N/A\")}\`')
+print(f'- **High-risk files:** {data.get(\"high_risk_file_count\", 0)}')
+print(f'- **Overall trend:** {data.get(\"overall_trend\", \"unknown\")}')
+" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Watch list - Top 5 volatile terms
+          if [ -f "artifacts/governance/governance_watch_list.json" ]; then
+            python -c "
+import json
+with open('artifacts/governance/governance_watch_list.json') as f:
+    data = json.load(f)
+
+print('### ⚠️ Top 5 Volatile Terms')
+print('')
+top_5 = data.get('top_5_volatile', [])
+if top_5:
+    print('| Term | Stability | Risk Level |')
+    print('|------|-----------|------------|')
+    entries = data.get('entries', [])
+    for term in top_5[:5]:
+        entry = next((e for e in entries if e['term'] == term), None)
+        if entry:
+            risk_badge = {'critical': '🔴', 'high': '🟠', 'moderate': '🟡', 'low': '🟢'}.get(entry['risk_level'], '⚪')
+            print(f\"| \`{term}\` | {entry['stability_score']:.2f} | {risk_badge} {entry['risk_level']} |\")
+else:
+    print('✅ All governance terms are stable!')
+print('')
+print(f'**Watch count:** {data.get(\"watch_count\", 0)} terms below threshold')
+" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⚠️ Top 5 Volatile Terms" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Watch list not generated." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*See governance artifacts for full details.*" >> $GITHUB_STEP_SUMMARY

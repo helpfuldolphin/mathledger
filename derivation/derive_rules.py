@@ -5,13 +5,71 @@ Provides:
 - ProofContext dataclass for proof metadata
 - Rule definitions for derivation
 - Tautology recognition patterns
+- TautologyResult for structured verification outcomes
 """
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import List, Optional
+
+
+class TautologyVerdict(Enum):
+    """Verdict for tautology checking."""
+    TAUTOLOGY = "tautology"
+    NOT_TAUTOLOGY = "not_tautology"
+    ABSTAIN = "abstain"
+    TIMEOUT = "timeout"
+    ERROR = "error"
+
+
+@dataclass
+class TautologyResult:
+    """
+    Structured result from tautology verification.
+
+    Attributes:
+        verdict: The verification verdict (TAUTOLOGY, NOT_TAUTOLOGY, ABSTAIN, etc.)
+        method: The method used for verification (e.g., 'pattern', 'truth_table')
+        duration_ms: Time taken for verification in milliseconds
+        formula: The formula that was checked
+        error_message: Error message if verdict is ERROR
+    """
+    verdict: TautologyVerdict
+    method: str = "unknown"
+    duration_ms: float = 0.0
+    formula: str = ""
+    error_message: Optional[str] = None
+
+    @property
+    def is_tautology(self) -> bool:
+        """True if the formula was verified as a tautology."""
+        return self.verdict == TautologyVerdict.TAUTOLOGY
+
+    @property
+    def is_not_tautology(self) -> bool:
+        """True if the formula was verified as not a tautology."""
+        return self.verdict == TautologyVerdict.NOT_TAUTOLOGY
+
+    @property
+    def is_abstain(self) -> bool:
+        """True if verification abstained (timeout, error, etc.)."""
+        return self.verdict in (TautologyVerdict.ABSTAIN, TautologyVerdict.TIMEOUT, TautologyVerdict.ERROR)
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary for serialization."""
+        return {
+            "verdict": self.verdict.value,
+            "method": self.method,
+            "duration_ms": self.duration_ms,
+            "formula": self.formula,
+            "error_message": self.error_message,
+            "is_tautology": self.is_tautology,
+            "is_not_tautology": self.is_not_tautology,
+            "is_abstain": self.is_abstain,
+        }
 
 
 @dataclass
@@ -76,37 +134,69 @@ def is_known_tautology(norm: str) -> bool:
     return any(r.match(norm) for r in KNOWN_TAUTOLOGY_RE)
 
 
-def is_tautology_with_timeout(norm: str, timeout_ms: int = 5) -> bool:
+def is_tautology_with_timeout(norm: str, timeout_ms: int = 5) -> TautologyResult:
     """
     Fast check for tautology with timeout for slow path.
-    
+
     Args:
         norm: Normalized formula string
         timeout_ms: Timeout in milliseconds for slow verification
-        
+
     Returns:
-        True if tautology, False otherwise or on timeout
+        TautologyResult with verification outcome
     """
-    from substrate.repro.determinism import deterministic_unix_timestamp
-    
+    import time
+    start_time = time.perf_counter()
+
     # Instant check for known schemata
     if is_known_tautology(norm):
-        return True
+        elapsed_ms = (time.perf_counter() - start_time) * 1000
+        return TautologyResult(
+            verdict=TautologyVerdict.TAUTOLOGY,
+            method="pattern",
+            duration_ms=elapsed_ms,
+            formula=norm,
+        )
 
     # Bounded slow path with timeout
     try:
         from normalization.truthtab import is_tautology as slow_tauto
-        
-        start_time = deterministic_unix_timestamp(0)
+
         result = bool(slow_tauto(norm))
-        elapsed_ms = (deterministic_unix_timestamp(0) - start_time) * 1000
-        
+        elapsed_ms = (time.perf_counter() - start_time) * 1000
+
         if elapsed_ms > timeout_ms:
-            # Timeout hit, skip this candidate
-            return False
-        return result
-    except Exception:
-        return False
+            # Timeout hit
+            return TautologyResult(
+                verdict=TautologyVerdict.TIMEOUT,
+                method="truth_table",
+                duration_ms=elapsed_ms,
+                formula=norm,
+            )
+
+        if result:
+            return TautologyResult(
+                verdict=TautologyVerdict.TAUTOLOGY,
+                method="truth_table",
+                duration_ms=elapsed_ms,
+                formula=norm,
+            )
+        else:
+            return TautologyResult(
+                verdict=TautologyVerdict.NOT_TAUTOLOGY,
+                method="truth_table",
+                duration_ms=elapsed_ms,
+                formula=norm,
+            )
+    except Exception as e:
+        elapsed_ms = (time.perf_counter() - start_time) * 1000
+        return TautologyResult(
+            verdict=TautologyVerdict.ERROR,
+            method="truth_table",
+            duration_ms=elapsed_ms,
+            formula=norm,
+            error_message=str(e),
+        )
 
 
 @dataclass

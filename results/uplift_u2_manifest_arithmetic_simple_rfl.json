@@ -1,0 +1,26 @@
+{
+  "label": "PHASE II \u2014 NOT USED IN PHASE I",
+  "slice": "arithmetic_simple",
+  "mode": "rfl",
+  "cycles": 10,
+  "initial_seed": 42,
+  "slice_config_hash": "a372591d1c50cabe39fb7af1022c5201882a32087f1c6872770694388c620e25",
+  "prereg_hash": "d8e8fca2dc0f896fd7cb4cb0031ba249",
+  "ht_series_hash": "cd56434691602958f00b33ef8831c9099559be6f087c9ac5573045b7aec170ac",
+  "deterministic_seed_schedule": [
+    2746317213,
+    1181241943,
+    958682846,
+    3163119785,
+    1812140441,
+    127978094,
+    939042955,
+    2340505846,
+    946785248,
+    2530876844
+  ],
+  "outputs": {
+    "results": "results\\uplift_u2_arithmetic_simple_rfl.jsonl",
+    "manifest": "results\\uplift_u2_manifest_arithmetic_simple_rfl.json"
+  }
+}

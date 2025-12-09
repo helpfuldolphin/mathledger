@@ -1,0 +1,14 @@
+{
+  "average_drift_per_term": 0.0,
+  "drift_vectors": [],
+  "forecast_id": "insufficient_data",
+  "generated_at": "2025-01-01T00:00:00Z",
+  "high_risk_file_count": 0,
+  "high_risk_files": [],
+  "input_scan_count": 0,
+  "predicted_next_violations": {},
+  "schema_mismatch_deltas": {},
+  "term_hotspots": {},
+  "total_drift_magnitude": 0.0,
+  "trending_violations": "insufficient_data"
+}

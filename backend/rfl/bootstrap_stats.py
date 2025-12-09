@@ -8,6 +8,7 @@ import warnings
 
 from rfl.bootstrap_stats import (  # noqa: F401
     BootstrapResult,
+    bootstrap_bca,
     bootstrap_percentile,
     compute_coverage_ci,
     compute_uplift_ci,
@@ -22,6 +23,7 @@ warnings.warn(
 
 __all__ = [
     "BootstrapResult",
+    "bootstrap_bca",
     "bootstrap_percentile",
     "compute_coverage_ci",
     "compute_uplift_ci",

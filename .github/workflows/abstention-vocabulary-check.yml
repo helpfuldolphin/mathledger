@@ -1,0 +1,256 @@
+# Abstention Vocabulary Drift Check
+# 
+# This workflow ensures no drift in the abstention vocabulary across
+# rfl/, derivation/, and experiments/ directories.
+#
+# INVARIANTS ENFORCED:
+#   INV-TAX-1: No drift across layers
+#   INV-TAX-2: All abstention vocabularies collapse to canonical system
+#   INV-TAX-3: Serializers stable and forward-compatible
+#
+# PHASE II — VERIFICATION ZONE
+# Agent B6 (abstention-ops-6)
+
+name: Abstention Vocabulary Check
+
+on:
+  push:
+    branches: [main, mvdp-*]
+    paths:
+      - 'rfl/**'
+      - 'derivation/**'
+      - 'experiments/**'
+      - 'backend/metrics/**'
+      - 'backend/verification/**'
+      - 'scripts/check_abstention_vocabulary.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'rfl/**'
+      - 'derivation/**'
+      - 'experiments/**'
+      - 'backend/metrics/**'
+      - 'backend/verification/**'
+      - 'scripts/check_abstention_vocabulary.py'
+
+jobs:
+  vocabulary-check:
+    name: Abstention Vocabulary Drift Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      
+      - name: Install dependencies
+        run: uv sync --frozen
+      
+      - name: Run vocabulary drift check
+        run: |
+          uv run python scripts/check_abstention_vocabulary.py --strict --json > abstention-report.json
+          echo "=== ABSTENTION VOCABULARY REPORT ==="
+          cat abstention-report.json
+      
+      - name: Validate semantic tree completeness
+        run: |
+          uv run python -c "
+          from rfl.verification.abstention_semantics import verify_tree_completeness
+          uncovered = verify_tree_completeness()
+          if uncovered:
+              print(f'ERROR: Semantic tree missing types: {uncovered}')
+              exit(1)
+          print('✅ Semantic tree covers all AbstentionType values')
+          "
+      
+      - name: Export governance semantics
+        run: |
+          uv run python -c "
+          from rfl.verification.abstention_semantics import export_semantics
+          out_path = export_semantics('artifacts/abstention_semantics.json')
+          print(f'✅ Exported governance semantics to {out_path}')
+          "
+      
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: abstention-vocabulary-report
+          path: |
+            abstention-report.json
+            artifacts/abstention_semantics.json
+          retention-days: 30
+      
+      - name: Check for unknown keys
+        run: |
+          uv run python -c "
+          import json
+          with open('abstention-report.json') as f:
+              report = json.load(f)
+          unknown = report.get('unknown_keys', [])
+          if unknown:
+              print(f'❌ FAILED: Unknown abstention keys detected: {unknown}')
+              exit(1)
+          print(f'✅ All {report[\"known_matches\"]} abstention keys are canonical')
+          "
+
+  # Dedicated test job for abstention taxonomy
+  taxonomy-tests:
+    name: Abstention Taxonomy Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      
+      - name: Install dependencies
+        run: uv sync --frozen
+      
+      - name: Run taxonomy tests
+        run: |
+          uv run pytest tests/rfl/test_abstention_taxonomy.py tests/rfl/test_abstention_semantics.py -v --tb=short
+      
+      - name: Verify determinism
+        run: |
+          # Run classification twice and ensure identical results
+          uv run python -c "
+          from rfl.verification import classify_verification_method, classify_breakdown_key
+          
+          methods = ['lean-disabled', 'lean-timeout', 'lean-error', 'truth-table-error']
+          keys = ['timeout', 'engine_failure', 'empty_run', 'budget_exceeded']
+          
+          for _ in range(2):
+              for m in methods:
+                  result = classify_verification_method(m)
+                  assert result is not None, f'Method {m} should classify'
+              for k in keys:
+                  result = classify_breakdown_key(k)
+                  assert result is not None, f'Key {k} should classify'
+          
+          print('✅ Classification is deterministic')
+          "
+
+  # No-silent-taxonomy-bump guard
+  taxonomy-version-guard:
+    name: Taxonomy Version Guard
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      
+      - name: Install dependencies
+        run: uv sync --frozen
+      
+      - name: Check taxonomy version consistency
+        run: |
+          # Check if exported semantics file exists
+          if [ -f "artifacts/abstention_semantics.json" ]; then
+            echo "Found existing semantics export, checking for silent changes..."
+            uv run python scripts/check_taxonomy_version.py --export artifacts/abstention_semantics.json
+          else
+            echo "No existing semantics export found, generating baseline..."
+            mkdir -p artifacts
+            uv run python -c "from rfl.verification.abstention_semantics import export_semantics; export_semantics('artifacts/abstention_semantics.json')"
+            echo "✅ Generated baseline semantics export"
+          fi
+      
+      - name: Display taxonomy version
+        run: |
+          uv run python -c "
+          from rfl.verification import get_taxonomy_version
+          print(f'Current taxonomy version: {get_taxonomy_version()}')
+          "
+
+  # Breaking change acknowledgment guard
+  breaking-change-guard:
+    name: Breaking Change Acknowledgment Guard
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      
+      - name: Install dependencies
+        run: uv sync --frozen
+      
+      - name: Check for breaking taxonomy changes
+        env:
+          UPDATE_TAXONOMY_ACK: ${{ vars.UPDATE_TAXONOMY_ACK || '' }}
+        run: |
+          # Check if exported semantics file exists
+          if [ -f "artifacts/abstention_semantics.json" ]; then
+            echo "Checking for breaking changes..."
+            
+            # Generate current semantics
+            uv run python -c "from rfl.verification.abstention_semantics import export_semantics; export_semantics('artifacts/current_semantics.json')"
+            
+            # Run governance CI check
+            uv run python scripts/taxonomy_governance.py ci-check \
+              --old artifacts/abstention_semantics.json \
+              --new artifacts/current_semantics.json
+          else
+            echo "No existing semantics export found, skipping breaking change check..."
+          fi
+      
+      - name: Generate governance report
+        if: always()
+        run: |
+          if [ -f "artifacts/abstention_semantics.json" ] && [ -f "artifacts/current_semantics.json" ]; then
+            uv run python scripts/taxonomy_governance.py report \
+              --old artifacts/abstention_semantics.json \
+              --new artifacts/current_semantics.json \
+              --output artifacts/taxonomy_change_report.md
+            
+            echo "### Taxonomy Change Report" >> $GITHUB_STEP_SUMMARY
+            cat artifacts/taxonomy_change_report.md >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Upload governance report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: taxonomy-governance-report
+          path: artifacts/taxonomy_change_report.md
+          retention-days: 30
+          if-no-files-found: ignore
+

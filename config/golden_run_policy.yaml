@@ -1,0 +1,22 @@
+# Golden Run Policy Spec v1.0.0
+# Describe the authoritative list of experiments that must maintain golden runs.
+# Each entry defines the artifacts used for validation and the number of
+# deterministic replays required per experiment (usually 1 canonical seed).
+schema_version: 1.0.0
+golden_runs:
+  - name: u2_arithmetic_simple_baseline
+    description: "Phase II U2 baseline slice with canonical ordering seed."
+    runs_required: 1
+    runs:
+      - receipt: artifacts/golden_runs/u2_arithmetic_simple_baseline.json
+        ht_log: results/uplift_u2_arithmetic_simple_baseline.jsonl
+        trace_log: traces/u2_arithmetic_simple_baseline.jsonl
+        metrics: artifacts/u2_arithmetic_simple_baseline_metrics.json
+  - name: u2_arithmetic_simple_rfl
+    description: "Phase II U2 RFL slice canonical golden run."
+    runs_required: 1
+    runs:
+      - receipt: artifacts/golden_runs/u2_arithmetic_simple_rfl.json
+        ht_log: results/uplift_u2_arithmetic_simple_rfl.jsonl
+        trace_log: traces/u2_arithmetic_simple_rfl.jsonl
+        metrics: artifacts/u2_arithmetic_simple_rfl_metrics.json

@@ -20,6 +20,17 @@ dependencies = [
   "scikit-learn==1.4.0",
   "coverage==7.4.1",
   "jcs>=0.2.1",
+  # TDA Mind Scanner dependencies (Phase V - Operation CORTEX)
+  "networkx>=3.2.0",
+  "scipy>=1.12.0",
+  "ripser>=0.6.4",
+  "persim>=0.3.2",
+]
+
+[project.optional-dependencies]
+# GUDHI is optional - requires separate installation on some platforms
+tda-full = [
+  "gudhi>=3.9.0",
 ]
 
 [tool.uv]  # lets `uv run` know this is a project

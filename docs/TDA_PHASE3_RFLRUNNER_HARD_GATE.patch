@@ -1,0 +1,314 @@
+--- a/rfl/runner.py
++++ b/rfl/runner.py
+@@ -16,6 +16,7 @@ import numpy as np
+ from typing import List, Dict, Any, Optional, Sequence
+ from pathlib import Path
+ from datetime import datetime
++from enum import Enum
+
+ # TDA Mind Scanner integration (Phase II/III)
+ from typing import TYPE_CHECKING
+@@ -24,6 +25,42 @@ if TYPE_CHECKING:
+     from backend.tda.reference_profile import ReferenceTDAProfile
+
+
++# ============================================================================
++# Phase III: ProofOutcome Enumeration
++# ============================================================================
++
++class ProofOutcome(Enum):
++    """
++    Outcome of a proof/attestation processing attempt.
++
++    Phase III introduces ABANDONED_TDA for TDA hard gate blocks.
++    """
++    PROCESSED = "processed"
++    SKIPPED = "skipped"
++    ERROR = "error"
++    ABANDONED_TDA = "abandoned_tda"  # Phase III: TDA hard gate block
++
++    def allows_policy_update(self) -> bool:
++        """Returns True if this outcome allows policy updates."""
++        return self == ProofOutcome.PROCESSED
++
++    def is_blocked(self) -> bool:
++        """Returns True if blocked by TDA hard gate."""
++        return self == ProofOutcome.ABANDONED_TDA
++
++
++# ============================================================================
++# Phase II: HSS → Learning Rate Modulation (from Phase II patch)
++# ============================================================================
++
++@dataclass
++class TDAModulationConfig:
++    """Configuration for HSS-based learning rate modulation."""
++    enabled: bool = True
++    theta_warn: float = 0.5
++    theta_block: float = 0.2
++    lambda_soft: float = 0.3
++    skip_on_block: bool = True
++
++    def compute_modulation_factor(self, hss: float) -> float:
++        if hss >= self.theta_warn:
++            return 1.0
++        elif hss >= self.theta_block:
++            return self.lambda_soft
++        else:
++            return 0.0 if self.skip_on_block else self.lambda_soft
++
++    def classify_hss(self, hss: float) -> str:
++        if hss >= self.theta_warn:
++            return "OK"
++        elif hss >= self.theta_block:
++            return "WARN"
++        else:
++            return "SOFT_BLOCK"
++
++
+ from .config import RFLConfig, CurriculumSlice
+ from .experiment import RFLExperiment, ExperimentResult
+ @@ -76,6 +113,20 @@ class RunLedgerEntry:
+     tda_pcs: Optional[float] = None
+     tda_drs: Optional[float] = None
+     tda_signal: Optional[str] = None
++    # Phase II: Learning rate modulation
++    eta_base: Optional[float] = None
++    eta_eff: Optional[float] = None
++    hss_class: Optional[str] = None
++    # Phase III: Hard Gate Fields
++    tda_outcome: Optional[str] = None  # "OK", "WARN", "BLOCK", "ABANDONED"
++    tda_gate_enforced: bool = False
++    tda_pipeline_hash: Optional[str] = None
++    lean_submission_avoided: bool = False
++    policy_update_avoided: bool = False
++
++
++from substrate.bridge.context import AttestedRunContext
+
+
+@@ -87,6 +138,9 @@ class RflResult:
+     abstention_mass_delta: float
+     step_id: str
+     ledger_entry: Optional[RunLedgerEntry] = None
++    # Phase III: Outcome tracking
++    outcome: Optional[ProofOutcome] = None
++    tda_gate_enforced: bool = False
+
+
+ class RFLRunner:
+@@ -160,6 +214,21 @@ class RFLRunner:
+         self.tda_profiles: Dict[str, "ReferenceTDAProfile"] = {}
+         self._tda_results: List[Dict[str, Any]] = []
+         self._init_tda_monitor()
+
++        # Phase II: HSS → Learning Rate Modulation
++        self.tda_modulation = TDAModulationConfig()
++        self._modulation_stats: Dict[str, int] = {"OK": 0, "WARN": 0, "SOFT_BLOCK": 0}
++        self._learning_skipped_count: int = 0
++        self._eta_history: List[Dict[str, float]] = []
++
++        # Phase III: Hard Gate Configuration
++        self._tda_hard_gate_enabled: bool = False
++        self._tda_pipeline_hash: Optional[str] = None
++        self._hard_gate_stats: Dict[str, int] = {
++            "blocked_count": 0,
++            "lean_submissions_avoided": 0,
++            "policy_updates_avoided": 0,
++        }
++        self._init_phase3_config()
+
+     def _init_tda_monitor(self) -> None:
+         """Initialize TDA monitor if available and configured."""
+@@ -181,6 +250,30 @@ class RFLRunner:
+         except ImportError:
+             logger.debug("[TDA] TDA module not available, skipping initialization")
+
++    def _init_phase3_config(self) -> None:
++        """Initialize Phase III hard gate configuration."""
++        import os
++        tda_mode = os.getenv("MATHLEDGER_TDA_MODE", "soft")
++
++        if tda_mode == "hard":
++            self._tda_hard_gate_enabled = True
++            logger.info("[TDA] Phase III Hard Gate ENABLED")
++
++        # Compute pipeline hash for attestation binding
++        if self.tda_monitor is not None:
++            try:
++                from backend.tda.governance import compute_tda_pipeline_hash
++                self._tda_pipeline_hash = compute_tda_pipeline_hash(
++                    self.tda_monitor.cfg,
++                    self.tda_profiles,
++                )
++                logger.info(f"[TDA] Pipeline hash: {self._tda_pipeline_hash[:16]}...")
++            except Exception as e:
++                logger.warning(f"[TDA] Failed to compute pipeline hash: {e}")
++
++    def _should_apply_hard_gate(self) -> bool:
++        """Check if Phase III hard gate should be applied."""
++        if self.tda_monitor is None:
++            return False
++        if not self._tda_hard_gate_enabled:
++            return False
++        from backend.tda.runtime_monitor import TDAOperationalMode
++        return self.tda_monitor.cfg.mode == TDAOperationalMode.HARD
+
+     def run_with_attestation(
+         self,
+@@ -565,6 +658,35 @@ class RFLRunner:
+         tda_result = self._evaluate_tda_for_attestation(attestation)
+         tda_hss = tda_result.get("hss") if tda_result else None
+
++        # --- Phase III: Hard Gate Check ---
++        if self._should_apply_hard_gate() and tda_result:
++            from backend.tda.runtime_monitor import TDAMonitorResult, TDAGatingSignal
++
++            # Reconstruct result for should_block check
++            monitor_result = TDAMonitorResult(
++                hss=tda_result.get("hss", 0.5),
++                sns=tda_result.get("sns", 0.0),
++                pcs=tda_result.get("pcs", 0.0),
++                drs=tda_result.get("drs", 0.0),
++                signal=TDAGatingSignal(tda_result.get("signal", "OK")),
++                block=tda_result.get("block", False),
++                warn=tda_result.get("warn", False),
++            )
++
++            if self.tda_monitor.should_block(monitor_result):
++                # ABANDON: No policy update, no further processing
++                self._hard_gate_stats["blocked_count"] += 1
++                self._hard_gate_stats["policy_updates_avoided"] += 1
++                self._learning_skipped_count += 1
++
++                return self._build_abandoned_result(
++                    attestation,
++                    tda_result,
++                    step_id,
++                    reason=f"TDA hard gate: HSS={tda_hss:.3f} < threshold",
++                )
++
+         # --- Phase II: Learning Rate Modulation ---
+         eta_base = 0.1  # Base learning rate
+         eta_eff, hss_class, learning_allowed = self._compute_modulated_learning_rate(
+@@ -761,6 +883,58 @@ class RFLRunner:
+
+         return result
+
++    # =========================================================================
++    # Phase III: Hard Gate Enforcement
++    # =========================================================================
++
++    def _build_abandoned_result(
++        self,
++        attestation: Any,
++        tda_result: Dict[str, Any],
++        step_id: str,
++        reason: str,
++    ) -> RflResult:
++        """Build result for TDA hard gate abandoned attestation."""
++        ledger_entry = RunLedgerEntry(
++            run_id=step_id[:16],
++            slice_name=attestation.slice_id if hasattr(attestation, 'slice_id') else "unknown",
++            status="abandoned_tda",
++            coverage_rate=0.0,
++            novelty_rate=0.0,
++            throughput=0.0,
++            success_rate=0.0,
++            abstention_fraction=0.0,
++            policy_reward=0.0,
++            symbolic_descent=0.0,
++            budget_spent=0,
++            derive_steps=0,
++            max_breadth=0,
++            max_total=0,
++            # TDA fields
++            tda_hss=tda_result.get("hss"),
++            tda_sns=tda_result.get("sns"),
++            tda_pcs=tda_result.get("pcs"),
++            tda_drs=tda_result.get("drs"),
++            tda_signal=tda_result.get("signal"),
++            tda_outcome="ABANDONED",
++            tda_gate_enforced=True,
++            tda_pipeline_hash=self._tda_pipeline_hash,
++            lean_submission_avoided=True,
++            policy_update_avoided=True,
++            eta_base=0.1,
++            eta_eff=0.0,
++            hss_class="HARD_BLOCK",
++        )
++
++        self.policy_ledger.append(ledger_entry)
++
++        return RflResult(
++            policy_update_applied=False,
++            source_root=attestation.root_hash if hasattr(attestation, 'root_hash') else "",
++            abstention_mass_delta=0.0,
++            step_id=step_id,
++            ledger_entry=ledger_entry,
++            outcome=ProofOutcome.ABANDONED_TDA,
++            tda_gate_enforced=True,
++        )
++
++    def get_hard_gate_stats(self) -> Dict[str, Any]:
++        """Get Phase III hard gate statistics."""
++        return {
++            "blocked_count": self._hard_gate_stats["blocked_count"],
++            "lean_submissions_avoided": self._hard_gate_stats.get("lean_submissions_avoided", 0),
++            "policy_updates_avoided": self._hard_gate_stats["policy_updates_avoided"],
++            "tda_pipeline_hash": self._tda_pipeline_hash,
++            "hard_gate_enabled": self._tda_hard_gate_enabled,
++        }
++
+     # =========================================================================
+     # Phase II: HSS → Learning Rate Modulation
+     # =========================================================================
+@@ -860,6 +1034,11 @@ class RFLRunner:
+             "min_hss": float(np.min(hss_values)) if hss_values else None,
+             "max_hss": float(np.max(hss_values)) if hss_values else None,
+         }
++        # Add Phase II/III stats
++        summary["modulation"] = self.get_modulation_stats()
++        summary["hard_gate"] = self.get_hard_gate_stats()
++        summary["governance"] = self._compute_governance_summary()
++        return summary
+
++    def _compute_governance_summary(self) -> Dict[str, Any]:
++        """Compute Phase III governance summary."""
++        if not self._tda_results:
++            return {"governance_signal": "HEALTHY", "structural_health": 1.0}
++
++        try:
++            from backend.tda.governance import summarize_tda_for_global_health
++            from backend.tda.runtime_monitor import TDAMonitorResult, TDAGatingSignal
++
++            results = []
++            for r in self._tda_results:
++                results.append(TDAMonitorResult(
++                    hss=r.get("hss", 0.5),
++                    sns=r.get("sns", 0.0),
++                    pcs=r.get("pcs", 0.0),
++                    drs=r.get("drs", 0.0),
++                    signal=TDAGatingSignal(r.get("signal", "OK")),
++                    block=r.get("block", False),
++                    warn=r.get("warn", False),
++                ))
++
++            return summarize_tda_for_global_health(results, self.tda_monitor.cfg)
++        except Exception as e:
++            logger.warning(f"[TDA] Failed to compute governance summary: {e}")
++            return {"governance_signal": "UNKNOWN", "error": str(e)}
+
+     def _export_results(self) -> Dict[str, Any]:
+         """
+@@ -920,6 +1099,12 @@ class RFLRunner:
+             "tda_shadow": {
+                 "summary": self.get_tda_summary(),
+             }
++            "tda_phase3": {
++                "hard_gate_stats": self.get_hard_gate_stats(),
++                "governance_summary": self._compute_governance_summary(),
++                "pipeline_hash": self._tda_pipeline_hash,
++                "modulation_stats": self.get_modulation_stats(),
++            },
+         }

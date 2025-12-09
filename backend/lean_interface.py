@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import html
 import re
-from typing import Optional
+from typing import Literal, Optional
 
 from normalization.canon import normalize, normalize_pretty
 
@@ -53,6 +53,88 @@ class LeanStatement:
 
     def is_empty(self) -> bool:
         return not self.canonical
+
+
+# Structured Lean failure telemetry -----------------------------------------
+
+LeanFailureKind = Literal["timeout", "type_error", "tactic_failure", "unknown"]
+
+
+@dataclass(frozen=True, slots=True)
+class LeanFailureSignal:
+    """
+    Structured metadata describing why Lean failed to verify a goal.
+
+    kind:
+        timeout         - Lean exceeded its timeout or returned code 124.
+        type_error      - Lean reported a type mismatch or elaboration failure.
+        tactic_failure  - Lean reached tactic failure / unsolved goals.
+        unknown         - Could not classify the stderr payload.
+
+    message:
+        Short, canonicalized description of the failure (first stderr line).
+
+    elapsed_ms:
+        Wall-clock duration (in milliseconds) for the Lean attempt.
+    """
+
+    kind: LeanFailureKind
+    message: str
+    elapsed_ms: int
+
+
+_TIMEOUT_HINTS = (
+    "timeout",
+    "time out",
+    "timed out",
+    "execution exceeded",
+    "[timeout]",
+)
+_TYPE_ERROR_HINTS = (
+    "type mismatch",
+    "type expected",
+    "has type",
+    "failed to synthesize type",
+    "invalid type",
+)
+_TACTIC_FAILURE_HINTS = (
+    "tactic failed",
+    "no goals to be solved",
+    "unsolved goals",
+    "state space search failed",
+)
+
+
+def classify_lean_failure(
+    stderr: Optional[str],
+    returncode: int,
+    elapsed_ms: int,
+) -> LeanFailureSignal:
+    """
+    Map Lean stderr text + return code into a LeanFailureSignal.
+
+    Args:
+        stderr: Raw stderr captured from Lean/lake build.
+        returncode: Process return code.
+        elapsed_ms: Execution duration (milliseconds) for observability.
+    """
+    text = (stderr or "").strip()
+    normalized = text.lower()
+
+    kind: LeanFailureKind = "unknown"
+
+    if returncode == 124 or any(hint in normalized for hint in _TIMEOUT_HINTS):
+        kind = "timeout"
+    elif any(hint in normalized for hint in _TYPE_ERROR_HINTS):
+        kind = "type_error"
+    elif any(hint in normalized for hint in _TACTIC_FAILURE_HINTS):
+        kind = "tactic_failure"
+
+    if not text:
+        text = f"lean return code {returncode}"
+
+    first_line = text.splitlines()[0]
+    return LeanFailureSignal(kind=kind, message=first_line, elapsed_ms=elapsed_ms)
 
 
 def _decode_unicode_escapes(text: str) -> str:

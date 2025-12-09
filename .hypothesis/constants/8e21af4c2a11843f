@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\substrate\dag\proof_dag.py
+# hypothesis_version: 6.148.2
+
+['%s', ',', ',\n                ', ', ', '0', 'NULL::BIGINT', 'NULL::TEXT', 'Proof DAG valid', 'canonical_hash', 'child', 'child_hash', 'child_hash_mismatch', 'child_statement_id', 'children_with_hashes', 'children_with_ids', 'count', 'cycle_nodes', 'db_duplicate_edges', 'db_missing_children', 'db_missing_parents', 'db_missing_proofs', 'duplicate_edges', 'duplicate_edges_db', 'edge_count', 'edge_index', 'hash', 'hash_a', 'hash_b', 'incomplete_edge', 'issues', 'metrics', 'missing', 'missing_children', 'missing_parents', 'missing_proofs', 'node_count', 'ok', 'p.statement_id', 'parent', 'parent_hash', 'parent_hash_mismatch', 'parent_statement_id', 'parents_with_hashes', 'parents_with_ids', 'pp.child_hash', 'pp.edge_index', 'pp.parent_hash', 'pp.proof_id', 'proof_id', 'proof_parents', 'proofs', 'self_loops', 'statement_id', 'statements', 'summary', 'utf-8']

@@ -1,0 +1,4 @@
+# file: C:\dev\mathledger\derivation\derive_rules.py
+# hypothesis_version: 6.148.2
+
+[5000, '([a-z])', '->', '/\\', '/\\\\', 'AND', 'IMPLIES', 'KNOWN_TAUTOLOGY_RE', 'NOT', 'OR', 'ProofContext', 'ProofResult', 'RULE_AXIOM', 'RULE_DERIVED', 'RULE_MODUS_PONENS', 'RULE_SMOKE_PL', 'TautologyResult', 'TautologyVerdict', 'TruthTableTimeout', '\\/', 'abstain_error', 'abstain_timeout', 'axiom', 'dependencies', 'derivation_rule', 'derived', 'is_known_tautology', 'merkle_root', 'mp', 'not_tautology', 'pattern', 'signature_b64', 'smoke_pl', 'statement_id', 'tautology', 'truth-table', 'truth-table-error', 'truth-table-timeout', 'unknown', '~']

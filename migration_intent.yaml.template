@@ -1,0 +1,83 @@
+# Migration Intent Declaration Template
+# =============================================================================
+# Copy this file to migration_intent.yaml and fill in the values when
+# submitting a PR that constitutes a phase migration.
+#
+# Author: Agent E4 (doc-ops-4) — Phase Migration Architect
+# Reference: docs/PHASE_MIGRATION_GUIDE.md
+# =============================================================================
+
+# Source and target phases (required)
+# Valid values: phase_i, phase_ii, phase_iib, phase_iii
+source_phase: phase_i
+target_phase: phase_ii
+
+# Detailed justification for this migration (required, min 50 chars)
+justification: |
+  <DESCRIBE_WHY_THIS_MIGRATION_IS_NECESSARY>
+  Example: Migrating to Phase II to enable DB-backed RFL experiments 
+  with statistical analysis of uplift across asymmetric slices.
+
+# Preconditions that have been verified (required, at least 1)
+preconditions_verified:
+  - "Evidence sealed: attestation.json exists with valid H_t"
+  - "Determinism test passes: pytest tests/integration/test_first_organism_determinism.py"
+  - "1000+ cycle baseline exists: results/fo_baseline.jsonl"
+  - "Migration simulator run: python scripts/phase_migration_simulator.py"
+
+# Rollback plan if migration causes issues (required, min 30 chars)
+rollback_plan: |
+  <DESCRIBE_HOW_TO_REVERT_THIS_MIGRATION>
+  Example: Revert RFL_DB_ENABLED to False in rfl/config.py and 
+  run python scripts/rollback_phase2_migrations.py to drop tables.
+
+# Required approvers (GitHub usernames)
+approvers:
+  - <MAINTAINER_1>
+  - <MAINTAINER_2>
+
+# Migration signals this declaration acknowledges
+# (from pr_migration_linter.py detection)
+signals_acknowledged:
+  - db_write_introduction
+  - rfl_db_enable
+  # - prereg_addition
+  # - uplift_slice_addition
+  # - lean_enable
+  # - lean_timeout_config
+  # - lean_toolchain_update
+  # - basis_import_activation
+  # - ed25519_introduction
+  # - rfc8785_activation
+  # - proof_middleware_addition
+  # - curriculum_active_change
+  # - security_model_change
+  # - determinism_envelope_change
+
+# Metadata (optional but recommended)
+metadata:
+  # Set to true after running: python scripts/phase_migration_simulator.py
+  migration_simulator_run: false
+  
+  # Simulation ID from migration_sim_result.json (after running simulator)
+  simulation_id: null
+  
+  # PR number (filled automatically by CI)
+  pr_number: null
+  
+  # Additional verification flags
+  determinism_verified: false
+  evidence_sealed: false
+
+# =============================================================================
+# INSTRUCTIONS:
+# 1. Copy this file to migration_intent.yaml in the project root
+# 2. Fill in all required fields (source_phase, target_phase, justification,
+#    preconditions_verified, rollback_plan)
+# 3. Run the migration simulator: python scripts/phase_migration_simulator.py
+# 4. Update metadata.migration_simulator_run to true
+# 5. Update metadata.simulation_id with the ID from migration_sim_result.json
+# 6. Commit migration_intent.yaml with your PR
+# 7. PR linter will validate the declaration
+# =============================================================================
+
