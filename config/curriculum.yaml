@@ -9,6 +9,17 @@ systems:
       - depth_max
       attestation_required: true
       attestation_window_minutes: 60
+    # Stability envelope configuration (STRATCOM First Light)
+    # Prevents curriculum drift during Cortex integration
+    stability:
+      enabled: true
+      max_hss_cv: 0.25              # Max coefficient of variation for HSS
+      min_hss_threshold: 0.3         # Minimum HSS value considered "low"
+      max_low_hss_ratio: 0.2         # Max 20% of cycles can be low-HSS
+      min_suitability_score: 0.6     # Minimum suitability for slice transitions
+      min_cycles_for_stability: 5    # Need 5+ cycles for stability evaluation
+      variance_spike_threshold: 2.0  # HSS variance spike = 2x baseline
+      allow_variance_spikes: false   # Block transitions during variance spikes
     slices:
     # Debug slice for microscopic uplift experiments - minimal params, truth-table only
     # Brutally tiny for fast iteration: atoms=2, depth=2, total_max=16
