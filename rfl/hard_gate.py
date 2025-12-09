@@ -20,6 +20,14 @@ from .evidence_fusion import TDAOutcome, TDAFields
 logger = logging.getLogger(__name__)
 
 
+# Hard Gate Thresholds
+THRESHOLD_CRITICAL_BLOCK_RATE = 0.95  # Block rate above which promotion is blocked
+THRESHOLD_HIGH_BLOCK_RATE = 0.80      # Block rate above which warning is issued
+THRESHOLD_CRITICAL_HSS = 0.30         # HSS below which structural instability is flagged
+THRESHOLD_MODERATE_HSS = 0.70         # HSS below which moderate instability is flagged
+THRESHOLD_STABILITY_TREND = 0.10      # HSS difference for trend detection
+
+
 class HardGateMode(Enum):
     """Hard gate evaluation mode."""
     SHADOW = "shadow"  # Log only, don't block
@@ -262,34 +270,30 @@ def _determine_outcome(
     """
     Determine TDA outcome based on metrics and thresholds.
     
-    Thresholds:
-    - HSS < 0.3: Structural instability (BLOCK in ENFORCE mode)
-    - block_rate > 0.8: Excessive blocking (WARN)
-    - block_rate > 0.95: Critical blocking (BLOCK in ENFORCE mode)
-    - Otherwise: PASS
+    Uses module-level threshold constants for consistency.
     
     Returns:
         Tuple of (TDAOutcome, reason)
     """
     # Check for critical blocking
-    if block_rate > 0.95:
+    if block_rate > THRESHOLD_CRITICAL_BLOCK_RATE:
         outcome = TDAOutcome.BLOCK if mode == HardGateMode.ENFORCE else TDAOutcome.SHADOW
         reason = f"Critical event blocking rate: {block_rate:.2%}"
         return outcome, reason
     
     # Check for structural instability
-    if hss_score < 0.3:
+    if hss_score < THRESHOLD_CRITICAL_HSS:
         outcome = TDAOutcome.BLOCK if mode == HardGateMode.ENFORCE else TDAOutcome.SHADOW
         reason = f"Structural instability detected (HSS={hss_score:.2f})"
         return outcome, reason
     
     # Check for excessive blocking
-    if block_rate > 0.8:
+    if block_rate > THRESHOLD_HIGH_BLOCK_RATE:
         reason = f"High event blocking rate: {block_rate:.2%}"
         return TDAOutcome.WARN, reason
     
     # Check for moderate instability
-    if hss_score < 0.7:
+    if hss_score < THRESHOLD_MODERATE_HSS:
         reason = f"Moderate instability (HSS={hss_score:.2f})"
         return TDAOutcome.WARN, reason
     
@@ -323,9 +327,9 @@ def aggregate_hss_traces(traces: List[HSSTrace]) -> Dict[str, Any]:
         first_half_mean = sum(scores[:mid]) / mid
         second_half_mean = sum(scores[mid:]) / (len(scores) - mid)
         
-        if second_half_mean > first_half_mean + 0.1:
+        if second_half_mean > first_half_mean + THRESHOLD_STABILITY_TREND:
             trend = "improving"
-        elif second_half_mean < first_half_mean - 0.1:
+        elif second_half_mean < first_half_mean - THRESHOLD_STABILITY_TREND:
             trend = "degrading"
         else:
             trend = "stable"

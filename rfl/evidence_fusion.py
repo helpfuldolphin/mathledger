@@ -47,7 +47,7 @@ class InconsistencyType(Enum):
     NONE = "none"
 
 
-@dataclass(frozen=True)
+@dataclass
 class TDAFields:
     """
     TDA governance signal fields for a single run.

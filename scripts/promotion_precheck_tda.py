@@ -47,6 +47,10 @@ EXIT_FAIL = 1
 EXIT_ERROR = 2
 EXIT_ABSTAIN = 3
 
+# Default TDA field values for runs without TDA integration
+DEFAULT_HSS = 0.8  # Reasonable default stability score
+DEFAULT_BLOCK_RATE = 0.0  # Assume no blocking if not measured
+
 
 class PromotionPrecheckTDA:
     """Promotion pre-check with TDA integration."""
@@ -214,8 +218,8 @@ class PromotionPrecheckTDA:
                     else:
                         # Mock TDA fields if not present
                         tda = TDAFields(
-                            HSS=0.8,  # Default reasonable value
-                            block_rate=entry.get("block_rate", 0.0),
+                            HSS=DEFAULT_HSS,
+                            block_rate=entry.get("block_rate", DEFAULT_BLOCK_RATE),
                             tda_outcome=TDAOutcome.UNKNOWN,
                         )
                     
