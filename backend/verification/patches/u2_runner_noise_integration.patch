@@ -1,0 +1,108 @@
+--- a/experiments/u2/runner.py
++++ b/experiments/u2/runner.py
+@@ -10,6 +10,13 @@ import time
+ from dataclasses import dataclass, field
+ from pathlib import Path
+ from typing import Any, Callable, Dict, List, Optional, Tuple
++
++# Phase III: Noise integration imports
++from backend.verification.telemetry import run_lean_with_monitoring
++from backend.verification.rfl_integration import (
++    compute_expected_value,
++    apply_bias_correction,
++)
++from backend.verification.error_codes import VerifierErrorCode, VerifierTier
+ from rfl.prng import DeterministicPRNG, int_to_hex_seed
+ from .frontier import FrontierManager, BeamAllocator
+ from .logging import U2TraceLogger
+@@ -34,6 +41,12 @@ class U2Config:
+     output_dir: Optional[Path] = None
+     slice_config: Dict[str, Any] = field(default_factory=dict)
+     
++    # Phase III: Noise configuration
++    noise_config_path: Optional[Path] = None
++    enable_noise_injection: bool = False
++    enable_replay_log: bool = False
++    replay_log_path: Optional[Path] = None
++    
+     # Search parameters
+     max_beam_width: int = 100
+     max_depth: int = 10
+@@ -72,6 +85,18 @@ class U2Runner:
+         self.master_prng = DeterministicPRNG(master_seed_hex)
+         self.slice_prng = self.master_prng.for_path("slice", config.slice_name)
+         
++        # Phase III: Load noise configuration
++        self.noise_config = None
++        if config.enable_noise_injection and config.noise_config_path:
++            import yaml
++            with open(config.noise_config_path) as f:
++                self.noise_config = yaml.safe_load(f)
++            print(f"INFO: Loaded noise config from {config.noise_config_path}")
++        
++        # Phase III: Initialize replay log writer
++        self.replay_log_writer = None
++        # TODO: Initialize replay log writer if enabled
++        
+         # Initialize frontier manager
+         self.frontier = FrontierManager(
+             max_beam_width=config.max_beam_width,
+@@ -100,6 +125,38 @@ class U2Runner:
+         """
+         # ... existing code ...
+         
++    def _execute_with_noise(
++        self,
++        execute_fn: Callable[[str, int], Tuple[bool, Any]],
++        item: str,
++        cycle: int,
++    ) -> Tuple[bool, Any, Dict[str, Any]]:
++        """Execute verification with noise injection.
++        
++        Args:
++            execute_fn: Original execution function
++            item: Item to verify
++            cycle: Cycle number
++        
++        Returns:
++            Tuple of (success, result, noise_metadata)
++        """
++        
++        # Run verification with noise injection
++        telemetry = run_lean_with_monitoring(
++            module_name=item,
++            tier=VerifierTier.BALANCED,
++            timeout_s=60.0,
++            context=f"cycle_{cycle}_item_{item}",
++            master_seed=self.config.master_seed,
++            noise_config=self.noise_config,
++        )
++        
++        # Convert telemetry to (success, result, metadata)
++        success = telemetry.success
++        result = telemetry.to_dict()
++        noise_metadata = {"telemetry": telemetry}
++        
++        return success, result, noise_metadata
++    
+     def run_cycle(
+         self,
+         cycle: int,
+@@ -110,8 +167,18 @@ class U2Runner:
+         # ... existing code ...
+         
+         # Execute verification
+-        success, result = execute_fn(item, cycle)
++        # Phase III: Wrap execute_fn with noise injection
++        if self.noise_config:
++            success, result, noise_metadata = self._execute_with_noise(
++                execute_fn, item, cycle
++            )
++        else:
++            success, result = execute_fn(item, cycle)
++            noise_metadata = None
+         
++        # Phase III: Emit replay log entry
++        # TODO: Write to replay log if enabled
++        
+         # ... rest of existing code ...
