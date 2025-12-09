@@ -137,7 +137,7 @@ class SafetyEnvelope:
     
     # Provenance
     gate_version: str = "v1.0.0"
-    deterministic_seed: Optional[str] = None
+    prng_state: Optional[str] = None  # PRNG state for reproducibility
     
     def to_dict(self) -> Dict[str, Any]:
         """Export envelope as dictionary."""
@@ -150,8 +150,33 @@ class SafetyEnvelope:
             "slo_compliant": self.slo_compliant,
             "slo_violations": dict(self.slo_violations),
             "gate_version": self.gate_version,
-            "deterministic_seed": self.deterministic_seed,
+            "prng_state": self.prng_state,
         }
+
+
+def _extract_candidate_id(candidate: Any) -> str:
+    """
+    Extract candidate ID from various candidate formats.
+    
+    Supports:
+    - Dict with "item" key
+    - Dict with other keys (use string representation)
+    - String candidates
+    - Other types (use string representation)
+    
+    Args:
+        candidate: Candidate in any supported format
+    
+    Returns:
+        String identifier for the candidate
+    """
+    if isinstance(candidate, dict):
+        if "item" in candidate:
+            return str(candidate["item"])
+        # Use dict representation if no item key
+        return str(candidate)
+    # For non-dict types, use string representation
+    return str(candidate)
 
 
 def evaluate_hard_gate_decision(
@@ -186,7 +211,7 @@ def evaluate_hard_gate_decision(
     """
     
     # Extract candidate features
-    candidate_id = str(candidate.get("item", candidate) if isinstance(candidate, dict) else candidate)
+    candidate_id = _extract_candidate_id(candidate)
     depth = candidate.get("depth", 0) if isinstance(candidate, dict) else 0
     complexity = len(str(candidate))
     
@@ -262,7 +287,7 @@ def evaluate_hard_gate_decision(
         confidence=confidence,
         slo_compliant=slo_compliant,
         slo_violations=slo_violations,
-        deterministic_seed=prng.get_state(),
+        prng_state=str(prng.get_state()),
     )
     
     # Record decision in safety context
@@ -295,10 +320,9 @@ def validate_safety_envelope(envelope: SafetyEnvelope) -> bool:
     if not (0.0 <= envelope.confidence <= 1.0):
         return False
     
-    # Validate decision consistency
-    if envelope.decision == GateDecision.REJECTED and envelope.slo_compliant:
-        # Rejection should mark violations unless it's a policy-driven rejection
-        if not envelope.slo_violations and "policy" not in envelope.reason.lower():
-            return False
+    # Validate SLO compliance consistency
+    # If NOT slo_compliant, there should be violations recorded
+    if not envelope.slo_compliant and not envelope.slo_violations:
+        return False
     
     return True

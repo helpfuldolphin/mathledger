@@ -419,7 +419,6 @@ class U2Runner:
         
         # Restore safety context
         if snapshot.safety_context:
-            from .safety import U2SafetyContext
             self.safety_context = U2SafetyContext.from_dict(snapshot.safety_context)
         
         # Restore frontier
