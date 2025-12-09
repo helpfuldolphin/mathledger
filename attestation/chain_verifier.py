@@ -75,6 +75,8 @@ class ExperimentBlock:
         - Gate decisions
         - Block number
         """
+        from substrate.crypto.core import rfc8785_canonicalize
+        
         payload = {
             "run_id": self.run_id,
             "composite_root": self.composite_root,
@@ -83,9 +85,8 @@ class ExperimentBlock:
             "block_number": self.block_number,
         }
         
-        # Canonical JSON serialization
-        import json
-        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        # Canonical JSON serialization using RFC 8785
+        canonical = rfc8785_canonicalize(payload)
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
     
     def verify_integrity(self) -> Tuple[bool, Optional[str]]:

@@ -83,10 +83,10 @@ def extract_tda_config_from_rfl(rfl_config: Dict[str, Any]) -> Dict[str, Any]:
     if slice_config_path:
         slice_config_hash = _hash_file(Path(slice_config_path))
     else:
-        # Hash the slice config dict itself
-        import json
+        # Hash the slice config dict itself using RFC 8785 canonicalization
+        from substrate.crypto.core import rfc8785_canonicalize
         slice_config_hash = hashlib.sha256(
-            json.dumps(slice_config, sort_keys=True).encode("utf-8")
+            rfc8785_canonicalize(slice_config).encode("utf-8")
         ).hexdigest()
     
     # Extract verifier settings
@@ -128,9 +128,10 @@ def extract_tda_config_from_u2(u2_config: Dict[str, Any]) -> Dict[str, Any]:
     if slice_config_path:
         slice_config_hash = _hash_file(Path(slice_config_path))
     else:
-        import json
+        # Hash the slice config dict itself using RFC 8785 canonicalization
+        from substrate.crypto.core import rfc8785_canonicalize
         slice_config_hash = hashlib.sha256(
-            json.dumps(slice_config, sort_keys=True).encode("utf-8")
+            rfc8785_canonicalize(slice_config).encode("utf-8")
         ).hexdigest()
     
     # U2 may have different bound names

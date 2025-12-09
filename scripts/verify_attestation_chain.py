@@ -177,9 +177,9 @@ def main():
             print(f"   Error: {result.error_message}", file=sys.stderr)
             
             if result.divergences:
-                print("\n📊 TDA Configuration Divergences:", file=sys.stderr)
+                print("\n   📊 TDA Configuration Divergences:", file=sys.stderr)
                 for divergence in result.divergences:
-                    print(f"\n{divergence}", file=sys.stderr)
+                    print(f"   {divergence}", file=sys.stderr)
             
             sys.exit(int(result.error_code))
     

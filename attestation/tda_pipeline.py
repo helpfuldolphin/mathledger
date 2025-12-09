@@ -87,7 +87,19 @@ def compute_tda_pipeline_hash(config_dict: Dict[str, Any]) -> str:
     Compute TDA pipeline hash from a configuration dictionary.
     
     Args:
-        config_dict: Configuration dictionary with required fields
+        config_dict: Configuration dictionary with required fields:
+            - max_breadth (int): Maximum derivation breadth (e.g., 100)
+            - max_depth (int): Maximum derivation depth (e.g., 50)
+            - max_total (int): Maximum total statements (e.g., 1000)
+            - verifier_tier (str): Verifier tier identifier (e.g., "tier1")
+            - verifier_timeout (float): Verification timeout in seconds (e.g., 10.0)
+            - slice_id (str): Curriculum slice identifier (e.g., "slice_a")
+            - slice_config_hash (str): Hash of slice configuration file
+            - abstention_strategy (str): Abstention handling strategy (e.g., "conservative")
+            
+            Optional fields:
+            - verifier_budget (dict or None): Budget constraints
+            - gates (dict or None): Gate specifications
         
     Returns:
         64-character hex digest
