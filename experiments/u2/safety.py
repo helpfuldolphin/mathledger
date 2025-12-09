@@ -137,7 +137,7 @@ class SafetyEnvelope:
     
     # Provenance
     gate_version: str = "v1.0.0"
-    prng_state: Optional[str] = None  # PRNG state for reproducibility
+    prng_state: Optional[Dict[str, Any]] = None  # PRNG state for reproducibility
     
     def to_dict(self) -> Dict[str, Any]:
         """Export envelope as dictionary."""
@@ -287,7 +287,7 @@ def evaluate_hard_gate_decision(
         confidence=confidence,
         slo_compliant=slo_compliant,
         slo_violations=slo_violations,
-        prng_state=str(prng.get_state()),
+        prng_state=prng.get_state(),
     )
     
     # Record decision in safety context

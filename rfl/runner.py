@@ -38,7 +38,7 @@ from .bootstrap_stats import (
 from .audit import RFLAuditLog, SymbolicDescentGradient, StepIdComputation
 from .experiment_logging import RFLExperimentLogger
 from .provenance import ManifestBuilder
-from .prng import DeterministicPRNG
+from rfl.prng import DeterministicPRNG
 from experiments.u2.safety import (
     U2SafetyContext,
     SafetyEnvelope,
