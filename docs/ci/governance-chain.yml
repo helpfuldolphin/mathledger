@@ -1,0 +1,571 @@
+# Governance Chain CI Pipeline
+# Author: Manus-B (Ledger Replay Architect & Attestation Runtime Engineer)
+# Phase: III - Consensus Runtime Activation
+# Date: 2025-12-06
+#
+# Purpose:
+#   Enforce ledger integrity governance on every commit.
+#   No code merges unless all governance checks pass.
+#
+# Checks:
+#   1. Schema migration validation
+#   2. Epoch backfill dry run
+#   3. Replay verification (full chain or sliding window)
+#   4. Ledger drift radar scan
+#   5. Attestation integrity sweep
+#   6. PQ activation readiness audit
+
+name: Governance Chain
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'integrate/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '22'
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+
+jobs:
+  # =========================================================================
+  # Job 1: Schema Migration Check
+  # =========================================================================
+  schema-migration-check:
+    name: Schema Migration Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for migration analysis
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install psycopg2-binary
+      
+      - name: Start PostgreSQL
+        run: |
+          docker run -d \
+            --name postgres \
+            -e POSTGRES_PASSWORD=test \
+            -e POSTGRES_DB=mathledger_test \
+            -p 5432:5432 \
+            postgres:15
+          
+          # Wait for PostgreSQL to be ready
+          timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+      
+      - name: Run migration validation
+        run: |
+          python3 scripts/validate_migrations.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --migrations-dir migrations \
+            --check-monotonicity \
+            --check-hash-law-invariants \
+            --check-backward-compatibility
+      
+      - name: Upload migration report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-validation-report
+          path: reports/migration_validation.json
+          retention-days: 30
+  
+  # =========================================================================
+  # Job 2: Epoch Backfill Dry Run
+  # =========================================================================
+  epoch-backfill-dry-run:
+    name: Epoch Backfill Dry Run
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: schema-migration-check
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install psycopg2-binary
+      
+      - name: Start PostgreSQL
+        run: |
+          docker run -d \
+            --name postgres \
+            -e POSTGRES_PASSWORD=test \
+            -e POSTGRES_DB=mathledger_test \
+            -p 5432:5432 \
+            postgres:15
+          
+          timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+      
+      - name: Load test data
+        run: |
+          python3 scripts/load_test_data.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --blocks 1000 \
+            --hash-version sha256-v1
+      
+      - name: Run epoch backfill (dry run)
+        run: |
+          python3 scripts/backfill_epochs.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --dry-run \
+            --epoch-size 100 \
+            --start-block 0 \
+            --end-block 1000 \
+            --hash-version sha256-v1 \
+            --verbose
+      
+      - name: Validate epoch roots
+        run: |
+          python3 scripts/validate_epoch_roots.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --start-epoch 0 \
+            --end-epoch 9
+      
+      - name: Upload backfill report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: epoch-backfill-report
+          path: reports/epoch_backfill.json
+          retention-days: 30
+  
+  # =========================================================================
+  # Job 3: Replay Verification
+  # =========================================================================
+  replay-verification:
+    name: Replay Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: schema-migration-check
+    
+    strategy:
+      matrix:
+        verification-mode:
+          - full_chain
+          - sliding_window
+          - epoch_validation
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install psycopg2-binary
+      
+      - name: Start PostgreSQL
+        run: |
+          docker run -d \
+            --name postgres \
+            -e POSTGRES_PASSWORD=test \
+            -e POSTGRES_DB=mathledger_test \
+            -p 5432:5432 \
+            postgres:15
+          
+          timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+      
+      - name: Load test data
+        run: |
+          python3 scripts/load_test_data.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --blocks 1000 \
+            --hash-version sha256-v1
+      
+      - name: Run replay verification
+        run: |
+          python3 scripts/replay_verify.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --mode ${{ matrix.verification-mode }} \
+            --start-block 0 \
+            --end-block 1000 \
+            --fail-fast \
+            --verbose
+      
+      - name: Check replay success rate
+        run: |
+          python3 scripts/check_replay_success_rate.py \
+            --report reports/replay_verification_${{ matrix.verification-mode }}.json \
+            --min-success-rate 1.0
+      
+      - name: Upload replay report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: replay-verification-${{ matrix.verification-mode }}
+          path: reports/replay_verification_${{ matrix.verification-mode }}.json
+          retention-days: 30
+  
+  # =========================================================================
+  # Job 4: Ledger Drift Radar
+  # =========================================================================
+  drift-radar-scan:
+    name: Ledger Drift Radar Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: replay-verification
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install psycopg2-binary
+      
+      - name: Start PostgreSQL
+        run: |
+          docker run -d \
+            --name postgres \
+            -e POSTGRES_PASSWORD=test \
+            -e POSTGRES_DB=mathledger_test \
+            -p 5432:5432 \
+            postgres:15
+          
+          timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+      
+      - name: Load test data
+        run: |
+          python3 scripts/load_test_data.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --blocks 1000 \
+            --hash-version sha256-v1
+      
+      - name: Run drift radar scan
+        run: |
+          python3 scripts/drift_radar_scan.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --start-block 0 \
+            --end-block 1000 \
+            --scan-types schema,hash-delta,metadata,statement \
+            --verbose
+      
+      - name: Classify drift signals
+        run: |
+          python3 scripts/classify_drift_signals.py \
+            --input reports/drift_signals.json \
+            --output reports/drift_classifications.json \
+            --migration-history migrations/ \
+            --code-history .git/
+      
+      - name: Check drift severity
+        run: |
+          python3 scripts/check_drift_severity.py \
+            --report reports/drift_classifications.json \
+            --max-critical 0 \
+            --max-high 0 \
+            --max-medium 5
+      
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-radar-report
+          path: |
+            reports/drift_signals.json
+            reports/drift_classifications.json
+          retention-days: 30
+  
+  # =========================================================================
+  # Job 5: Attestation Integrity Sweep
+  # =========================================================================
+  attestation-integrity-sweep:
+    name: Attestation Integrity Sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: schema-migration-check
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install psycopg2-binary
+      
+      - name: Start PostgreSQL
+        run: |
+          docker run -d \
+            --name postgres \
+            -e POSTGRES_PASSWORD=test \
+            -e POSTGRES_DB=mathledger_test \
+            -p 5432:5432 \
+            postgres:15
+          
+          timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
+      
+      - name: Load test data
+        run: |
+          python3 scripts/load_test_data.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --blocks 1000 \
+            --hash-version sha256-v1
+      
+      - name: Run attestation integrity sweep
+        run: |
+          python3 scripts/attestation_integrity_sweep.py \
+            --database-url postgresql://postgres:test@localhost:5432/mathledger_test \
+            --start-block 0 \
+            --end-block 1000 \
+            --check-dual-roots \
+            --check-merkle-trees \
+            --check-domain-separation \
+            --verbose
+      
+      - name: Check integrity violations
+        run: |
+          python3 scripts/check_integrity_violations.py \
+            --report reports/attestation_integrity.json \
+            --max-violations 0
+      
+      - name: Upload integrity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: attestation-integrity-report
+          path: reports/attestation_integrity.json
+          retention-days: 30
+  
+  # =========================================================================
+  # Job 6: PQ Activation Readiness Audit
+  # =========================================================================
+  pq-activation-readiness:
+    name: PQ Activation Readiness Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: schema-migration-check
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install psycopg2-binary
+      
+      - name: Check PQ migration code
+        run: |
+          python3 scripts/check_pq_migration_code.py \
+            --check-dual-commitment-support \
+            --check-sha3-support \
+            --check-cross-algorithm-validation \
+            --check-epoch-transition-support
+      
+      - name: Audit PQ migration readiness
+        run: |
+          python3 scripts/audit_pq_readiness.py \
+            --output reports/pq_readiness.json \
+            --verbose
+      
+      - name: Upload PQ readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pq-readiness-report
+          path: reports/pq_readiness.json
+          retention-days: 30
+  
+  # =========================================================================
+  # Job 7: Governance Gate (Final Check)
+  # =========================================================================
+  governance-gate:
+    name: Governance Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+      - schema-migration-check
+      - epoch-backfill-dry-run
+      - replay-verification
+      - drift-radar-scan
+      - attestation-integrity-sweep
+      - pq-activation-readiness
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          path: reports/
+      
+      - name: Aggregate governance results
+        run: |
+          python3 scripts/aggregate_governance_results.py \
+            --reports-dir reports/ \
+            --output reports/governance_summary.json
+      
+      - name: Check governance pass/fail
+        run: |
+          python3 scripts/check_governance_gate.py \
+            --summary reports/governance_summary.json \
+            --fail-on-any-error
+      
+      - name: Post governance summary to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = JSON.parse(fs.readFileSync('reports/governance_summary.json', 'utf8'));
+            
+            const comment = `## Governance Chain Report
+            
+            **Status**: ${summary.passed ? '✅ PASSED' : '❌ FAILED'}
+            
+            ### Checks
+            - Schema Migration: ${summary.checks.schema_migration ? '✅' : '❌'}
+            - Epoch Backfill: ${summary.checks.epoch_backfill ? '✅' : '❌'}
+            - Replay Verification: ${summary.checks.replay_verification ? '✅' : '❌'}
+            - Drift Radar: ${summary.checks.drift_radar ? '✅' : '❌'}
+            - Attestation Integrity: ${summary.checks.attestation_integrity ? '✅' : '❌'}
+            - PQ Readiness: ${summary.checks.pq_readiness ? '✅' : '❌'}
+            
+            ### Details
+            - Replay Success Rate: ${summary.metrics.replay_success_rate}%
+            - Drift Signals: ${summary.metrics.drift_signals_count}
+            - Integrity Violations: ${summary.metrics.integrity_violations}
+            
+            [View Full Report](${summary.report_url})
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      
+      - name: Upload governance summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-summary
+          path: reports/governance_summary.json
+          retention-days: 90
+      
+      - name: Fail if governance check failed
+        run: |
+          if [ ! -f reports/governance_summary.json ]; then
+            echo "Governance summary not found"
+            exit 1
+          fi
+          
+          passed=$(jq -r '.passed' reports/governance_summary.json)
+          if [ "$passed" != "true" ]; then
+            echo "Governance gate FAILED"
+            exit 1
+          fi
+          
+          echo "Governance gate PASSED ✅"
+
+# ============================================================================
+# Performance Constraints
+# ============================================================================
+# - Schema migration check: < 10 minutes
+# - Epoch backfill dry run: < 20 minutes
+# - Replay verification (full_chain): < 30 minutes
+# - Replay verification (sliding_window): < 10 minutes
+# - Replay verification (epoch_validation): < 15 minutes
+# - Drift radar scan: < 15 minutes
+# - Attestation integrity sweep: < 20 minutes
+# - PQ activation readiness: < 15 minutes
+# - Governance gate: < 5 minutes
+#
+# Total pipeline time: < 35 minutes (parallel execution)
+
+# ============================================================================
+# Failure Surface & Remediation Flow
+# ============================================================================
+# 1. Schema migration failure:
+#    - Check migration SQL syntax
+#    - Verify backward compatibility
+#    - Review hash-law invariants
+#
+# 2. Epoch backfill failure:
+#    - Check epoch size consistency
+#    - Verify hash algorithm selection
+#    - Review Merkle root computation
+#
+# 3. Replay verification failure:
+#    - Investigate hash mismatch
+#    - Check canonical payload integrity
+#    - Review hash algorithm version
+#
+# 4. Drift radar failure:
+#    - Classify drift signals
+#    - Determine if intentional (migration) or unintentional (bug)
+#    - Apply remediation guidance
+#
+# 5. Attestation integrity failure:
+#    - Check dual-root computation
+#    - Verify Merkle tree structure
+#    - Review domain separation
+#
+# 6. PQ activation readiness failure:
+#    - Implement missing PQ migration code
+#    - Add dual-commitment support
+#    - Test cross-algorithm validation
+
+# ============================================================================
+# Seed Selection (for replay verification)
+# ============================================================================
+# - Full chain: Verify all blocks (slow, comprehensive)
+# - Sliding window: Verify last 1000 blocks (fast, recent coverage)
+# - Epoch validation: Verify epoch roots only (fastest, epoch-level coverage)
+#
+# Seed selection strategy:
+# - On main branch: Full chain (nightly)
+# - On develop branch: Sliding window (every commit)
+# - On feature branches: Epoch validation (every commit)
+# - On PRs: Sliding window (every push)
