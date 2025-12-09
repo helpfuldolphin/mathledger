@@ -42,6 +42,7 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
+from backend.repro.determinism import deterministic_isoformat
 
 from .update_algebra import PolicyState, PolicyUpdate, apply_update, PolicyEvolutionChain
 
@@ -136,7 +137,7 @@ class PolicyCheckpoint:
             New PolicyCheckpoint
         """
         if created_at is None:
-            created_at = datetime.utcnow().isoformat() + "Z"
+            created_at = deterministic_isoformat(experiment_id, config_hash, policy_state)
         
         return cls(
             policy_state=policy_state,

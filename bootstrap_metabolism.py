@@ -9,6 +9,7 @@ import re
 import json
 from datetime import datetime
 from pathlib import Path
+from backend.repro.determinism import deterministic_isoformat
 from dataclasses import dataclass, asdict
 from typing import List, Tuple, Dict
 import numpy as np
@@ -290,7 +291,7 @@ def main():
     print("[5/5] Writing coverage JSON...")
     output = {
         "metrologist": "Claude M — The Reflexive Metrologist",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": deterministic_isoformat("bootstrap_metabolism", results),
         "experiment_config": {
             "n_experiments": 40,
             "n_replicates": 10000,
