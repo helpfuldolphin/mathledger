@@ -49,12 +49,23 @@ color_echo "$CYAN" "╚═══════════════════
 OUTPUT_PATH="$PROJECT_ROOT/$OUTPUT"
 mkdir -p "$OUTPUT_PATH"
 
+# Check prerequisites
+if ! command -v python &> /dev/null; then
+    color_echo "$RED" "💥 ERROR: Python is not installed or not in PATH"
+    exit 3
+fi
+
+RADAR_SCRIPT="$SCRIPT_DIR/radars/doc_governance_drift_radar.py"
+if [ ! -f "$RADAR_SCRIPT" ]; then
+    color_echo "$RED" "💥 ERROR: Radar script not found: $RADAR_SCRIPT"
+    exit 3
+fi
+
 # Run radar
 echo "Running documentation governance radar..."
 color_echo "$GRAY" "  Mode:   $MODE"
 color_echo "$GRAY" "  Output: $OUTPUT_PATH\n"
 
-RADAR_SCRIPT="$SCRIPT_DIR/radars/doc_governance_drift_radar.py"
 DOCS_PATH="$PROJECT_ROOT/docs"
 
 # Run and capture exit code

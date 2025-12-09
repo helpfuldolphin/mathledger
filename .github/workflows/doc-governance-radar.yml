@@ -65,40 +65,46 @@ jobs:
         id: radar
         continue-on-error: true
         run: |
+          set +e
           ./scripts/governance-watchdog.sh ${{ steps.mode.outputs.mode }}
+          RADAR_EXIT_CODE=$?
+          echo "exit_code=$RADAR_EXIT_CODE" >> $GITHUB_OUTPUT
+          exit $RADAR_EXIT_CODE
       
       - name: Set job status
         id: status
+        if: always()
         run: |
-          EXIT_CODE=${{ steps.radar.outcome == 'success' && '0' || steps.radar.conclusion }}
+          EXIT_CODE=${{ steps.radar.outputs.exit_code }}
           
-          # Map outcomes to our exit codes
-          if [ "${{ steps.radar.outcome }}" = "success" ]; then
-            echo "status=pass" >> $GITHUB_OUTPUT
-            echo "emoji=✅" >> $GITHUB_OUTPUT
-            echo "color=green" >> $GITHUB_OUTPUT
-          elif [ -f artifacts/drift/doc_governance_drift_report.json ]; then
-            STATUS=$(jq -r '.status' artifacts/drift/doc_governance_drift_report.json)
-            CRITICAL=$(jq -r '.summary.critical' artifacts/drift/doc_governance_drift_report.json)
-            
-            if [ "$STATUS" = "FAIL" ] || [ "$CRITICAL" -gt 0 ]; then
-              echo "status=fail" >> $GITHUB_OUTPUT
-              echo "emoji=❌" >> $GITHUB_OUTPUT
-              echo "color=red" >> $GITHUB_OUTPUT
-            elif [ "$STATUS" = "WARN" ]; then
-              echo "status=warn" >> $GITHUB_OUTPUT
-              echo "emoji=⚠️" >> $GITHUB_OUTPUT
-              echo "color=yellow" >> $GITHUB_OUTPUT
-            else
+          # Map exit codes to status
+          case $EXIT_CODE in
+            0)
               echo "status=pass" >> $GITHUB_OUTPUT
               echo "emoji=✅" >> $GITHUB_OUTPUT
               echo "color=green" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "status=error" >> $GITHUB_OUTPUT
-            echo "emoji=💥" >> $GITHUB_OUTPUT
-            echo "color=red" >> $GITHUB_OUTPUT
-          fi
+              ;;
+            1)
+              echo "status=fail" >> $GITHUB_OUTPUT
+              echo "emoji=❌" >> $GITHUB_OUTPUT
+              echo "color=red" >> $GITHUB_OUTPUT
+              ;;
+            2)
+              echo "status=warn" >> $GITHUB_OUTPUT
+              echo "emoji=⚠️" >> $GITHUB_OUTPUT
+              echo "color=yellow" >> $GITHUB_OUTPUT
+              ;;
+            4)
+              echo "status=skip" >> $GITHUB_OUTPUT
+              echo "emoji=⏭️" >> $GITHUB_OUTPUT
+              echo "color=gray" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "status=error" >> $GITHUB_OUTPUT
+              echo "emoji=💥" >> $GITHUB_OUTPUT
+              echo "color=red" >> $GITHUB_OUTPUT
+              ;;
+          esac
       
       - name: Generate summary
         if: always()

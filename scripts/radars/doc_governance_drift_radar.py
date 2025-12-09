@@ -19,7 +19,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any
 import json
 
 # Exit codes
@@ -336,6 +336,37 @@ class DocGovernanceDriftRadar:
         current_file = None
         added_lines = []
         
+        # Negation and gate patterns (same as scan_file)
+        negation_patterns = [
+            r'\bno\b.*\buplift\b',
+            r'\bzero\b.*\buplift\b',
+            r'\buplift\b.*\bnone\b',
+            r'\buplift\b.*\bzero\b',
+            r'\bwithout\b.*\buplift\b',
+            r'\bdoes\s+not.*\buplift\b',
+            r'\bdo\s+not.*\buplift\b',
+            r'\bcannot.*\buplift\b',
+            r'\bforbid.*\buplift\b',
+        ]
+        
+        gate_patterns = [
+            r'\buplift\s+evidence\s+gate\b',
+            r'\bgate.*uplift\b',
+            r'\bfor.*uplift.*to\s+(?:be|qualify)\b',
+            r'\bif.*uplift\b',
+            r'\bwhen.*uplift\b',
+            r'\bcriteria.*uplift\b',
+            r'\brequires?.*uplift\b',
+            r'\bmust.*\buplift\b',
+            r'\bshould.*\buplift\b',
+            r'\bwould.*\buplift\b',
+            r'\bfuture.*\buplift\b',
+            r'\bpotential.*\buplift\b',
+            r'\bexpected.*\buplift\b',
+            r'\btarget.*\buplift\b',
+            r'\bgoal.*\buplift\b',
+        ]
+        
         # Parse diff
         for line in diff_content.split('\n'):
             # Track which file we're in
@@ -352,10 +383,20 @@ class DocGovernanceDriftRadar:
         if current_file:
             added_content = '\n'.join(added_lines)
             
-            # Check for uplift claims
+            # Check for uplift claims (with filtering)
             for pattern in self.uplift_patterns:
                 matches = re.finditer(pattern, added_content, re.IGNORECASE)
                 for match in matches:
+                    # Get the line containing the match
+                    match_line = match.group(0)
+                    
+                    # Skip if negation or gate pattern
+                    is_negation = any(re.search(pat, match_line, re.IGNORECASE) for pat in negation_patterns)
+                    is_gate = any(re.search(pat, match_line, re.IGNORECASE) for pat in gate_patterns)
+                    
+                    if is_negation or is_gate:
+                        continue
+                    
                     # Check if proper disclaimer is in the added content
                     has_disclaimer = any(
                         disclaimer in added_content
@@ -371,15 +412,26 @@ class DocGovernanceDriftRadar:
                             "message": f"PR adds uplift claim without 'integrated-run pending' disclaimer"
                         })
             
-            # Check for TDA enforcement claims
+            # Check for TDA enforcement claims (with filtering)
             for pattern in self.tda_enforcement_patterns:
-                if re.search(pattern, added_content, re.IGNORECASE):
-                    violations.append({
-                        "type": "pr_tda_enforcement_claim",
-                        "severity": "CRITICAL",
-                        "file": current_file,
-                        "message": f"PR adds TDA enforcement claim before runner wiring complete"
-                    })
+                matches = re.finditer(pattern, added_content, re.IGNORECASE)
+                for match in matches:
+                    match_line = match.group(0)
+                    
+                    # Check for future qualifier
+                    has_future_qualifier = re.search(
+                        r'\b(?:will|future|planned|to be|once|after|when).*\b(?:wired|integrated|connected)\b',
+                        match_line,
+                        re.IGNORECASE
+                    )
+                    
+                    if not has_future_qualifier:
+                        violations.append({
+                            "type": "pr_tda_enforcement_claim",
+                            "severity": "CRITICAL",
+                            "file": current_file,
+                            "message": f"PR adds TDA enforcement claim before runner wiring complete"
+                        })
         
         return violations
 
