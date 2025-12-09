@@ -12,6 +12,7 @@ import yaml
 import sys
 from datetime import datetime
 from pathlib import Path
+from backend.repro.determinism import deterministic_isoformat
 from dataclasses import dataclass, asdict
 from typing import List, Tuple, Dict, Optional
 import numpy as np
@@ -468,7 +469,7 @@ def main(config_path: str = "config/rfl/production.json"):
     coverage_data = {
         "gate": "RFL - Reflexive Metabolism Gate",
         "metrologist": config['metrologist'],
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": deterministic_isoformat("rfl_gate", method, results),
         "method": method.upper(),
         "pass_criteria": config['pass_criteria'],
         "aggregate": {

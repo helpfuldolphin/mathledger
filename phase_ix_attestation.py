@@ -17,6 +17,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from backend.repro.determinism import deterministic_isoformat
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -219,7 +220,7 @@ def main():
     final_attestation = {
         'phase': 'IX',
         'title': 'Celestial Convergence',
-        'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+        'timestamp': deterministic_isoformat('phase_ix', harmony_result, dossier_result),
         'harmony': {
             'root': harmony_result['harmony_root'],
             'convergence_rate': harmony_result['convergence_rate'],
