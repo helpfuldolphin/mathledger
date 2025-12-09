@@ -20,6 +20,9 @@ from dataclasses import dataclass, asdict, field
 from collections import Counter
 import warnings
 
+from backend.safety import evaluate_hard_gate_decision, check_gate_decision
+from backend.tda import TDAMode
+
 LATENCY_BUCKET_THRESHOLDS = (0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
 ABSTENTION_BUCKET_THRESHOLDS = (0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 1.0)
 
@@ -520,6 +523,53 @@ class RFLRunner:
             raise
 
         self._increment_metric("ml:metrics:first_organism:runs_completed")
+
+        # ═══════════════════════════════════════════════════════════════════
+        # CORTEX: TDA Hard Gate Decision (BLOCKING)
+        # ═══════════════════════════════════════════════════════════════════
+        # Evaluate hard gate decision before proceeding with RFL update.
+        # This is the Brain - the central decision point that can block execution.
+        
+        if self.config.tda_enabled:
+            # Build context for TDA evaluation
+            gate_context = {
+                "abstention_rate": attestation.abstention_rate,
+                "coverage_rate": attestation.metadata.get("coverage_rate", 0.0),
+                "verified_count": attestation.metadata.get("verified_count", 0),
+                "cycle_index": self.first_organism_runs_total,
+                "composite_root": attestation.composite_root,
+                "slice_id": attestation.slice_id,
+            }
+            
+            # Parse TDA mode from config
+            try:
+                tda_mode = TDAMode(self.config.tda_mode)
+            except ValueError:
+                logger.warning(f"Invalid TDA mode '{self.config.tda_mode}', defaulting to BLOCK")
+                tda_mode = TDAMode.BLOCK
+            
+            # Evaluate gate decision (the Cortex)
+            gate_envelope = evaluate_hard_gate_decision(gate_context, tda_mode)
+            
+            # Log the decision
+            logger.info(
+                f"[CORTEX] TDA Gate Decision: {gate_envelope.decision} "
+                f"(mode={gate_envelope.tda_mode}, status={gate_envelope.slo.status.value})"
+            )
+            logger.info(f"[CORTEX] {gate_envelope.slo.message}")
+            
+            # Record gate decision in attestation records for audit
+            self.dual_attestation_records.setdefault("gate_decisions", []).append({
+                "cycle": self.first_organism_runs_total,
+                "composite_root": attestation.composite_root,
+                "envelope": gate_envelope.to_dict(),
+            })
+            
+            # BLOCKING CHECK: Enforce gate decision
+            # If gate says block, execution stops here with RuntimeError
+            check_gate_decision(gate_envelope)
+        
+        # ═══════════════════════════════════════════════════════════════════
 
         slice_cfg = self._resolve_slice(attestation.slice_id)
         policy_id = attestation.policy_id or "default"

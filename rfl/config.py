@@ -145,6 +145,10 @@ class RFLConfig:
     # Abstention discipline
     abstention_tolerance: float = 0.25
 
+    # TDA Hard Gate configuration
+    tda_mode: str = "BLOCK"  # "BLOCK", "DRY_RUN", or "SHADOW"
+    tda_enabled: bool = True  # Enable/disable TDA hard gate
+
     # Baseline comparison
     baseline_run_id: Optional[str] = None  # If None, compare against pre-RFL corpus
 
