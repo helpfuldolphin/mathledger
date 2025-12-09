@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional
 from datetime import datetime
 
 from backend.tda import TDAMode, evaluate_tda_decision
+from substrate.repro.determinism import deterministic_timestamp
 from .envelope import SafetyEnvelope, SafetySLO, SLOStatus
 
 
@@ -48,7 +49,6 @@ def evaluate_hard_gate_decision(
     
     # Use deterministic timestamp if not provided
     if timestamp is None:
-        from substrate.repro.determinism import deterministic_timestamp
         timestamp = deterministic_timestamp(0)
     
     timestamp_str = timestamp.isoformat() + "Z"

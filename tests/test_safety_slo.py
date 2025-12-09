@@ -18,7 +18,7 @@ from backend.tda import TDAMode
 
 
 class TestSafetySLO:
-    """Test Safety SLO basic functionality."""
+    """Test Safety SLO creation, serialization, and status handling."""
     
     def test_slo_creation(self):
         """Test creating a Safety SLO."""

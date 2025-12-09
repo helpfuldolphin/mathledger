@@ -177,9 +177,12 @@ class U2Runner:
         
         if self.config.tda_enabled:
             # Build context for TDA evaluation
+            # NOTE: U2Runner uses placeholder metrics until full metric tracking is implemented
+            # TODO: Implement actual abstention_rate from failed/total attempts
+            # TODO: Compute coverage_rate from frontier state space exploration
             gate_context = {
-                "abstention_rate": 0.0,  # U2 doesn't have direct abstention tracking yet
-                "coverage_rate": 0.0,  # Will be computed from frontier stats
+                "abstention_rate": 0.0,  # Placeholder: no abstention tracking yet
+                "coverage_rate": 0.0,  # Placeholder: will be computed from frontier stats
                 "verified_count": candidates_processed,  # Use processed count as proxy
                 "cycle_index": cycle,
                 "frontier_size": self.frontier.size(),

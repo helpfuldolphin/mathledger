@@ -249,8 +249,6 @@ class TestCortexErrorHandling:
     
     def test_invalid_tda_mode_string(self):
         """Test handling of invalid TDA mode string."""
-        from backend.tda.modes import TDAMode
-        
         # Invalid mode should raise ValueError when creating enum
         with pytest.raises(ValueError):
             TDAMode("INVALID_MODE")

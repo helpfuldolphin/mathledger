@@ -7,6 +7,17 @@ Evaluates topological properties and makes hard gate decisions.
 from typing import Any, Dict, Optional
 from .modes import TDAMode, TDADecision
 
+# TDA Decision Thresholds (configurable)
+ABSTENTION_THRESHOLD = 0.5  # Block if abstention rate exceeds 50%
+COVERAGE_THRESHOLD = 0.5  # Block if coverage below 50% after min cycles
+MIN_CYCLES_FOR_COVERAGE = 10  # Minimum cycles before coverage matters
+MIN_CYCLES_FOR_PROOFS = 5  # Minimum cycles before requiring proofs
+
+# Confidence scores for different blocking conditions
+CONFIDENCE_ABSTENTION = 0.95
+CONFIDENCE_COVERAGE = 0.85
+CONFIDENCE_NO_PROOFS = 0.90
+
 
 def evaluate_tda_decision(
     context: Dict[str, Any],
@@ -33,23 +44,22 @@ def evaluate_tda_decision(
     cycle_index = context.get("cycle_index", 0)
     
     # Topological analysis: check for structural degradation
-    # Block if abstention rate exceeds 50% (system is failing)
     should_block = False
     reason = "TDA: System healthy"
     confidence = 1.0
     
-    if abstention_rate > 0.5:
+    if abstention_rate > ABSTENTION_THRESHOLD:
         should_block = True
-        reason = f"TDA: Critical abstention rate {abstention_rate:.2%} > 50%"
-        confidence = 0.95
-    elif coverage_rate < 0.5 and cycle_index > 10:
+        reason = f"TDA: Critical abstention rate {abstention_rate:.2%} > {ABSTENTION_THRESHOLD:.0%}"
+        confidence = CONFIDENCE_ABSTENTION
+    elif coverage_rate < COVERAGE_THRESHOLD and cycle_index > MIN_CYCLES_FOR_COVERAGE:
         should_block = True
         reason = f"TDA: Poor coverage {coverage_rate:.2%} after {cycle_index} cycles"
-        confidence = 0.85
-    elif verified_count == 0 and cycle_index > 5:
+        confidence = CONFIDENCE_COVERAGE
+    elif verified_count == 0 and cycle_index > MIN_CYCLES_FOR_PROOFS:
         should_block = True
         reason = f"TDA: No verified proofs after {cycle_index} cycles"
-        confidence = 0.90
+        confidence = CONFIDENCE_NO_PROOFS
     
     # Collect metadata for audit trail
     metadata = {
