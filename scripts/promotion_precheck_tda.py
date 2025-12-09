@@ -51,6 +51,10 @@ EXIT_ABSTAIN = 3
 DEFAULT_HSS = 0.8  # Reasonable default stability score
 DEFAULT_BLOCK_RATE = 0.0  # Assume no blocking if not measured
 
+# Pre-check Thresholds
+THRESHOLD_MEAN_BLOCK_RATE = 0.8  # Mean block rate above which precheck fails
+THRESHOLD_TDA_PASS_RATE = 0.5  # TDA pass rate below which precheck fails
+
 
 class PromotionPrecheckTDA:
     """Promotion pre-check with TDA integration."""
@@ -293,13 +297,13 @@ class PromotionPrecheckTDA:
         checks = {
             "mean_block_rate": {
                 "value": fused.mean_block_rate,
-                "threshold": 0.8,
-                "passed": fused.mean_block_rate < 0.8,
+                "threshold": THRESHOLD_MEAN_BLOCK_RATE,
+                "passed": fused.mean_block_rate < THRESHOLD_MEAN_BLOCK_RATE,
             },
             "tda_pass_rate": {
                 "value": fused.tda_pass_rate,
-                "threshold": 0.5,
-                "passed": fused.tda_pass_rate >= 0.5,
+                "threshold": THRESHOLD_TDA_PASS_RATE,
+                "passed": fused.tda_pass_rate >= THRESHOLD_TDA_PASS_RATE,
             },
             "hard_gate_blocks": {
                 "value": fused.tda_hard_gate_blocks,

@@ -28,6 +28,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# Inconsistency Detection Thresholds
+THRESHOLD_HIGH_BLOCK_RATE_INCONSISTENCY = 0.5  # Block rate above which to flag runs
+THRESHOLD_BLOCK_RATE_MULTIPLIER = 1.5  # Multiplier for uplift without quality detection
+THRESHOLD_BLOCK_RATE_IMPROVEMENT = 0.5  # Multiplier for degradation with good TDA
+
+
 class TDAOutcome(Enum):
     """TDA Hard Gate decision outcome."""
     PASS = "pass"
@@ -382,7 +388,7 @@ def _detect_inconsistencies(
     # Check for high block rates
     high_block_runs = [
         r for r in all_runs
-        if r.tda.block_rate is not None and r.tda.block_rate > 0.5
+        if r.tda.block_rate is not None and r.tda.block_rate > THRESHOLD_HIGH_BLOCK_RATE_INCONSISTENCY
     ]
     if high_block_runs:
         inconsistencies.append(InconsistencyReport(
@@ -427,7 +433,7 @@ def _detect_inconsistencies(
         ) / max(1, len([r for r in rfl_runs if r.tda.block_rate is not None]))
         
         # Uplift without quality: RFL coverage improved but block rate also increased significantly
-        if rfl_mean_coverage > baseline_mean_coverage and rfl_mean_block_rate > baseline_mean_block_rate * 1.5:
+        if rfl_mean_coverage > baseline_mean_coverage and rfl_mean_block_rate > baseline_mean_block_rate * THRESHOLD_BLOCK_RATE_MULTIPLIER:
             inconsistencies.append(InconsistencyReport(
                 inconsistency_type=InconsistencyType.UPLIFT_WITHOUT_QUALITY,
                 severity="warning",
@@ -441,7 +447,7 @@ def _detect_inconsistencies(
             ))
         
         # Degradation with good TDA: RFL coverage decreased but block rate improved
-        if rfl_mean_coverage < baseline_mean_coverage and rfl_mean_block_rate < baseline_mean_block_rate * 0.5:
+        if rfl_mean_coverage < baseline_mean_coverage and rfl_mean_block_rate < baseline_mean_block_rate * THRESHOLD_BLOCK_RATE_IMPROVEMENT:
             inconsistencies.append(InconsistencyReport(
                 inconsistency_type=InconsistencyType.DEGRADATION_WITH_GOOD_TDA,
                 severity="info",
