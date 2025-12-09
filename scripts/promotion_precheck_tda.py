@@ -20,7 +20,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 # Add repo root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
