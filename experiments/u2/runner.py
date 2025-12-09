@@ -6,6 +6,7 @@ Core execution engine for U2 experiments with:
 - Snapshot support
 - Trace logging
 - Policy-driven search
+- Runtime safety enforcement (Neural Link)
 """
 
 import time
@@ -20,6 +21,12 @@ from .logging import U2TraceLogger
 from .policy import create_policy, SearchPolicy
 from .schema import EventType
 from .snapshots import SnapshotData, create_snapshot_name, save_snapshot
+from .safety import (
+    U2SafetyContext,
+    SafetyEnvelope,
+    GateDecision,
+    evaluate_hard_gate_decision,
+)
 
 
 @dataclass
@@ -90,6 +97,10 @@ class U2Runner:
         master_seed_hex = int_to_hex_seed(config.master_seed)
         self.master_prng = DeterministicPRNG(master_seed_hex)
         self.slice_prng = self.master_prng.for_path("slice", config.slice_name)
+        
+        # Initialize safety context (Neural Link Cortex)
+        self.safety_context = U2SafetyContext()
+        self.safety_prng = self.master_prng.for_path("safety")
         
         # Initialize frontier manager
         self.frontier = FrontierManager(
@@ -187,7 +198,44 @@ class U2Runner:
                     }
                 )
             
-            # Execute candidate
+            # BLOCKING CALL: Cortex approval via Hard Gate
+            # NO candidate executes without this approval
+            safety_envelope = evaluate_hard_gate_decision(
+                candidate=candidate.item,
+                cycle=cycle,
+                safety_context=self.safety_context,
+                prng=self.safety_prng.for_path("gate", str(cycle)),
+                max_depth=self.config.max_depth,
+            )
+            
+            # Log safety decision
+            if trace_ctx:
+                trace_ctx.trace_logger.log_event(
+                    EventType.FRONTIER_POP,  # Reuse existing event type
+                    cycle=cycle,
+                    data={
+                        "safety_gate": safety_envelope.to_dict(),
+                    }
+                )
+            
+            # Block execution if not approved
+            if safety_envelope.decision != GateDecision.APPROVED:
+                # Log rejection/abstention
+                if trace_ctx:
+                    trace_ctx.trace_logger.log_event(
+                        EventType.DERIVE_FAILURE,
+                        cycle=cycle,
+                        data={
+                            "item": str(candidate.item),
+                            "blocked_by_safety_gate": True,
+                            "decision": safety_envelope.decision.value,
+                            "reason": safety_envelope.reason,
+                        }
+                    )
+                # Skip this candidate - Cortex rejected
+                continue
+            
+            # Execute candidate (only if approved)
             try:
                 success, result = execute_fn(candidate.item, cycle)
                 
@@ -348,6 +396,7 @@ class U2Runner:
             frontier_state=self.frontier.get_state(),
             prng_state=self.slice_prng.get_state(),
             stats=self.stats,
+            safety_context=self.safety_context.to_dict(),
             snapshot_cycle=cycle,
             snapshot_timestamp=int(time.time()),
         )
@@ -368,6 +417,10 @@ class U2Runner:
         self.current_cycle = snapshot.current_cycle
         self.stats = snapshot.stats
         
+        # Restore safety context
+        if snapshot.safety_context:
+            self.safety_context = U2SafetyContext.from_dict(snapshot.safety_context)
+        
         # Restore frontier
         self.frontier.set_state(snapshot.frontier_state)
         
@@ -384,6 +437,7 @@ class U2Runner:
             "stats": self.stats,
             "frontier_stats": self.frontier.get_stats(),
             "beam_stats": self.beam_allocator.get_stats(),
+            "safety_context": self.safety_context.to_dict(),
         }
 
 

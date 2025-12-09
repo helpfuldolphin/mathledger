@@ -63,6 +63,9 @@ class SnapshotData:
     # Statistics
     stats: Dict[str, Any] = field(default_factory=dict)
     
+    # Safety context (Neural Link)
+    safety_context: Dict[str, Any] = field(default_factory=dict)
+    
     # Metadata
     snapshot_cycle: int = 0
     snapshot_timestamp: int = 0
@@ -79,6 +82,7 @@ class SnapshotData:
             "frontier_state": self.frontier_state,
             "prng_state": self.prng_state,
             "stats": self.stats,
+            "safety_context": self.safety_context,
             "snapshot_cycle": self.snapshot_cycle,
             "snapshot_timestamp": self.snapshot_timestamp,
         }
@@ -95,6 +99,7 @@ class SnapshotData:
             "frontier_state": self.frontier_state,
             "prng_state": self.prng_state,
             "stats": self.stats,
+            "safety_context": self.safety_context,
             "snapshot_cycle": self.snapshot_cycle,
         }
     
@@ -111,6 +116,7 @@ class SnapshotData:
             frontier_state=data.get("frontier_state", {}),
             prng_state=data.get("prng_state", {}),
             stats=data.get("stats", {}),
+            safety_context=data.get("safety_context", {}),
             snapshot_cycle=data.get("snapshot_cycle", 0),
             snapshot_timestamp=data.get("snapshot_timestamp", 0),
         )

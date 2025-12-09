@@ -4,6 +4,7 @@ RFL 40-Run Orchestrator
 Executes 40 derivation experiments and verifies reflexive metabolism:
 - Coverage ≥ 92% (bootstrap CI lower bound)
 - Uplift > 1.0 (bootstrap CI lower bound)
+- Runtime safety enforcement (Neural Link)
 """
 
 import hashlib
@@ -37,6 +38,13 @@ from .bootstrap_stats import (
 from .audit import RFLAuditLog, SymbolicDescentGradient, StepIdComputation
 from .experiment_logging import RFLExperimentLogger
 from .provenance import ManifestBuilder
+from rfl.prng import DeterministicPRNG
+from experiments.u2.safety import (
+    U2SafetyContext,
+    SafetyEnvelope,
+    GateDecision,
+    evaluate_hard_gate_decision,
+)
 
 # ---------------- Logger ----------------
 logging.basicConfig(
@@ -154,6 +162,10 @@ class RFLRunner:
 
         # Audit log for RFL Law compliance (determinism verification)
         self.audit_log = RFLAuditLog(seed=self.config.random_seed)
+
+        # Safety context (Neural Link Cortex)
+        self.safety_context = U2SafetyContext()
+        self.safety_prng = DeterministicPRNG(f"0x{self.config.random_seed:016x}")
 
         # Experiment Logger (Schema v1)
         self.experiment_logger = RFLExperimentLogger(config)
@@ -542,6 +554,36 @@ class RFLRunner:
         reward = max(0.0, 1.0 - max(attestation.abstention_rate, 0.0))
         symbolic_descent = -abstention_rate_delta
 
+        # BLOCKING CALL: Safety gate check before policy update
+        # Prepare candidate for gate evaluation
+        safety_candidate = {
+            "item": attestation.statement_hash,
+            "depth": attestation.metadata.get("depth", 0),
+            "abstention_rate": attestation.abstention_rate,
+        }
+        
+        safety_envelope = evaluate_hard_gate_decision(
+            candidate=safety_candidate,
+            cycle=self.first_organism_runs_total,
+            safety_context=self.safety_context,
+            prng=self.safety_prng.for_path("attestation", str(self.first_organism_runs_total)),
+            max_depth=100,  # Higher limit for RFL attestations
+            max_complexity=10000.0,  # Higher complexity allowed
+        )
+        
+        # Log safety decision
+        logger.info(
+            f"[SAFETY] Attestation {self.first_organism_runs_total}: "
+            f"{safety_envelope.decision.value} - {safety_envelope.reason}"
+        )
+        
+        # Block policy update if not approved
+        if safety_envelope.decision != GateDecision.APPROVED:
+            policy_update_applied = False
+            logger.warning(
+                f"[SAFETY] Policy update blocked by safety gate: {safety_envelope.reason}"
+            )
+        
         if policy_update_applied:
             self.policy_update_count += 1
             breakdown = attestation.metadata.get("abstention_breakdown", {})
@@ -650,6 +692,7 @@ class RFLRunner:
                 "metadata": attestation.metadata,
                 "abstention_rate": attestation.abstention_rate,
                 "abstention_mass": attestation.abstention_mass,
+                "safety_envelope": safety_envelope.to_dict(),
             }
         )
 
@@ -992,6 +1035,10 @@ class RFLRunner:
                 "summary": self._summarize_policy_ledger()
             },
             "dual_attestation": self.dual_attestation_records,
+            "safety": {
+                "context": self.safety_context.to_dict(),
+                "neural_link_enabled": True,
+            },
             "metabolism_verification": {
                 "passed": self.metabolism_passed,
                 "message": self.metabolism_message,
