@@ -17,6 +17,11 @@ from .chain_verifier import (
     AttestationChainVerifier,
     verify_experiment_attestation_chain,
 )
+from .experiment_integration import (
+    create_rfl_attestation_block,
+    create_u2_attestation_block,
+    save_attestation_block,
+)
 
 __all__: list[str] = [
     "compute_composite_root",
@@ -30,5 +35,8 @@ __all__: list[str] = [
     "ExperimentBlock",
     "AttestationChainVerifier",
     "verify_experiment_attestation_chain",
+    "create_rfl_attestation_block",
+    "create_u2_attestation_block",
+    "save_attestation_block",
 ]
 
