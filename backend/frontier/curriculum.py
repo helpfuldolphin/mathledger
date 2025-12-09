@@ -8,8 +8,11 @@ velocity, slice caps, and monotonicity invariants.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import shutil
+import sys
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -146,6 +149,36 @@ class CurriculumConfigError(Exception):
     def __init__(self, errors: List[str]):
         self.errors = errors
         super().__init__(f"Invalid curriculum configuration: {'; '.join(errors)}")
+
+
+class CurriculumDriftError(Exception):
+    """Raised when a drift in curriculum configuration is detected."""
+
+
+@dataclass
+class CurriculumDriftSentinel:
+    """Runtime drift guard for curriculum configuration."""
+    baseline_fingerprint: str
+    baseline_version: int
+    baseline_slice_count: int
+
+    def check(self, system: "CurriculumSystem") -> List[str]:
+        """
+        Checks the provided CurriculumSystem for drift against the baseline.
+        Returns a list of violation messages. An empty list means no drift.
+        """
+        violations = []
+        current_fingerprint = system.fingerprint()
+        if current_fingerprint != self.baseline_fingerprint:
+            violations.append(
+                f"Fingerprint mismatch (ContentDrift): "
+                f"Expected {self.baseline_fingerprint[:12]}..., got {current_fingerprint[:12]}..."
+            )
+        if system.version != self.baseline_version:
+            violations.append(f"SchemaDrift: Version changed from {self.baseline_version} to {system.version}")
+        if len(system.slices) != self.baseline_slice_count:
+            violations.append(f"SliceCountDrift: Slice count changed from {self.baseline_slice_count} to {len(system.slices)}")
+        return violations
 
 
 def validate_curriculum_config(config: Dict[str, Any]) -> List[str]:
@@ -298,6 +331,17 @@ def _first_available(root: Dict[str, Any], paths: Iterable[Sequence[str]]) -> An
     return None
 
 
+def _get_metric_by_path(root: Dict[str, Any], path: Tuple[str, ...]) -> Any:
+    """Strictly resolve a metric from a nested dictionary using a path."""
+    node = root
+    for i, part in enumerate(path):
+        if not isinstance(node, dict) or part not in node:
+            subpath = ".".join(path[:i+1])
+            raise KeyError(f"Required path '{subpath}' not found in metric payload.")
+        node = node[part]
+    return node
+
+
 @dataclass(frozen=True)
 class CoverageGateSpec:
     ci_lower_min: float
@@ -385,6 +429,15 @@ class SliceGates:
             caps=CapsGateSpec(**data['caps']),
         )
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize all gates to a canonical dictionary."""
+        return {
+            "coverage": self.coverage.to_dict(),
+            "abstention": self.abstention.to_dict(),
+            "velocity": self.velocity.to_dict(),
+            "caps": self.caps.to_dict(),
+        }
+
 
 @dataclass
 class CurriculumSlice:
@@ -418,6 +471,7 @@ class CurriculumSystem:
     description: str
     slices: List[CurriculumSlice]
     active_index: int
+    invariants: Dict[str, Any] = field(default_factory=dict)
     monotonic_axes: Tuple[str, ...] = ()
     version: int = 2
 
@@ -452,6 +506,7 @@ class CurriculumSystem:
             description=description,
             slices=slices,
             active_index=active_index,
+            invariants=invariants,
             monotonic_axes=monotonic_axes,
             version=version,
         )
@@ -531,6 +586,48 @@ class CurriculumSystem:
         if slice_obj.metadata:
             base.update(slice_obj.metadata)
         return base
+
+    def fingerprint(self) -> str:
+        """
+        Computes a deterministic SHA-256 fingerprint of the curriculum configuration.
+
+        The fingerprint is stable against slice reordering and excludes runtime state
+        such as completion timestamps and the active slice pointer.
+        """
+        # Slice-order normalization: sort by name for stability
+        sorted_slices = sorted(self.slices, key=lambda s: s.name)
+
+        canonical_slices = []
+        for s in sorted_slices:
+            canonical_slices.append({
+                "name": s.name,
+                # Parameter & Metadata Normalization: sort keys
+                "params": dict(sorted(s.params.items())),
+                "gates": {
+                    # Gate-parameter normalization: asdict is stable for frozen dataclasses
+                    "coverage": asdict(s.gates.coverage),
+                    "abstention": asdict(s.gates.abstention),
+                    "velocity": asdict(s.gates.velocity),
+                    "caps": asdict(s.gates.caps),
+                },
+                "metadata": dict(sorted(s.metadata.items())),
+            })
+
+        canonical_representation = {
+            "version": self.version,
+            "slug": self.slug,
+            "invariants": dict(sorted(self.invariants.items())),
+            "slices": canonical_slices,
+        }
+
+        # Use sorted_keys and no whitespace for the most compact, stable JSON string
+        payload = json.dumps(
+            canonical_representation, 
+            sort_keys=True, 
+            separators=(",", ":")
+        ).encode("utf-8")
+
+        return hashlib.sha256(payload).hexdigest()
 
 
 def make_first_organism_slice() -> CurriculumSlice:
@@ -777,6 +874,43 @@ class NormalizedMetrics:
 
     @classmethod
     def from_raw(cls, metrics: Dict[str, Any]) -> "NormalizedMetrics":
+        """
+        Create a normalized metrics object from a raw dictionary.
+        Supports multiple enforcement modes via METRIC_SCHEMA_ENFORCEMENT_MODE.
+        """
+        mode = os.getenv("METRIC_SCHEMA_ENFORCEMENT_MODE", "permissive").lower()
+
+        # Canonical v1 schema paths
+        SCHEMA_V1 = {
+            "coverage_ci_lower": ("metrics", "rfl", "coverage", "ci_lower"),
+            "coverage_sample_size": ("metrics", "rfl", "coverage", "sample_size"),
+            "abstention_rate_pct": ("metrics", "success_rates", "abstention_rate"),
+            "attempt_mass": ("metrics", "curriculum", "active_slice", "attempt_mass"),
+            "slice_runtime_minutes": ("metrics", "curriculum", "active_slice", "wallclock_minutes"),
+            "proof_velocity_pph": ("metrics", "throughput", "proofs_per_hour"),
+            "velocity_cv": ("metrics", "throughput", "coefficient_of_variation"),
+            "backlog_fraction": ("metrics", "frontier", "queue_backlog"),
+            "attestation_hash": ("provenance", "merkle_hash"),
+        }
+
+        # --- Strict Mode ---
+        if mode == "strict":
+            try:
+                raw_values = {}
+                for key, path in SCHEMA_V1.items():
+                    value = _get_metric_by_path(metrics, path)
+                    if key == "attestation_hash":
+                        raw_values[key] = str(value) if value is not None else None
+                    elif key in ["coverage_ci_lower", "abstention_rate_pct", "slice_runtime_minutes", "proof_velocity_pph", "velocity_cv", "backlog_fraction"]:
+                        raw_values[key] = _to_float(value)
+                    else:
+                        raw_values[key] = _to_int(value)
+                return cls(**raw_values)
+            except KeyError as e:
+                raise CurriculumDriftError(f"Metric Schema Drift (Strict): {e}") from e
+
+        # --- Permissive & Log-Only Modes ---
+        # Fallback to old, flexible logic
         root = metrics.get('metrics', metrics)
 
         coverage_ci_lower = _to_float(_first_available(root, [
@@ -825,7 +959,8 @@ class NormalizedMetrics:
             ('provenance', 'merkle_hash'),
             ('provenance', 'attestation_hash'),
         ])
-        return cls(
+
+        permissive_result = cls(
             coverage_ci_lower=coverage_ci_lower,
             coverage_sample_size=coverage_sample_size,
             abstention_rate_pct=abstention_rate,
@@ -836,6 +971,31 @@ class NormalizedMetrics:
             backlog_fraction=backlog_fraction,
             attestation_hash=attestation_hash if isinstance(attestation_hash, str) else None,
         )
+
+        if mode == "log_only":
+            # Parallel Validation
+            try:
+                raw_values = {}
+                for key, path in SCHEMA_V1.items():
+                    value = _get_metric_by_path(metrics, path)
+                    if key == "attestation_hash":
+                        raw_values[key] = str(value) if value is not None else None
+                    elif key in ["coverage_ci_lower", "abstention_rate_pct", "slice_runtime_minutes", "proof_velocity_pph", "velocity_cv", "backlog_fraction"]:
+                        raw_values[key] = _to_float(value)
+                    else:
+                        raw_values[key] = _to_int(value)
+                strict_result = cls(**raw_values)
+                if asdict(permissive_result) != asdict(strict_result):
+                    print(
+                        "WARNING: Metric Schema Drift Detected in log_only mode.\n" 
+                        f"  Permissive Result: {asdict(permissive_result)}\n"
+                        f"  Strict Result:     {asdict(strict_result)}",
+                        file=sys.stderr
+                    )
+            except KeyError as e:
+                print(f"ERROR: Metric Schema Drift (Strict) would fail: {e}", file=sys.stderr)
+
+        return permissive_result
 
     @property
     def abstention_mass(self) -> Optional[float]:
