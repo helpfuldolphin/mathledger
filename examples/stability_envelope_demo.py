@@ -8,6 +8,7 @@ Usage:
     python examples/stability_envelope_demo.py
 """
 
+import random
 import sys
 from pathlib import Path
 
@@ -198,7 +199,6 @@ def demo_suitability_scoring():
     print("\nCreating slices with different characteristics...")
     for slice_name, (base_hss, variance, base_proofs) in slices.items():
         for i in range(10):
-            import random
             random.seed(i)
             hss_value = base_hss + (random.random() - 0.5) * variance * 2
             hss_value = max(0.0, min(1.0, hss_value))

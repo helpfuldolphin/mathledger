@@ -181,6 +181,7 @@ class CurriculumStabilityEnvelope:
         # Compute basic statistics
         hss_mean = statistics.mean(hss_values)
         hss_std = statistics.stdev(hss_values) if len(hss_values) > 1 else 0.0
+        # CV = std/mean. If mean is 0, CV is undefined (use inf as sentinel)
         hss_cv = hss_std / hss_mean if hss_mean > 0 else float('inf')
         
         # Count low-HSS cycles
@@ -243,7 +244,7 @@ class CurriculumStabilityEnvelope:
         
         # Stability component: penalize high CV
         # CV of 0.0 -> score 1.0, CV >= max_hss_cv -> score 0.0
-        if hss_cv == float('inf'):
+        if math.isinf(hss_cv):
             stability_component = 0.0
         else:
             stability_component = max(0.0, 1.0 - (hss_cv / self.config.max_hss_cv))
