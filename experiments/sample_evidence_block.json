@@ -1,0 +1,23 @@
+{
+  "runs": [
+    {
+      "run_id": "U2_EXP_003_seed_60",
+      "uplift": {
+        "delta_p": 0.18,
+        "abstention_rate": 0.18,
+        "promotion_decision": "PASS"
+      },
+      "tda": {
+        "HSS": 0.85,
+        "block_rate": 0.30,
+        "tda_outcome": "BLOCK"
+      },
+      "metadata": {
+        "slice": "SLICE_C",
+        "seed": "0x60def456",
+        "cycles": 200,
+        "note": "TDA blocks due to timeout issues"
+      }
+    }
+  ]
+}

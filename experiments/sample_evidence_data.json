@@ -1,0 +1,58 @@
+{
+  "runs": [
+    {
+      "run_id": "U2_EXP_001_seed_42",
+      "uplift": {
+        "delta_p": 0.12,
+        "abstention_rate": 0.23,
+        "promotion_decision": "PASS"
+      },
+      "tda": {
+        "HSS": 0.90,
+        "block_rate": 0.0,
+        "tda_outcome": "OK"
+      },
+      "metadata": {
+        "slice": "SLICE_A",
+        "seed": "0x42ab1234",
+        "cycles": 200
+      }
+    },
+    {
+      "run_id": "U2_EXP_001_seed_43",
+      "uplift": {
+        "delta_p": 0.15,
+        "abstention_rate": 0.20,
+        "promotion_decision": "PASS"
+      },
+      "tda": {
+        "HSS": 0.85,
+        "block_rate": 0.0,
+        "tda_outcome": "OK"
+      },
+      "metadata": {
+        "slice": "SLICE_A",
+        "seed": "0x43cd5678",
+        "cycles": 200
+      }
+    },
+    {
+      "run_id": "U2_EXP_001_seed_44",
+      "uplift": {
+        "delta_p": 0.10,
+        "abstention_rate": 0.25,
+        "promotion_decision": "PASS"
+      },
+      "tda": {
+        "HSS": 0.88,
+        "block_rate": 0.0,
+        "tda_outcome": "OK"
+      },
+      "metadata": {
+        "slice": "SLICE_A",
+        "seed": "0x44ef9abc",
+        "cycles": 200
+      }
+    }
+  ]
+}
