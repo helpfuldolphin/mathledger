@@ -10,6 +10,23 @@ This module implements **TDA-aware evidence fusion** for multi-run RFL experimen
 - `experiments/evidence_fusion.py` — Core fusion logic
 - `experiments/promotion_precheck.py` — CLI for promotion precheck
 - `tests/test_evidence_fusion.py` — Comprehensive test suite
+- `experiments/test_evidence_examples.sh` — Example workflow script
+
+## Quick Start
+
+```bash
+# Run all example scenarios
+bash experiments/test_evidence_examples.sh
+
+# Or test manually:
+# 1. Fuse evidence summaries
+python3 experiments/evidence_fusion.py \
+  experiments/sample_evidence_data.json \
+  /tmp/fused.json
+
+# 2. Run promotion precheck
+python3 experiments/promotion_precheck.py /tmp/fused.json
+```
 
 ## Schema Extension
 
