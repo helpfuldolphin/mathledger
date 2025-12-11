@@ -44,5 +44,8 @@ artifacts/
 logs/
 *.backup.py
 
+# First Light run directories
+first_light_run/
+
 # Docker volumes (not needed if named volumes)
 # data/
