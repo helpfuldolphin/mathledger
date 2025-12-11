@@ -37,6 +37,13 @@ from .bootstrap_stats import (
 from .audit import RFLAuditLog, SymbolicDescentGradient, StepIdComputation
 from .experiment_logging import RFLExperimentLogger
 from .provenance import ManifestBuilder
+from .cortex_telemetry import (
+    CortexEnvelope,
+    TDAMode,
+    compute_cortex_summary,
+    UpliftSafetyCortexAdapter,
+    attach_cortex_governance_to_evidence,
+)
 
 # ---------------- Logger ----------------
 logging.basicConfig(
@@ -166,6 +173,18 @@ class RFLRunner:
             metrics_path = Path("results") / "rfl_wide_slice_runs.jsonl"
             self.metrics_logger = RFLMetricsLogger(str(metrics_path))
             logger.info(f"[INIT] Metrics logger enabled: {metrics_path}")
+
+        # Cortex telemetry envelope (populated by Cortex gate if present)
+        # Default to DRY_RUN mode if not explicitly set
+        cortex_mode_str = os.getenv("CORTEX_TDA_MODE", "DRY_RUN").upper()
+        try:
+            cortex_mode = TDAMode[cortex_mode_str]
+        except KeyError:
+            cortex_mode = TDAMode.DRY_RUN
+            logger.warning(f"Invalid CORTEX_TDA_MODE '{cortex_mode_str}', defaulting to DRY_RUN")
+        
+        self.cortex_envelope = CortexEnvelope(tda_mode=cortex_mode)
+        logger.info(f"[INIT] Cortex telemetry enabled with TDA mode: {cortex_mode.value}")
 
         # Telemetry
         self._redis_client = None
@@ -980,7 +999,8 @@ class RFLRunner:
                 "bootstrap_ci": self.coverage_ci.to_dict() if self.coverage_ci else None
             },
             "uplift": {
-                "bootstrap_ci": self.uplift_ci.to_dict() if self.uplift_ci else None
+                "bootstrap_ci": self.uplift_ci.to_dict() if self.uplift_ci else None,
+                "safety_cortex_adapter": UpliftSafetyCortexAdapter.from_envelope(self.cortex_envelope).to_dict()
             },
             "abstentions": {
                 "histogram": dict(self.abstention_histogram),
@@ -998,7 +1018,8 @@ class RFLRunner:
                 "abstention_fraction": float(self.abstention_fraction),
                 "abstention_tolerance": float(self.config.abstention_tolerance),
                 "timestamp": deterministic_timestamp(0).isoformat() + "Z"
-            }
+            },
+            "cortex_summary": compute_cortex_summary(self.cortex_envelope)["cortex_summary"]
         }
 
         # Export main results
