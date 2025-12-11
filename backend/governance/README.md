@@ -51,7 +51,41 @@ lawful = validator.adjudicate()
 # Returns: True if all validations pass, False otherwise
 ```
 
-### 2. Exporter (`export.py`)
+### 2. Safety Gate (`safety_gate.py`) - Phase X Neural Link
+
+Surfaces safety gate decisions into observability systems:
+
+```python
+from backend.governance import (
+    SafetyEnvelope,
+    SafetyGateStatus,
+    build_safety_gate_summary_for_first_light,
+    build_safety_gate_tile_for_global_health,
+    attach_safety_gate_to_evidence,
+)
+
+# Build envelope from gate decisions
+envelope = SafetyEnvelope(
+    final_status=SafetyGateStatus.PASS,
+    total_decisions=100,
+    blocked_cycles=0,
+    advisory_cycles=2,
+    decisions=[...]
+)
+
+# Add to First Light summary
+first_light["safety_gate_summary"] = build_safety_gate_summary_for_first_light(envelope)
+
+# Add to global health dashboard
+health = build_global_health_surface(tiles, safety_envelope=envelope)
+
+# Attach to evidence pack
+evidence = attach_safety_gate_to_evidence(evidence, envelope)
+```
+
+See `docs/SAFETY_GATE_INTEGRATION.md` for complete integration guide.
+
+### 3. Exporter (`export.py`)
 
 Generates governance artifacts from source data:
 
