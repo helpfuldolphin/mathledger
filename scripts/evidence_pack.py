@@ -126,7 +126,7 @@ class EvidencePackToolchain:
         print(f"   Total artifacts: {len(logs) + len(figures)}")
         return True
     
-    def attach_cortex_governance(self, evidence_path: Path, cortex_envelope: Any) -> bool:
+    def attach_cortex_governance(self, evidence_path: Path, cortex_envelope: 'CortexEnvelope') -> bool:
         """
         Attach Cortex governance to an existing evidence pack.
         

@@ -13,6 +13,7 @@ Date: 2025-12-11
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import Dict, List, Any, Optional
@@ -194,7 +195,9 @@ class UpliftSafetyCortexAdapter:
         else:
             band = "LOW"
         
-        # Advisory only if not in BLOCK mode
+        # advisory_only indicates whether the adapter's output is informational only
+        # (i.e., TDA mode is not BLOCK). When False, it means BLOCK mode is active
+        # and violations would result in hard blocks.
         advisory_only = envelope.tda_mode != TDAMode.BLOCK
         
         return cls(
@@ -229,7 +232,6 @@ def attach_cortex_governance_to_evidence(
         New evidence dict with cortex_gate added
     """
     # Deep copy to avoid mutation
-    import copy
     evidence_copy = copy.deepcopy(evidence)
     
     # Ensure governance key exists
