@@ -1,0 +1,32 @@
+{
+  "run_id": "fl_integrated_42_1765428734",
+  "config": {
+    "seed": 42,
+    "cycles": 50,
+    "slice_name": "arithmetic_simple",
+    "mode": "integrated"
+  },
+  "start_time": "2025-01-01T00:00:42+00:00Z",
+  "end_time": "2025-01-01T00:01:32+00:00Z",
+  "duration_seconds": 50.0,
+  "final_policy_weights": {
+    "len": -0.5010000000000001,
+    "depth": 0.25050000000000006,
+    "success": 5.950000000000001
+  },
+  "final_abstention_rate": 0.3333333333333333,
+  "total_proofs_verified": 250,
+  "total_candidates_processed": 475,
+  "stability_report": {
+    "hss_mean": 0.44494283494283493,
+    "hss_std": 0.16126453435834698,
+    "hss_cv": 0.3624387712166796,
+    "hss_stable": false,
+    "policy_len_std": 0.14501028963490836,
+    "policy_depth_std": 0.07250514481745418,
+    "policy_success_std": 1.721093329834266,
+    "policy_stable": true,
+    "num_cycles": 50,
+    "convergence_achieved": false
+  }
+}

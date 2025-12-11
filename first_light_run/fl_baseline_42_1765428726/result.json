@@ -1,0 +1,32 @@
+{
+  "run_id": "fl_baseline_42_1765428726",
+  "config": {
+    "seed": 42,
+    "cycles": 10,
+    "slice_name": "arithmetic_simple",
+    "mode": "baseline"
+  },
+  "start_time": "2025-01-01T00:00:42+00:00Z",
+  "end_time": "2025-01-01T00:00:52+00:00Z",
+  "duration_seconds": 10.0,
+  "final_policy_weights": {
+    "len": 0.0,
+    "depth": 0.0,
+    "success": 0.0
+  },
+  "final_abstention_rate": 0.3333333333333333,
+  "total_proofs_verified": 50,
+  "total_candidates_processed": 95,
+  "stability_report": {
+    "hss_mean": 0.44494283494283493,
+    "hss_std": 0.16126453435834698,
+    "hss_cv": 0.3624387712166796,
+    "hss_stable": false,
+    "policy_len_std": 0.0,
+    "policy_depth_std": 0.0,
+    "policy_success_std": 0.0,
+    "policy_stable": true,
+    "num_cycles": 10,
+    "convergence_achieved": false
+  }
+}

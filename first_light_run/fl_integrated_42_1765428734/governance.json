@@ -1,0 +1,2302 @@
+[
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.0,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2857142857142857,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2857142857142857,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.01,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.25,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.25,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.02,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2222222222222222,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2222222222222222,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.03,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.7,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.7,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.04,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.6363636363636364,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.6363636363636364,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.05,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5833333333333334,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5833333333333334,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.06,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5384615384615384,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5384615384615384,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.07,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.08,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.4,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.4,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.09,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.3333333333333333,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.3333333333333333,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.1,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2857142857142857,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2857142857142857,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.11,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.25,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.25,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.12,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2222222222222222,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2222222222222222,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.13,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.7,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.7,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.14,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.6363636363636364,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.6363636363636364,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.15,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5833333333333334,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5833333333333334,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.16,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5384615384615384,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5384615384615384,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.17,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.18,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.4,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.4,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.19,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.3333333333333333,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.3333333333333333,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.2,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2857142857142857,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2857142857142857,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.21,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.25,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.25,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.22,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2222222222222222,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2222222222222222,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.23,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.7,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.7,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.24,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.6363636363636364,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.6363636363636364,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.25,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5833333333333334,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5833333333333334,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.26,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5384615384615384,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5384615384615384,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.27,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.28,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.4,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.4,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.29,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.3333333333333333,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.3333333333333333,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.3,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2857142857142857,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2857142857142857,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.31,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.25,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.25,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.32,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2222222222222222,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2222222222222222,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.33,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.7,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.7,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.34,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.6363636363636364,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.6363636363636364,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.35000000000000003,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5833333333333334,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5833333333333334,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.36,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5384615384615384,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5384615384615384,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.37,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.38,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.4,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.4,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.39,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.3333333333333333,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.3333333333333333,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.4,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2857142857142857,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2857142857142857,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.41000000000000003,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.25,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.25,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.42,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.2222222222222222,
+      "abstention_mass": 2,
+      "safety_threshold_met": true
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.2222222222222222,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.43,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.7,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.7,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.44,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.6363636363636364,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.6363636363636364,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.45,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5833333333333334,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 500,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5833333333333334,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.46,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5384615384615384,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 600,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5384615384615384,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.47000000000000003,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.5,
+      "abstention_mass": 7,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 700,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.5,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.48,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.4,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 300,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.4,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  },
+  {
+    "curriculum_stability": {
+      "active_slice": "arithmetic_simple",
+      "wallclock_minutes": 0.49,
+      "proof_velocity_cv": 0.05,
+      "coverage_rate": 0.95
+    },
+    "safety_metrics": {
+      "abstention_rate": 0.3333333333333333,
+      "abstention_mass": 2,
+      "safety_threshold_met": false
+    },
+    "tda_metrics": {
+      "persistence_diagram": "mock",
+      "betti_numbers": [
+        1,
+        0,
+        0
+      ],
+      "bottleneck_distance": 0.1
+    },
+    "telemetry_metrics": {
+      "throughput_proofs_per_hour": 400,
+      "queue_backlog": 0.1,
+      "resource_utilization": 0.7
+    },
+    "epistemic_tile": {
+      "uncertainty_mass": 0.3333333333333333,
+      "confidence_interval": [
+        0.9,
+        0.95
+      ]
+    },
+    "harmonic_tile": {
+      "oscillation_amplitude": 0.01,
+      "phase_coherence": 0.98
+    },
+    "drift_tile": {
+      "concept_drift_score": 0.02,
+      "distribution_shift": 0.01
+    },
+    "semantic_tile": {
+      "vocabulary_coverage": 0.95,
+      "semantic_density": 0.85
+    }
+  }
+]

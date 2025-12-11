@@ -1,0 +1,589 @@
+{
+  "version": "1.0.0",
+  "created_at": "2025-12-11T04:52:06.298232+00:00",
+  "run_metadata": {
+    "run_id": "fl_baseline_42_1765428726",
+    "seed": 42,
+    "cycles": 10,
+    "slice_name": "arithmetic_simple",
+    "mode": "baseline",
+    "start_time": "2025-01-01T00:00:42+00:00Z",
+    "end_time": "2025-01-01T00:00:52+00:00Z",
+    "duration_seconds": 10.0
+  },
+  "stability_report": {
+    "hss_mean": 0.44494283494283493,
+    "hss_std": 0.16126453435834698,
+    "hss_cv": 0.3624387712166796,
+    "hss_stable": false,
+    "policy_len_std": 0.0,
+    "policy_depth_std": 0.0,
+    "policy_success_std": 0.0,
+    "policy_stable": true,
+    "num_cycles": 10,
+    "convergence_achieved": false
+  },
+  "trajectories": {
+    "delta_p": [
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      },
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      },
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      },
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      },
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      },
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      },
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      },
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      },
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      },
+      {
+        "len": 0.0,
+        "depth": 0.0,
+        "success": 0.0
+      }
+    ],
+    "hss": [
+      0.2857142857142857,
+      0.25,
+      0.2222222222222222,
+      0.7,
+      0.6363636363636364,
+      0.5833333333333334,
+      0.5384615384615384,
+      0.5,
+      0.4,
+      0.3333333333333333
+    ]
+  },
+  "governance": {
+    "curriculum_stability": [
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.0,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      },
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.01,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      },
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.02,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      },
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.03,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      },
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.04,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      },
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.05,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      },
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.06,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      },
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.07,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      },
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.08,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      },
+      {
+        "active_slice": "arithmetic_simple",
+        "wallclock_minutes": 0.09,
+        "proof_velocity_cv": 0.05,
+        "coverage_rate": 0.95
+      }
+    ],
+    "safety_summary": {
+      "final_abstention_rate": 0.3333333333333333,
+      "safety_threshold_met": false
+    },
+    "cortex_summary": {
+      "abstention_mass": 45,
+      "total_attempts": 95
+    },
+    "tda_metrics": [
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      },
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      },
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      },
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      },
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      },
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      },
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      },
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      },
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      },
+      {
+        "persistence_diagram": "mock",
+        "betti_numbers": [
+          1,
+          0,
+          0
+        ],
+        "bottleneck_distance": 0.1
+      }
+    ],
+    "epistemic_tile": [
+      {
+        "uncertainty_mass": 0.2857142857142857,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      },
+      {
+        "uncertainty_mass": 0.25,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      },
+      {
+        "uncertainty_mass": 0.2222222222222222,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      },
+      {
+        "uncertainty_mass": 0.7,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      },
+      {
+        "uncertainty_mass": 0.6363636363636364,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      },
+      {
+        "uncertainty_mass": 0.5833333333333334,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      },
+      {
+        "uncertainty_mass": 0.5384615384615384,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      },
+      {
+        "uncertainty_mass": 0.5,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      },
+      {
+        "uncertainty_mass": 0.4,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      },
+      {
+        "uncertainty_mass": 0.3333333333333333,
+        "confidence_interval": [
+          0.9,
+          0.95
+        ]
+      }
+    ],
+    "harmonic_tile": [
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      },
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      },
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      },
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      },
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      },
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      },
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      },
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      },
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      },
+      {
+        "oscillation_amplitude": 0.01,
+        "phase_coherence": 0.98
+      }
+    ],
+    "drift_tile": [
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      },
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      },
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      },
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      },
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      },
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      },
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      },
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      },
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      },
+      {
+        "concept_drift_score": 0.02,
+        "distribution_shift": 0.01
+      }
+    ],
+    "semantic_tile": [
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      },
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      },
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      },
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      },
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      },
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      },
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      },
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      },
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      },
+      {
+        "vocabulary_coverage": 0.95,
+        "semantic_density": 0.85
+      }
+    ]
+  },
+  "synthetic_raw_logs": {
+    "cycles_count": 10,
+    "cycles_sample": [
+      {
+        "cycle": 0,
+        "candidates_processed": 7,
+        "proofs_verified": 5,
+        "abstentions": 2,
+        "abstention_rate": 0.2857142857142857,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      },
+      {
+        "cycle": 1,
+        "candidates_processed": 8,
+        "proofs_verified": 6,
+        "abstentions": 2,
+        "abstention_rate": 0.25,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      },
+      {
+        "cycle": 2,
+        "candidates_processed": 9,
+        "proofs_verified": 7,
+        "abstentions": 2,
+        "abstention_rate": 0.2222222222222222,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      },
+      {
+        "cycle": 3,
+        "candidates_processed": 10,
+        "proofs_verified": 3,
+        "abstentions": 7,
+        "abstention_rate": 0.7,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      },
+      {
+        "cycle": 4,
+        "candidates_processed": 11,
+        "proofs_verified": 4,
+        "abstentions": 7,
+        "abstention_rate": 0.6363636363636364,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      },
+      {
+        "cycle": 5,
+        "candidates_processed": 12,
+        "proofs_verified": 5,
+        "abstentions": 7,
+        "abstention_rate": 0.5833333333333334,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      },
+      {
+        "cycle": 6,
+        "candidates_processed": 13,
+        "proofs_verified": 6,
+        "abstentions": 7,
+        "abstention_rate": 0.5384615384615384,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      },
+      {
+        "cycle": 7,
+        "candidates_processed": 14,
+        "proofs_verified": 7,
+        "abstentions": 7,
+        "abstention_rate": 0.5,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      },
+      {
+        "cycle": 8,
+        "candidates_processed": 5,
+        "proofs_verified": 3,
+        "abstentions": 2,
+        "abstention_rate": 0.4,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      },
+      {
+        "cycle": 9,
+        "candidates_processed": 6,
+        "proofs_verified": 4,
+        "abstentions": 2,
+        "abstention_rate": 0.3333333333333333,
+        "policy_weights": {
+          "len": 0.0,
+          "depth": 0.0,
+          "success": 0.0
+        }
+      }
+    ]
+  },
+  "summary": {
+    "total_proofs_verified": 50,
+    "total_candidates_processed": 95,
+    "final_policy_weights": {
+      "len": 0.0,
+      "depth": 0.0,
+      "success": 0.0
+    },
+    "convergence_achieved": false
+  }
+}
