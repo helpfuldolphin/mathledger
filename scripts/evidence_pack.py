@@ -24,6 +24,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
+# Import cortex telemetry for evidence pack integration
+try:
+    from rfl.cortex_telemetry import attach_cortex_governance_to_evidence, CortexEnvelope
+    CORTEX_AVAILABLE = True
+except ImportError:
+    CORTEX_AVAILABLE = False
+
 # Exit codes
 EXIT_PASS = 0
 EXIT_FAIL = 1
@@ -117,6 +124,42 @@ class EvidencePackToolchain:
         print()
         print(f"✅ Evidence pack created: {output_path}")
         print(f"   Total artifacts: {len(logs) + len(figures)}")
+        return True
+    
+    def attach_cortex_governance(self, evidence_path: Path, cortex_envelope: Any) -> bool:
+        """
+        Attach Cortex governance to an existing evidence pack.
+        
+        Args:
+            evidence_path: Path to evidence pack manifest
+            cortex_envelope: CortexEnvelope instance
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not CORTEX_AVAILABLE:
+            print("⚠️  WARNING: Cortex telemetry not available, skipping cortex governance", file=sys.stderr)
+            return False
+        
+        if not evidence_path.exists():
+            print(f"❌ ERROR: Evidence pack not found: {evidence_path}", file=sys.stderr)
+            return False
+        
+        try:
+            with open(evidence_path, 'r') as f:
+                evidence = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"❌ ERROR: Invalid JSON in evidence pack: {e}", file=sys.stderr)
+            return False
+        
+        # Attach cortex governance
+        evidence_with_cortex = attach_cortex_governance_to_evidence(evidence, cortex_envelope)
+        
+        # Save updated evidence pack
+        with open(evidence_path, 'w') as f:
+            json.dump(evidence_with_cortex, f, indent=2, sort_keys=True)
+        
+        print(f"✅ Cortex governance attached to {evidence_path}")
         return True
 
     def seal(self, input_path: Path, output_path: Path) -> bool:
