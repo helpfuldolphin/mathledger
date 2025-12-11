@@ -19,7 +19,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any
 
 # Exit codes
 EXIT_PASS = 0
@@ -127,7 +127,7 @@ class DocGovernanceRadar:
         tda_claim_patterns = [
             (r"TDA enforcement live", "Claimed 'TDA enforcement live'"),
             (r"TDA is now the final arbiter", "Claimed 'TDA is now the final arbiter'"),
-            (r"TDA hooks.*wired", "Claimed TDA hooks are wired"),
+            (r"TDA hooks.*(?:are|is) wired", "Claimed TDA hooks are wired"),
             (r"TDA.*operational", "Claimed TDA is operational"),
         ]
         

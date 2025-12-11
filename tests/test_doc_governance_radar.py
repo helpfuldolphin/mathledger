@@ -12,8 +12,6 @@ import pytest
 import json
 from pathlib import Path
 import sys
-import tempfile
-import shutil
 
 # Add scripts to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "radars"))
@@ -278,12 +276,7 @@ def test_report_artifacts_created(temp_repo):
 def test_line_numbers_reported_correctly(temp_repo):
     """Test that line numbers in violations are accurate."""
     doc_path = temp_repo["docs"] / "PHASE2_RFL_UPLIFT_PLAN.md"
-    doc_path.write_text("""Line 1
-Line 2
-Line 3
-We proved uplift here on line 4.
-Line 5
-""")
+    doc_path.write_text("Line 1\nLine 2\nLine 3\nWe proved uplift here on line 4.\nLine 5")
     
     radar = DocGovernanceRadar(temp_repo["root"], temp_repo["output"])
     radar.run()
