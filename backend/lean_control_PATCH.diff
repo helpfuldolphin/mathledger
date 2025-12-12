@@ -1,0 +1,67 @@
+# REAL-READY UNIFIED DIFF
+# File: backend/lean_control.py
+# Purpose: Add telemetry support for controlled statements
+
+--- a/backend/lean_control.py
++++ b/backend/lean_control.py
+@@ +449,0 @@
++
++
++def verify_controlled_statement_with_telemetry(
++    canonical: str,
++    enable_telemetry: bool = True,
++    timeout_s: float = 60.0,
++) -> Dict[str, Any]:
++    """
++    Verify a controlled statement with telemetry collection.
++    
++    This function verifies a controlled statement from the registry
++    and optionally collects comprehensive telemetry.
++    
++    Args:
++        canonical: Canonical form of statement (e.g., "p->p")
++        enable_telemetry: Enable telemetry collection
++        timeout_s: Timeout in seconds
++    
++    Returns:
++        Dict with verification result and telemetry
++    """
++    
++    # Check if statement is controlled
++    if canonical not in CONTROLLED_STATEMENTS:
++        return {
++            "success": False,
++            "outcome": "unknown_statement",
++            "error": f"Statement '{canonical}' not in controlled registry",
++            "telemetry": None,
++        }
++    
++    stmt = CONTROLLED_STATEMENTS[canonical]
++    
++    if not enable_telemetry:
++        # Use existing infrastructure without telemetry
++        build_runner = get_controlled_build_runner()
++        result = build_runner(stmt.canonical, stmt.proof_body)
++        return {
++            "success": result.get("success", False),
++            "outcome": "verified" if result.get("success") else "proof_invalid",
++            "expected_success": stmt.expected_success,
++            "telemetry": None,
++        }
++    
++    # Import telemetry runtime
++    from backend.lean_mode import run_lean_with_telemetry
++    
++    result = run_lean_with_telemetry(
++        statement=stmt.canonical,
++        proof_body=stmt.proof_body,
++        timeout_s=timeout_s,
++        enable_telemetry=True,
++    )
++    
++    # Add expected success to result
++    result["expected_success"] = stmt.expected_success
++    result["statement_type"] = stmt.statement_type.value
++    result["description"] = stmt.description
++    
++    return result
