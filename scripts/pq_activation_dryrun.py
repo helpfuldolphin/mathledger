@@ -10,6 +10,7 @@ sequence without actually modifying the blockchain.
 
 Usage:
     python3 scripts/pq_activation_dryrun.py --activation-block 10000
+    python3 scripts/pq_activation_dryrun.py --rehearsal --scenario missing_module
 
 Author: Manus-H
 Date: 2025-12-10
@@ -55,20 +56,26 @@ def print_warning(message: str) -> None:
 class DryRunValidator:
     """Validates node readiness for PQ activation."""
     
-    def __init__(self, activation_block: int):
+    def __init__(self, activation_block: int, rehearsal_mode: bool = False, node_state: Optional[Dict] = None):
         self.activation_block = activation_block
         self.checks_passed = 0
         self.checks_failed = 0
         self.warnings = 0
+        self.rehearsal_mode = rehearsal_mode
+        self.node_state = node_state or {}
+        self.failure_reason = None
     
     def check_software_version(self) -> bool:
         """Check if node software version supports PQ migration."""
         print_info("Checking software version...")
         
-        # DEMO-SCAFFOLD: In real implementation, this would query the node
-        # For dry-run, we simulate the check
         expected_version = "v2.1.0-pq"
-        current_version = "v2.1.0-pq"  # Simulated
+        
+        if self.rehearsal_mode:
+            current_version = self.node_state.get("software_version", "unknown")
+        else:
+            # DEMO-SCAFFOLD: In real implementation, this would query the node
+            current_version = "v2.1.0-pq"  # Simulated
         
         passed = current_version == expected_version
         print_check(passed, f"Software version: {current_version} (expected: {expected_version})")
@@ -84,9 +91,14 @@ class DryRunValidator:
         """Check if node is fully synced."""
         print_info("Checking node sync status...")
         
-        # DEMO-SCAFFOLD: In real implementation, this would query the node RPC
-        is_synced = True  # Simulated
-        current_block = self.activation_block - 100  # Simulated
+        if self.rehearsal_mode:
+            sync_status = self.node_state.get("sync_status", {})
+            is_synced = sync_status.get("is_synced", False)
+            current_block = sync_status.get("current_block", 0)
+        else:
+            # DEMO-SCAFFOLD: In real implementation, this would query the node RPC
+            is_synced = True  # Simulated
+            current_block = self.activation_block - 100  # Simulated
         
         print_check(is_synced, f"Node sync status: {'synced' if is_synced else 'catching up'}")
         print_info(f"Current block height: {current_block}")
@@ -111,13 +123,22 @@ class DryRunValidator:
             "backend/consensus_pq/epoch.py",
         ]
         
-        all_present = True
-        for module in required_modules:
-            module_path = Path(module)
-            exists = module_path.exists()
-            print_check(exists, f"Module: {module}")
-            if not exists:
-                all_present = False
+        if self.rehearsal_mode:
+            all_present = self.node_state.get("pq_modules_present", False)
+            missing_modules = self.node_state.get("missing_modules", [])
+            for module in required_modules:
+                exists = module not in missing_modules
+                print_check(exists, f"Module: {module}")
+            if not all_present:
+                self.failure_reason = "missing_pq_modules"
+        else:
+            all_present = True
+            for module in required_modules:
+                module_path = Path(module)
+                exists = module_path.exists()
+                print_check(exists, f"Module: {module}")
+                if not exists:
+                    all_present = False
         
         if all_present:
             self.checks_passed += 1
@@ -130,8 +151,11 @@ class DryRunValidator:
         """Check if drift radar is enabled and configured."""
         print_info("Checking drift radar configuration...")
         
-        # DEMO-SCAFFOLD: In real implementation, check node config
-        drift_radar_enabled = True  # Simulated
+        if self.rehearsal_mode:
+            drift_radar_enabled = self.node_state.get("drift_radar_enabled", False)
+        else:
+            # DEMO-SCAFFOLD: In real implementation, check node config
+            drift_radar_enabled = True  # Simulated
         
         print_check(drift_radar_enabled, "Drift radar enabled")
         
@@ -139,6 +163,8 @@ class DryRunValidator:
             self.checks_passed += 1
         else:
             self.checks_failed += 1
+            self.warnings += 1
+            self.failure_reason = "drift_radar_disabled"
             print_warning("Drift radar is critical for detecting consensus issues during activation")
         
         return drift_radar_enabled
@@ -147,8 +173,11 @@ class DryRunValidator:
         """Check if monitoring and alerting systems are operational."""
         print_info("Checking monitoring systems...")
         
-        # DEMO-SCAFFOLD: In real implementation, ping monitoring endpoints
-        monitoring_up = True  # Simulated
+        if self.rehearsal_mode:
+            monitoring_up = self.node_state.get("monitoring_up", False)
+        else:
+            # DEMO-SCAFFOLD: In real implementation, ping monitoring endpoints
+            monitoring_up = True  # Simulated
         
         print_check(monitoring_up, "Monitoring systems operational")
         
@@ -163,9 +192,13 @@ class DryRunValidator:
         """Check if sufficient disk space is available."""
         print_info("Checking disk space...")
         
-        # DEMO-SCAFFOLD: In real implementation, check actual disk usage
-        available_gb = 500  # Simulated
         required_gb = 100
+        
+        if self.rehearsal_mode:
+            available_gb = self.node_state.get("disk_space_gb", 0)
+        else:
+            # DEMO-SCAFFOLD: In real implementation, check actual disk usage
+            available_gb = 500  # Simulated
         
         sufficient = available_gb >= required_gb
         print_check(sufficient, f"Disk space: {available_gb}GB available (required: {required_gb}GB)")
@@ -174,6 +207,7 @@ class DryRunValidator:
             self.checks_passed += 1
         else:
             self.checks_failed += 1
+            self.failure_reason = "insufficient_disk_space"
         
         return sufficient
     
@@ -221,6 +255,9 @@ class DryRunValidator:
             "ready_for_activation": self.checks_failed == 0,
         }
         
+        if self.failure_reason:
+            report["failure_reason"] = self.failure_reason
+        
         return report
 
 def main():
@@ -228,7 +265,6 @@ def main():
     parser.add_argument(
         "--activation-block",
         type=int,
-        required=True,
         help="Block number where PQ epoch activates",
     )
     parser.add_argument(
@@ -237,14 +273,67 @@ def main():
         default="pq_dryrun_report.json",
         help="Output file for dry-run report",
     )
+    parser.add_argument(
+        "--rehearsal",
+        action="store_true",
+        help="Run in rehearsal mode using JSON fixtures",
+    )
+    parser.add_argument(
+        "--scenario",
+        type=str,
+        choices=["success", "missing_module", "drift_radar_disabled", "low_disk_space"],
+        help="Rehearsal scenario to simulate",
+    )
+    parser.add_argument(
+        "--fixture",
+        type=str,
+        default="tests/fixtures/pq_rehearsal_scenarios.json",
+        help="Path to rehearsal scenarios JSON fixture",
+    )
     
     args = parser.parse_args()
     
-    print_header("PQ ACTIVATION DAY DRY-RUN")
-    print(f"{Colors.BOLD}Activation Block:{Colors.END} {args.activation_block}")
-    print(f"{Colors.BOLD}Current Time:{Colors.END} {time.strftime('%Y-%m-%d %H:%M:%S')}")
-    
-    validator = DryRunValidator(args.activation_block)
+    # Rehearsal mode validation
+    if args.rehearsal:
+        if not args.scenario:
+            print(f"{Colors.RED}Error: --scenario required in rehearsal mode{Colors.END}")
+            sys.exit(1)
+        
+        # Load rehearsal fixture
+        fixture_path = Path(args.fixture)
+        if not fixture_path.exists():
+            print(f"{Colors.RED}Error: Fixture file not found: {args.fixture}{Colors.END}")
+            sys.exit(1)
+        
+        with open(fixture_path, 'r') as f:
+            fixtures = json.load(f)
+        
+        scenario_data = fixtures["scenarios"].get(args.scenario)
+        if not scenario_data:
+            print(f"{Colors.RED}Error: Unknown scenario: {args.scenario}{Colors.END}")
+            sys.exit(1)
+        
+        node_state = scenario_data["node_state"]
+        activation_block = args.activation_block or 10000
+        
+        print_header("PQ ACTIVATION DAY DRY-RUN (REHEARSAL MODE)")
+        print(f"{Colors.BOLD}Mode:{Colors.END} Rehearsal")
+        print(f"{Colors.BOLD}Scenario:{Colors.END} {scenario_data['name']}")
+        print(f"{Colors.BOLD}Description:{Colors.END} {scenario_data['description']}")
+        print(f"{Colors.BOLD}Activation Block:{Colors.END} {activation_block}")
+        print(f"{Colors.BOLD}Current Time:{Colors.END} {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        validator = DryRunValidator(activation_block, rehearsal_mode=True, node_state=node_state)
+    else:
+        if not args.activation_block:
+            print(f"{Colors.RED}Error: --activation-block required in normal mode{Colors.END}")
+            sys.exit(1)
+        
+        print_header("PQ ACTIVATION DAY DRY-RUN")
+        print(f"{Colors.BOLD}Activation Block:{Colors.END} {args.activation_block}")
+        print(f"{Colors.BOLD}Current Time:{Colors.END} {time.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        validator = DryRunValidator(args.activation_block)
     
     # Run pre-activation checks
     print_header("PRE-ACTIVATION CHECKLIST")
@@ -256,8 +345,9 @@ def main():
     validator.check_monitoring_systems()
     validator.check_disk_space()
     
-    # Simulate activation
-    validator.simulate_activation_sequence()
+    # Simulate activation (skip in rehearsal mode for faster training)
+    if not args.rehearsal:
+        validator.simulate_activation_sequence()
     
     # Generate report
     print_header("DRY-RUN SUMMARY")
