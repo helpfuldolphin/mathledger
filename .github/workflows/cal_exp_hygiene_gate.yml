@@ -1,10 +1,62 @@
 name: Calibration Experiment Hygiene Gate
 
+# SCOPE: Only triggers when CAL-EXP critical files or this workflow are modified.
+# This prevents global CI friction on unrelated documentation-only PRs.
 on:
   push:
     branches: [master, main, 'integrate/**']
+    paths:
+      # CAL-EXP-1 harness scripts
+      - 'scripts/run_p5_cal_exp1.py'
+      - 'scripts/first_light_cal_exp1_warm_start.py'
+      - 'scripts/first_light_cal_exp1_runtime_stability.py'
+      # CAL-EXP-2 harness and dependencies
+      - 'scripts/first_light_cal_exp2_convergence.py'
+      - 'scripts/first_light_cal_exp3_regime_change.py'
+      # P4 core (CAL-EXP-2 TRUE dependencies)
+      - 'backend/topology/first_light/**'
+      # Runtime/telemetry modules (CAL-EXP-1 dependencies)
+      - 'experiments/u2/runtime/**'
+      - 'backend/telemetry/**'
+      # Config files
+      - 'config/p5_synthetic.json'
+      # Derivation modules
+      - 'derivation/budget_cal_exp_integration.py'
+      - 'derivation/budget_invariants.py'
+      # Test files for CAL-EXP hygiene
+      - 'tests/ci/test_cal_exp*.py'
+      - 'tests/first_light/test_cal_exp*.py'
+      # This workflow itself
+      - '.github/workflows/cal_exp_hygiene_gate.yml'
+      # Manifest (tracks critical files)
+      - 'CRITICAL_FILES_MANIFEST.md'
   pull_request:
     branches: [master, main, 'integrate/**']
+    paths:
+      # CAL-EXP-1 harness scripts
+      - 'scripts/run_p5_cal_exp1.py'
+      - 'scripts/first_light_cal_exp1_warm_start.py'
+      - 'scripts/first_light_cal_exp1_runtime_stability.py'
+      # CAL-EXP-2 harness and dependencies
+      - 'scripts/first_light_cal_exp2_convergence.py'
+      - 'scripts/first_light_cal_exp3_regime_change.py'
+      # P4 core (CAL-EXP-2 TRUE dependencies)
+      - 'backend/topology/first_light/**'
+      # Runtime/telemetry modules (CAL-EXP-1 dependencies)
+      - 'experiments/u2/runtime/**'
+      - 'backend/telemetry/**'
+      # Config files
+      - 'config/p5_synthetic.json'
+      # Derivation modules
+      - 'derivation/budget_cal_exp_integration.py'
+      - 'derivation/budget_invariants.py'
+      # Test files for CAL-EXP hygiene
+      - 'tests/ci/test_cal_exp*.py'
+      - 'tests/first_light/test_cal_exp*.py'
+      # This workflow itself
+      - '.github/workflows/cal_exp_hygiene_gate.yml'
+      # Manifest (tracks critical files)
+      - 'CRITICAL_FILES_MANIFEST.md'
 
 jobs:
   hygiene-check:

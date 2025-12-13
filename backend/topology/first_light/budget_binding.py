@@ -1059,7 +1059,7 @@ def budget_calibration_for_alignment_view(
         alignment = "healthy"
         status = "ok"
         advisory = (
-            f"Budget calibration passed. "
+            f"Budget calibration criteria met. "
             f"Enablement recommendation: {enablement or 'ENABLE'}."
         )
 
