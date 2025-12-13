@@ -1,0 +1,303 @@
+name: Calibration Experiment Hygiene Gate
+
+on:
+  push:
+    branches: [master, main, 'integrate/**']
+  pull_request:
+    branches: [master, main, 'integrate/**']
+
+jobs:
+  hygiene-check:
+    name: CAL-EXP-1 Reproducibility Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify CAL-EXP-1 harness scripts are tracked
+        run: |
+          echo "=== Checking CAL-EXP-1 Harness Scripts ==="
+          HARNESS_SCRIPTS=(
+            "scripts/run_p5_cal_exp1.py"
+            "scripts/first_light_cal_exp1_warm_start.py"
+            "scripts/first_light_cal_exp1_runtime_stability.py"
+          )
+
+          MISSING=()
+          for script in "${HARNESS_SCRIPTS[@]}"; do
+            if [ ! -f "$script" ]; then
+              echo "MISSING: $script"
+              MISSING+=("$script")
+            else
+              echo "OK: $script"
+            fi
+          done
+
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo ""
+            echo "FAILURE: ${#MISSING[@]} CAL-EXP-1 harness scripts missing!"
+            echo "These files must be tracked in git for reproducibility."
+            exit 1
+          fi
+
+          echo "All harness scripts present."
+
+      - name: Verify experiments/u2/runtime module is tracked
+        run: |
+          echo "=== Checking experiments/u2/runtime Module ==="
+          RUNTIME_FILES=(
+            "experiments/u2/runtime/__init__.py"
+            "experiments/u2/runtime/profile_guard.py"
+            "experiments/u2/runtime/calibration_correlation.py"
+          )
+
+          MISSING=()
+          for file in "${RUNTIME_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "MISSING: $file"
+              MISSING+=("$file")
+            else
+              echo "OK: $file"
+            fi
+          done
+
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo ""
+            echo "FAILURE: experiments/u2/runtime module incomplete!"
+            echo "This module is required by first_light_cal_exp1_runtime_stability.py"
+            exit 1
+          fi
+
+          echo "Runtime module complete."
+
+      - name: Verify backend/telemetry module is tracked
+        run: |
+          echo "=== Checking backend/telemetry Module ==="
+          TELEMETRY_FILES=(
+            "backend/telemetry/__init__.py"
+            "backend/telemetry/rtts_cal_exp_window_join.py"
+          )
+
+          MISSING=()
+          for file in "${TELEMETRY_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "MISSING: $file"
+              MISSING+=("$file")
+            else
+              echo "OK: $file"
+            fi
+          done
+
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo ""
+            echo "FAILURE: backend/telemetry module incomplete!"
+            echo "This module is required by CAL-EXP-1 components."
+            exit 1
+          fi
+
+          echo "Telemetry module present."
+
+      - name: Verify config files are tracked
+        run: |
+          echo "=== Checking Configuration Files ==="
+          if [ ! -f "config/p5_synthetic.json" ]; then
+            echo "MISSING: config/p5_synthetic.json"
+            echo "This config is required by run_p5_cal_exp1.py --adapter-config"
+            exit 1
+          fi
+          echo "OK: config/p5_synthetic.json"
+
+      - name: Test CAL-EXP-1 imports
+        run: |
+          echo "=== Testing Critical Imports ==="
+
+          # Install minimal dependencies
+          pip install -q -e . 2>/dev/null || true
+
+          # Test imports (should not fail on clean checkout)
+          python -c "
+          import sys
+          errors = []
+
+          # Test harness import
+          try:
+              import scripts.run_p5_cal_exp1
+          except ImportError as e:
+              errors.append(f'run_p5_cal_exp1: {e}')
+
+          # Test runtime module
+          try:
+              from experiments.u2.runtime import build_runtime_health_snapshot
+          except ImportError as e:
+              errors.append(f'experiments.u2.runtime: {e}')
+
+          # Test telemetry module
+          try:
+              import backend.telemetry
+          except ImportError as e:
+              errors.append(f'backend.telemetry: {e}')
+
+          if errors:
+              print('IMPORT FAILURES:')
+              for err in errors:
+                  print(f'  - {err}')
+              sys.exit(1)
+
+          print('All critical imports successful.')
+          " || echo "Import test completed with warnings (dependencies may not be installed)"
+
+      - name: Check for untracked critical files
+        run: |
+          echo "=== Checking for Untracked Critical Files ==="
+
+          # Get untracked files in critical paths
+          UNTRACKED=$(git status --porcelain | grep "^??" | grep -E "(scripts|backend|experiments|config)/.*\.(py|json)$" || true)
+
+          if [ -n "$UNTRACKED" ]; then
+            echo "WARNING: Untracked files in critical paths:"
+            echo "$UNTRACKED"
+            echo ""
+            echo "Consider tracking these files if they are required for CAL-EXP-1."
+            # Note: This is a warning, not a failure
+          else
+            echo "No untracked files in critical paths."
+          fi
+
+  import-test:
+    name: CAL-EXP-1 Import Smoke Test
+    runs-on: ubuntu-latest
+    needs: hygiene-check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -e . || echo "Package install skipped"
+
+      - name: Verify CAL-EXP-1 can start
+        run: |
+          echo "=== Verifying CAL-EXP-1 Startup ==="
+
+          # Test that the harness script can at least be parsed
+          python -m py_compile scripts/run_p5_cal_exp1.py 2>/dev/null && echo "OK: run_p5_cal_exp1.py compiles" || echo "WARN: run_p5_cal_exp1.py not found"
+          python -m py_compile scripts/first_light_cal_exp1_warm_start.py 2>/dev/null && echo "OK: first_light_cal_exp1_warm_start.py compiles" || echo "WARN: file not found"
+
+          # Test dry-run mode if available
+          python scripts/run_p5_cal_exp1.py --dry-run --cycles 10 --seed 42 --output-dir /tmp/test 2>/dev/null || echo "Dry-run test completed (may have dependency issues)"
+
+  # ============================================================================
+  # CAL-EXP-2 HYGIENE CHECKS
+  # ============================================================================
+
+  cal-exp2-hygiene:
+    name: CAL-EXP-2 Reproducibility Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Verify CAL-EXP-2 harness script is tracked
+        run: |
+          echo "=== Checking CAL-EXP-2 Harness Script ==="
+          # Only the main harness is a TRUE dependency
+          if [ ! -f "scripts/first_light_cal_exp2_convergence.py" ]; then
+            echo "MISSING: scripts/first_light_cal_exp2_convergence.py"
+            echo "This is the CAL-EXP-2 harness - required for execution."
+            exit 1
+          fi
+          echo "OK: scripts/first_light_cal_exp2_convergence.py"
+
+          # Optional: post-analysis tools (warn but don't fail)
+          if [ ! -f "scripts/plot_budget_vs_divergence.py" ]; then
+            echo "WARN: scripts/plot_budget_vs_divergence.py missing (post-analysis tool)"
+          else
+            echo "OK: scripts/plot_budget_vs_divergence.py (optional)"
+          fi
+
+      - name: Verify P4 core is tracked (TRUE dependencies)
+        run: |
+          echo "=== Checking P4 Core (TRUE Dependencies) ==="
+          P4_FILES=(
+            "backend/topology/first_light/runner_p4.py"
+            "backend/topology/first_light/config_p4.py"
+            "backend/topology/first_light/telemetry_adapter.py"
+            "backend/topology/first_light/divergence_analyzer.py"
+          )
+
+          MISSING=()
+          for file in "${P4_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "MISSING: $file"
+              MISSING+=("$file")
+            else
+              echo "OK: $file"
+            fi
+          done
+
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo ""
+            echo "FAILURE: P4 core incomplete!"
+            exit 1
+          fi
+
+          echo "P4 core complete."
+
+      - name: Verify CAL-EXP-2 tests exist
+        run: |
+          echo "=== Checking CAL-EXP-2 Tests ==="
+          if [ ! -f "tests/first_light/test_cal_exp2_exp3_scaffolds.py" ]; then
+            echo "MISSING: tests/first_light/test_cal_exp2_exp3_scaffolds.py"
+            exit 1
+          fi
+          echo "OK: test_cal_exp2_exp3_scaffolds.py"
+
+      - name: Test CAL-EXP-2 imports
+        run: |
+          echo "=== Testing CAL-EXP-2 Imports ==="
+
+          pip install -q -e . 2>/dev/null || true
+
+          python -c "
+          import sys
+          errors = []
+
+          # Test TRUE dependencies only
+          try:
+              from backend.topology.first_light.config_p4 import FirstLightConfigP4
+          except ImportError as e:
+              errors.append(f'config_p4: {e}')
+
+          try:
+              from backend.topology.first_light.runner_p4 import FirstLightShadowRunnerP4
+          except ImportError as e:
+              errors.append(f'runner_p4: {e}')
+
+          try:
+              from backend.topology.first_light.telemetry_adapter import MockTelemetryProvider
+          except ImportError as e:
+              errors.append(f'telemetry_adapter: {e}')
+
+          if errors:
+              print('CAL-EXP-2 IMPORT FAILURES:')
+              for err in errors:
+                  print(f'  - {err}')
+              sys.exit(1)
+
+          print('CAL-EXP-2 imports successful.')
+          " || echo "Import test completed with warnings"

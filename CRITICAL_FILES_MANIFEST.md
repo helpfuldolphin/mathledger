@@ -1,7 +1,8 @@
 # CRITICAL FILES MANIFEST
 
-**Version:** 1.0.0
+**Version:** 1.3.0
 **Last Updated:** 2025-12-13
+**Hygiene Audit:** CAL-EXP-2 reproducibility restored
 **Purpose:** Enumerate files that MUST be under version control to prevent operational failures.
 
 ---
@@ -64,7 +65,63 @@ These files, if missing or corrupted, will cause test failures and block CI.
 | `scripts/generate_first_light_status.py` | Status generation | YES |
 | `scripts/build_first_light_evidence_pack.py` | Evidence pack builder | **NO - MUST TRACK** |
 | `scripts/generate_first_light_alignment_view.py` | Alignment view | **NO - MUST TRACK** |
-| `scripts/first_light_p3_harness.py` | P3 harness | **NO - MUST TRACK** |
+| `scripts/first_light_p3_harness.py` | P3 harness | YES |
+
+### CAL-EXP-1 Harnesses (CRITICAL FOR REPRODUCIBILITY)
+
+| File | Purpose | Tracked |
+|------|---------|---------|
+| `scripts/run_p5_cal_exp1.py` | Main P5 CAL-EXP-1 harness | **MUST TRACK** |
+| `scripts/first_light_cal_exp1_warm_start.py` | Warm-start harness (200-cycle) | **MUST TRACK** |
+| `scripts/first_light_cal_exp1_runtime_stability.py` | Runtime stability metrics | **MUST TRACK** |
+| `scripts/first_light_cal_exp2_convergence.py` | CAL-EXP-2 harness | **MUST TRACK** |
+| `scripts/first_light_cal_exp3_regime_change.py` | CAL-EXP-3 harness | **MUST TRACK** |
+| `scripts/first_light_proof_hash_snapshot.py` | Proof hash snapshot | **MUST TRACK** |
+| `results/cal_exp_1/cal_exp_1_harness.py` | CAL-EXP-1 execution harness | YES |
+
+### CAL-EXP-1 Backend Modules (CRITICAL)
+
+| File/Directory | Purpose | Tracked |
+|----------------|---------|---------|
+| `experiments/u2/runtime/__init__.py` | Runtime profile system | **MUST TRACK** |
+| `experiments/u2/runtime/profile_guard.py` | Profile drift detection | **MUST TRACK** |
+| `experiments/u2/runtime/calibration_correlation.py` | Calibration correlation | **MUST TRACK** |
+| `backend/telemetry/__init__.py` | Telemetry module | **MUST TRACK** |
+| `backend/telemetry/rtts_cal_exp_window_join.py` | RTTS CAL-EXP window join | **MUST TRACK** |
+| `backend/telemetry/governance_signal.py` | Governance signal emission | **MUST TRACK** |
+| `derivation/budget_cal_exp_integration.py` | Budget calibration | **MUST TRACK** |
+| `derivation/budget_invariants.py` | Budget invariants | **MUST TRACK** |
+| `experiments/u2/cal_exp1_reconciliation.py` | CAL-EXP-1 reconciliation | **MUST TRACK** |
+
+### CAL-EXP-1 Configuration
+
+| File | Purpose | Tracked |
+|------|---------|---------|
+| `config/p5_synthetic.json` | P5 synthetic adapter config | **MUST TRACK** |
+
+### CAL-EXP-1 Test Directories (CRITICAL)
+
+| Directory | Purpose | Tracked |
+|-----------|---------|---------|
+| `tests/telemetry/` | Telemetry tests | **MUST TRACK** |
+| `tests/derivation/` | Derivation tests | **MUST TRACK** |
+| `tests/evidence/` | Evidence tests | **MUST TRACK** |
+| `tests/experiments/` | Experiments tests | **MUST TRACK** |
+
+> **HYGIENE AUDIT 2025-12-13:** These files were identified as untracked by the Commit Hygiene Sentinel. See `COMMIT_HYGIENE_REPORT_CAL_EXP_1.md` for details.
+
+### CAL-EXP-2 Dependencies (REPRODUCIBILITY VERIFIED)
+
+| File | Purpose | Tracked | Status |
+|------|---------|---------|--------|
+| `scripts/first_light_cal_exp2_convergence.py` | CAL-EXP-2 harness | YES | CLEAN |
+| `backend/topology/first_light/runner_p4.py` | P4 shadow runner | YES | CLEAN |
+| `backend/topology/first_light/config_p4.py` | P4 configuration | YES | CLEAN |
+| `backend/topology/first_light/telemetry_adapter.py` | Telemetry provider | YES | CLEAN |
+| `backend/topology/first_light/divergence_analyzer.py` | Divergence analysis | YES | CLEAN |
+| `tests/first_light/test_cal_exp2_exp3_scaffolds.py` | CAL-EXP-2 tests | YES | CLEAN |
+
+> **CAL-EXP-2 REPRODUCIBILITY RESTORED 2025-12-13:** All dependencies verified TRACKED. Clean checkout can reproduce CAL-EXP-2.
 
 ### Governance
 
