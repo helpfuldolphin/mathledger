@@ -1,3 +1,10 @@
+# ==============================================================================
+#  EXPERIMENTAL - MUST NOT INFLUENCE GOVERNANCE OR ACCEPTANCE DECISIONS.
+# ==============================================================================
+# This script is for characterizing hardware/environment performance ONLY.
+# Its output is advisory and not a measure of the TDA algorithm's quality.
+# ==============================================================================
+
 import json
 import time
 import numpy as np
@@ -59,6 +66,9 @@ def run_benchmark():
         "hot_max_ms": hot_max_ms
     }
 
+    print("#" * 80)
+    print("# EXPERIMENTAL: This output characterizes hardware performance, not algorithm quality.")
+    print("#" * 80)
     print(json.dumps(results, indent=2))
 
 if __name__ == "__main__":

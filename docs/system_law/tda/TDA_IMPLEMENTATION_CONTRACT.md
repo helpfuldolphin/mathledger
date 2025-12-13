@@ -127,6 +127,8 @@ To manage this, performance violations are categorized into two types:
 
 ### How to Run the Benchmark
 
+**> EXPERIMENTAL — MUST NOT influence governance or acceptance decisions.**
+
 A simple performance harness is provided to measure and characterize the performance of the TDA cycle computation.
 
 **Command:**
@@ -142,6 +144,16 @@ The script will output a JSON object containing four key metrics:
 *   `hot_max_ms`: The absolute maximum time observed during hot runs.
 
 The output of this benchmark is advisory and should be used to establish a performance baseline. It is not used for gating CI/CD pipelines at this stage.
+
+#### Note: Performance vs. Calibration Metrics
+
+It is critical to distinguish between the two types of metrics involved:
+
+1.  **Performance Metrics (from this benchmark):** These values (`cold_ms`, `hot_p95_ms`, etc.) measure the **speed of computation**. They characterize the hardware and software execution environment and are used to ensure the TDA module meets its real-time processing budget. They say nothing about the quality or correctness of the TDA algorithm's output.
+
+2.  **TDA Calibration Metrics (from analysis):** These are the algorithmic parameters of TDA itself, such as divergence thresholds, metric weights (`w_*`), and neighborhood sizes (`k`). These values are determined through offline analysis of trajectory datasets containing known anomalies and are essential for ensuring the TDA module correctly identifies meaningful deviations.
+
+This benchmark **does not** produce calibration metrics. Its purpose is solely to enforce the performance contract.
 
 ---
 
