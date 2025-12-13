@@ -74,6 +74,19 @@ These files, if missing or corrupted, will cause test failures and block CI.
 | `backend/governance/evidence_pack.py` | Evidence pack core | **NO - MUST TRACK** |
 | `backend/governance/last_mile_checker.py` | Final validation | **NO - MUST TRACK** |
 
+### TDA / Calibration Experiment Support
+
+| File | Purpose | Tracked |
+|------|---------|---------|
+| `backend/tda/metrics.py` | TDA metrics computation | YES |
+| `backend/tda/monitor.py` | TDA monitoring and red-flags | YES |
+| `backend/tda/console_tile.py` | TDA console tile | YES |
+| `backend/tda/evidence.py` | TDA evidence artifacts | YES |
+| `backend/tda/pattern_classifier.py` | TDA pattern classification | YES |
+| `backend/tda/patterns_from_windows.py` | TDA windowed patterns | YES |
+
+> **Note:** These files are required by CAL-EXP-1 (calibration experiment). Missing any of these will cause CAL-EXP-1 replication to fail.
+
 ### Health / USLA
 
 | File | Purpose | Tracked |
@@ -137,6 +150,12 @@ jobs:
             "attestation/dual_root.py"
             "normalization/canon.py"
             "scripts/generate_first_light_status.py"
+            "backend/tda/metrics.py"
+            "backend/tda/monitor.py"
+            "backend/tda/console_tile.py"
+            "backend/tda/evidence.py"
+            "backend/tda/pattern_classifier.py"
+            "backend/tda/patterns_from_windows.py"
           )
           for file in "${CRITICAL_FILES[@]}"; do
             if [ ! -f "$file" ]; then
