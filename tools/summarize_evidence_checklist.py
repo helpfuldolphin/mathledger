@@ -1,9 +1,100 @@
+"""
+summarize_evidence_checklist.py
+
+This script parses the Phase X P3/P4 Evidence Checklist Markdown file, analyzes the status of each artifact,
+and generates a readiness summary in both JSON and Markdown formats. It supports trend tracking,
+calculates readiness percentages for different launch gates (P3/P4), and identifies blocked items
+along with their dependencies. The script includes a 'Contract Freeze' banner and an 'Attestation'
+section to formalize its output contract.
+
+Usage:
+    python summarize_evidence_checklist.py [--output-dir <path>] [--ascii-only | --no-ascii-only]
+
+Arguments:
+    --output-dir <path>: Directory to write the output files. Defaults to the script's directory.
+    --ascii-only       : Use ASCII symbols instead of emojis. Defaults to True on Windows.
+    --no-ascii-only    : Use Unicode emojis instead of ASCII symbols.
+
+Golden Output Snapshot (Example):
+
+Example JSON Output:
+```json
+{
+    "blocked_items": [
+        {
+            "artifact": "API Documentation",
+            "dependencies": [
+                "`System Architecture Diagram`"
+            ]
+        }
+    ],
+    "contract_freeze": true,
+    "contract_reference": "docs/system_law/Phase_X/Phase_X_P3_P4_Evidence_Checklist.md",
+    "current_run_timestamp": "2025-12-13T03:00:00.000000",
+    "last_run_timestamp": null,
+    "readiness_percentage": {
+        "overall": 50.0,
+        "p3": 60.0,
+        "p4": 40.0
+    },
+    "schema_version": "1.0.0",
+    "status_counts": {
+        "BLOCKED": 1,
+        "IN PROGRESS": 2,
+        "READY": 3,
+        "TODO": 4
+    },
+    "trend_since_last_run": {
+        "BLOCKED": {"change": 0, "direction": "none"},
+        "IN PROGRESS": {"change": 1, "direction": "increase"},
+        "READY": {"change": 1, "direction": "increase"},
+        "TODO": {"change": -2, "direction": "decrease"}
+    }
+}
+```
+
+Example Markdown Output:
+```markdown
+# Evidence Checklist Readiness Report
+
+**CONTRACT FREEZE**: The JSON and Markdown output schemas are FROZEN for Phase X.
+
+*Last generated: 2025-12-13 03:00:00 UTC*
+
+## Readiness Dashboard
+- **Overall Readiness:** `50.0%`
+- **P3 Gate Readiness:** `60.0%`
+- **P4 Gate Readiness:** `40.0%`
+
+## Sprint Status
+| Status | Count | Trend |
+|---|---|---|
+| [OK] READY | `3` | (+1) |
+| [IN PROGRESS] IN PROGRESS | `2` | (+1) |
+| [BLOCKED] BLOCKED | `1` |  |
+| [TODO] TODO | `4` | (-2) |
+
+## [BLOCKED] Blocked Items
+- **API Documentation**: Blocked by `System Architecture Diagram`
+
+---
+
+## Attestation
+
+This report provides an automated summary of the evidence checklist status.
+
+-   **Verified**: The *status* (`READY`, `BLOCKED`, etc.) and *count* of artifacts as parsed from the checklist markdown file.
+-   **Not Verified**: The *correctness* or *validity* of the artifacts themselves. A `READY` status indicates the item is marked complete, not that its content has been validated by this script.
+-   **Intended Consumer**: Project leadership and team leads for a high-level overview of sprint progress and blockers.
+```
+"""
 import re
 import json
 import os
 import sys
 import argparse
 from datetime import datetime
+
 
 # --- CONFIGURATION ---
 SCHEMA_VERSION = "1.0.0"
