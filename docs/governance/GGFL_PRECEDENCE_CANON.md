@@ -1,5 +1,7 @@
 # GGFL Canon: Identity Precedence Over Risk
 
+This document formalizes the principle that cryptographic identity failures, characterized by a `HARD_BLOCK` signal, consistently override any risk assessment outputs within the Global Governance Fusion Layer. This invariant prioritizes foundational system integrity over probabilistic risk metrics, a design choice validated by automated integration tests documented in `tests/test_ggfl_fusion_integration.py`.
+
 A foundational principle of the Global Governance Fusion Layer (GGFL) is the non-negotiable precedence of cryptographic verification over statistical risk assessment. This document codifies the "why" behind this critical safety invariant.
 
 ## The Invariant
