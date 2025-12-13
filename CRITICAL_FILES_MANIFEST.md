@@ -1,8 +1,8 @@
 # CRITICAL FILES MANIFEST
 
-**Version:** 1.4.0
+**Version:** 1.5.0
 **Last Updated:** 2025-12-13
-**Hygiene Audit:** CAL-EXP-2 reproducibility verified with CI gate
+**Hygiene Audit:** CAL-EXP-2 reproducibility verified with CI gate (import-level GATING)
 **Purpose:** Enumerate files that MUST be under version control to prevent operational failures.
 
 ---
@@ -110,18 +110,33 @@ These files, if missing or corrupted, will cause test failures and block CI.
 
 > **HYGIENE AUDIT 2025-12-13:** These files were identified as untracked by the Commit Hygiene Sentinel. See `COMMIT_HYGIENE_REPORT_CAL_EXP_1.md` for details.
 
-### CAL-EXP-2 Dependencies (REPRODUCIBILITY VERIFIED)
+### CAL-EXP-2 Minimal Set (GATING)
 
-| File | Purpose | Tracked | Status |
-|------|---------|---------|--------|
-| `scripts/first_light_cal_exp2_convergence.py` | CAL-EXP-2 harness | YES | CLEAN |
-| `backend/topology/first_light/runner_p4.py` | P4 shadow runner | YES | CLEAN |
-| `backend/topology/first_light/config_p4.py` | P4 configuration | YES | CLEAN |
-| `backend/topology/first_light/telemetry_adapter.py` | Telemetry provider | YES | CLEAN |
-| `backend/topology/first_light/divergence_analyzer.py` | Divergence analysis | YES | CLEAN |
-| `tests/first_light/test_cal_exp2_exp3_scaffolds.py` | CAL-EXP-2 tests | YES | CLEAN |
+> **CI VALIDATION:** These files are validated by `.github/workflows/cal_exp_hygiene_gate.yml` (GATING).
+> **Test Coverage:** `tests/ci/test_cal_exp2_reproducibility.py::TestCalExp2MinimalSet`
+
+The following files constitute the **minimum required set** for CAL-EXP-2 reproducibility.
+A clean checkout with only these files tracked MUST be able to import and initialize CAL-EXP-2.
+
+| File | Purpose | Import Required | Tracked |
+|------|---------|-----------------|---------|
+| `scripts/first_light_cal_exp2_convergence.py` | **HARNESS** - Main entry point | YES | ✅ |
+| `backend/topology/first_light/runner_p4.py` | P4 shadow runner | YES | ✅ |
+| `backend/topology/first_light/config_p4.py` | P4 configuration | YES | ✅ |
+| `backend/topology/first_light/telemetry_adapter.py` | Mock telemetry provider | YES | ✅ |
+| `backend/topology/first_light/divergence_analyzer.py` | Divergence analysis | YES | ✅ |
+| `backend/topology/first_light/data_structures_p4.py` | P4 data structures | YES | ✅ |
+| `backend/topology/first_light/p5_pattern_classifier.py` | Pattern classifier | YES | ✅ |
+| `tests/first_light/test_cal_exp2_exp3_scaffolds.py` | CAL-EXP-2 test suite | NO | ✅ |
+
+**Constraints:**
+- ❌ `results/` directory is **NOT REQUIRED** for import
+- ❌ No 1000-cycle execution in CI (import-level only)
+- ✅ Fresh checkout + `uv sync` must succeed
+- ✅ All imports must resolve without runtime dependencies
 
 > **CAL-EXP-2 REPRODUCIBILITY RESTORED 2025-12-13:** All dependencies verified TRACKED. Clean checkout can reproduce CAL-EXP-2.
+> **CI GATE ADDED 2025-12-13:** Import-level gating via `cal_exp_hygiene_gate.yml`.
 
 ### Governance
 

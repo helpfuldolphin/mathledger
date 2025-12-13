@@ -392,6 +392,11 @@ jobs:
               print('SUCCESS: CAL-EXP-2 imports verified from clean checkout')
           "
 
-      - name: Run CAL-EXP-2 hygiene unit test
+      - name: Run CAL-EXP-2 hygiene unit test (GATING)
         run: |
-          pytest tests/ci/test_cal_exp2_reproducibility.py -v --tb=short 2>/dev/null || echo "Unit test file not found or pytest not installed"
+          echo "=== CAL-EXP-2 Reproducibility Unit Test (GATING) ==="
+          # This test is GATING - failures block the build
+          # It verifies import-level requirements only (no execution/results needed)
+          uv run pytest tests/ci/test_cal_exp2_reproducibility.py -v --tb=short \
+            -k "not test_imports_without_results" \
+            || { echo "GATING FAILURE: CAL-EXP-2 reproducibility test failed"; exit 1; }

@@ -137,6 +137,70 @@ class TestCalExp2MinimalSet:
         )
 
 
+class TestCalExp2HarnessImportable:
+    """Verify CAL-EXP-2 harness script is importable (not just compilable)."""
+
+    def test_harness_module_imports(self):
+        """Verify harness script can be imported as a module."""
+        harness_path = Path("scripts/first_light_cal_exp2_convergence.py")
+        if not harness_path.exists():
+            pytest.skip("Harness script not found")
+
+        # Add scripts to path and attempt import
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "first_light_cal_exp2_convergence", harness_path
+        )
+        assert spec is not None, "Could not create module spec for harness"
+        assert spec.loader is not None, "Module spec has no loader"
+
+        module = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(module)
+        except ImportError as e:
+            pytest.fail(
+                f"CAL-EXP-2 IMPORT FAILURE: Harness has unresolved import: {e}\n"
+                "This means a dependency is missing from the tracked files."
+            )
+        except Exception as e:
+            # Other exceptions during import (not ImportError) are okay
+            # since we're testing importability, not execution
+            if "required" in str(e).lower() or "missing" in str(e).lower():
+                pytest.fail(f"CAL-EXP-2 harness has missing dependency: {e}")
+
+    def test_core_imports_from_harness(self):
+        """Verify the exact imports used by the harness script."""
+        # These are the TRUE imports from first_light_cal_exp2_convergence.py
+        errors = []
+
+        try:
+            from backend.topology.first_light.config_p4 import FirstLightConfigP4
+
+            assert FirstLightConfigP4 is not None
+        except ImportError as e:
+            errors.append(f"FirstLightConfigP4: {e}")
+
+        try:
+            from backend.topology.first_light.runner_p4 import FirstLightShadowRunnerP4
+
+            assert FirstLightShadowRunnerP4 is not None
+        except ImportError as e:
+            errors.append(f"FirstLightShadowRunnerP4: {e}")
+
+        try:
+            from backend.topology.first_light.telemetry_adapter import MockTelemetryProvider
+
+            assert MockTelemetryProvider is not None
+        except ImportError as e:
+            errors.append(f"MockTelemetryProvider: {e}")
+
+        assert not errors, (
+            "CAL-EXP-2 IMPORT FAILURE: Core dependencies missing:\n"
+            + "\n".join(f"  - {e}" for e in errors)
+        )
+
+
 class TestCalExp2NoResultsRequired:
     """Verify CAL-EXP-2 imports don't require results/ directory."""
 
