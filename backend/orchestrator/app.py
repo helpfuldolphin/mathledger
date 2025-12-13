@@ -1,0 +1,206 @@
+import os
+from datetime import datetime
+from typing import Dict, Any, Generator
+
+import psycopg
+from fastapi import FastAPI, HTTPException, Depends
+
+def _db_url() -> str:
+    return os.getenv("DATABASE_URL", "postgresql://ml:mlpass@127.0.0.1:5433/mathledger?connect_timeout=5")
+
+app = FastAPI()
+
+@app.on_event("startup")
+async def startup():
+    # Skip DB connect in tests/offline/mocks
+    if os.getenv("DISABLE_DB_STARTUP") == "1":
+        return
+    url = _db_url()
+    if url.startswith("mock://"):
+        return
+    with psycopg.connect(url) as c, c.cursor() as cur:
+        cur.execute("SELECT 1")
+
+def get_db_connection() -> Generator[psycopg.Connection, None, None]:
+    """
+    Dependency provider (tests may override this symbol).
+    """
+    url = _db_url()
+    if url.startswith("mock://"):
+        raise HTTPException(status_code=503, detail="Mock DB in use; override get_db_connection in tests")
+    conn = psycopg.connect(url)
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+@app.get("/health")
+def health():
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+@app.get("/metrics")
+def metrics(conn: psycopg.Connection = Depends(get_db_connection)) -> Dict[str, Any]:
+    """
+    Contract: must include 'proofs' {success,failure}, 'block_count', 'max_depth'.
+    Uses injected connection so seeded test DB is visible.
+    """
+    block_height = 0
+    block_count  = 0
+    statement_count = 0
+    proofs_total = 0
+    proofs_success = 0
+    max_depth = 0
+
+    try:
+        with conn.cursor() as cur:
+            # blocks
+            try:
+                cur.execute("SELECT COALESCE(MAX(block_number),0) FROM blocks")
+                row = cur.fetchone()
+                block_height = int(row[0]) if row and row[0] is not None else 0
+                cur.execute("SELECT COUNT(*) FROM blocks")
+                block_count = int(cur.fetchone()[0])
+            except Exception:
+                block_height = 0
+                block_count  = 0
+
+            # statements + max depth
+            try:
+                cur.execute("SELECT COUNT(*) FROM statements")
+                statement_count = int(cur.fetchone()[0])
+            except Exception:
+                statement_count = 0
+            try:
+                cur.execute("SELECT COALESCE(MAX(derivation_depth),0) FROM statements")
+                md = cur.fetchone()
+                max_depth = int(md[0]) if md and md[0] is not None else 0
+            except Exception:
+                max_depth = 0
+
+            # proofs — schema-adaptive
+            try:
+                cur.execute("SELECT COUNT(*) FROM proofs")
+                proofs_total = int(cur.fetchone()[0])
+
+                # discover columns
+                cur.execute("""
+                    SELECT column_name, data_type
+                    FROM information_schema.columns
+                    WHERE table_name='proofs'
+                """)
+                cols = {r[0].lower(): r[1].lower() for r in cur.fetchall()}
+
+                def has(col):    return col in cols
+                def is_bool(c):  return has(c) and 'boolean' in cols[c]
+                def is_int(c):   return has(c) and ('int' in cols[c] or 'numeric' in cols[c])
+                def is_txt(c):   return has(c) and ('char' in cols[c] or 'text' in cols[c])
+
+                if is_bool('success'):
+                    cur.execute("SELECT COUNT(*) FROM proofs WHERE success = TRUE")
+                    proofs_success = int(cur.fetchone()[0])
+                elif is_bool('is_success'):
+                    cur.execute("SELECT COUNT(*) FROM proofs WHERE is_success = TRUE")
+                    proofs_success = int(cur.fetchone()[0])
+                elif is_int('success'):
+                    cur.execute("SELECT COUNT(*) FROM proofs WHERE success = 1")
+                    proofs_success = int(cur.fetchone()[0])
+                elif is_txt('status'):
+                    cur.execute("SELECT COUNT(*) FROM proofs WHERE LOWER(status) IN ('success','ok','passed')")
+                    proofs_success = int(cur.fetchone()[0])
+                elif is_txt('outcome'):
+                    cur.execute("SELECT COUNT(*) FROM proofs WHERE LOWER(outcome) IN ('success','ok','passed')")
+                    proofs_success = int(cur.fetchone()[0])
+                elif is_txt('result'):
+                    cur.execute("SELECT COUNT(*) FROM proofs WHERE LOWER(result) IN ('success','ok','passed')")
+                    proofs_success = int(cur.fetchone()[0])
+                else:
+                    proofs_success = 0
+            except Exception:
+                proofs_total   = 0
+                proofs_success = 0
+    except Exception:
+        pass
+
+    proofs_failure = max(0, proofs_total - proofs_success)
+    success_rate   = (float(proofs_success)/float(proofs_total)) if proofs_total else 0.0
+
+    return {
+        "proofs": {"success": proofs_success, "failure": proofs_failure},
+        "block_count": block_count,
+        "max_depth": max_depth,
+        "proof_counts": proofs_total,
+        "statement_counts": statement_count,
+        "success_rate": success_rate,
+        "queue_length": -1,
+        "block_height": block_height,
+        "blocks": {"height": block_height},
+    }
+
+@app.get("/blocks/latest")
+def blocks_latest(conn: psycopg.Connection = Depends(get_db_connection)) -> Dict[str, Any]:
+    """
+    404 with {"detail":"no blocks"} when empty.
+    """
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT block_number, merkle_root, created_at, header
+                FROM blocks
+                ORDER BY block_number DESC
+                LIMIT 1
+            """)
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="no blocks")
+            block_number, merkle_root, created_at, header = row
+            return {
+                "block_number": int(block_number) if block_number is not None else 0,
+                "merkle_root":  merkle_root or "",
+                "created_at":   created_at.isoformat() if created_at else "",
+                "header":       header or {},
+            }
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=404, detail="no blocks")
+
+@app.get("/statements")
+def statements(hash: str, conn: psycopg.Connection = Depends(get_db_connection)):
+    """
+    404 with {"detail":"statement not found"} when missing.
+    """
+    try:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("""
+                    SELECT id, text, content_norm, system_id, is_axiom, derivation_depth, created_at
+                    FROM statements WHERE content_norm = %s LIMIT 1
+                """, (hash,))
+                row = cur.fetchone()
+            except Exception:
+                row = None
+            if not row:
+                try:
+                    cur.execute("""
+                        SELECT id, text, content_norm, system_id, is_axiom, derivation_depth, created_at
+                        FROM statements WHERE hash = %s LIMIT 1
+                    """, (hash,))
+                    row = cur.fetchone()
+                except Exception:
+                    row = None
+            if not row:
+                raise HTTPException(status_code=404, detail="statement not found")
+            sid, text, content_norm, system_id, is_axiom, depth, created_at = row
+            return {
+                "id": int(sid) if sid is not None else 0,
+                "text": text,
+                "content_norm": content_norm,
+                "system_id": system_id,
+                "is_axiom": bool(is_axiom),
+                "derivation_depth": int(depth) if depth is not None else 0,
+                "created_at": created_at.isoformat() if created_at else "",
+            }
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=404, detail="statement not found")
