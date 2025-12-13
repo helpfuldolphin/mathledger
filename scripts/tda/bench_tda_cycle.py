@@ -60,15 +60,17 @@ def run_benchmark():
     hot_max_ms = max(hot_timings_ms)
 
     results = {
+        "classification": "EXPERIMENTAL",
+        "non_calibration_guarantee": True,
         "cold_ms": cold_ms,
         "hot_p50_ms": hot_p50_ms,
         "hot_p95_ms": hot_p95_ms,
         "hot_max_ms": hot_max_ms
     }
 
-    print("#" * 80)
-    print("# EXPERIMENTAL: This output characterizes hardware performance, not algorithm quality.")
-    print("#" * 80)
+    print("#" * 80, file=sys.stderr)
+    print("# EXPERIMENTAL: This output characterizes hardware performance, not algorithm quality.", file=sys.stderr)
+    print("#" * 80, file=sys.stderr)
     print(json.dumps(results, indent=2))
 
 if __name__ == "__main__":

@@ -188,6 +188,8 @@ def main():
     
     # Finalize JSON payload
     current_summary["schema_version"] = SCHEMA_VERSION
+    current_summary["contract_freeze"] = True
+    current_summary["contract_reference"] = CHECKLIST_PATH_DEFAULT
     current_summary["trend_since_last_run"] = trend
     current_summary["last_run_timestamp"] = previous_summary.get("current_run_timestamp") if previous_summary else None
     current_summary["current_run_timestamp"] = datetime.utcnow().isoformat()

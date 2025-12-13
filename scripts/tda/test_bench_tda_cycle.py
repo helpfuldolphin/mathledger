@@ -32,11 +32,16 @@ class TestTDABenchmarkHarness(unittest.TestCase):
             self.fail(f"Benchmark script did not produce valid JSON. Output:\n{result.stdout}")
 
         # Validate schema/fields
-        expected_keys = ["cold_ms", "hot_p50_ms", "hot_p95_ms", "hot_max_ms"]
-        self.assertEqual(list(output_data.keys()), expected_keys)
+        expected_keys = ["classification", "non_calibration_guarantee", "cold_ms", "hot_p50_ms", "hot_p95_ms", "hot_max_ms"]
+        self.assertCountEqual(list(output_data.keys()), expected_keys)
+
+        # Assert specific values for the new guarantee fields
+        self.assertEqual(output_data["classification"], "EXPERIMENTAL")
+        self.assertTrue(output_data["non_calibration_guarantee"])
 
         # Validate types
-        for key, value in output_data.items():
+        for key in ["cold_ms", "hot_p50_ms", "hot_p95_ms", "hot_max_ms"]:
+            value = output_data[key]
             self.assertIsInstance(value, (int, float), f"Value for '{key}' is not a number.")
             self.assertGreaterEqual(value, 0, f"Value for '{key}' should be non-negative.")
 

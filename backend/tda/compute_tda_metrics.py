@@ -2,6 +2,7 @@ import json
 import time
 import uuid
 from typing import Dict, Any, List
+import sys
 
 import numpy as np
 from sklearn.decomposition import PCA
@@ -21,7 +22,7 @@ def timeit(budget_ms: float):
             end_time = time.perf_counter()
             duration_ms = (end_time - start_time) * 1000
             if duration_ms > budget_ms:
-                print(f"PERFORMANCE WARNING: {func.__name__} took {duration_ms:.2f}ms (budget: {budget_ms}ms)")
+                print(f"PERFORMANCE WARNING: {func.__name__} took {duration_ms:.2f}ms (budget: {budget_ms}ms)", file=sys.stderr)
             return result
         return wrapper
     return decorator

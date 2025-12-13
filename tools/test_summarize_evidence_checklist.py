@@ -32,23 +32,46 @@ class TestContractHardening(unittest.TestCase):
         self.trend = calculate_trend(self.summary, None) # No previous data
 
     def test_json_output_contract(self):
-        """Ensures JSON output is deterministic and contains schema_version."""
-        self.summary["schema_version"] = "1.0.0"
-        
-        # Generate JSON with sort_keys=True
-        json_string_sorted = json.dumps(self.summary, sort_keys=True)
-        
-        # Generate JSON without sort_keys=True for comparison
-        json_string_unsorted = json.dumps(self.summary)
-        
-        # The actual test: re-parse and check keys
-        data = json.loads(json_string_sorted)
-        self.assertIn("schema_version", data)
-        self.assertEqual(data["schema_version"], "1.0.0")
-        
-        # Check if keys are sorted
-        keys = list(data.keys())
-        self.assertEqual(keys, sorted(keys))
+        """Verify the JSON output contract via an integration test."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # We need to mock sys.argv to test the main function's argument parsing
+            import sys
+            original_argv = sys.argv
+            sys.argv = ['summarize_evidence_checklist.py', '--output-dir', tmpdir]
+            
+            # We also need a dummy checklist file for main() to read
+            dummy_checklist_path = 'dummy_checklist.md'
+            with open(dummy_checklist_path, 'w') as f:
+                f.write(FIXTURE_MARKDOWN)
+            
+            checklist_path_orig = 'summarize_evidence_checklist.CHECKLIST_PATH_DEFAULT'
+            # Use unittest.mock to patch the global path
+            with unittest.mock.patch(checklist_path_orig, dummy_checklist_path):
+                main()
+            
+            # Assert that files were created in the temp directory
+            json_path = os.path.join(tmpdir, 'readiness.json')
+            self.assertTrue(os.path.exists(json_path))
+
+            # Read the generated JSON and verify its contract
+            with open(json_path, 'r') as f:
+                data = json.load(f)
+
+            # Assertions for the contract
+            self.assertIn("schema_version", data)
+            self.assertEqual(data["schema_version"], "1.0.0")
+            self.assertIn("contract_freeze", data)
+            self.assertTrue(data["contract_freeze"])
+            self.assertIn("contract_reference", data)
+            self.assertEqual(data["contract_reference"], dummy_checklist_path)
+
+            # Check for sorted keys
+            keys = list(data.keys())
+            self.assertEqual(keys, sorted(keys), "JSON keys are not sorted")
+            
+            # Cleanup
+            sys.argv = original_argv
+            os.remove(dummy_checklist_path)
 
     def test_windows_encoding_safety_hardened(self):
         """
