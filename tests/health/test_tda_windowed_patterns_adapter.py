@@ -717,3 +717,212 @@ class TestTdaWindowedPatternsForAlignmentView:
 
         for driver in result["drivers"]:
             assert driver.startswith("DRIVER_"), f"Driver '{driver}' missing DRIVER_ prefix"
+
+
+# =============================================================================
+# Red-Flag Storm Guard Tests (CAL-EXP-2 Prep)
+# =============================================================================
+
+
+class TestRedFlagStormGuard:
+    """
+    Tests verifying SHADOW MODE non-interference under red-flag storms.
+
+    When TDA windowed patterns emits many red-flags (high confidence patterns,
+    long streaks, disagreements), SHADOW MODE must:
+    1. NOT interfere with processing
+    2. Cap warnings to prevent log flooding
+    3. Preserve all signal data for observability
+    """
+
+    def test_storm_with_many_high_confidence_patterns_stays_shadow(self):
+        """Storm of high-confidence patterns does not trigger enforcement."""
+        manifest = {
+            "signals": {
+                "tda_windowed_patterns": {
+                    "schema_version": "1.0.0",
+                    "mode": "SHADOW",
+                    "status": {
+                        "dominant_pattern": "DRIFT",
+                        "max_streak": {"pattern": "DRIFT", "length": 10},
+                        "high_confidence_count": 50,  # Storm: many red flags
+                        "coverage": {"total_windows": 100, "windows_with_patterns": 80},
+                    },
+                    "top_events": [
+                        {"window_index": i, "pattern": "DRIFT", "confidence": 0.95}
+                        for i in range(20)  # Many high-confidence events
+                    ],
+                },
+            },
+            "governance": {
+                "tda": {
+                    "patterns": {"pattern": "NONE"},  # Disagreement
+                },
+            },
+        }
+
+        # Extract signal
+        signal = extract_tda_windowed_patterns_signal_for_status(
+            manifest=manifest, evidence_data=None,
+        )
+
+        # Verify SHADOW MODE preserved
+        assert signal is not None
+        assert signal.get("mode") == "SHADOW"
+        assert signal.get("high_confidence_count") == 50
+
+        # Verify no enforcement fields (should not exist)
+        assert "enforcement_action" not in signal
+        assert "blocked" not in signal
+
+    def test_storm_warnings_capped_at_one(self):
+        """Storm of red flags produces max 1 warning (cap enforced)."""
+        manifest = {
+            "signals": {
+                "tda_windowed_patterns": {
+                    "schema_version": "1.0.0",
+                    "mode": "SHADOW",
+                    "status": {
+                        "dominant_pattern": "DRIFT",
+                        "max_streak": {"pattern": "OSCILLATION", "length": 15},
+                        "high_confidence_count": 100,
+                        "coverage": {"total_windows": 200, "windows_with_patterns": 150},
+                    },
+                    "top_events": [
+                        {"window_index": i, "pattern": "DRIFT", "confidence": 0.99}
+                        for i in range(50)
+                    ],
+                },
+            },
+        }
+
+        warnings = extract_tda_windowed_patterns_warnings(
+            manifest=manifest, evidence_data=None,
+        )
+
+        # Verify warning cap
+        assert len(warnings) <= 1, f"Expected max 1 warning, got {len(warnings)}"
+
+        # Verify warning content includes key metrics
+        if warnings:
+            warning = warnings[0]
+            assert "dominant=" in warning or "DRIFT" in warning
+
+    def test_storm_disagreement_warning_also_capped(self):
+        """Storm with disagreement still produces max 1 disagreement warning."""
+        manifest = {
+            "signals": {
+                "tda_windowed_patterns": {
+                    "schema_version": "1.0.0",
+                    "mode": "SHADOW",
+                    "status": {
+                        "dominant_pattern": "DRIFT",
+                        "max_streak": {"pattern": "DRIFT", "length": 20},
+                        "high_confidence_count": 200,
+                        "coverage": {"total_windows": 500, "windows_with_patterns": 400},
+                    },
+                },
+            },
+            "governance": {
+                "tda": {
+                    "patterns": {"pattern": "NONE"},
+                },
+            },
+        }
+
+        disagreement = extract_pattern_disagreement_for_status(
+            manifest=manifest, evidence_data=None,
+        )
+
+        assert disagreement is not None
+        assert disagreement.get("disagreement_detected") is True
+        assert disagreement.get("mode") == "SHADOW"
+
+        # Only one disagreement record (not one per window/event)
+        assert isinstance(disagreement, dict)  # Single record, not list
+
+    def test_storm_ggfl_adapter_preserves_all_drivers(self):
+        """GGFL adapter under storm preserves all driver codes."""
+        signal = {
+            "dominant_pattern": "OSCILLATION",
+            "max_streak": {"pattern": "OSCILLATION", "length": 25},
+            "high_confidence_count": 300,
+            "extraction_source": "MANIFEST",
+        }
+        disagreement = {
+            "disagreement_detected": True,
+            "reason_code": "DRIVER_WINDOWED_DETECTED_PATTERN",
+        }
+
+        result = tda_windowed_patterns_for_alignment_view(signal, disagreement)
+
+        # Verify all drivers captured
+        drivers = result.get("drivers", [])
+        assert any("DOMINANT_PATTERN:OSCILLATION" in d for d in drivers)
+        assert any("STREAK:OSCILLATION" in d for d in drivers)
+        assert any("WINDOWED_DETECTED_PATTERN" in d for d in drivers)
+
+        # Verify SHADOW mode semantics (no blocking)
+        assert result.get("conflict") is False  # Advisory only
+        assert result.get("weight_hint") == "LOW"
+
+    def test_storm_signal_deterministic(self):
+        """Storm conditions produce deterministic output."""
+        manifest = {
+            "signals": {
+                "tda_windowed_patterns": {
+                    "schema_version": "1.0.0",
+                    "mode": "SHADOW",
+                    "status": {
+                        "dominant_pattern": "DRIFT",
+                        "max_streak": {"pattern": "DRIFT", "length": 50},
+                        "high_confidence_count": 500,
+                        "coverage": {"total_windows": 1000, "windows_with_patterns": 900},
+                    },
+                },
+            },
+        }
+
+        # Run extraction multiple times
+        results = [
+            extract_tda_windowed_patterns_signal_for_status(manifest=manifest, evidence_data=None)
+            for _ in range(5)
+        ]
+
+        # All results must be identical
+        for result in results[1:]:
+            assert result == results[0], "Storm extraction must be deterministic"
+
+    def test_storm_no_state_mutation(self):
+        """Storm processing does not mutate input manifest."""
+        import copy
+
+        manifest = {
+            "signals": {
+                "tda_windowed_patterns": {
+                    "schema_version": "1.0.0",
+                    "mode": "SHADOW",
+                    "status": {
+                        "dominant_pattern": "DRIFT",
+                        "max_streak": {"pattern": "DRIFT", "length": 100},
+                        "high_confidence_count": 1000,
+                        "coverage": {"total_windows": 2000, "windows_with_patterns": 1800},
+                    },
+                },
+            },
+            "governance": {
+                "tda": {
+                    "patterns": {"pattern": "NONE"},
+                },
+            },
+        }
+
+        manifest_copy = copy.deepcopy(manifest)
+
+        # Run all extractions
+        _ = extract_tda_windowed_patterns_signal_for_status(manifest=manifest, evidence_data=None)
+        _ = extract_tda_windowed_patterns_warnings(manifest=manifest, evidence_data=None)
+        _ = extract_pattern_disagreement_for_status(manifest=manifest, evidence_data=None)
+
+        # Manifest must not be mutated
+        assert manifest == manifest_copy, "Storm processing mutated input manifest"
