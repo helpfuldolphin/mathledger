@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "CAL-EXP-1",
+  "attestation_type": "REPLICATION",
+  "attestation_date": "2025-12-13",
+  "commit_hash": "55bd258a8af327af5d12332b2544c91600dafa99",
+  "toolchain_hash": "d088f20824a5bbc4cd1bf5f02d34a6758752363f417bed1a99970773b8dacfdc",
+  "harness_hash": "98834dc727c4508c7a067392ce7eb0e5bf0bee76b76121e2e304a74796e37b98",
+  "artifact_hashes": {
+    "h1_ordering_perturbation.jsonl": "7d4f87012d82248b45a88ac585732dbaa3609964653d370169756f8b5ecbdfe2",
+    "h2_content_perturbation.jsonl": "3fdb110f549b9c446a3d7a9f150b10fbee1ac37965edbb89fff6c8342d9815fd",
+    "h3_height_rejection.jsonl": "1be08636037acb96e989f7e47b85558f15c2c9eede0d7dbf89ff909ad4116864",
+    "h4_timestamp_rejection.jsonl": "c288535686a7eaf19dd2e0316259ee9e5b4be92a0ea790e85a032b57d4b9c5e8",
+    "h6_tier_skew.jsonl": "7e8e4333fcd89d63ff0882d9b2396d40d730e03bd4222e940f079e060a5ccf95"
+  },
+  "evidence_merkle_root_raw": "ea9820e02cfbccc2f9243ce14c3558cd8845e7c9e800487ff4ecf74c792e71c6",
+  "evidence_merkle_root_normalized": "cb6278e65cf13388ee0062bf2f97b43bad1c085280d1f86461b2fea5be696c20",
+  "time_variant_keys": [
+    "timestamp",
+    "created_at",
+    "updated_at",
+    "run_timestamp"
+  ],
+  "hypothesis_results": {
+    "H1": "PASS",
+    "H2": "PASS",
+    "H3": "PASS",
+    "H4": "PASS",
+    "H5": "PASS",
+    "H6": "PASS"
+  },
+  "replication_verdict": "MATCH",
+  "notes": "Normalized Merkle root verified identical across: (1) original working tree run 1, (2) original working tree run 2, (3) fresh checkout replication. Raw roots differ due to timestamp variance as documented."
+}
