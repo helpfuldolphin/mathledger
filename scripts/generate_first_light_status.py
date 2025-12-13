@@ -15,19 +15,34 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
+
+from backend.health.policy_drift_tile import (
+    policy_drift_vs_nci_for_alignment_view,
+    summarize_policy_drift_vs_nci_consistency,
+)
+
+from backend.health.tda_windowed_patterns_adapter import (
+    extract_tda_windowed_patterns_signal_for_status,
+    extract_tda_windowed_patterns_warnings,
+    extract_pattern_disagreement_for_status,
+)
 
 # =============================================================================
 # CONSTANTS
 # =============================================================================
 
-SCHEMA_VERSION = "1.3.0"
+SCHEMA_VERSION = "1.4.0"  # Bumped for TDA windowed patterns signal integration
 DEFAULT_SCHEMA_ROOT = Path(__file__).resolve().parent.parent / "schemas" / "evidence"
 
-# Extraction source constants
+# Extraction source constants (hierarchy: CLI > MANIFEST > LEGACY_FILE > RUN_CONFIG > MISSING)
+EXTRACTION_SOURCE_CLI = "CLI"
 EXTRACTION_SOURCE_MANIFEST = "MANIFEST"
-EXTRACTION_SOURCE_EVIDENCE_JSON = "EVIDENCE_JSON"
+EXTRACTION_SOURCE_LEGACY_FILE = "LEGACY_FILE"
+EXTRACTION_SOURCE_RUN_CONFIG = "RUN_CONFIG"
+EXTRACTION_SOURCE_EVIDENCE_JSON = "EVIDENCE_JSON"  # Legacy alias
 EXTRACTION_SOURCE_MISSING = "MISSING"
+EXTRACTION_SOURCE_ABSENT = "ABSENT"
 
 # Reason codes for schema validation
 REASON_SCHEMA_VALIDATION_FAILED = "SCHEMA_VALIDATION_FAILED"
@@ -49,6 +64,91 @@ def load_json_safe(path: Path) -> Optional[Dict[str, Any]]:
     except (json.JSONDecodeError, OSError):
         pass
     return None
+
+
+def load_evidence_pack_inputs(
+    evidence_pack_dir: Optional[Path],
+) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """Load manifest.json and evidence.json from an evidence pack directory."""
+    if not evidence_pack_dir:
+        return None, None
+
+    manifest = load_json_safe(evidence_pack_dir / "manifest.json")
+    evidence = load_json_safe(evidence_pack_dir / "evidence.json")
+    return manifest, evidence
+
+
+def extract_policy_drift_summary_with_source(
+    manifest: Optional[Mapping[str, Any]],
+    evidence: Optional[Mapping[str, Any]],
+) -> Tuple[Optional[Dict[str, Any]], str]:
+    """Extract policy_drift summary using manifest-first precedence."""
+    governance = manifest.get("governance") if manifest else None
+    if isinstance(governance, Mapping):
+        policy_drift = governance.get("policy_drift")
+        if isinstance(policy_drift, Mapping):
+            return dict(policy_drift), EXTRACTION_SOURCE_MANIFEST
+
+    governance = evidence.get("governance") if evidence else None
+    if isinstance(governance, Mapping):
+        policy_drift = governance.get("policy_drift")
+        if isinstance(policy_drift, Mapping):
+            return dict(policy_drift), EXTRACTION_SOURCE_EVIDENCE_JSON
+
+    return None, EXTRACTION_SOURCE_ABSENT
+
+
+def extract_nci_signal_with_source(
+    manifest: Optional[Mapping[str, Any]],
+    evidence: Optional[Mapping[str, Any]],
+) -> Tuple[Optional[Dict[str, Any]], str]:
+    """Extract NCI signal using manifest-first precedence."""
+    signals = manifest.get("signals") if manifest else None
+    if isinstance(signals, Mapping):
+        nci_p5 = signals.get("nci_p5")
+        if isinstance(nci_p5, Mapping):
+            status = str(nci_p5.get("slo_status", "UNKNOWN") or "UNKNOWN").upper()
+            health_contribution: Dict[str, Any] = {"status": status}
+            global_nci = nci_p5.get("global_nci")
+            if isinstance(global_nci, (int, float)):
+                health_contribution["global_nci"] = global_nci
+            return {"health_contribution": health_contribution}, EXTRACTION_SOURCE_MANIFEST
+
+    governance = evidence.get("governance") if evidence else None
+    if isinstance(governance, Mapping):
+        nci = governance.get("nci")
+        if isinstance(nci, Mapping):
+            health_contribution = nci.get("health_contribution")
+            if isinstance(health_contribution, Mapping):
+                normalized = dict(health_contribution)
+                normalized["status"] = str(
+                    normalized.get("status", "UNKNOWN") or "UNKNOWN"
+                ).upper()
+                return {"health_contribution": normalized}, EXTRACTION_SOURCE_EVIDENCE_JSON
+
+    return None, EXTRACTION_SOURCE_ABSENT
+
+
+def _policy_status_to_light(status: Any) -> str:
+    normalized = str(status or "UNKNOWN").upper()
+    if normalized == "OK":
+        return "GREEN"
+    if normalized == "WARN":
+        return "YELLOW"
+    if normalized == "BLOCK":
+        return "RED"
+    return "YELLOW"
+
+
+def _nci_status_to_light(status: Any) -> str:
+    normalized = str(status or "UNKNOWN").upper()
+    if normalized == "OK":
+        return "GREEN"
+    if normalized == "WARN":
+        return "YELLOW"
+    if normalized == "BREACH":
+        return "RED"
+    return "YELLOW"
 
 
 def sha256_file(path: Path) -> Optional[str]:
@@ -80,6 +180,87 @@ def find_run_config(results_dir: Path) -> Optional[Dict[str, Any]]:
                 return load_json_safe(config_path)
 
     return None
+
+
+# =============================================================================
+# IDENTITY PREFLIGHT EXTRACTION
+# =============================================================================
+
+def extract_identity_preflight(
+    manifest: Optional[Mapping[str, Any]] = None,
+    evidence: Optional[Mapping[str, Any]] = None,
+    results_dir: Optional[Path] = None,
+    cli_identity: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Extract identity preflight signal with extraction_source tracking.
+
+    Hierarchy (first match wins):
+    1. CLI override (--identity-preflight JSON)
+    2. MANIFEST (governance.slice_identity.p5_preflight_reference)
+    3. LEGACY_FILE (p5_identity_preflight.json in results_dir)
+    4. RUN_CONFIG (run_config.json identity_preflight field)
+    5. MISSING (no source found)
+
+    Returns:
+        Dict with status, extraction_source, and optional fields.
+    """
+    # 1. CLI override (highest priority)
+    if cli_identity is not None:
+        return {
+            "status": cli_identity.get("status", "OK"),
+            "extraction_source": EXTRACTION_SOURCE_CLI,
+            "fingerprint_match": cli_identity.get("fingerprint_match"),
+            "mode": "SHADOW",
+        }
+
+    # 2. MANIFEST
+    if manifest is not None:
+        gov = manifest.get("governance") if isinstance(manifest, Mapping) else None
+        if isinstance(gov, Mapping):
+            slice_id = gov.get("slice_identity")
+            if isinstance(slice_id, Mapping):
+                preflight_ref = slice_id.get("p5_preflight_reference")
+                if isinstance(preflight_ref, Mapping) and preflight_ref.get("status"):
+                    return {
+                        "status": preflight_ref.get("status", "OK"),
+                        "extraction_source": EXTRACTION_SOURCE_MANIFEST,
+                        "fingerprint_match": preflight_ref.get("fingerprint_match"),
+                        "sha256": preflight_ref.get("sha256"),
+                        "mode": "SHADOW",
+                    }
+
+    # 3. LEGACY_FILE
+    if results_dir is not None:
+        preflight_path = results_dir / "p5_identity_preflight.json"
+        if preflight_path.exists():
+            data = load_json_safe(preflight_path)
+            if data:
+                return {
+                    "status": data.get("status", "OK"),
+                    "extraction_source": EXTRACTION_SOURCE_LEGACY_FILE,
+                    "fingerprint_match": data.get("fingerprint_match"),
+                    "sha256": sha256_file(preflight_path),
+                    "mode": "SHADOW",
+                }
+
+    # 4. RUN_CONFIG
+    if results_dir is not None:
+        config = find_run_config(results_dir)
+        if config and "identity_preflight" in config:
+            id_pf = config["identity_preflight"]
+            return {
+                "status": id_pf.get("status", "OK"),
+                "extraction_source": EXTRACTION_SOURCE_RUN_CONFIG,
+                "fingerprint_match": id_pf.get("fingerprint_match"),
+                "mode": "SHADOW",
+            }
+
+    # 5. MISSING
+    return {
+        "status": "OK",
+        "extraction_source": EXTRACTION_SOURCE_MISSING,
+        "mode": "SHADOW",
+    }
 
 
 # =============================================================================
@@ -496,6 +677,16 @@ def generate_warnings(
         if div_rate > 0.1:
             warnings.append(f"P5 divergence rate {div_rate:.2%} exceeds 10% (advisory)")
 
+    # Policy drift vs NCI inconsistency (single-line warning with top driver only)
+    pdn = signals.get("policy_drift_vs_nci") or {}
+    if isinstance(pdn, Mapping):
+        consistency = str(pdn.get("consistency_status", "") or "").upper()
+        if consistency == "INCONSISTENT":
+            view = policy_drift_vs_nci_for_alignment_view(pdn)
+            drivers = view.get("drivers") or []
+            top_driver = drivers[0] if drivers else "DRIVER_STATUS_INCONSISTENT"
+            warnings.append(f"Policy drift vs NCI INCONSISTENT: {top_driver}")
+
     return warnings
 
 
@@ -504,12 +695,15 @@ def generate_warnings(
 # =============================================================================
 
 def generate_status(
+    p3_dir: Optional[Path] = None,
+    p4_dir: Optional[Path] = None,
+    evidence_pack_dir: Optional[Path] = None,
+    *,
     results_dir: Optional[Path] = None,
-    p3_run_dir: Optional[Path] = None,
-    p4_run_dir: Optional[Path] = None,
     manifest: Optional[Dict[str, Any]] = None,
     evidence: Optional[Dict[str, Any]] = None,
     schema_root: Optional[Path] = None,
+    cli_identity: Optional[Dict[str, Any]] = None,
     **kwargs,
 ) -> Dict[str, Any]:
     """Generate First Light status JSON.
@@ -521,6 +715,7 @@ def generate_status(
         manifest: Optional manifest dict
         evidence: Optional evidence dict
         schema_root: Schema root directory for validation
+        cli_identity: Optional CLI-provided identity preflight override
 
     Returns:
         Status dict with schema_version, signals, warnings, mode, etc.
@@ -529,29 +724,67 @@ def generate_status(
     if schema_root is None:
         schema_root = DEFAULT_SCHEMA_ROOT
 
+    # Load evidence pack inputs unless explicitly provided.
+    if manifest is None or evidence is None:
+        loaded_manifest, loaded_evidence = load_evidence_pack_inputs(evidence_pack_dir)
+        if manifest is None:
+            manifest = loaded_manifest
+        if evidence is None:
+            evidence = loaded_evidence
+
+    # Prefer explicit results_dir, else fall back to run dirs for telemetry scanning.
+    run_results_dir = results_dir or p4_dir or p3_dir
+
     # Detect telemetry source
     telemetry_source = "mock"
-    if results_dir:
-        telemetry_source = detect_telemetry_source(results_dir)
+    if run_results_dir:
+        telemetry_source = detect_telemetry_source(run_results_dir)
 
     # Build signals dict
     signals: Dict[str, Any] = {}
 
+    # P5 identity preflight (with extraction_source tracking)
+    identity_signal = extract_identity_preflight(
+        manifest=manifest,
+        evidence=evidence,
+        results_dir=run_results_dir,
+        cli_identity=cli_identity,
+    )
+    signals["p5_identity_preflight"] = identity_signal
+
     # P5 divergence baseline
-    if results_dir:
-        p5_baseline = extract_p5_divergence_baseline(results_dir)
+    if run_results_dir:
+        p5_baseline = extract_p5_divergence_baseline(run_results_dir)
         if p5_baseline:
             signals["p5_divergence_baseline"] = p5_baseline
 
     # CAL-EXP-1 summary
-    if results_dir:
-        cal_exp1 = load_cal_exp1_summary(results_dir)
+    if run_results_dir:
+        cal_exp1 = load_cal_exp1_summary(run_results_dir)
         if cal_exp1:
             signals["cal_exp1_summary"] = cal_exp1
 
+    policy_drift_summary, extraction_source_policy = extract_policy_drift_summary_with_source(
+        manifest, evidence
+    )
+    nci_signal, extraction_source_nci = extract_nci_signal_with_source(manifest, evidence)
+    if policy_drift_summary is not None and nci_signal is not None:
+        consistency = summarize_policy_drift_vs_nci_consistency(policy_drift_summary, nci_signal)
+        health_contribution = nci_signal.get("health_contribution", {}) if isinstance(nci_signal, Mapping) else {}
+        signals["policy_drift_vs_nci"] = {
+            "consistency_status": str(consistency.get("consistency", "UNKNOWN") or "UNKNOWN").upper(),
+            "policy_status_light": _policy_status_to_light(policy_drift_summary.get("status")),
+            "nci_status_light": _nci_status_to_light(
+                (health_contribution.get("status") if isinstance(health_contribution, Mapping) else None)
+            ),
+            "advisory_notes": list(consistency.get("notes") or []),
+            "extraction_source_policy": extraction_source_policy,
+            "extraction_source_nci": extraction_source_nci,
+        }
+
     # Schema validation
     schemas_ok, schema_warnings, schema_report = validate_schema_artifacts(
-        p3_run_dir, p4_run_dir, schema_root
+        p3_dir, p4_dir, schema_root
     )
     signals["schemas_ok"] = schemas_ok
     signals["schemas_ok_summary"] = build_schemas_ok_summary(
@@ -561,8 +794,8 @@ def generate_status(
 
     # Check for proof snapshot
     proof_snapshot_present = False
-    if results_dir:
-        for subdir in [results_dir] + list(results_dir.iterdir() if results_dir.is_dir() else []):
+    if run_results_dir:
+        for subdir in [run_results_dir] + list(run_results_dir.iterdir() if run_results_dir.is_dir() else []):
             if isinstance(subdir, Path) and subdir.is_dir():
                 if (subdir / "proof_snapshot.json").exists():
                     proof_snapshot_present = True
@@ -571,6 +804,51 @@ def generate_status(
     # Generate warnings
     warnings = generate_warnings(signals, manifest, evidence)
     warnings.extend(schema_warnings)
+
+    # ====================================================================
+    # TDA Windowed Patterns Signal (SHADOW MODE)
+    # ====================================================================
+    # Extract TDA windowed patterns signal from manifest or evidence
+    # SHADOW MODE CONTRACT:
+    # - TDA windowed patterns signal is purely advisory (observational only)
+    # - It does not gate status generation or modify any decisions
+    # - Provides per-window pattern classification context for reviewers
+    # - Missing signal is NOT an error (signal is optional)
+    # See docs/system_law/TDA_PhaseX_Binding.md Section 14
+    try:
+        tda_windowed_signal = extract_tda_windowed_patterns_signal_for_status(
+            manifest=manifest,
+            evidence_data=evidence,
+        )
+        if tda_windowed_signal:
+            signals["tda_windowed_patterns"] = tda_windowed_signal
+
+            # Extract warnings (capped to 1 line total)
+            tda_windowed_warnings = extract_tda_windowed_patterns_warnings(
+                manifest=manifest,
+                evidence_data=evidence,
+            )
+            if tda_windowed_warnings:
+                warnings.extend(tda_windowed_warnings[:1])
+
+        # Check for single-shot vs windowed disagreement (advisory only)
+        pattern_disagreement = extract_pattern_disagreement_for_status(
+            manifest=manifest,
+            evidence_data=evidence,
+        )
+        if pattern_disagreement and pattern_disagreement.get("disagreement_detected"):
+            signals["tda_pattern_disagreement"] = pattern_disagreement
+            # Add advisory note to warnings (capped to 1 line, DRIVER_ reason code format)
+            reason_code = pattern_disagreement.get("reason_code", "DRIVER_UNKNOWN")
+            single_shot = pattern_disagreement.get("single_shot_pattern", "NONE")
+            windowed = pattern_disagreement.get("windowed_dominant_pattern", "NONE")
+            warnings.append(
+                f"TDA pattern disagreement: {reason_code} "
+                f"(single-shot={single_shot}, windowed_dominant={windowed})"
+            )
+    except Exception:
+        # Non-fatal: if extraction fails, skip signal (advisory only)
+        pass
 
     # Build final status
     status: Dict[str, Any] = {
@@ -595,18 +873,24 @@ def main(argv: Optional[List[str]] = None) -> int:
     import argparse
 
     parser = argparse.ArgumentParser(description="Generate First Light status")
-    parser.add_argument("--results-dir", type=Path, help="Results directory")
-    parser.add_argument("--p3-run-dir", type=Path, help="P3 run directory")
-    parser.add_argument("--p4-run-dir", type=Path, help="P4 run directory")
+    parser.add_argument("--p3-dir", type=Path, help="P3 run directory")
+    parser.add_argument("--p4-dir", type=Path, help="P4 run directory")
+    parser.add_argument("--evidence-pack-dir", type=Path, help="Evidence pack directory")
+    parser.add_argument("--results-dir", type=Path, help="Legacy results directory override")
+    parser.add_argument("--p3-run-dir", type=Path, help="Legacy P3 run directory")
+    parser.add_argument("--p4-run-dir", type=Path, help="Legacy P4 run directory")
     parser.add_argument("--schema-root", type=Path, help="Schema root directory")
     parser.add_argument("--output", "-o", type=Path, help="Output JSON path")
 
     args = parser.parse_args(argv)
 
+    p3_dir = args.p3_dir or args.p3_run_dir
+    p4_dir = args.p4_dir or args.p4_run_dir
     status = generate_status(
+        p3_dir=p3_dir,
+        p4_dir=p4_dir,
+        evidence_pack_dir=args.evidence_pack_dir,
         results_dir=args.results_dir,
-        p3_run_dir=args.p3_run_dir,
-        p4_run_dir=args.p4_run_dir,
         schema_root=args.schema_root,
     )
 
