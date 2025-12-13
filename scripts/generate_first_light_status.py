@@ -648,44 +648,97 @@ def build_schemas_ok_summary(
 # =============================================================================
 
 def generate_warnings(
-    signals: Dict[str, Any],
+    p3_check: Optional[Dict[str, Any]] = None,
+    p4_check: Optional[Dict[str, Any]] = None,
+    p5_replay_signal: Optional[Dict[str, Any]] = None,
+    *,
+    signals: Optional[Dict[str, Any]] = None,
     manifest: Optional[Dict[str, Any]] = None,
     evidence: Optional[Dict[str, Any]] = None,
 ) -> List[str]:
     """Generate warnings list from signals.
 
+    Supports two calling conventions:
+    1. Test convention: generate_warnings(p3_check, p4_check, p5_replay_signal)
+    2. Internal convention: generate_warnings(signals=signals, manifest=manifest)
+
     Returns single-line warnings, capped appropriately.
+
+    P5 Replay Warning Cap Precedence (v1.3.0):
+        Priority 1: schema_ok=false -> single schema warning
+        Priority 2: safety_mismatch_rate > 0 -> single safety warning
+        Priority 3: determinism_band=RED -> single RED band warning
     """
     warnings: List[str] = []
 
-    # Check for schema validation issues
-    schemas_ok_summary = signals.get("schemas_ok_summary", {})
-    if schemas_ok_summary.get("fail", 0) > 0 or schemas_ok_summary.get("missing", 0) > 0:
-        fail_count = schemas_ok_summary.get("fail", 0)
-        missing_count = schemas_ok_summary.get("missing", 0)
-        warnings.append(f"Schema validation: {fail_count} failed, {missing_count} missing")
+    # Handle signals-based calling convention (internal use)
+    if signals is not None:
+        # Check for schema validation issues
+        schemas_ok_summary = signals.get("schemas_ok_summary", {})
+        if schemas_ok_summary.get("fail", 0) > 0 or schemas_ok_summary.get("missing", 0) > 0:
+            fail_count = schemas_ok_summary.get("fail", 0)
+            missing_count = schemas_ok_summary.get("missing", 0)
+            warnings.append(f"Schema validation: {fail_count} failed, {missing_count} missing")
 
-    # Check for identity preflight issues
-    identity = signals.get("p5_identity_preflight", {})
-    if identity.get("status") == "BLOCK":
-        warnings.append("P5 identity pre-flight: BLOCK status (advisory)")
+        # Check for identity preflight issues (single-cap: one warning max)
+        identity = signals.get("p5_identity_preflight", {})
+        identity_status = identity.get("status", "OK")
+        extraction_source = identity.get("extraction_source", "MISSING")
+        if identity_status in ("BLOCK", "INVESTIGATE"):
+            warnings.append(
+                f"P5 identity pre-flight: {identity_status} status "
+                f"[source={extraction_source}] (advisory)"
+            )
 
-    # Check for divergence issues
-    divergence = signals.get("p5_divergence_baseline", {})
-    if divergence:
-        div_rate = divergence.get("divergence_rate", 0.0)
-        if div_rate > 0.1:
-            warnings.append(f"P5 divergence rate {div_rate:.2%} exceeds 10% (advisory)")
+        # Check for divergence issues
+        divergence = signals.get("p5_divergence_baseline", {})
+        if divergence:
+            div_rate = divergence.get("divergence_rate", 0.0)
+            if div_rate > 0.1:
+                warnings.append(f"P5 divergence rate {div_rate:.2%} exceeds 10% (advisory)")
 
-    # Policy drift vs NCI inconsistency (single-line warning with top driver only)
-    pdn = signals.get("policy_drift_vs_nci") or {}
-    if isinstance(pdn, Mapping):
-        consistency = str(pdn.get("consistency_status", "") or "").upper()
-        if consistency == "INCONSISTENT":
-            view = policy_drift_vs_nci_for_alignment_view(pdn)
-            drivers = view.get("drivers") or []
-            top_driver = drivers[0] if drivers else "DRIVER_STATUS_INCONSISTENT"
-            warnings.append(f"Policy drift vs NCI INCONSISTENT: {top_driver}")
+        # Policy drift vs NCI inconsistency (single-line warning with top driver only)
+        pdn = signals.get("policy_drift_vs_nci") or {}
+        if isinstance(pdn, Mapping):
+            consistency = str(pdn.get("consistency_status", "") or "").upper()
+            if consistency == "INCONSISTENT":
+                view = policy_drift_vs_nci_for_alignment_view(pdn)
+                drivers = view.get("drivers") or []
+                top_driver = drivers[0] if drivers else "DRIVER_STATUS_INCONSISTENT"
+                warnings.append(f"Policy drift vs NCI INCONSISTENT: {top_driver}")
+
+    # =========================================================================
+    # P5 Replay Safety Warnings (SHADOW MODE - advisory only)
+    # Single warning cap per category to prevent spam
+    # Precedence: schema_ok > safety_mismatch_rate > determinism_band=RED
+    # =========================================================================
+    if p5_replay_signal:
+        p5_warning_added = False  # Single warning cap
+
+        # Priority 1: schema_ok=false (highest priority)
+        schema_ok = p5_replay_signal.get("schema_ok", True)
+        if not schema_ok and not p5_warning_added:
+            warnings.append("P5 Replay schema validation failed (schema_ok=false)")
+            p5_warning_added = True
+
+        # Priority 2: safety_mismatch_rate > 0
+        td_v1 = p5_replay_signal.get("true_divergence_v1", {})
+        safety_mismatch_rate = td_v1.get("safety_mismatch_rate", 0.0)
+        if safety_mismatch_rate > 0.0 and not p5_warning_added:
+            warnings.append(
+                f"P5 Replay safety mismatch detected (safety_mismatch_rate={safety_mismatch_rate:.2%})"
+            )
+            p5_warning_added = True
+
+        # Priority 3: determinism_band=RED (fallback)
+        det_rate = p5_replay_signal.get("determinism_rate")
+        det_band = p5_replay_signal.get("determinism_band")
+        if det_band == "RED" and not p5_warning_added:
+            if det_rate is not None:
+                warnings.append(f"P5 Replay determinism rate ({det_rate:.2%}) in RED band")
+            else:
+                warnings.append("P5 Replay determinism in RED band")
+            p5_warning_added = True
 
     return warnings
 
@@ -801,9 +854,81 @@ def generate_status(
                     proof_snapshot_present = True
                     break
 
+    # ====================================================================
+    # Noise vs Reality Signal (SHADOW MODE)
+    # ====================================================================
+    # EXTRACTION SOURCE: MANIFEST | EVIDENCE_JSON | MISSING
+    # SHADOW MODE CONTRACT:
+    # - Noise vs reality signal is purely observational
+    # - It does not gate status generation or modify any decisions
+    # - Provides context about P3 synthetic noise coverage vs P5 real divergence
+    try:
+        from backend.topology.first_light.noise_vs_reality_integration import (
+            extract_noise_vs_reality_signal,
+            ExtractionSource,
+        )
+
+        # Prepare manifest for extraction
+        pack_manifest_nvr = manifest or {}
+        evidence_json_path_nvr = None
+        if evidence_pack_dir:
+            candidate = evidence_pack_dir / "evidence.json"
+            if candidate.exists():
+                evidence_json_path_nvr = candidate
+
+        # Extract signal with extraction_source tracking
+        nvr_signal = extract_noise_vs_reality_signal(
+            manifest=pack_manifest_nvr,
+            evidence_json_path=evidence_json_path_nvr,
+        )
+
+        nvr_extraction_source = nvr_signal.get("extraction_source", ExtractionSource.MISSING.value)
+
+        if nvr_extraction_source != ExtractionSource.MISSING.value:
+            nvr_verdict = nvr_signal.get("verdict")
+            nvr_advisory_severity = nvr_signal.get("advisory_severity")
+            nvr_advisory_warning = nvr_signal.get("advisory_warning")
+
+            if nvr_verdict and nvr_advisory_severity:
+                signals["noise_vs_reality"] = {
+                    "extraction_source": nvr_extraction_source,
+                    "verdict": nvr_verdict,
+                    "advisory_severity": nvr_advisory_severity,
+                    "coverage_ratio": nvr_signal.get("coverage_ratio"),
+                    "p3_noise_rate": nvr_signal.get("p3_noise_rate"),
+                    "p5_divergence_rate": nvr_signal.get("p5_divergence_rate"),
+                    "p5_source": nvr_signal.get("p5_source"),
+                    "p5_source_advisory": nvr_signal.get("p5_source_advisory"),
+                    "summary_sha256": nvr_signal.get("summary_sha256"),
+                    "top_factor": nvr_signal.get("top_factor"),
+                    "top_factor_value": nvr_signal.get("top_factor_value"),
+                }
+    except ImportError:
+        pass  # Module not available, skip signal
+
     # Generate warnings
-    warnings = generate_warnings(signals, manifest, evidence)
+    warnings = generate_warnings(signals=signals, manifest=manifest, evidence=evidence)
     warnings.extend(schema_warnings)
+
+    # Noise vs Reality warning (SINGLE LINE CAP)
+    nvr_in_signals = signals.get("noise_vs_reality")
+    if nvr_in_signals:
+        nvr_v = nvr_in_signals.get("verdict")
+        if nvr_v in ["INSUFFICIENT", "MARGINAL"]:
+            try:
+                from backend.topology.first_light.noise_vs_reality_integration import (
+                    format_advisory_warning,
+                )
+                nvr_warn = format_advisory_warning(
+                    verdict=nvr_v,
+                    top_factor=nvr_in_signals.get("top_factor"),
+                    top_factor_value=nvr_in_signals.get("top_factor_value"),
+                    p5_source=nvr_in_signals.get("p5_source", "p5_jsonl_fallback"),
+                )
+                if nvr_warn:
+                    warnings.append(f"Noise vs reality: {nvr_warn}")
+            except ImportError:
+                pass
 
     # ====================================================================
     # TDA Windowed Patterns Signal (SHADOW MODE)
@@ -871,6 +996,7 @@ def generate_status(
 def main(argv: Optional[List[str]] = None) -> int:
     """CLI entry point."""
     import argparse
+    import sys
 
     parser = argparse.ArgumentParser(description="Generate First Light status")
     parser.add_argument("--p3-dir", type=Path, help="P3 run directory")
@@ -881,8 +1007,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--p4-run-dir", type=Path, help="Legacy P4 run directory")
     parser.add_argument("--schema-root", type=Path, help="Schema root directory")
     parser.add_argument("--output", "-o", type=Path, help="Output JSON path")
+    parser.add_argument(
+        "--identity-preflight",
+        type=str,
+        help="CLI identity preflight override (JSON string)",
+    )
 
     args = parser.parse_args(argv)
+
+    # Parse CLI identity preflight if provided
+    cli_identity = None
+    if args.identity_preflight:
+        try:
+            cli_identity = json.loads(args.identity_preflight)
+        except json.JSONDecodeError:
+            print("Error: Invalid JSON for --identity-preflight", file=sys.stderr)
+            return 1
 
     p3_dir = args.p3_dir or args.p3_run_dir
     p4_dir = args.p4_dir or args.p4_run_dir
@@ -892,6 +1032,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         evidence_pack_dir=args.evidence_pack_dir,
         results_dir=args.results_dir,
         schema_root=args.schema_root,
+        cli_identity=cli_identity,
     )
 
     if args.output:
