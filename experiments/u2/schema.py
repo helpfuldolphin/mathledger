@@ -237,3 +237,28 @@ SNAPSHOT_EVENTS = {
 }
 
 ALL_EVENT_TYPES = set(EventType)
+
+
+# PHASE II — Snapshot Orchestration Events
+@dataclass(frozen=True)
+class SnapshotPlanEvent:
+    """
+    Emitted at session start to record the auto-resume planning decision.
+    
+    This event provides an auditable trail of snapshot orchestration decisions
+    for global health dashboards and continuity analysis.
+    
+    Extended fields (mean_coverage_pct, max_gap) allow reconstruction of
+    "why this resume choice was made" from a single event record.
+    """
+    status: str  # "NO_ACTION", "RESUME", "NEW_RUN"
+    preferred_run_id: Optional[str]
+    preferred_snapshot_path: Optional[str]
+    total_runs_analyzed: int
+    mean_coverage_pct: float = 0.0  # Average coverage across all runs
+    max_gap: int = 0  # Largest gap between snapshots across all runs
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to JSON-serializable dict."""
+        from dataclasses import asdict
+        return asdict(self)

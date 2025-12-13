@@ -72,7 +72,7 @@ Visit [http://127.0.0.1:5210/docs](http://127.0.0.1:5210/docs) for the API docs 
 | `GET /` | Service status |
 | `GET /theory/graph` | Zoomable theory graph (nodes + edges) |
 | `GET /theorem/{id}` | Theorem detail (statement, deps, source) |
-| `POST /verify/{id}` | Call POA/Proof to verify (stub for now) |
+| `POST /verify/{id}` | Endpoint to request verification from the POA service (stub for now) |
 | `GET /factory/agents` | Agent status from ledger (stub for now) |
 
 ---
@@ -82,11 +82,11 @@ Visit [http://127.0.0.1:5210/docs](http://127.0.0.1:5210/docs) for the API docs 
 **Claude E can speculate** (e.g., suggest UI copy, propose explorations), but:
 
 1. All **speculative content** must be labeled as `SPECULATIVE`
-2. For **truth claims**, the wrapper calls **POA/Proof**:
+2. For **truth claims**, the wrapper requests verification from the POA service:
    - Status: `PROVED` (green) or `ABSTAIN` (grey)
-   - Never upgrade `ABSTAIN` to `PROVED`
-3. Every theorem displays **provenance** (source file, line, proof status)
-4. **"Verify with POA"** button routes to `/verify/{id}` → calls Proof service
+   - Do not upgrade `ABSTAIN` to `PROVED`
+3. Every theorem displays **provenance** (source file, line, verification status)
+4. **"Verify with POA"** button routes to `/verify/{id}` → sends request to the verification service
 
 ---
 
@@ -104,7 +104,7 @@ See **[docs/edge_setup.md](docs/edge_setup.md)** for full instructions on wiring
 
 - **Manus A** (Conductor): Switch Bridge connector to `https://bridge.mathledger.ai` (stable URL)
 - **Claude D** (Integrator): Merge this branch when green (UI builds, wrapper 200/OK)
-- **POA/Proof**: Future integration for `/verify` endpoint
+- **POA/Verification**: Future integration for `/verify` endpoint
 
 ---
 
@@ -114,7 +114,7 @@ See **[docs/edge_setup.md](docs/edge_setup.md)** for full instructions on wiring
 2. ✅ Document domain/edge setup (Cloudflare + Tunnel)
 3. 🔜 Wire UI to consume `api.mathledger.ai/theory/graph`
 4. 🔜 Wire wrapper to Bridge API (read-only, X-Token auth)
-5. 🔜 Integrate POA/Proof service for `/verify`
+5. 🔜 Integrate POA/Verification service for `/verify`
 6. 🔜 Add live Factory panel (read `agent_ledger.jsonl`)
 
 ---
@@ -124,7 +124,7 @@ See **[docs/edge_setup.md](docs/edge_setup.md)** for full instructions on wiring
 - [ ] `npm run dev` launches Universe view with mock graph
 - [ ] `uvicorn main:app` returns 200 on `/theory/graph`
 - [ ] UI displays ProofBadge + "Verify with POA" button
-- [ ] Speculative content labeled; Proof route wired (stub OK)
+- [ ] Speculative content labeled; Verification route wired (stub OK)
 - [ ] Footer shows "Connected to mathledger.ai"
 
 ---

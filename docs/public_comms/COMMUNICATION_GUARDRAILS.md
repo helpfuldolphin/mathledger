@@ -52,4 +52,4 @@ These are concise, powerful, and safe statements for use in presentations, socia
 
 ### Neutrality Invariant Declaration
 
-**Public-facing artifacts must never use alarmist or emotive language.** All communication must be factual, precise, and objective. Enforcement is supported by `tools/lint_public_language.py`.
+**Public-facing artifacts must never use alarmist or emotive language.** All communication must be factual, precise, and objective. Enforcement is supported by `tools/lint_public_language.py`. This is run as part of the `lint-public-language` job (step: `Run Public Language Linter`) in the proposed `ci.yml` workflow.

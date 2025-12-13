@@ -1,6 +1,6 @@
 # MathLedger API
 
-FastAPI-based API for MathLedger mathematical proof system.
+FastAPI-based API for MathLedger mathematical verification system.
 
 ## Quick Start
 
@@ -29,7 +29,7 @@ X-API-Key: devkey
 ### Endpoints
 
 #### `/metrics` (GET)
-Get system metrics including proof success/failure counts, block count, and max depth.
+Get system metrics including verification attempt success/failure counts, record count, and max depth.
 
 **Response:**
 ```json
@@ -44,8 +44,8 @@ Get system metrics including proof success/failure counts, block count, and max 
 }
 ```
 
-#### `/blocks/latest` (GET)
-Get the latest block information.
+#### `/records/latest` (GET)
+Get the latest record information.
 
 **Response:**
 ```json

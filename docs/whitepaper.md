@@ -1,7 +1,7 @@
 # MathLedger: A Verifiable Ledger of Mathematical Truths
 
 ## Abstract
-We present **MathLedger**, a system that constructs a **ledger of mathematics**: a monotone, auditable, and queryable record of all provable truths within bounded axiomatic frameworks. MathLedger automates the generation of statements, derives proofs via axiomatic inference, verifies them in Lean 4, and records every result as a block with Merkle-style provenance. Each block saturates a **slice of a theory**—beginning with propositional logic and climbing a **logic ladder** through first-order logic with equality, equational theories, and linear arithmetic. The result is **authentic synthetic data**: infinite in scope, but Lean-verified, normalized, deduplicated, and cryptographically sealed.
+We present **MathLedger**, a system that constructs a **ledger of mathematics**: a monotone, auditable, and queryable record of all provable truths within bounded axiomatic frameworks. MathLedger automates the generation of statements, derives proofs via axiomatic inference, verifies them in Lean 4, and records every result as a record entry with Merkle-style provenance. Each record entry saturates a **slice of a theory**—beginning with propositional logic and climbing a **logic ladder** through first-order logic with equality, equational theories, and linear arithmetic. The result is **authentic synthetic data**: infinite in scope, but Lean-verified, normalized, deduplicated, and cryptographically sealed.
 
 MathLedger is both a **backend factory** and a **frontend interface**. The backend generates and records proofs automatically, night after night. The frontend exposes a typed API, a lightweight UI, and an AI wrapper so that humans and models can traverse, query, and even generate textbooks and research papers from the ledger itself. This duality makes MathLedger both the substrate for large-scale reasoning research and the platform through which future mathematics is authored.
 
@@ -13,7 +13,7 @@ Mathematics is the cleanest substrate for reasoning. Yet no system today offers 
 - **Benchmarks** (MATH, GSM8K, MiniF2F) are tiny, brittle, and inconsistent.
 - **LLM proofs** hallucinate; internal labs hand-curate datasets at great cost.
 
-MathLedger solves this by **automating proof generation and verification** into a *ledger*: every statement is derived from axioms, every proof is verified in Lean, every block is auditable. Unlike scraped data, MathLedger grows without bound. Unlike RL-provers, its automation is deterministic and reproducible. It is the first source of **authentic synthetic reasoning data** at scale.
+MathLedger addresses this by **automating verification generation and validation** into a *ledger*: every statement is derived from axioms, every verification is validated in Lean, every record entry is auditable. Unlike scraped data, MathLedger grows without bound. Unlike RL-provers, its automation is deterministic and reproducible. It is the first source of **authentic synthetic reasoning data** at scale.
 
 ---
 
@@ -23,10 +23,10 @@ MathLedger solves this by **automating proof generation and verification** into 
 
 - **Enumerator**: generates candidate formulas bounded by atoms and depth, deduped via AST normalization.
 - **Derivation Engine**: instantiates axioms, applies Modus Ponens and substitution, derives new statements.
-- **Lean Verifier**: invokes Lean tactics (`taut`, `aesop`, `by decide`) or internal checkers, ensures correctness.
+- **Lean Verifier**: invokes Lean tactics (`taut`, `aesop`, `by decide`) or internal checkers, validates correctness.
 - **Normalizer/Hasher**: canonicalizes formulas, computes SHA-256 hash IDs.
-- **Ledger DB**: Postgres tables: `theories`, `statements`, `proofs`, `dependencies`, `runs`, `blocks`.
-- **Block Builder**: groups proofs into a block, computes Merkle root over proof IDs, appends block to ledger.
+- **Ledger DB**: Postgres tables: `theories`, `statements`, `verifications`, `dependencies`, `runs`, `records`.
+- **Record Builder**: groups verifications into a record entry, computes Merkle root over verification IDs, appends record to ledger.
 -- **Curriculum YAML**: defines per-system slices (atoms, depth, breadth, total caps), ratchets to the next slice when thresholds are met.
 
 Mathematical activity follows the **Chain of Verifiable Cognition**. The living implementation of that chain is the **First Organism**; it is documented in `docs/FIRST_ORGANISM.md`, validated by `tests/integration/test_first_organism.py`, sealed via `basis/attestation/dual_root.py`, and referenced in the attestation and RFL specs (`docs/ATTESTATION_SPEC.md`, `docs/RFL_IMPLEMENTATION_SUMMARY.md`). Every documented architecture milestone therefore has a concrete test and artifact associated with it, transforming the whitepaper from theory into diagnosable reality.
@@ -34,10 +34,10 @@ Mathematical activity follows the **Chain of Verifiable Cognition**. The living 
 ### Data Model
 - `theories`: defines systems (PL, FOL=, Group, Ring).
 - `statements`: `id, hash, text, system_id, depth, norm_jsonb, created_at`.
-- `proofs`: `id, statement_id, method, prover, derivation_rule, status, duration_ms`.
+- `verifications`: `id, statement_id, method, prover, derivation_rule, status, duration_ms`.
 - `dependencies`: DAG edges (premises → conclusion).
 - `runs`: execution configs, start/finish times, summary stats.
-- `blocks`: block headers with `run_id, system_id, root_hash, counts`.
+- `records`: record headers with `run_id, system_id, root_hash, counts`.
 
 ---
 
@@ -48,22 +48,22 @@ MathLedger advances inductively, system by system, slice by slice:
    - Connectives: ¬, ∧, ∨, →.
    - Axioms: K and S schemas.
    - Inference: Modus Ponens, Substitution.
-   - Proof methods: Lean tactics (`taut`, `aesop`), internal truth tables.
+   - Verification methods: Lean tactics (`taut`, `aesop`), internal truth tables.
    - Curricula: atoms ≤4, depth ≤4 → depth ≤5 → atoms ≤5, depth ≤6.
 
 2. **First-Order Logic with Equality (FOL=)**
    - Quantifiers ∀, ∃.
    - Ground term instantiation bounded by depth.
    - Congruence closure for =.
-   - Proof methods: Lean FOL tactics, Herbrand expansions.
+   - Verification methods: Lean FOL tactics, Herbrand expansions.
 
 3. **Equational Theories (Monoids → Groups → Rings)**
    - Rewrite rules: associativity, identity, inverses.
-   - Proof methods: Knuth–Bendix completion, Lean `simp`.
+   - Verification methods: Knuth–Bendix completion, Lean `simp`.
    - Lemmas: algebraic identities, cancellations, homomorphisms.
 
 4. **Linear Arithmetic (QF-LIA, QF-LRA)**
-   - Proof methods: `linarith`, cutting-plane certs.
+   - Verification methods: `linarith`, cutting-plane certs.
    - Lemmas: inequalities, bounds, linear dependencies.
 
 Each system is saturated slice by slice, with **ratchet logic**: only when success rates and coverage thresholds are met does MathLedger advance to the next slice.
@@ -87,38 +87,38 @@ Each system is saturated slice by slice, with **ratchet logic**: only when succe
 
 ### Ingestion
 - Persist only **new hashes**.
-- UPSERT guarantees idempotency.
+- UPSERT operations support idempotency.
 - Canonical proof chosen per statement.
 
-### Block Construction
-- After each run, collect successful proofs.
-- Compute Merkle root: SHA-256 over proof ID list.
-- Insert block header into `blocks`, append to ledger.
+### Record Construction
+- After each run, collect successful verifications.
+- Compute Merkle root: SHA-256 over verification ID list.
+- Insert record header into `records`, append to ledger.
 
 ---
 
 ## 5. Ledger Semantics
 MathLedger is a **monotone, auditable ledger**:
-- Every block extends the DAG of mathematics; none retract.
-- Each block header commits to proofs via Merkle root.
+- Every record extends the DAG of mathematics; none retract.
+- Each record header commits to verifications via Merkle root.
 - Provenance is explicit: every statement links to axioms and parent proofs.
-- Determinism: same slice config → identical hashes, proofs, blocks.
-- Reproducibility: any block can be independently re-verified in Lean.
+- Determinism: same slice config → identical hashes, verifications, records.
+- Reproducibility: any record can be independently re-verified in Lean.
 
 ---
 
 ## 6. Evaluation
 ### Metrics Captured
-- Proof throughput (proofs/sec).
+- Verification throughput (verifications/sec).
 - Success rate (Lean acceptance vs failures).
 - Dedupe ratio (unique proofs vs raw generation).
-- Lemma reuse (frequency of derived lemmas across blocks).
+- Lemma reuse (frequency of derived lemmas across records).
 - Depth coverage (max derivation depth).
 
 ### Scaling Laws
 MathLedger produces scaling curves analogous to LLMs:
 - **Proofs/sec vs depth** (compute cost vs coverage).
-- **Lemma hit-rate vs block index** (knowledge reuse curve).
+- **Lemma hit-rate vs record index** (knowledge reuse curve).
 - **Success % vs slice size** (robustness as domains widen).
 
 ---
@@ -129,7 +129,7 @@ MathLedger produces scaling curves analogous to LLMs:
 - Endpoints:
   - `/metrics`: JSON of system stats.
   - `/theories`: ladder view.
-  - `/blocks/latest?system=pl`: latest block header.
+  - `/records/latest?system=pl`: latest record header.
   - `/statements?hash=...`: statement detail, proofs, parents.
   - `/lemmas/top`: most reused lemmas.
 
@@ -146,13 +146,13 @@ MathLedger produces scaling curves analogous to LLMs:
 ---
 
 ## 8. Roadmap
-- **Phase 1 (PL, live now):** Bounded-complete propositional logic, K+S axioms, Modus Ponens, substitution. Blocks finalized nightly.
+- **Phase 1 (PL, live now):** Bounded-complete propositional logic, K+S axioms, Modus Ponens, substitution. Records finalized nightly.
 - **Phase 2 (FOL=):** Equality reasoning, Herbrand instantiation, congruence closure.
 - **Phase 3 (Equational theories):** Groups, rings, algebraic identities via rewrite proofs.
 - **Phase 4 (Linear arithmetic):** Inequalities, bounded model proofs.
 - **Phase 5:** Extend to topology, category theory, analysis — leveraging mathlib’s corpus as seed axioms.
 
-At each phase, MathLedger saturates bounded slices, ratchets difficulty, and records blocks.
+At each phase, MathLedger saturates bounded slices, ratchets difficulty, and records entries.
 
 ---
 
@@ -166,13 +166,13 @@ MathLedger is the **data and infrastructure layer** for reasoning research.
 **Acquisition thesis:**
 - Owning MathLedger means owning the **substrate of mathematical reasoning data**.
 - It is the reasoning equivalent of owning the ImageNet of 2010 or the Bitcoin ledger of 2009.
-- It is both **a factory** (backend blocks) and **an author** (frontend AI wrapper) — producing textbooks, conjectures, and research papers from the ledger itself.
+- It is both **a factory** (backend records) and **an author** (frontend AI wrapper) — producing textbooks, conjectures, and research papers from the ledger itself.
 
 ---
 
 ## 10. Conclusion
-MathLedger makes mathematics a **living, verifiable dataset**. It climbs the ladder of logic slice by slice, block by block, with every truth cryptographically sealed and every proof reproducible. On the backend, it is an **automated factory of authentic synthetic reasoning data**. On the frontend, it is an **interface for humans and AIs to explore, learn, and create mathematics**.
+MathLedger makes mathematics a **living, verifiable dataset**. It climbs the ladder of logic slice by slice, record by record, with every truth cryptographically sealed and every verification reproducible. On the backend, it is an **automated factory of authentic synthetic reasoning data**. On the frontend, it is an **interface for humans and AIs to explore, learn, and create mathematics**.
 
-Just as Bitcoin demonstrated a new substrate for money, MathLedger demonstrates a new substrate for **thought itself**. It does not outsource thinking — it scaffolds it, extends it, and makes it auditable at scale.
+Just as Bitcoin demonstrated a new substrate for money, MathLedger demonstrates a new substrate for **computational reasoning itself**. It does not automate subjective understanding — it scaffolds it, extends it, and makes it auditable at scale.
 
 MathLedger is the **ledger of mathematics**.

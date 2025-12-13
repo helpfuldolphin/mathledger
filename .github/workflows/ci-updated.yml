@@ -26,6 +26,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v1
       - run: uv sync
+
+      - name: Advisory: legacy P3 wrapper callsites (non-gating)
+        continue-on-error: true
+        run: uv run python scripts/legacy_p3_wrapper_ci_check.py
       
       # MIGRATION STEP RE-ENABLED
       # Previously disabled due to 9 failing migrations (PR #21)
@@ -133,4 +137,3 @@ jobs:
 # Note: dual-attestation.yml provides composite UI + Reasoning attestation
 # and depends on browsermcp.yml and reasoning.yml workflows
 # See: .github/workflows/dual-attestation.yml
-

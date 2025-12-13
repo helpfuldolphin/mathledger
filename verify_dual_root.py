@@ -16,6 +16,9 @@ exact same cryptographic primitives as block sealing.
 import os
 import sys
 import psycopg
+
+# Schema version for tile compatibility
+TILE_SCHEMA_VERSION = "1.0.0"
 from typing import List, Dict, Any, Optional
 
 # Import from canonical source of truth for H_t computation
@@ -281,6 +284,46 @@ def main():
         sys.exit(2)
     finally:
         conn.close()
+
+
+def summarize_dual_root_health(results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Summarize dual-root verification results for health dashboard.
+
+    Args:
+        results: List of verification results from verify_block()
+
+    Returns:
+        Dictionary with health summary
+    """
+    if not results:
+        return {
+            "status": "unknown",
+            "total_blocks": 0,
+            "verified_blocks": 0,
+            "failed_blocks": 0,
+            "coverage_pct": 0.0,
+        }
+
+    total_blocks = len(results)
+    verified_blocks = sum(1 for r in results if r.get("verified", False))
+    failed_blocks = sum(1 for r in results if r.get("has_dual_roots", False) and not r.get("verified", False))
+    blocks_with_roots = sum(1 for r in results if r.get("has_dual_roots", False))
+
+    coverage_pct = (blocks_with_roots / total_blocks * 100) if total_blocks > 0 else 0.0
+
+    status = "ok" if coverage_pct >= 95.0 and failed_blocks == 0 else "warn"
+    if failed_blocks > 0:
+        status = "error"
+
+    return {
+        "status": status,
+        "total_blocks": total_blocks,
+        "verified_blocks": verified_blocks,
+        "failed_blocks": failed_blocks,
+        "blocks_with_roots": blocks_with_roots,
+        "coverage_pct": coverage_pct,
+    }
 
 
 if __name__ == "__main__":

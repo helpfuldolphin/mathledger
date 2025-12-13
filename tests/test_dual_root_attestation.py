@@ -135,8 +135,17 @@ class TestAttestationMetadata:
         assert metadata['ui_event_count'] == 1
         assert metadata['attestation_version'] == 'v2'
         assert metadata['algorithm'] == 'SHA256'
+        assert metadata['post_quantum_algorithm'] == 'SHA3-256'
         assert metadata['composite_formula'] == 'SHA256(R_t || U_t)'
         assert metadata['leaf_hash_algorithm'] == 'sha256'
+        commitments = metadata['hash_commitments']
+        assert set(commitments.keys()) == {'reasoning', 'ui', 'composite'}
+        reasoning_commit = commitments['reasoning']
+        assert reasoning_commit['classical']['digest'] == r_t
+        assert reasoning_commit['post_quantum']['algorithm'] == 'SHA3-256'
+        assert len(reasoning_commit['post_quantum']['digest']) == 64
+        composite_commit = commitments['composite']
+        assert composite_commit['classical']['digest'] == h_t
 
     def test_generate_attestation_metadata_with_extra(self):
         """Test metadata generation with extra fields."""
@@ -152,6 +161,9 @@ class TestAttestationMetadata:
         assert metadata['block_number'] == 42
         assert metadata['system'] == 'pl'
         assert metadata['attestation_version'] == 'v2'
+        commitments = metadata['hash_commitments']
+        assert commitments['ui']['classical']['digest'] == u_t
+        assert commitments['ui']['post_quantum']['algorithm'] == 'SHA3-256'
 
 
 class TestCompositeVerification:
@@ -206,6 +218,8 @@ class TestBlockSealing:
         assert block['block_hash']
         assert block['block_number'] >= 1
         assert block['attestation_metadata']['attestation_version'] == 'v2'
+        assert 'hash_commitments' in block
+        assert block['hash_commitments'] == block['attestation_metadata']['hash_commitments']
 
     def test_seal_block_with_dual_roots_basic(self):
         """Test basic block sealing with dual roots."""
@@ -227,6 +241,10 @@ class TestBlockSealing:
         assert isinstance(block['sealed_at'], int)
         assert isinstance(block['reasoning_leaves'], list)
         assert block['attestation_metadata']['attestation_version'] == 'v2'
+        assert 'hash_commitments' in block
+        composite_commit = block['hash_commitments']['composite']
+        assert composite_commit['classical']['digest'] == block['composite_attestation_root']
+        assert composite_commit['post_quantum']['algorithm'] == 'SHA3-256'
 
         # Verify legacy merkle_root aliases to reasoning_merkle_root
         assert block['merkle_root'] == block['reasoning_merkle_root']
@@ -242,6 +260,9 @@ class TestBlockSealing:
         assert block['ui_event_count'] == 2
         # Verify UI events are reflected in metadata
         assert block['attestation_metadata']['ui_event_count'] == 2
+        ui_commit = block['hash_commitments']['ui']
+        assert ui_commit['classical']['digest'] == block['ui_merkle_root']
+        assert len(ui_commit['post_quantum']['digest']) == 64
 
     def test_seal_block_with_dual_roots_no_ui_events(self):
         """Test block sealing without UI events."""
@@ -291,6 +312,7 @@ class TestBlockSealing:
         assert block['reasoning_merkle_root'] is not None
         assert block['ui_merkle_root'] is not None
         assert block['composite_attestation_root'] is not None
+        assert block['hash_commitments']['reasoning']['post_quantum']['algorithm'] == 'SHA3-256'
 
     def test_reasoning_inclusion_proofs_verify(self):
         """Reasoning leaves should verify via Merkle proof."""
@@ -387,6 +409,26 @@ class TestBlockSealing:
         assert block["attestation_metadata"]["composite_formula"] == "SHA256(R_t || U_t)"
         assert block["attestation_metadata"]["reasoning_event_count"] == 1
         assert block["attestation_metadata"]["ui_event_count"] == 1
+        assert block["hash_commitments"]["reasoning"]["classical"]["digest"] == block["reasoning_merkle_root"]
+        assert block["hash_commitments"]["reasoning"]["post_quantum"]["algorithm"] == "SHA3-256"
+
+    def test_post_quantum_commitments_are_deterministic_across_order(self):
+        """Post-quantum digests should be order-independent."""
+        proofs = [
+            {"statement": "p -> p", "method": "axiom"},
+            {"statement": "q -> q", "method": "axiom"},
+        ]
+        ui_events = [
+            {"event_type": "focus", "statement_hash": "abc"},
+            {"event_type": "select_statement", "statement_hash": "def"},
+        ]
+
+        block1 = seal_block_with_dual_roots("pl", proofs, ui_events=ui_events)
+        block2 = seal_block_with_dual_roots("pl", list(reversed(proofs)), ui_events=list(reversed(ui_events)))
+
+        assert block1["hash_commitments"]["reasoning"]["post_quantum"]["digest"] == block2["hash_commitments"]["reasoning"]["post_quantum"]["digest"]
+        assert block1["hash_commitments"]["ui"]["post_quantum"]["digest"] == block2["hash_commitments"]["ui"]["post_quantum"]["digest"]
+        assert block1["hash_commitments"]["composite"]["post_quantum"]["digest"] == block2["hash_commitments"]["composite"]["post_quantum"]["digest"]
 
 
 class TestCanonicalSourceOfTruth:

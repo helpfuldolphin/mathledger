@@ -38,6 +38,13 @@ from .audit import RFLAuditLog, SymbolicDescentGradient, StepIdComputation
 from .experiment_logging import RFLExperimentLogger
 from .provenance import ManifestBuilder
 
+# Phase X: USLA Shadow Mode Integration (optional)
+try:
+    from backend.topology.usla_integration import USLAIntegration, RunnerType
+    USLA_AVAILABLE = True
+except ImportError:
+    USLA_AVAILABLE = False
+
 # ---------------- Logger ----------------
 logging.basicConfig(
     level=logging.INFO,
@@ -182,6 +189,26 @@ class RFLRunner:
             except Exception as e:
                 logger.warning(f"[WARN] Telemetry: Redis not available for metrics: {e}")
                 self._redis_client = None
+
+        # Phase X: USLA Shadow Mode Integration
+        # SHADOW MODE: Simulator runs in parallel, logs only, NEVER modifies governance
+        self._usla_integration: Optional[Any] = None
+        usla_enabled = os.getenv("USLA_SHADOW_ENABLED", "").lower() in ("1", "true", "yes")
+        if usla_enabled and USLA_AVAILABLE:
+            try:
+                self._usla_integration = USLAIntegration.create_for_runner(
+                    runner_type=RunnerType.RFL,
+                    runner_id=config.experiment_id,
+                    enabled=True,
+                    log_dir="results/usla_shadow",
+                    run_id=deterministic_timestamp(0).strftime("%Y%m%d_%H%M%S"),
+                )
+                logger.info("[INIT] USLA shadow mode enabled")
+            except Exception as e:
+                logger.warning(f"[WARN] USLA shadow mode initialization failed: {e}")
+                self._usla_integration = None
+        elif usla_enabled and not USLA_AVAILABLE:
+            logger.warning("[WARN] USLA_SHADOW_ENABLED=true but usla_integration not available")
 
     def _increment_metric(self, key: str, amount: float = 1.0):
         if self._redis_client:
@@ -677,6 +704,19 @@ class RFLRunner:
             result=result,
             metrics_cartographer_data=None  # Can be enhanced to pull from sidecar/redis
         )
+
+        # Phase X: USLA Shadow Mode Processing
+        # SHADOW MODE: Runs AFTER real governance, logs only, NEVER modifies decisions
+        if self._usla_integration and self._usla_integration.enabled:
+            try:
+                self._usla_integration.process_rfl_cycle(
+                    cycle=self.first_organism_runs_total,
+                    ledger_entry=ledger_entry,
+                    attestation=attestation,
+                    real_blocked=False,  # RFL does not have TDA blocking yet
+                )
+            except Exception as e:
+                logger.warning(f"[USLA] Shadow processing failed: {e}")
 
         return result
 

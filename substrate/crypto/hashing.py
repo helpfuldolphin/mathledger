@@ -63,6 +63,24 @@ def sha256_bytes(data: Union[str, bytes], domain: bytes = b'') -> bytes:
     return hashlib.sha256(domain + data).digest()
 
 
+def sha3_256_hex(data: Union[str, bytes], domain: bytes = b'') -> str:
+    """
+    Compute SHA3-256 hash and return as hex string.
+    """
+    if isinstance(data, str):
+        data = data.encode('utf-8')
+    return hashlib.sha3_256(domain + data).hexdigest()
+
+
+def sha3_256_bytes(data: Union[str, bytes], domain: bytes = b'') -> bytes:
+    """
+    Compute SHA3-256 hash and return as bytes.
+    """
+    if isinstance(data, str):
+        data = data.encode('utf-8')
+    return hashlib.sha3_256(domain + data).digest()
+
+
 def hash_statement(statement: str) -> str:
     """
     Hash a statement with STMT domain separation.

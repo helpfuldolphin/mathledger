@@ -25,6 +25,13 @@ from .snapshots import (
     find_latest_snapshot,
     rotate_snapshots,
 )
+from .telemetry import (
+    TelemetryReport,
+    extract_telemetry_from_trace,
+    export_telemetry,
+    create_evidence_pack,
+    compare_telemetry,
+)
 
 __all__ = [
     # Frontier
@@ -66,4 +73,11 @@ __all__ = [
     "load_snapshot",
     "find_latest_snapshot",
     "rotate_snapshots",
+
+    # Telemetry
+    "TelemetryReport",
+    "extract_telemetry_from_trace",
+    "export_telemetry",
+    "create_evidence_pack",
+    "compare_telemetry",
 ]

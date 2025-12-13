@@ -10,18 +10,30 @@ Reference: MathLedger Whitepaper §4.2 (Dual Attestation Block Sealing).
 
 from __future__ import annotations
 
+import logging
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from substrate.crypto.hashing import sha256_hex
 from substrate.repro.determinism import deterministic_unix_timestamp
 from attestation.dual_root import (
     AttestationTree,
+    build_composite_commitment,
     build_reasoning_attestation,
     build_ui_attestation,
     compute_composite_root,
     generate_attestation_metadata,
 )
-from ledger.ui_events import materialize_ui_artifacts, consume_ui_artifacts
+from ledger.ui_events import consume_ui_artifacts
+from substrate.crypto.pq_policy_guard import (
+    BlockHeaderPQ,
+    PQPolicyConfig,
+    validate_block_pq_policy,
+)
+
+LOGGER = logging.getLogger(__name__)
+_PQ_POLICY_PATH = Path(__file__).resolve().parents[1] / "config" / "pq_hash_policy.yaml"
 
 
 def _derive_block_identity(
@@ -101,7 +113,22 @@ def seal_block(system: str, proofs: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
             "block_number": block_number,
             "sealed_at": sealed_at,
         },
+        reasoning_commitments=reasoning_tree.commitments,
+        ui_commitments=ui_tree.commitments,
+        composite_commitments=build_composite_commitment(
+            h_t,
+            reasoning_tree.commitments,
+            ui_tree.commitments,
+        ),
     )
+    hash_commitments = metadata["hash_commitments"]
+    pq_verdict = _apply_pq_policy_guard(
+        block_number=block_number,
+        algorithm_id=metadata.get("algorithm", "sha256"),
+        hash_commitments=hash_commitments,
+    )
+    if pq_verdict:
+        metadata["pq_policy_verdict"] = pq_verdict
 
     return {
         "block_number": block_number,
@@ -113,6 +140,8 @@ def seal_block(system: str, proofs: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
         "reasoning_leaves": _tree_metadata(reasoning_tree),
         "ui_event_count": 0,
         "ui_leaves": _tree_metadata(ui_tree),
+        "hash_commitments": hash_commitments,
+        "pq_policy_verdict": pq_verdict,
     }
 
 
@@ -184,7 +213,22 @@ def seal_block_with_dual_roots(
             "block_number": block_number,
             "sealed_at": sealed_at,
         },
+        reasoning_commitments=reasoning_tree.commitments,
+        ui_commitments=ui_tree.commitments,
+        composite_commitments=build_composite_commitment(
+            composite_attestation_root,
+            reasoning_tree.commitments,
+            ui_tree.commitments,
+        ),
     )
+    hash_commitments = attestation_metadata["hash_commitments"]
+    pq_verdict = _apply_pq_policy_guard(
+        block_number=block_number,
+        algorithm_id=attestation_metadata.get("algorithm", "sha256"),
+        hash_commitments=hash_commitments,
+    )
+    if pq_verdict:
+        attestation_metadata["pq_policy_verdict"] = pq_verdict
 
     return {
         "block_number": block_number,
@@ -199,4 +243,60 @@ def seal_block_with_dual_roots(
         "sealed_at": sealed_at,
         "reasoning_leaves": _tree_metadata(reasoning_tree),
         "ui_leaves": _tree_metadata(ui_tree),
+        "hash_commitments": hash_commitments,
+        "pq_policy_verdict": pq_verdict,
     }
+
+
+@lru_cache(maxsize=1)
+def _load_pq_policy_config() -> Optional[PQPolicyConfig]:
+    if not _PQ_POLICY_PATH.exists():
+        return None
+    try:
+        return PQPolicyConfig.from_file(_PQ_POLICY_PATH)
+    except Exception as exc:  # pragma: no cover - defensive fail-safe
+        LOGGER.warning("Failed to load PQ hash policy config (%s): %s", _PQ_POLICY_PATH, exc)
+        return None
+
+
+def _apply_pq_policy_guard(
+    *,
+    block_number: int,
+    algorithm_id: str,
+    hash_commitments: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    policy = _load_pq_policy_config()
+    if policy is None:
+        return None
+
+    header = BlockHeaderPQ(
+        block_number=block_number,
+        algorithm_id=(algorithm_id or "").lower(),
+        has_dual_commitment=_has_dual_commitment(hash_commitments),
+        has_legacy_hash=_has_legacy_hash(hash_commitments),
+    )
+    verdict = validate_block_pq_policy(header, policy)
+    if not verdict.get("ok", False):
+        LOGGER.warning(
+            "PQ hash policy violation detected during block sealing",
+            extra={"pq_policy_verdict": verdict},
+        )
+    return verdict
+
+
+def _has_dual_commitment(hash_commitments: Dict[str, Any]) -> bool:
+    try:
+        reasoning = hash_commitments["reasoning"]
+        pq_digest = reasoning["post_quantum"]["digest"]
+        classical_digest = reasoning["classical"]["digest"]
+        return bool(pq_digest and classical_digest)
+    except Exception:
+        return False
+
+
+def _has_legacy_hash(hash_commitments: Dict[str, Any]) -> bool:
+    try:
+        reasoning = hash_commitments["reasoning"]
+        return bool(reasoning["classical"]["digest"])
+    except Exception:
+        return False

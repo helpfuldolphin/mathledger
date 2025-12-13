@@ -77,6 +77,51 @@ from fastapi.testclient import TestClient
 
 
 # ---------------------------------------------------------------------------
+# First Organism API Client
+# ---------------------------------------------------------------------------
+@dataclass
+class UIEventResponse:
+    """Response from UI event API."""
+    event_id: str
+    timestamp: int
+    leaf_hash: str
+
+
+class FirstOrganismApiClient:
+    """API client for First Organism integration tests."""
+
+    def __init__(self, client: TestClient, api_key: str = "devkey"):
+        self.client = client
+        self.api_key = api_key
+        self._headers = {"X-API-Key": api_key}
+
+    def post_ui_event(self, payload: Dict[str, Any]) -> UIEventResponse:
+        """Post a UI event."""
+        response = self.client.post(
+            "/ui/events",
+            json=payload,
+            headers=self._headers,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return UIEventResponse(
+            event_id=data.get("event_id", ""),
+            timestamp=data.get("timestamp", 0),
+            leaf_hash=data.get("leaf_hash", ""),
+        )
+
+    def get_health(self) -> Dict[str, Any]:
+        """Get health status."""
+        response = self.client.get("/health")
+        return response.json()
+
+    def get_metrics(self) -> Dict[str, Any]:
+        """Get metrics."""
+        response = self.client.get("/metrics", headers=self._headers)
+        return response.json()
+
+
+# ---------------------------------------------------------------------------
 # MDAP Deterministic Epoch & Namespace
 # ---------------------------------------------------------------------------
 MDAP_EPOCH_SEED = 0x4D444150  # "MDAP" as hex seed

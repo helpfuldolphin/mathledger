@@ -8,12 +8,20 @@ Core execution engine for U2 experiments with:
 - Policy-driven search
 """
 
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from rfl.prng import DeterministicPRNG, int_to_hex_seed
+
+# Phase X: USLA Shadow Mode Integration (optional)
+try:
+    from backend.topology.usla_integration import USLAIntegration, RunnerType
+    USLA_AVAILABLE = True
+except ImportError:
+    USLA_AVAILABLE = False
 
 from .frontier import FrontierManager, BeamAllocator
 from .logging import U2TraceLogger
@@ -116,7 +124,23 @@ class U2Runner:
             "total_candidates_generated": 0,
             "total_time_s": 0.0,
         }
-    
+
+        # Phase X: USLA Shadow Mode Integration
+        # SHADOW MODE: Simulator runs in parallel, logs only, NEVER modifies governance
+        self._usla_integration: Optional[Any] = None
+        usla_enabled = os.getenv("USLA_SHADOW_ENABLED", "").lower() in ("1", "true", "yes")
+        if usla_enabled and USLA_AVAILABLE:
+            try:
+                self._usla_integration = USLAIntegration.create_for_runner(
+                    runner_type=RunnerType.U2,
+                    runner_id=f"u2_{config.slice_name}",
+                    enabled=True,
+                    log_dir="results/usla_shadow",
+                    run_id=f"{config.experiment_id}_{config.master_seed}",
+                )
+            except Exception:
+                self._usla_integration = None
+
     def initialize_policy(self, feedback_data: Optional[Dict[str, Any]] = None) -> None:
         """
         Initialize search policy.
@@ -288,10 +312,26 @@ class U2Runner:
         self.stats["total_candidates_processed"] += candidates_processed
         self.stats["total_candidates_generated"] += candidates_generated
         self.stats["total_time_s"] += time_elapsed
-        
+
         self.results.append(result)
         self.current_cycle = cycle
-        
+
+        # Phase X: USLA Shadow Mode Processing
+        # SHADOW MODE: Runs AFTER cycle completes, logs only, NEVER modifies decisions
+        if self._usla_integration and self._usla_integration.enabled:
+            try:
+                self._usla_integration.process_u2_cycle(
+                    cycle=cycle,
+                    cycle_result={
+                        "success": result.success,
+                        "depth": result.metadata.get("max_depth"),
+                        "branch_factor": None,  # U2 doesn't track this directly
+                    },
+                    real_blocked=False,  # U2 does not have TDA blocking yet
+                )
+            except Exception:
+                pass  # Shadow mode should never block main execution
+
         return result
     
     def _generate_candidates(

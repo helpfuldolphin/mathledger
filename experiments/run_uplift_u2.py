@@ -61,6 +61,11 @@ from experiments.u2.snapshots import (
     find_latest_snapshot,
     rotate_snapshots,
 )
+from experiments.u2.snapshot_history import (
+    build_multi_run_snapshot_history,
+    plan_future_runs,
+    summarize_snapshot_plans_for_u2_orchestrator,
+)
 from experiments.u2.logging import U2TraceLogger, CORE_EVENTS, ALL_EVENT_TYPES
 from experiments.u2 import schema as trace_schema
 
@@ -91,6 +96,41 @@ METRIC_DISPATCHER = {
 def hash_string(data: str) -> str:
     """Computes the SHA256 hash of a string."""
     return hashlib.sha256(data.encode('utf-8')).hexdigest()
+
+
+def _log_snapshot_plan_event(
+    trace_logger: Optional[U2TraceLogger],
+    event: trace_schema.SnapshotPlanEvent,
+) -> None:
+    """
+    Log SnapshotPlanEvent to trace log.
+    
+    This is a simple JSONL writer for snapshot plan events.
+    """
+    if trace_logger is None:
+        return
+    
+    # Write event as JSONL line
+    event_data = {
+        "type": "snapshot_plan_event",
+        "event_type": "SnapshotPlanEvent",
+        "payload": event.to_dict(),
+    }
+    
+    # Access file handle directly if available, otherwise use a simple write
+    try:
+        if hasattr(trace_logger, 'file_handle') and trace_logger.file_handle:
+            line = json.dumps(event_data, sort_keys=True, separators=(',', ':'))
+            trace_logger.file_handle.write(line + '\n')
+            trace_logger.file_handle.flush()
+        elif hasattr(trace_logger, 'output_path'):
+            # Fallback: append to file
+            with open(trace_logger.output_path, 'a', encoding='utf-8') as f:
+                line = json.dumps(event_data, sort_keys=True, separators=(',', ':'))
+                f.write(line + '\n')
+    except Exception as e:
+        # Fail soft - don't crash if logging fails
+        print(f"WARNING: Failed to log snapshot plan event: {e}", file=sys.stderr)
 
 
 def get_config(config_path: Path) -> Dict[str, Any]:
@@ -180,6 +220,7 @@ def run_experiment(
     trace_ctx: Optional[TracedExperimentContext] = None,
     snapshot_keep: int = 5,
     trace_events: Optional[set] = None,
+    snapshot_plan_event: Optional[trace_schema.SnapshotPlanEvent] = None,
 ):
     """
     Main function to run the uplift experiment with snapshot support.
@@ -303,18 +344,31 @@ def run_experiment(
         trace_logger.__enter__()
         if trace_events:
             print(f"INFO: Trace events filter: {sorted(trace_events)}")
-        # Emit session start
-        trace_logger.log_session_start(
-            trace_schema.SessionStartEvent(
-                run_id=u2_config.experiment_id,
-                slice_name=slice_name,
-                mode=mode,
-                schema_version=trace_schema.TRACE_SCHEMA_VERSION,
-                config_hash=hash_string(json.dumps(slice_config, sort_keys=True))[:16],
-                total_cycles=cycles,
-                initial_seed=seed,
-            )
-        )
+        # Emit session start (if method exists)
+        try:
+            if hasattr(trace_logger, 'log_session_start'):
+                # Try to emit session start event (may not be defined in all versions)
+                SessionStartEvent = getattr(trace_schema, 'SessionStartEvent', None)
+                TRACE_SCHEMA_VERSION = getattr(trace_schema, 'TRACE_SCHEMA_VERSION', '1.0.0')
+                if SessionStartEvent:
+                    trace_logger.log_session_start(
+                        SessionStartEvent(
+                            run_id=u2_config.experiment_id,
+                            slice_name=slice_name,
+                            mode=mode,
+                            schema_version=TRACE_SCHEMA_VERSION,
+                            config_hash=hash_string(json.dumps(slice_config, sort_keys=True))[:16],
+                            total_cycles=cycles,
+                            initial_seed=seed,
+                        )
+                    )
+        except Exception as e:
+            # Fail soft - don't crash if session start logging fails
+            print(f"WARNING: Failed to log session start event: {e}", file=sys.stderr)
+        
+        # Emit snapshot plan event if available (from auto-resume)
+        if snapshot_plan_event is not None:
+            _log_snapshot_plan_event(trace_logger, snapshot_plan_event)
         print(f"INFO: Trace logging enabled: {trace_log_path}")
     
     # Use external trace context if provided (for run_with_traces wrapper)
@@ -368,19 +422,27 @@ def run_experiment(
     finally:
         # Close trace logger if we opened it
         if trace_logger is not None:
-            # Emit session end
-            trace_logger.log_session_end(
-                trace_schema.SessionEndEvent(
-                    run_id=u2_config.experiment_id,
-                    slice_name=slice_name,
-                    mode=mode,
-                    schema_version=trace_schema.TRACE_SCHEMA_VERSION,
-                    manifest_hash=None,  # Will be computed after manifest generation
-                    ht_series_hash=None,
-                    total_cycles=cycles,
-                    completed_cycles=runner.cycle_index,
-                )
-            )
+            # Emit session end (if method exists)
+            try:
+                if hasattr(trace_logger, 'log_session_end'):
+                    SessionEndEvent = getattr(trace_schema, 'SessionEndEvent', None)
+                    TRACE_SCHEMA_VERSION = getattr(trace_schema, 'TRACE_SCHEMA_VERSION', '1.0.0')
+                    if SessionEndEvent:
+                        trace_logger.log_session_end(
+                            SessionEndEvent(
+                                run_id=u2_config.experiment_id,
+                                slice_name=slice_name,
+                                mode=mode,
+                                schema_version=TRACE_SCHEMA_VERSION,
+                                manifest_hash=None,  # Will be computed after manifest generation
+                                ht_series_hash=None,
+                                total_cycles=cycles,
+                                completed_cycles=runner.cycle_index,
+                            )
+                        )
+            except Exception as e:
+                # Fail soft - don't crash if session end logging fails
+                print(f"WARNING: Failed to log session end event: {e}", file=sys.stderr)
             trace_logger.__exit__(None, None, None)
 
     # 7. Final snapshot at end if interval is set
@@ -527,6 +589,17 @@ Exit Codes:
         default=5,
         help="Number of snapshots to keep (rotation policy). Default: 5. Set to 0 to disable rotation."
     )
+    parser.add_argument(
+        "--auto-resume",
+        action="store_true",
+        help="Automatically select best snapshot from snapshot-root for resuming. Uses multi-run planning."
+    )
+    parser.add_argument(
+        "--snapshot-root",
+        type=str,
+        default=None,
+        help="Root directory containing multiple run directories for auto-resume planning."
+    )
     
     # Trace logging (PHASE II telemetry)
     parser.add_argument(
@@ -555,6 +628,14 @@ Exit Codes:
         print("       Use --resume to auto-discover the latest snapshot,", file=sys.stderr)
         print("       or --restore-from to specify a specific snapshot file.", file=sys.stderr)
         sys.exit(1)
+    
+    if args.auto_resume and (args.resume or args.restore_from):
+        print("ERROR: --auto-resume is mutually exclusive with --resume and --restore-from.", file=sys.stderr)
+        sys.exit(1)
+    
+    if args.auto_resume and not args.snapshot_root:
+        print("ERROR: --snapshot-root is required when --auto-resume is used.", file=sys.stderr)
+        sys.exit(1)
 
     config_path = Path(args.config)
     out_dir = Path(args.out)
@@ -577,7 +658,128 @@ Exit Codes:
 
     # Handle --resume: auto-discover latest snapshot
     restore_from: Optional[Path] = None
-    if args.resume:
+    snapshot_plan_event: Optional[trace_schema.SnapshotPlanEvent] = None
+    
+    if args.auto_resume:
+        # Auto-resume: analyze multiple runs and select best snapshot
+        snapshot_root = Path(args.snapshot_root)
+        if not snapshot_root.exists():
+            print(f"WARNING: Snapshot root directory not found: {snapshot_root}", file=sys.stderr)
+            print(f"         Falling back to NEW_RUN.", file=sys.stderr)
+            orchestrator_summary = {
+                "status": "NEW_RUN",
+                "has_resume_targets": False,
+                "preferred_run_id": None,
+                "preferred_snapshot_path": None,
+                "details": {"runs_available": 0, "message": "Snapshot root not found"},
+            }
+        else:
+            try:
+                # Discover run directories (subdirectories of snapshot_root)
+                run_dirs: List[str] = []
+                try:
+                    for item in snapshot_root.iterdir():
+                        if item.is_dir():
+                            run_dirs.append(str(item))
+                except (OSError, PermissionError) as e:
+                    print(f"WARNING: Error scanning snapshot root: {e}", file=sys.stderr)
+                    print(f"         Falling back to NEW_RUN.", file=sys.stderr)
+                    run_dirs = []
+                
+                if not run_dirs:
+                    print(f"INFO: No run directories found in {snapshot_root}. Starting a new run.", file=sys.stderr)
+                    orchestrator_summary = {
+                        "status": "NEW_RUN",
+                        "has_resume_targets": False,
+                        "preferred_run_id": None,
+                        "preferred_snapshot_path": None,
+                        "details": {"runs_available": 0, "message": "No runs found"},
+                    }
+                else:
+                    print(f"INFO: Analyzing {len(run_dirs)} runs for auto-resume...")
+                    try:
+                        # Build multi-run history (handles errors gracefully)
+                        multi_history = build_multi_run_snapshot_history(run_dirs)
+                        
+                        # Plan future runs
+                        plan = plan_future_runs(multi_history, target_coverage=10.0)
+                        
+                        # Get orchestrator summary
+                        orchestrator_summary = summarize_snapshot_plans_for_u2_orchestrator(plan)
+                        
+                        if orchestrator_summary["status"] == "RESUME":
+                            preferred_path = orchestrator_summary.get("preferred_snapshot_path")
+                            if preferred_path:
+                                restore_from = Path(preferred_path)
+                                print(f"INFO: Auto-resume decision: RESUME from {restore_from}")
+                                print(f"      Run ID: {orchestrator_summary.get('preferred_run_id', 'unknown')}")
+                            else:
+                                print(f"WARNING: RESUME status but no snapshot path. Falling back to NEW_RUN.", file=sys.stderr)
+                                orchestrator_summary["status"] = "NEW_RUN"
+                        elif orchestrator_summary["status"] == "NEW_RUN":
+                            print(f"INFO: Auto-resume decision: NEW_RUN")
+                            print(f"      Reason: {orchestrator_summary.get('details', {}).get('message', 'No viable resume points')}")
+                        else:
+                            print(f"INFO: Auto-resume decision: NO_ACTION")
+                            print(f"      Reason: {orchestrator_summary.get('details', {}).get('message', '')}")
+                    
+                    except Exception as e:
+                        # Log with context about which step failed
+                        print(f"WARNING: Error during auto-resume analysis: {e}", file=sys.stderr)
+                        print(f"         Snapshot root: {snapshot_root}", file=sys.stderr)
+                        print(f"         Run directories found: {len(run_dirs)}", file=sys.stderr)
+                        print(f"         Falling back to NEW_RUN.", file=sys.stderr)
+                        orchestrator_summary = {
+                            "status": "NEW_RUN",
+                            "has_resume_targets": False,
+                            "preferred_run_id": None,
+                            "preferred_snapshot_path": None,
+                            "details": {"runs_available": len(run_dirs), "message": f"Analysis error: {e}"},
+                        }
+                
+                # Create SnapshotPlanEvent for telemetry
+                # Extract metrics from multi_history for event
+                mean_coverage = multi_history.get("summary", {}).get("average_coverage_pct", 0.0)
+                max_gap = multi_history.get("global_max_gap", 0)
+                
+                snapshot_plan_event = trace_schema.SnapshotPlanEvent(
+                    status=orchestrator_summary["status"],
+                    preferred_run_id=orchestrator_summary.get("preferred_run_id"),
+                    preferred_snapshot_path=orchestrator_summary.get("preferred_snapshot_path"),
+                    total_runs_analyzed=multi_history.get("run_count", 0),
+                    mean_coverage_pct=mean_coverage,
+                    max_gap=max_gap,
+                )
+            
+            except Exception as e:
+                # Catch-all for any unexpected errors - log with full context
+                import traceback
+                print(f"ERROR: Unexpected error in auto-resume: {e}", file=sys.stderr)
+                print(f"       Snapshot root: {snapshot_root}", file=sys.stderr)
+                print(f"       Error type: {type(e).__name__}", file=sys.stderr)
+                if len(run_dirs) > 0:
+                    print(f"       Run directories found: {len(run_dirs)}", file=sys.stderr)
+                print(f"       Falling back to NEW_RUN.", file=sys.stderr)
+                # Log traceback for debugging (but don't crash)
+                print(f"       Traceback (for debugging):", file=sys.stderr)
+                traceback.print_exc(file=sys.stderr)
+                orchestrator_summary = {
+                    "status": "NEW_RUN",
+                    "has_resume_targets": False,
+                    "preferred_run_id": None,
+                    "preferred_snapshot_path": None,
+                    "details": {"runs_available": len(run_dirs) if 'run_dirs' in locals() else 0, "message": f"Unexpected error: {e}"},
+                }
+                snapshot_plan_event = trace_schema.SnapshotPlanEvent(
+                    status="NEW_RUN",
+                    preferred_run_id=None,
+                    preferred_snapshot_path=None,
+                    total_runs_analyzed=0,
+                    mean_coverage_pct=0.0,
+                    max_gap=0,
+                )
+    
+    elif args.resume:
         latest = find_latest_snapshot(snapshot_dir)
         if latest is None:
             print(f"ERROR: No snapshot found in {snapshot_dir}", file=sys.stderr)
@@ -604,6 +806,7 @@ Exit Codes:
         trace_log_path=trace_log_path,
         snapshot_keep=args.snapshot_keep,
         trace_events=trace_events,
+        snapshot_plan_event=snapshot_plan_event,
     )
 
 if __name__ == "__main__":

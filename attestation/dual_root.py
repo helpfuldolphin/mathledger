@@ -35,6 +35,7 @@ from substrate.crypto.hashing import (
     merkle_root as crypto_merkle_root,
     compute_merkle_proof,
     sha256_hex,
+    sha3_256_hex,
 )
 
 # --------------------------------------------------------------------------- #
@@ -46,6 +47,26 @@ DOMAIN_UI_LEAF = b"\xA1ui-leaf"
 
 REASONING_EMPTY_SENTINEL = b"REASONING:EMPTY"
 UI_EMPTY_SENTINEL = b"UI:EMPTY"
+
+DOMAIN_REASONING_PQ = b"\xB0reasoning-pq"
+DOMAIN_UI_PQ = b"\xB1ui-pq"
+DOMAIN_COMPOSITE_PQ = b"\xB2composite-pq"
+
+PRIMARY_ALGORITHM = "SHA256"
+PRIMARY_VERSION = "v1"
+POST_QUANTUM_ALGORITHM = "SHA3-256"
+POST_QUANTUM_VERSION = "pq.v1"
+
+_PQ_DOMAIN_BY_KIND = {
+    "reasoning": DOMAIN_REASONING_PQ,
+    "ui": DOMAIN_UI_PQ,
+    "composite": DOMAIN_COMPOSITE_PQ,
+}
+
+_EMPTY_SENTINEL_BY_KIND = {
+    "reasoning": REASONING_EMPTY_SENTINEL,
+    "ui": UI_EMPTY_SENTINEL,
+}
 
 RawLeaf = Union[str, bytes, Mapping[str, Any], Sequence[Any], int, float, bool, None]
 
@@ -79,6 +100,7 @@ class AttestationTree:
     root: str
     leaves: Tuple[AttestationLeaf, ...]
     domain: bytes
+    commitments: "HashCommitmentBundle"
 
     def to_metadata(self) -> Dict[str, Any]:
         return {
@@ -86,6 +108,50 @@ class AttestationTree:
             "root": self.root,
             "leaf_count": len(self.leaves),
             "leaves": [leaf.to_metadata() for leaf in self.leaves],
+            "hash_commitments": self.commitments.to_metadata(),
+        }
+
+
+@dataclass(frozen=True)
+class HashCommitment:
+    """Single hash commitment with metadata."""
+
+    algorithm: str
+    version: str
+    digest: str
+
+    def to_metadata(self) -> Dict[str, str]:
+        return {
+            "algorithm": self.algorithm,
+            "version": self.version,
+            "digest": self.digest,
+        }
+
+
+@dataclass(frozen=True)
+class HashCommitmentBundle:
+    """Pair of classical + post-quantum commitments."""
+
+    classical: HashCommitment
+    post_quantum: HashCommitment
+
+    @classmethod
+    def from_roots(cls, classical_digest: str, pq_digest: str) -> "HashCommitmentBundle":
+        return cls(
+            classical=HashCommitment(PRIMARY_ALGORITHM, PRIMARY_VERSION, classical_digest),
+            post_quantum=HashCommitment(POST_QUANTUM_ALGORITHM, POST_QUANTUM_VERSION, pq_digest),
+        )
+
+    @classmethod
+    def fallback_from_digest(cls, kind: str, digest: str) -> "HashCommitmentBundle":
+        domain = _PQ_DOMAIN_BY_KIND[kind]
+        pq_digest = sha3_256_hex(digest, domain=domain)
+        return cls.from_roots(digest, pq_digest)
+
+    def to_metadata(self) -> Dict[str, Dict[str, str]]:
+        return {
+            "classical": self.classical.to_metadata(),
+            "post_quantum": self.post_quantum.to_metadata(),
         }
 
 
@@ -136,10 +202,24 @@ def _build_attestation_tree(
     domain: bytes,
 ) -> AttestationTree:
     canonical_values = [_canonicalize_leaf(item) for item in items]
+    pq_domain = _PQ_DOMAIN_BY_KIND.get(kind)
+    if pq_domain is None:
+        raise ValueError(f"Unsupported attestation tree kind: {kind}")
+    pq_root = _compute_post_quantum_root(
+        canonical_values,
+        domain=pq_domain,
+        empty_sentinel=empty_sentinel,
+    )
 
     if not canonical_values:
         root = hashlib.sha256(empty_sentinel).hexdigest()
-        return AttestationTree(kind=kind, root=root, leaves=tuple(), domain=domain)
+        return AttestationTree(
+            kind=kind,
+            root=root,
+            leaves=tuple(),
+            domain=domain,
+            commitments=HashCommitmentBundle.from_roots(root, pq_root),
+        )
 
     leaf_hashes = [hash_fn(canonical) for canonical in canonical_values]
     root = crypto_merkle_root(leaf_hashes)
@@ -164,7 +244,13 @@ def _build_attestation_tree(
             )
         )
 
-    return AttestationTree(kind=kind, root=root, leaves=tuple(leaves), domain=domain)
+    return AttestationTree(
+        kind=kind,
+        root=root,
+        leaves=tuple(leaves),
+        domain=domain,
+        commitments=HashCommitmentBundle.from_roots(root, pq_root),
+    )
 
 
 def build_reasoning_attestation(proof_events: Sequence[RawLeaf]) -> AttestationTree:
@@ -263,6 +349,9 @@ def generate_attestation_metadata(
     reasoning_leaves: Optional[Sequence[AttestationLeaf]] = None,
     ui_leaves: Optional[Sequence[AttestationLeaf]] = None,
     extra: Optional[Dict[str, Any]] = None,
+    reasoning_commitments: Optional["HashCommitmentBundle"] = None,
+    ui_commitments: Optional["HashCommitmentBundle"] = None,
+    composite_commitments: Optional["HashCommitmentBundle"] = None,
 ) -> Dict[str, Any]:
     """
     Generate attestation metadata for a block.
@@ -288,6 +377,7 @@ def generate_attestation_metadata(
         "ui_event_count": ui_event_count,
         "attestation_version": "v2",
         "algorithm": "SHA256",
+        "post_quantum_algorithm": POST_QUANTUM_ALGORITHM,
         "composite_formula": "SHA256(R_t || U_t)",
         "leaf_hash_algorithm": "sha256",
     }
@@ -296,6 +386,28 @@ def generate_attestation_metadata(
         metadata["reasoning_leaves"] = _serialize_leaves(reasoning_leaves)
     if ui_leaves:
         metadata["ui_leaves"] = _serialize_leaves(ui_leaves)
+
+    reasoning_bundle = reasoning_commitments or _commitments_from_context(
+        kind="reasoning",
+        digest=r_t,
+        leaves=reasoning_leaves,
+    )
+    ui_bundle = ui_commitments or _commitments_from_context(
+        kind="ui",
+        digest=u_t,
+        leaves=ui_leaves,
+    )
+    composite_bundle = composite_commitments or build_composite_commitment(
+        h_t,
+        reasoning_bundle,
+        ui_bundle,
+    )
+
+    metadata["hash_commitments"] = {
+        "reasoning": reasoning_bundle.to_metadata(),
+        "ui": ui_bundle.to_metadata(),
+        "composite": composite_bundle.to_metadata(),
+    }
 
     if extra:
         metadata.update(extra)
@@ -313,9 +425,52 @@ def verify_composite_integrity(r_t: str, u_t: str, h_t: str) -> bool:
         return False
 
 
+def _compute_post_quantum_root(
+    canonical_values: Sequence[str],
+    *,
+    domain: bytes,
+    empty_sentinel: bytes,
+) -> str:
+    if canonical_values:
+        payload = rfc8785_canonicalize(sorted(canonical_values))
+    else:
+        payload = empty_sentinel
+    return sha3_256_hex(payload, domain=domain)
+
+
+def _commitments_from_context(
+    *,
+    kind: str,
+    digest: str,
+    leaves: Optional[Sequence[AttestationLeaf]],
+) -> HashCommitmentBundle:
+    if leaves:
+        canonical_values = [leaf.canonical_value for leaf in leaves]
+        pq_root = _compute_post_quantum_root(
+            canonical_values,
+            domain=_PQ_DOMAIN_BY_KIND[kind],
+            empty_sentinel=_EMPTY_SENTINEL_BY_KIND[kind],
+        )
+        return HashCommitmentBundle.from_roots(digest, pq_root)
+    return HashCommitmentBundle.fallback_from_digest(kind, digest)
+
+
+def build_composite_commitment(
+    classical_digest: str,
+    reasoning_bundle: HashCommitmentBundle,
+    ui_bundle: HashCommitmentBundle,
+) -> HashCommitmentBundle:
+    pq_payload = reasoning_bundle.post_quantum.digest + ui_bundle.post_quantum.digest
+    pq_digest = sha3_256_hex(pq_payload, domain=DOMAIN_COMPOSITE_PQ)
+    return HashCommitmentBundle.from_roots(classical_digest, pq_digest)
+
+
 __all__ = [
     "AttestationLeaf",
     "AttestationTree",
+    "HashCommitment",
+    "HashCommitmentBundle",
+    "build_composite_commitment",
     "build_reasoning_attestation",
     "build_ui_attestation",
     "compute_reasoning_root",

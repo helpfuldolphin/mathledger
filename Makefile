@@ -8,6 +8,12 @@
 
 .PHONY: help worker api enqueue-sample db-stats clean check-local qa-metrics-lint first-organism-up first-organism-down first-organism-validate first-organism-test
 
+# Docs maintenance (optional; run manually before publishing system law docs)
+# first-light-system-law-index:
+# 	python tools/generate_system_law_index.py
+# first-light-system-law-index-check:
+# 	python tools/generate_system_law_index.py --check
+
 # Default target
 help:
 	@echo "MathLedger Build Commands:"

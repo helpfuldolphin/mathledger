@@ -12,3 +12,14 @@ warnings.warn(
 )
 
 from normalization.taut import *  # noqa: F401,F403
+from normalization.taut import (  # noqa: F401
+    _evaluate_formula,
+    _extract_atoms,
+)
+
+__all__ = [
+    "truth_table_is_tautology",
+    "is_tautology",
+    "_evaluate_formula",
+    "_extract_atoms",
+]
