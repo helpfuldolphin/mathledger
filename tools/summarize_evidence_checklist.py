@@ -108,6 +108,9 @@ def generate_markdown_summary(summary, trend, ascii_only=False):
 
     markdown = f"""
 # Evidence Checklist Readiness Report
+
+**CONTRACT FREEZE**: The JSON and Markdown output schemas are FROZEN for Phase X.
+
 *Last generated: {now}*
 
 ## Readiness Dashboard
