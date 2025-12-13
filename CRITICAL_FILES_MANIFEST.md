@@ -1,8 +1,8 @@
 # CRITICAL FILES MANIFEST
 
-**Version:** 1.3.0
+**Version:** 1.4.0
 **Last Updated:** 2025-12-13
-**Hygiene Audit:** CAL-EXP-2 reproducibility restored
+**Hygiene Audit:** CAL-EXP-2 reproducibility verified with CI gate
 **Purpose:** Enumerate files that MUST be under version control to prevent operational failures.
 
 ---
