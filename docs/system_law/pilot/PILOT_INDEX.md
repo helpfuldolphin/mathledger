@@ -150,7 +150,45 @@ This section exists to prevent scope creep and claim inflation.
 
 ---
 
-## 7. Transition Out of Pilot
+## 7. Pilot External Ingest (SHADOW)
+
+TDA Windowed Patterns external signal ingestion surface.
+
+### 7.1 Artifacts
+
+| Type | Path |
+|------|------|
+| Adapter | `backend/health/tda_windowed_patterns_adapter.py` |
+| Tests | `tests/health/test_tda_windowed_patterns_adapter.py` |
+| Documentation | `docs/system_law/TDA_PhaseX_Binding.md` (Section 14) |
+
+### 7.2 Test Command
+
+```bash
+uv run python -m pytest tests/health/test_tda_windowed_patterns_adapter.py -v
+# Expected: 55 passed
+```
+
+### 7.3 Frozen Enums
+
+- `extraction_source`: MANIFEST, EVIDENCE_JSON, MISSING
+- `reason_code`: DRIVER_WINDOWED_DETECTED_PATTERN, DRIVER_SINGLE_SHOT_DETECTED_PATTERN
+- `signal_type`: SIG-TDAW
+
+### 7.4 Non-Interference Guarantee
+
+The external ingest surface operates under non-interference:
+
+- Adapter reads manifest and evidence data without modification
+- Extraction failures return None or empty structures (no exceptions propagated)
+- Warning output is capped (max 1 line per warning type)
+- No enforcement actions triggered by any signal value
+- No governance state modified by adapter execution
+- All outputs are logged for observability, none acted upon
+
+---
+
+## 8. Transition Out of Pilot
 
 Exit from Pilot Phase requires:
 
@@ -163,7 +201,7 @@ Until then, Pilot Phase remains ACTIVE under SHADOW MODE.
 
 ---
 
-## 8. Document Control
+## 9. Document Control
 
 | Field | Value |
 |-------|-------|
