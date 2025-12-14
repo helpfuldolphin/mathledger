@@ -161,4 +161,18 @@ git status --short results/ returns empty (untracked)
 
 ---
 
+## Execution Closure Note
+
+| Field | Value |
+|-------|-------|
+| **Closure Date** | 2025-12-14 |
+| **Authority** | STRATCOM CLOSURE directive |
+| **Final Run Count** | 3 (seeds 42, 43, 44) |
+
+- Execution complete.
+- Replication threshold met (L5: ≥3 independent run-pairs at L4).
+- Further runs require explicit STRATCOM authorization.
+
+---
+
 **Document Status**: NON-CANONICAL (observational record)
