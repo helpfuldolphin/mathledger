@@ -292,6 +292,22 @@ For reproducibility verification and byte-comparison of artifacts:
 {"cycle": 201, "delta_p": 0.847, "id": "a1b2c3d4-..."}
 ```
 
+### 4.4 Canonical Filename Resolution
+
+| Filename | Status | Notes |
+|----------|--------|-------|
+| `cycles.jsonl` | **CANONICAL** | Required per §4.1; verifiers and producers MUST use this name |
+| `delta_p_trace.jsonl` | **LEGACY** | Used by early non-canonical producer (`run_cal_exp_3.py`); NOT valid for L4+ claims |
+
+**Compatibility note**: The verifier (`verify_cal_exp_3_run.py`) requires `cycles.jsonl`. Runs using `delta_p_trace.jsonl` will fail artifact presence checks. To upgrade legacy runs, rename the file:
+
+```bash
+mv baseline/delta_p_trace.jsonl baseline/cycles.jsonl
+mv treatment/delta_p_trace.jsonl treatment/cycles.jsonl
+```
+
+**Producers**: Use `run_cal_exp_3_canonical.py` (outputs `cycles.jsonl`). The original `run_cal_exp_3.py` is superseded and produces non-canonical artifacts.
+
 ---
 
 ## 5. Verifier Extensions
