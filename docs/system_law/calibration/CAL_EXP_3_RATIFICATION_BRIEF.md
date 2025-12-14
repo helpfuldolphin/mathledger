@@ -1,8 +1,9 @@
 # CAL-EXP-3 Ratification Brief
 
-**Status**: RATIFICATION RECOMMENDATION
+**Status**: APPROVED — CANONIZED
 **Authority**: STRATCOM
 **Date**: 2025-12-14
+**Decision Date**: 2025-12-14
 **Scope**: CAL-EXP-3 canonization decision
 **Mode**: SHADOW (observational only)
 
@@ -215,14 +216,30 @@ This brief attests that:
 
 ---
 
-## 6. Next Steps (For STRATCOM)
+## 6. Execution Log
 
-| Action | Owner | Status |
-|--------|-------|--------|
-| Review this brief | STRATCOM | Pending |
-| Approve canonization | STRATCOM | Pending |
-| Update `CAL_EXP_3_UPLIFT_SPEC.md` header from "BINDING" to "CANONICAL" | Topologist | Blocked on approval |
-| Archive evidence pack | Ops | Blocked on approval |
+| Action | Owner | Status | Date |
+|--------|-------|--------|------|
+| Review this brief | STRATCOM | **COMPLETE** | 2025-12-14 |
+| Approve canonization | STRATCOM | **APPROVED** | 2025-12-14 |
+| Update `CAL_EXP_3_UPLIFT_SPEC.md` header to "CANONICAL" | Topologist | **COMPLETE** | 2025-12-14 |
+| Update `CAL_EXP_3_IMPLEMENTATION_PLAN.md` header to "CANONICAL" | Topologist | **COMPLETE** | 2025-12-14 |
+| Add CAL-EXP-3 to Phase-X calibration canon index | Topologist | **COMPLETE** | 2025-12-14 |
+| Mark CAL-EXP-3 execution as CLOSED | STRATCOM | **COMPLETE** | 2025-12-14 |
+
+---
+
+## 7. Canonization Record
+
+**CAL-EXP-3 v1.0** is now part of the Phase-X calibration canon.
+
+| Document | Status |
+|----------|--------|
+| `CAL_EXP_3_UPLIFT_SPEC.md` | CANONICAL (v1.0) |
+| `CAL_EXP_3_IMPLEMENTATION_PLAN.md` | CANONICAL (v1.0) |
+| `CAL_EXP_3_INDEX.md` | Updated |
+| `verify_cal_exp_3_run.py` | Canonical verifier |
+| `run_cal_exp_3_canonical.py` | Canonical producer |
 
 ---
 

@@ -1,10 +1,11 @@
 # CAL-EXP-3: Learning Uplift Measurement
 
-**Status**: SPECIFICATION (BINDING)
+**Status**: CANONICAL (v1.0)
 **Authority**: STRATCOM
 **Date**: 2025-12-13
+**Canonized**: 2025-12-14
 **Scope**: CAL-EXP-3 only
-**Mutability**: Frozen upon ratification
+**Mutability**: Frozen (semantic changes require STRATCOM re-ratification)
 
 ---
 

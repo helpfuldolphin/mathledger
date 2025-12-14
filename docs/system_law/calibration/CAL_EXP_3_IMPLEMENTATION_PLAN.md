@@ -1,10 +1,11 @@
 # CAL-EXP-3: Implementation Plan
 
-**Status**: IMPLEMENTATION PLAN (PROVISIONAL)
+**Status**: CANONICAL (v1.0)
 **Authority**: Derived from `CAL_EXP_3_UPLIFT_SPEC.md`
 **Date**: 2025-12-13
+**Canonized**: 2025-12-14
 **Scope**: Execution machinery only
-**Mutability**: Editable until execution begins
+**Mutability**: Frozen (additive changes permitted; semantic changes require STRATCOM approval)
 
 ---
 
