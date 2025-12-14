@@ -473,18 +473,18 @@ def test_check_no_external_ingestion_clean():
 
 @pytest.mark.unit
 def test_check_no_external_ingestion_detected():
-    """check_no_external_ingestion fails when external ingestion detected."""
+    """check_no_external_ingestion fails when external ingestion present."""
     validity_checks = {
         "external_ingestion": {"detected": True, "detail": "network fetch"}
     }
     passed, msg = check_no_external_ingestion(validity_checks)
     assert passed is False
-    assert "detected" in msg.lower()
+    assert "external" in msg.lower() or "ingestion" in msg.lower()
 
 
 @pytest.mark.unit
 def test_check_no_external_ingestion_network_calls():
-    """check_no_external_ingestion fails when network calls detected."""
+    """check_no_external_ingestion fails when network calls present."""
     validity_checks = {
         "network_calls": ["https://example.com/data"]
     }
@@ -559,12 +559,12 @@ def test_check_isolation_audit_failed():
 
         passed, msg, data = check_isolation_audit(run_dir)
         assert passed is False
-        assert "isolation_passed=false" in msg.lower()
+        assert "isolation_passed=false" in msg
 
 
 @pytest.mark.unit
 def test_check_isolation_audit_network_calls():
-    """check_isolation_audit fails when network calls detected."""
+    """check_isolation_audit fails when network calls present."""
     with tempfile.TemporaryDirectory() as tmpdir:
         run_dir = Path(tmpdir) / "run"
         run_dir.mkdir()
@@ -584,7 +584,7 @@ def test_check_isolation_audit_network_calls():
 
 @pytest.mark.unit
 def test_check_isolation_audit_file_reads():
-    """check_isolation_audit fails when external file reads detected."""
+    """check_isolation_audit fails when external file reads present."""
     with tempfile.TemporaryDirectory() as tmpdir:
         run_dir = Path(tmpdir) / "run"
         run_dir.mkdir()

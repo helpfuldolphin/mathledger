@@ -5,7 +5,7 @@ CAL-EXP-3 Run Verifier — Uplift Measurement Invariant Check
 Verifies that a CAL-EXP-3 run satisfies all validity conditions and structural
 requirements per the authoritative implementation plan.
 
-Advisory-only: does not gate CI unless explicitly configured.
+SHADOW MODE: Advisory-only. Does not gate CI merges.
 
 Usage:
     python scripts/verify_cal_exp_3_run.py --run-dir results/cal_exp_3/<run_id>/
@@ -18,6 +18,28 @@ Authoritative Sources:
     - docs/system_law/calibration/CAL_EXP_3_IMPLEMENTATION_PLAN.md
     - docs/system_law/calibration/CAL_EXP_3_UPLIFT_SPEC.md
     - docs/system_law/calibration/CAL_EXP_3_AUTHORIZATION.md
+
+================================================================================
+ARTIFACT CONTRACT (per §4.1, §7.1.1)
+================================================================================
+
+REQUIRED (FAIL if missing):
+    run_config.json                    - Experiment configuration
+    RUN_METADATA.json                  - Final verdict and claim level
+    baseline/cycles.jsonl              - Per-cycle Δp values (learning OFF)
+    treatment/cycles.jsonl             - Per-cycle Δp values (learning ON)
+    validity/toolchain_hash.txt        - SHA-256 of runtime environment
+    validity/corpus_manifest.json      - Hash of input corpus
+    validity/validity_checks.json      - Pass/fail for each validity condition
+    validity/isolation_audit.json      - Network/filesystem isolation proof (§7.1.1)
+
+OPTIONAL (WARN if missing):
+    baseline/summary.json              - Baseline arm summary statistics
+    treatment/summary.json             - Treatment arm summary statistics
+    analysis/uplift_report.json        - ΔΔp computation (verifier does NOT compute)
+    analysis/windowed_analysis.json    - Per-window breakdown
+
+================================================================================
 """
 
 from __future__ import annotations
@@ -279,10 +301,10 @@ def check_no_external_ingestion(validity_checks: Dict[str, Any]) -> Tuple[bool, 
     if "external_ingestion" in validity_checks:
         external = validity_checks["external_ingestion"]
         if isinstance(external, dict):
-            detected = external.get("detected", True)  # Fail-close default
-            if detected:
-                return False, f"external ingestion detected: {external.get('detail', 'unknown')}"
-            return True, "no external ingestion detected"
+            ingested = external.get("detected", True)  # Fail-close default
+            if ingested:
+                return False, f"external ingestion: {external.get('detail', 'unknown')}"
+            return True, "no external ingestion"
         elif isinstance(external, bool):
             if external:
                 return False, "external ingestion flag is true"
@@ -292,9 +314,9 @@ def check_no_external_ingestion(validity_checks: Dict[str, Any]) -> Tuple[bool, 
     if "network_calls" in validity_checks:
         net = validity_checks["network_calls"]
         if isinstance(net, list) and len(net) > 0:
-            return False, f"{len(net)} network calls detected"
+            return False, f"{len(net)} network calls"
         elif isinstance(net, int) and net > 0:
-            return False, f"{net} network calls detected"
+            return False, f"{net} network calls"
 
     # Check all_passed field if present
     if "all_passed" in validity_checks:
@@ -333,17 +355,17 @@ def check_isolation_audit(run_dir: Path) -> Tuple[bool, str, Optional[Dict[str, 
     # Check isolation_passed field
     isolation_passed = audit_data.get("isolation_passed", False)
     if not isolation_passed:
-        return False, "isolation_passed=false (external ingestion detected)", audit_data
+        return False, "isolation_passed=false", audit_data
 
     # Check for network calls
     network_calls = audit_data.get("network_calls", [])
     if isinstance(network_calls, list) and len(network_calls) > 0:
-        return False, f"network isolation failed: {len(network_calls)} calls detected", audit_data
+        return False, f"network isolation: {len(network_calls)} calls", audit_data
 
     # Check for file reads outside corpus
     file_reads = audit_data.get("file_reads_outside_corpus", [])
     if isinstance(file_reads, list) and len(file_reads) > 0:
-        return False, f"filesystem isolation failed: {len(file_reads)} external reads", audit_data
+        return False, f"filesystem isolation: {len(file_reads)} external reads", audit_data
 
     return True, "isolation audit passed", audit_data
 
@@ -978,7 +1000,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if not args.run_dir.exists():
-        print(f"ERROR: Run directory not found: {args.run_dir}")
+        print(f"FAIL: Run directory not found: {args.run_dir}")
         return 1
 
     report = verify_run(args.run_dir)
