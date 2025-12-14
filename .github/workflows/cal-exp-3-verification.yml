@@ -1,0 +1,266 @@
+# CAL-EXP-3 Run Verification (NON-GATING)
+#
+# Canonical Contract: docs/system_law/calibration/CAL_EXP_3_AUTHORIZATION.md
+#
+# SHADOW MODE CONTRACT:
+# - This workflow is ADVISORY ONLY (never blocks merges)
+# - Runs verification if results/cal_exp_3/**/run_config.json exists
+# - Validates: toolchain parity, baseline/treatment comparability, Δp logs
+# - All outputs have mode="SHADOW", enforcement=false
+# - continue-on-error: true for verification steps
+#
+# Purpose: Automated post-run invariant checking for CAL-EXP-3 uplift experiments
+
+name: CAL-EXP-3 Verification
+
+on:
+  push:
+    branches: [integrate/ledger-v0.1, master]
+    paths:
+      - 'results/cal_exp_3/**'
+      - 'scripts/verify_cal_exp_3_run.py'
+      - 'tests/ci/test_verify_cal_exp_3_run.py'
+
+  pull_request:
+    branches: [integrate/ledger-v0.1, master]
+    paths:
+      - 'results/cal_exp_3/**'
+      - 'scripts/verify_cal_exp_3_run.py'
+      - 'tests/ci/test_verify_cal_exp_3_run.py'
+
+  workflow_dispatch:
+    inputs:
+      run_dir:
+        description: 'CAL-EXP-3 run directory (e.g., results/cal_exp_3/<run_id>)'
+        required: false
+        default: ''
+        type: string
+
+env:
+  # SHADOW MODE: Always enabled
+  USLA_SHADOW_ENABLED: 'true'
+  SHADOW_MODE_ENABLED: 'true'
+  PYTHONUTF8: '1'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Unit Tests (BLOCKING on script failures only)
+  # ---------------------------------------------------------------------------
+  verifier-tests:
+    name: Verifier Unit Tests
+    runs-on: ubuntu-latest
+    continue-on-error: false  # Script failures block
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run verifier unit tests
+        run: |
+          echo "=== CAL-EXP-3 VERIFIER UNIT TESTS ==="
+          echo "Testing: verify_cal_exp_3_run.py"
+          echo ""
+          uv run pytest tests/ci/test_verify_cal_exp_3_run.py \
+            -v --tb=short \
+            -m unit \
+            --junit-xml=results/verifier-tests.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cal-exp-3-verifier-test-results
+          path: results/verifier-tests.xml
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Run Verification (NON-GATING - advisory only)
+  # ---------------------------------------------------------------------------
+  verify-runs:
+    name: Verify CAL-EXP-3 Runs
+    runs-on: ubuntu-latest
+    # CRITICAL: Advisory only - NEVER block merges
+    continue-on-error: true
+    needs: verifier-tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Check for CAL-EXP-3 runs
+        id: check-runs
+        run: |
+          echo "=== CHECKING FOR CAL-EXP-3 RUNS ==="
+
+          # Check if results/cal_exp_3 exists
+          if [ ! -d "results/cal_exp_3" ]; then
+            echo "No results/cal_exp_3 directory found."
+            echo "has_runs=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Look for run directories with run_config.json
+          # Expected structure: results/cal_exp_3/<run_id>/run_config.json
+          RUN_DIRS=$(find results/cal_exp_3 -maxdepth 2 -name "run_config.json" -type f 2>/dev/null | xargs -I{} dirname {} || true)
+
+          if [ -z "$RUN_DIRS" ]; then
+            echo "No run directories found with run_config.json"
+            echo "has_runs=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Validate each run has required subdirectories
+          VALID_RUNS=""
+          for run_dir in $RUN_DIRS; do
+            if [ -d "$run_dir/baseline" ] && [ -d "$run_dir/treatment" ] && [ -d "$run_dir/validity" ]; then
+              VALID_RUNS="$VALID_RUNS $run_dir"
+              echo "Found valid run: $run_dir"
+            else
+              echo "Skipping incomplete run: $run_dir"
+            fi
+          done
+
+          if [ -z "$VALID_RUNS" ]; then
+            echo "No valid CAL-EXP-3 runs found."
+            echo "has_runs=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "has_runs=true" >> $GITHUB_OUTPUT
+          echo "runs=$VALID_RUNS" >> $GITHUB_OUTPUT
+
+      - name: Verify specific run (manual trigger)
+        if: github.event.inputs.run_dir != ''
+        continue-on-error: true
+        run: |
+          echo "=== VERIFYING SPECIFIC RUN ==="
+          echo "Run Directory: ${{ github.event.inputs.run_dir }}"
+          echo ""
+
+          mkdir -p results/verification_reports
+
+          uv run python scripts/verify_cal_exp_3_run.py \
+            --run-dir "${{ github.event.inputs.run_dir }}" \
+            --output-report results/verification_reports/manual_verification_report.json
+
+      - name: Verify all runs (automatic)
+        if: steps.check-runs.outputs.has_runs == 'true' && github.event.inputs.run_dir == ''
+        continue-on-error: true
+        run: |
+          echo "=== VERIFYING ALL CAL-EXP-3 RUNS ==="
+          echo "SHADOW MODE: Advisory only, non-blocking"
+          echo ""
+
+          mkdir -p results/verification_reports
+
+          # Find all run directories with run_config.json and required subdirs
+          find results/cal_exp_3 -maxdepth 2 -name "run_config.json" -type f | while read config_file; do
+            run_dir=$(dirname "$config_file")
+
+            # Skip if missing required directories
+            if [ ! -d "$run_dir/baseline" ] || [ ! -d "$run_dir/treatment" ] || [ ! -d "$run_dir/validity" ]; then
+              echo "Skipping incomplete run: $run_dir"
+              continue
+            fi
+
+            RUN_ID=$(basename "$run_dir")
+
+            echo "----------------------------------------"
+            echo "Verifying: $run_dir"
+            echo ""
+
+            # Run verification (continue even on failure)
+            if uv run python scripts/verify_cal_exp_3_run.py \
+                --run-dir "$run_dir" \
+                --output-report "results/verification_reports/${RUN_ID}_verification_report.json"; then
+              echo "RESULT: PASS"
+            else
+              echo "RESULT: FAIL (advisory only)"
+            fi
+            echo ""
+          done
+
+          echo "========================================"
+          echo "Verification complete (advisory only)"
+          echo "========================================"
+
+      - name: No runs to verify
+        if: steps.check-runs.outputs.has_runs != 'true' && github.event.inputs.run_dir == ''
+        run: |
+          echo "=== NO CAL-EXP-3 RUNS FOUND ==="
+          echo "No results/cal_exp_3/<run_id>/ directories with run_config.json detected."
+          echo "This is expected if no CAL-EXP-3 experiments have been committed."
+          echo ""
+
+          # Create placeholder report for artifact upload
+          mkdir -p results/verification_reports
+          cat > results/verification_reports/no_runs_placeholder.json << 'EOF'
+          {
+            "schema_version": "1.0.0",
+            "verifier": "verify_cal_exp_3_run.py",
+            "status": "NO_RUNS_FOUND",
+            "message": "No CAL-EXP-3 run directories found in results/cal_exp_3/"
+          }
+          EOF
+
+      - name: Upload verification reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cal-exp-3-verification-reports-${{ github.run_number }}
+          path: results/verification_reports/
+          retention-days: 90
+
+  # ---------------------------------------------------------------------------
+  # Summary (Always runs, NON-GATING)
+  # ---------------------------------------------------------------------------
+  summary:
+    name: Verification Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [verifier-tests, verify-runs]
+
+    steps:
+      - name: Report Status
+        run: |
+          echo "========================================"
+          echo "CAL-EXP-3 VERIFICATION SUMMARY"
+          echo "========================================"
+          echo ""
+          echo "SHADOW MODE CONTRACT:"
+          echo "  - Verification results: ADVISORY ONLY"
+          echo "  - This workflow NEVER blocks merges"
+          echo "  - Mode marker: SHADOW"
+          echo "  - Enforcement: FALSE"
+          echo ""
+          echo "CHECKS PERFORMED:"
+          echo "  - Toolchain parity (validity/toolchain_hash.txt)"
+          echo "  - Corpus identity (validity/corpus_manifest.json)"
+          echo "  - Seed discipline (identical seed across arms)"
+          echo "  - Window pre-registration (windows.evaluation_window)"
+          echo "  - Exact cycle alignment (baseline/treatment cycles.jsonl)"
+          echo "  - No external ingestion (validity/validity_checks.json)"
+          echo "  - Arm configuration (baseline: learning OFF, treatment: learning ON)"
+          echo ""
+          echo "RESULTS:"
+          echo "  Verifier Tests: ${{ needs.verifier-tests.result }}"
+          echo "  Run Verification: ${{ needs.verify-runs.result }}"
+          echo ""
+
+          # Only the unit tests can fail the workflow
+          if [ "${{ needs.verifier-tests.result }}" = "failure" ]; then
+            echo "STATUS: VERIFIER TESTS FAILED (script issue)"
+            echo "Note: Run verification results are always advisory."
+            exit 1
+          fi
+
+          echo "STATUS: COMPLETE (verification results are advisory)"
+          echo "========================================"
