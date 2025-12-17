@@ -288,6 +288,67 @@ Per CAL-EXP-3: Evaluation windows must be pre-registered.
 
 ---
 
+## Appendix: Threshold Finalization (Binding)
+
+### Binding Thresholds
+
+| Parameter | Threshold | Rationale |
+|-----------|-----------|-----------|
+| `variance_ratio` | **2.0** | Max ratio `max(var_B, var_T) / min(var_B, var_T)` — 2× difference is materially distinct variance regimes |
+| `autocorrelation_delta` | **0.2** | Max absolute difference `|autocorr_B - autocorr_T|` — 0.2 indicates structurally different temporal dependencies |
+| `window_volatility_ratio` | **2.0** | Max ratio across all sub-windows `max(window_var) / min(window_var)` — consistent with variance_ratio threshold |
+
+### Minimal Sufficient Statistics
+
+For each check, the verifier requires:
+
+| Check | Required Statistics | Computation |
+|-------|---------------------|-------------|
+| F5.1 Variance mismatch | `var_B`, `var_T` | Sample variance of Δp values: `var(Δp) = Σ(Δp_i - mean)² / (n-1)` |
+| F5.2 Autocorrelation mismatch | `autocorr_B`, `autocorr_T` | Lag-1 autocorrelation: `corr(Δp[1:], Δp[:-1])` using Pearson correlation |
+| F5.3 Window volatility mismatch | Per-window variances for B and T | Variance computed within each sub-window (W1-W4) |
+
+**Note**: These are descriptive statistics for validity checking only. They do not constitute new metrics and MUST NOT appear in claims.
+
+### Fail-Close Semantics for Edge Cases
+
+| Edge Case | Behavior | Rationale |
+|-----------|----------|-----------|
+| **NaN in Δp values** | `temporal_comparability = false` | Cannot compute meaningful statistics |
+| **Inf in Δp values** | `temporal_comparability = false` | Indicates numeric overflow; invalid data |
+| **Missing cycles** | `temporal_comparability = false` | Incomplete data prevents valid comparison |
+| **Unequal cycle counts** | `temporal_comparability = false` | Arms must have identical cycle indices |
+| **Partial window data** | `temporal_comparability = false` | Sub-window volatility requires complete windows |
+| **Zero variance (either arm)** | `temporal_comparability = false` | Division by zero in ratio; indicates degenerate data |
+| **Insufficient cycles (< 10)** | `temporal_comparability = false` | Insufficient data for meaningful variance/autocorr estimates |
+| **Autocorrelation undefined** | `temporal_comparability = false` | Occurs when variance is zero; fail-close applies |
+
+**Fail-close principle**: If any statistic cannot be computed or is undefined, assume temporal mismatch. False negatives (rejecting valid comparisons) are acceptable; false positives (certifying invalid comparisons) are not.
+
+### Temporal Comparability Condition (Precise Statement)
+
+**`temporal_comparability = true`** if and only if ALL of the following hold:
+
+1. Both arms have identical cycle indices within the evaluation window (no missing cycles)
+2. All Δp values in both arms are finite real numbers (no NaN, no Inf)
+3. Both arms have non-zero variance (var_B > 0 AND var_T > 0)
+4. `variance_ratio = max(var_B, var_T) / min(var_B, var_T) ≤ 2.0`
+5. `|autocorr_B - autocorr_T| ≤ 0.2`
+6. For all sub-windows W_i: `max(var_W_i) / min(var_W_i) ≤ 2.0` (where min excludes zero)
+7. Each sub-window contains at least 10 cycles
+
+If ANY condition fails, `temporal_comparability = false` and the claim is capped per the F5.x severity table.
+
+### Version
+
+| Field | Value |
+|-------|-------|
+| Threshold version | 1.0 |
+| Finalized | 2025-12-17 |
+| Authority | STRATCOM |
+
+---
+
 **SHADOW MODE** — observational only.
 
 *Precision > optimism.*
