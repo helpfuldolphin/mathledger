@@ -27,7 +27,9 @@ from backend.health.shadow_release_gate import (
     scan_file,
     scan_directory,
     load_gate_registry,
+    is_legacy_path,
     PROHIBITED_PHRASES_IN_GATED,
+    LEGACY_ALLOWLIST_PATHS,
 )
 
 
@@ -75,7 +77,7 @@ def test_prohibited_phrase_observational_only_in_gated(gate: ShadowReleaseGate, 
 This system operates in observational only mode.
 """
     file_path = create_test_file(temp_dir, "gated_with_observational.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     assert len(violations) >= 1
     assert any(v.violation_type == "PROHIBITED_PHRASE_IN_GATED" for v in violations)
@@ -102,7 +104,7 @@ The gate provides advisory notifications only.
 gate_id: SRG-001
 """
     file_path = create_test_file(temp_dir, "gated_with_advisory.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     assert len(violations) >= 1
     assert any(v.violation_type == "PROHIBITED_PHRASE_IN_GATED" for v in violations)
@@ -130,7 +132,7 @@ This system operates in SHADOW-GATED mode with non-blocking behavior.
 gate_id: SRG-001
 """
     file_path = create_test_file(temp_dir, "gated_with_nonblocking.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     assert len(violations) >= 1
     assert any(v.violation_type == "PROHIBITED_PHRASE_IN_GATED" for v in violations)
@@ -157,7 +159,7 @@ This system operates in observational only mode.
 It does not affect the primary control flow.
 """
     file_path = create_test_file(temp_dir, "observe_with_observational.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     # Should NOT have PROHIBITED_PHRASE_IN_GATED violations
     # (only SHADOW-GATED triggers that check)
@@ -187,7 +189,7 @@ def test_gated_missing_gate_registry(gate: ShadowReleaseGate, temp_dir: Path):
 This document declares SHADOW-GATED but has no gate_id reference.
 """
     file_path = create_test_file(temp_dir, "gated_no_registry.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     assert len(violations) >= 1
     assert any(v.violation_type == "MISSING_GATE_REGISTRY" for v in violations)
@@ -211,7 +213,7 @@ def test_gated_with_valid_registry(gate: ShadowReleaseGate, temp_dir: Path):
 This document correctly references the gate registry.
 """
     file_path = create_test_file(temp_dir, "gated_with_registry.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     # Should NOT have MISSING_GATE_REGISTRY violation
     registry_violations = [
@@ -238,7 +240,7 @@ def test_unqualified_shadow_mode_warned(gate: ShadowReleaseGate, temp_dir: Path)
 This system operates in SHADOW MODE without further qualification.
 """
     file_path = create_test_file(temp_dir, "unqualified_shadow.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     assert any(v.violation_type == "UNQUALIFIED_SHADOW_MODE" for v in violations)
     assert any(v.severity == "WARN" for v in violations)
@@ -261,7 +263,7 @@ This system operates in SHADOW-OBSERVE mode.
 Another component uses SHADOW-GATED with gate_id: SRG-001.
 """
     file_path = create_test_file(temp_dir, "qualified_shadow.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     # Should NOT have UNQUALIFIED_SHADOW_MODE violations
     unqualified = [v for v in violations if v.violation_type == "UNQUALIFIED_SHADOW_MODE"]
@@ -289,7 +291,7 @@ On error, the gate uses fail-close semantics.
 For gated operations: The operation MUST fail-safe.
 """
     file_path = create_test_file(temp_dir, "failsafe_allowed.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     # Should NOT flag fail-close or fail-safe as prohibited
     # (They are technical terms, not prohibited phrases)
@@ -318,7 +320,7 @@ The system is passive.
 All checks are informational.
 """
     file_path = create_test_file(temp_dir, "multiple_prohibited.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     # Should find at least 4 violations (one per prohibited phrase)
     prohibited = [v for v in violations if v.violation_type == "PROHIBITED_PHRASE_IN_GATED"]
@@ -361,7 +363,7 @@ When a violation is detected:
 This is not a simulation or dry-run. It enforces contract compliance.
 """
     file_path = create_test_file(temp_dir, "clean_gated.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     # Filter to only ERROR severity violations
     errors = [v for v in violations if v.severity == "ERROR"]
@@ -448,7 +450,7 @@ See docs/system_law/SHADOW_MODE_CONTRACT.md for the authoritative definition.
 The SHADOW MODE CONTRACT defines two sub-modes.
 """
     file_path = create_test_file(temp_dir, "contract_ref.md", content)
-    violations = gate.scan_file(file_path)
+    violations, _ = gate.scan_file(file_path)
 
     # Should NOT flag contract references as unqualified
     unqualified = [v for v in violations if v.violation_type == "UNQUALIFIED_SHADOW_MODE"]
@@ -498,3 +500,163 @@ def test_system_law_scan():
     parsed = json.loads(json_output)
     assert "violations" in parsed
     assert "passed" in parsed
+
+
+# =============================================================================
+# TEST CASE 16: Legacy allowlist suppresses WARNs
+# =============================================================================
+
+@pytest.mark.unit
+def test_legacy_path_suppresses_unqualified_warns(temp_dir: Path):
+    """
+    Files in legacy allowlist paths should have UNQUALIFIED_SHADOW_MODE
+    warnings suppressed (per contract §1.1: defaults to SHADOW-OBSERVE).
+
+    Contract §1.1: "Any reference to 'SHADOW MODE' without explicit sub-mode
+    qualification SHALL be interpreted as SHADOW-OBSERVE."
+    """
+    # Create a file path that looks like it's in docs/system_law/
+    # We simulate this by checking the is_legacy_path function directly
+    assert is_legacy_path("docs/system_law/some_doc.md") is True
+    assert is_legacy_path("docs/calibration/exp.md") is True
+    assert is_legacy_path("docs/governance/policy.md") is True
+
+    # Non-legacy paths should NOT be allowlisted
+    assert is_legacy_path("docs/api/readme.md") is False
+    assert is_legacy_path("backend/health/gate.py") is False
+
+
+@pytest.mark.unit
+def test_legacy_mode_suppresses_warnings():
+    """
+    ShadowReleaseGate with legacy_mode=True (default) suppresses
+    UNQUALIFIED_SHADOW_MODE warnings for legacy paths.
+    """
+    gate = ShadowReleaseGate(legacy_mode=True)
+
+    content = """
+# Legacy Document
+
+This system operates in SHADOW MODE without qualification.
+"""
+    lines = content.split("\n")
+
+    # Simulate legacy path
+    violations, suppressed = gate._find_unqualified_shadow(
+        content, lines, "docs/system_law/legacy_doc.md"
+    )
+
+    # Should suppress the warning, not emit violation
+    assert len(violations) == 0
+    assert suppressed >= 1
+
+
+@pytest.mark.unit
+def test_strict_mode_warns_on_legacy_paths():
+    """
+    ShadowReleaseGate with legacy_mode=False (strict mode) still warns
+    on legacy paths — legacy allowlist is disabled.
+    """
+    gate = ShadowReleaseGate(legacy_mode=False)
+
+    content = """
+# Legacy Document
+
+This system operates in SHADOW MODE without qualification.
+"""
+    lines = content.split("\n")
+
+    # Even legacy path should get warnings in strict mode
+    violations, suppressed = gate._find_unqualified_shadow(
+        content, lines, "docs/system_law/legacy_doc.md"
+    )
+
+    # Should NOT suppress — strict mode is on
+    assert len(violations) >= 1
+    assert suppressed == 0
+    assert any(v.violation_type == "UNQUALIFIED_SHADOW_MODE" for v in violations)
+
+
+@pytest.mark.unit
+def test_legacy_warnings_suppressed_tracked_in_report(temp_dir: Path):
+    """
+    GateReport.legacy_warnings_suppressed should track count of suppressed warnings.
+    """
+    # Create a subdirectory structure that mimics docs/system_law/
+    legacy_dir = temp_dir / "docs" / "system_law"
+    legacy_dir.mkdir(parents=True, exist_ok=True)
+
+    content = """
+# Legacy Document
+
+This system operates in SHADOW MODE without qualification.
+Another mention of SHADOW MODE here.
+"""
+    file_path = legacy_dir / "legacy.md"
+    file_path.write_text(content, encoding="utf-8")
+
+    gate = ShadowReleaseGate(legacy_mode=True)
+    violations, suppressed = gate.scan_file(file_path)
+
+    # Should have suppressed the warnings
+    unqualified = [v for v in violations if v.violation_type == "UNQUALIFIED_SHADOW_MODE"]
+    assert len(unqualified) == 0
+    assert suppressed >= 1
+
+
+@pytest.mark.unit
+def test_legacy_allowlist_does_not_suppress_errors(temp_dir: Path):
+    """
+    Legacy allowlist only suppresses WARN-level violations.
+    ERROR-level violations (prohibited phrases, missing registry) are NOT suppressed.
+    """
+    # Create a legacy path with ERROR violations
+    legacy_dir = temp_dir / "docs" / "system_law"
+    legacy_dir.mkdir(parents=True, exist_ok=True)
+
+    content = """
+# Problematic Document
+
+**Mode**: SHADOW-GATED
+
+This is observational only and advisory.
+"""
+    file_path = legacy_dir / "bad_gated.md"
+    file_path.write_text(content, encoding="utf-8")
+
+    gate = ShadowReleaseGate(legacy_mode=True)
+    violations, _ = gate.scan_file(file_path)
+
+    # ERROR violations should still be present
+    errors = [v for v in violations if v.severity == "ERROR"]
+    assert len(errors) >= 1  # Prohibited phrases in GATED context
+
+    # Gate should fail on ERRORs even for legacy paths
+    prohibited = [v for v in violations if v.violation_type == "PROHIBITED_PHRASE_IN_GATED"]
+    assert len(prohibited) >= 1
+
+
+@pytest.mark.unit
+def test_non_legacy_path_still_warns():
+    """
+    Non-legacy paths should still get UNQUALIFIED_SHADOW_MODE warnings
+    even with legacy_mode=True.
+    """
+    gate = ShadowReleaseGate(legacy_mode=True)
+
+    content = """
+# New Document
+
+This system operates in SHADOW MODE without qualification.
+"""
+    lines = content.split("\n")
+
+    # Non-legacy path should still get warnings
+    violations, suppressed = gate._find_unqualified_shadow(
+        content, lines, "backend/new_module.py"
+    )
+
+    # Should NOT suppress — not a legacy path
+    assert len(violations) >= 1
+    assert suppressed == 0
+    assert any(v.violation_type == "UNQUALIFIED_SHADOW_MODE" for v in violations)

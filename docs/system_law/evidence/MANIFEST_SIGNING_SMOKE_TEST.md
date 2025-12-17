@@ -172,7 +172,54 @@ python -m pytest tests/evidence/test_manifest_signing.py -v
 
 ---
 
-## 6. Cleanup
+## 6. End-to-End Integration Tests
+
+```bash
+python -m pytest tests/evidence/test_manifest_signing_e2e.py -v
+```
+
+**Expected Output**:
+```
+tests/evidence/test_manifest_signing_e2e.py::TestManifestSigningE2E::test_e2e_sign_verify_tamper_workflow PASSED
+tests/evidence/test_manifest_signing_e2e.py::TestManifestSigningE2E::test_e2e_single_bit_flip_detected PASSED
+tests/evidence/test_manifest_signing_e2e.py::TestManifestSigningE2E::test_e2e_missing_signature_fails PASSED
+tests/evidence/test_manifest_signing_e2e.py::TestManifestSigningE2E::test_e2e_signature_not_transferable PASSED
+tests/evidence/test_manifest_signing_e2e.py::TestKeyGeneration::test_e2e_generate_keypair_via_script PASSED
+tests/evidence/test_manifest_signing_e2e.py::TestKeyGeneration::test_e2e_generated_keypair_works_for_signing PASSED
+tests/evidence/test_manifest_signing_e2e.py::TestFailClose::test_verification_fails_on_corrupted_signature PASSED
+tests/evidence/test_manifest_signing_e2e.py::TestFailClose::test_verification_fails_with_truncated_signature PASSED
+
+8 passed
+```
+
+**Key Tests**:
+| Test | Behavior Verified |
+|------|-------------------|
+| `test_e2e_sign_verify_tamper_workflow` | Full workflow: sign → verify → tamper → verify fails |
+| `test_e2e_single_bit_flip_detected` | Even 1-bit change detected |
+| `test_e2e_missing_signature_fails` | Fail-close on missing signature |
+| `test_e2e_signature_not_transferable` | Signature bound to specific manifest |
+
+---
+
+## 7. Verify .gitignore Blocks Private Keys
+
+```bash
+git check-ignore -v keys/test_private.pem tmp_keys/anything *.private.pem
+```
+
+**Expected Output**:
+```
+.gitignore:15:keys/*_private.pem    keys/test_private.pem
+.gitignore:17:tmp_keys/             tmp_keys/anything
+.gitignore:16:*.private.pem         test.private.pem
+```
+
+- [ ] All private key patterns are blocked
+
+---
+
+## 8. Cleanup
 
 ```bash
 rm -rf tmp_keys
@@ -188,7 +235,9 @@ rm -rf tmp_keys
 | Signing | [ ] PASS / [ ] FAIL |
 | Verification | [ ] PASS / [ ] FAIL |
 | Integrated Pipeline | [ ] PASS / [ ] FAIL / [ ] SKIP |
-| Unit Tests | [ ] PASS / [ ] FAIL |
+| Unit Tests (11 tests) | [ ] PASS / [ ] FAIL |
+| E2E Integration Tests (8 tests) | [ ] PASS / [ ] FAIL |
+| .gitignore Verification | [ ] PASS / [ ] FAIL |
 
 **Overall**: [ ] PASS / [ ] FAIL
 
@@ -197,5 +246,5 @@ rm -rf tmp_keys
 
 ---
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 

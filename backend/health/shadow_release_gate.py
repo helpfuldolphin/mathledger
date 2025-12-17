@@ -103,6 +103,31 @@ ALLOWED_TECHNICAL_PHRASES = [
     "fail silently",  # Only in SHADOW-OBSERVE failure handling
 ]
 
+# =============================================================================
+# LEGACY ALLOWLIST (per SHADOW_MODE_CONTRACT.md §1.1)
+# =============================================================================
+#
+# Per contract §1.1: "Any reference to 'SHADOW MODE' without explicit sub-mode
+# qualification SHALL be interpreted as SHADOW-OBSERVE."
+#
+# Legacy documents in docs/system_law/** that predate the SHADOW_MODE_CONTRACT
+# use unqualified "SHADOW MODE" which is valid (defaults to SHADOW-OBSERVE).
+# These paths suppress UNQUALIFIED_SHADOW_MODE warnings to reduce noise.
+#
+# New documents SHOULD use explicit SHADOW-OBSERVE or SHADOW-GATED.
+# The gate still enforces ERROR-level violations (prohibited phrases, missing registry).
+
+LEGACY_ALLOWLIST_PATHS = [
+    "docs/system_law/",
+    "docs/calibration/",
+    "docs/governance/",
+]
+
+def is_legacy_path(file_path: str) -> bool:
+    """Check if file is in a legacy allowlist path."""
+    normalized = file_path.replace("\\", "/")
+    return any(legacy in normalized for legacy in LEGACY_ALLOWLIST_PATHS)
+
 
 # =============================================================================
 # DATA STRUCTURES
@@ -132,6 +157,7 @@ class GateReport:
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     contract_version: str = "1.0.0"
     gate_id: str = "SRG-001"
+    legacy_warnings_suppressed: int = 0  # Track suppressed legacy WARNs
 
     def add_violation(self, violation: GateViolation) -> None:
         self.violations.append(violation)
@@ -150,6 +176,7 @@ class GateReport:
             "gate_id": self.gate_id,
             "shadow_mode": "SHADOW-GATED",
             "system_impact": "BLOCKED" if not self.passed else "ALLOWED",
+            "legacy_warnings_suppressed": self.legacy_warnings_suppressed,
         }
 
     def to_json(self) -> str:
@@ -242,11 +269,21 @@ class ShadowReleaseGate:
     1. Prohibited phrases in SHADOW-GATED contexts
     2. SHADOW-GATED without gate registry reference
     3. Unqualified "SHADOW MODE" usage
+
+    Legacy Mode:
+        When legacy_mode=True (default), unqualified SHADOW MODE warnings are
+        suppressed for files in LEGACY_ALLOWLIST_PATHS. Per contract §1.1,
+        unqualified SHADOW MODE is interpreted as SHADOW-OBSERVE.
     """
 
-    def __init__(self, registry: Optional[List[GateRegistryEntry]] = None):
+    def __init__(
+        self,
+        registry: Optional[List[GateRegistryEntry]] = None,
+        legacy_mode: bool = True
+    ):
         self.registry = registry or load_gate_registry()
         self.gate_ids = {e.gate_id for e in self.registry}
+        self.legacy_mode = legacy_mode
 
     def _detect_context(self, content: str) -> Tuple[bool, bool]:
         """
@@ -364,10 +401,20 @@ class ShadowReleaseGate:
         content: str,
         lines: List[str],
         file_path: str
-    ) -> List[GateViolation]:
-        """Find unqualified SHADOW MODE usage."""
+    ) -> Tuple[List[GateViolation], int]:
+        """
+        Find unqualified SHADOW MODE usage.
+
+        Returns: (violations, suppressed_count)
+            - violations: List of violations to report
+            - suppressed_count: Number of warnings suppressed due to legacy allowlist
+        """
         violations = []
+        suppressed_count = 0
         pattern = re.compile(UNQUALIFIED_SHADOW_PATTERN)
+
+        # Check if file is in legacy allowlist
+        in_legacy_path = self.legacy_mode and is_legacy_path(file_path)
 
         for i, line in enumerate(lines):
             if pattern.search(line):
@@ -376,6 +423,11 @@ class ShadowReleaseGate:
                     continue
                 # Exclude table headers or definitions
                 if "|" in line and ("SHADOW-OBSERVE" in line or "SHADOW-GATED" in line):
+                    continue
+
+                # Legacy mode: suppress warnings for allowlisted paths
+                if in_legacy_path:
+                    suppressed_count += 1
                     continue
 
                 violations.append(GateViolation(
@@ -387,7 +439,7 @@ class ShadowReleaseGate:
                     severity="WARN",
                 ))
 
-        return violations
+        return violations, suppressed_count
 
     def _check_gated_registry_requirement(
         self,
@@ -411,22 +463,25 @@ class ShadowReleaseGate:
 
         return violations
 
-    def scan_file(self, file_path: Path) -> List[GateViolation]:
+    def scan_file(self, file_path: Path) -> Tuple[List[GateViolation], int]:
         """
         Scan a single file for SHADOW MODE violations.
 
         Only scans .md files and certain config files.
+
+        Returns: (violations, suppressed_count)
         """
         violations = []
+        suppressed_count = 0
 
         # Only scan relevant file types
         if file_path.suffix not in [".md", ".yaml", ".yml", ".json"]:
-            return violations
+            return violations, suppressed_count
 
         try:
             content = file_path.read_text(encoding="utf-8")
         except Exception:
-            return violations
+            return violations, suppressed_count
 
         lines = content.split("\n")
         str_path = str(file_path)
@@ -441,9 +496,13 @@ class ShadowReleaseGate:
 
         # Check for unqualified SHADOW MODE in any document with SHADOW references
         if "SHADOW" in content.upper():
-            violations.extend(self._find_unqualified_shadow(content, lines, str_path))
+            unqualified_violations, unqualified_suppressed = self._find_unqualified_shadow(
+                content, lines, str_path
+            )
+            violations.extend(unqualified_violations)
+            suppressed_count += unqualified_suppressed
 
-        return violations
+        return violations, suppressed_count
 
     def scan_directory(
         self,
@@ -488,8 +547,9 @@ class ShadowReleaseGate:
                 if any(file_path.match(p) for p in all_excludes):
                     continue
 
-                violations = self.scan_file(file_path)
+                violations, suppressed = self.scan_file(file_path)
                 report.files_scanned += 1
+                report.legacy_warnings_suppressed += suppressed
 
                 for v in violations:
                     report.add_violation(v)
@@ -501,15 +561,38 @@ class ShadowReleaseGate:
 # PUBLIC API
 # =============================================================================
 
-def scan_file(file_path: str | Path) -> List[GateViolation]:
-    """Scan a single file for violations."""
-    gate = ShadowReleaseGate()
+def scan_file(
+    file_path: str | Path,
+    legacy_mode: bool = True
+) -> Tuple[List[GateViolation], int]:
+    """
+    Scan a single file for violations.
+
+    Args:
+        file_path: Path to file to scan
+        legacy_mode: If True, suppress UNQUALIFIED_SHADOW_MODE warnings for legacy paths
+
+    Returns:
+        (violations, suppressed_count)
+    """
+    gate = ShadowReleaseGate(legacy_mode=legacy_mode)
     return gate.scan_file(Path(file_path))
 
 
-def scan_directory(dir_path: str | Path, exclude_patterns: Optional[List[str]] = None) -> GateReport:
-    """Scan a directory for violations."""
-    gate = ShadowReleaseGate()
+def scan_directory(
+    dir_path: str | Path,
+    exclude_patterns: Optional[List[str]] = None,
+    legacy_mode: bool = True
+) -> GateReport:
+    """
+    Scan a directory for violations.
+
+    Args:
+        dir_path: Directory to scan
+        exclude_patterns: Glob patterns to exclude
+        legacy_mode: If True, suppress UNQUALIFIED_SHADOW_MODE warnings for legacy paths
+    """
+    gate = ShadowReleaseGate(legacy_mode=legacy_mode)
     return gate.scan_directory(Path(dir_path), exclude_patterns)
 
 
@@ -549,17 +632,24 @@ def main() -> int:
         action="store_true",
         help="Suppress stdout output (still writes to --output if specified)",
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Disable legacy mode — warn on ALL unqualified SHADOW MODE usage",
+    )
 
     args = parser.parse_args()
 
     if not args.scan_dir and not args.file:
         parser.error("Must specify --scan-dir or --file")
 
-    gate = ShadowReleaseGate()
+    legacy_mode = not args.strict
+    gate = ShadowReleaseGate(legacy_mode=legacy_mode)
 
     if args.file:
-        violations = gate.scan_file(Path(args.file))
+        violations, suppressed = gate.scan_file(Path(args.file))
         report = GateReport(scan_path=args.file, files_scanned=1)
+        report.legacy_warnings_suppressed = suppressed
         for v in violations:
             report.add_violation(v)
     else:
@@ -577,8 +667,12 @@ def main() -> int:
         print(f"Scan path: {report.scan_path}")
         print(f"Files scanned: {report.files_scanned}")
         print(f"Violations: {len(report.violations)}")
+        if report.legacy_warnings_suppressed > 0:
+            print(f"Legacy warnings suppressed: {report.legacy_warnings_suppressed}")
+            print(f"  (per SHADOW_MODE_CONTRACT.md s1.1: unqualified = SHADOW-OBSERVE)")
         print(f"Gate ID: {report.gate_id}")
         print(f"Contract version: {report.contract_version}")
+        print(f"Mode: {'STRICT' if args.strict else 'LEGACY (default)'}")
         print()
 
         if report.violations:
