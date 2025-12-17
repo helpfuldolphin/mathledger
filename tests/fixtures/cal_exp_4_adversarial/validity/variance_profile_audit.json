@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "CAL-EXP-4",
+  "baseline_arm": {
+    "delta_p_count": 800,
+    "delta_p_mean": 0.85,
+    "delta_p_variance": 0.01,
+    "delta_p_std": 0.1,
+    "delta_p_iqr": 0.12,
+    "delta_p_range": 0.5,
+    "delta_p_min": 0.6,
+    "delta_p_max": 1.1,
+    "delta_p_median": 0.85,
+    "delta_p_q1": 0.79,
+    "delta_p_q3": 0.91,
+    "has_nan": false,
+    "has_inf": false,
+    "windowed_variances": [0.008, 0.009, 0.011, 0.012]
+  },
+  "treatment_arm": {
+    "delta_p_count": 750,
+    "delta_p_mean": 0.72,
+    "delta_p_variance": 0.025,
+    "delta_p_std": 0.158,
+    "delta_p_iqr": 0.35,
+    "delta_p_range": 0.9,
+    "delta_p_min": 0.3,
+    "delta_p_max": 1.2,
+    "delta_p_median": 0.70,
+    "delta_p_q1": 0.55,
+    "delta_p_q3": 0.90,
+    "has_nan": false,
+    "has_inf": false,
+    "windowed_variances": [0.015, 0.022, 0.035, 0.028]
+  },
+  "comparability": {
+    "variance_ratio": 2.5,
+    "variance_ratio_acceptable": false,
+    "windowed_variance_drift": 0.25,
+    "windowed_drift_acceptable": false,
+    "iqr_ratio": 2.92,
+    "iqr_ratio_acceptable": false,
+    "profile_compatible": false,
+    "variance_profile_pass": false,
+    "claim_cap_applied": true,
+    "claim_cap_level": "L3",
+    "mismatch_details": "variance_ratio=2.5 exceeds max=2.0, windowed_drift=0.25 exceeds max=0.05, iqr_ratio=2.92 exceeds max=2.0"
+  },
+  "thresholds": {
+    "variance_ratio_max": 2.0,
+    "variance_ratio_min": 0.5,
+    "windowed_drift_max": 0.05,
+    "iqr_ratio_max": 2.0,
+    "claim_cap_threshold": 3.0
+  },
+  "windowed_analysis": {
+    "window_count": 4,
+    "baseline_windowed_variances": [0.008, 0.009, 0.011, 0.012],
+    "treatment_windowed_variances": [0.015, 0.022, 0.035, 0.028],
+    "per_window_ratios": [1.875, 2.444, 3.182, 2.333]
+  },
+  "evaluation_window": {
+    "start_cycle": 201,
+    "end_cycle": 1000
+  },
+  "generated_at": "2025-12-17T12:00:00Z",
+  "_meta": {
+    "generator": "adversarial_fixture_generator",
+    "note": "Synthetic fixture for F5.2/F5.3/F5.7 failure testing - NOT FOR PRODUCTION USE"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "CAL-EXP-4",
+  "baseline_arm": {
+    "cycle_count": 800,
+    "cycle_min": 201,
+    "cycle_max": 1000,
+    "cycle_gap_max": 1,
+    "cycle_gap_mean": 1.0,
+    "monotonic_cycle_indices": true,
+    "timestamp_monotonic": true,
+    "temporal_coverage_ratio": 1.0,
+    "missing_cycles": null,
+    "duplicate_cycles": null
+  },
+  "treatment_arm": {
+    "cycle_count": 750,
+    "cycle_min": 201,
+    "cycle_max": 1000,
+    "cycle_gap_max": 5,
+    "cycle_gap_mean": 1.33,
+    "monotonic_cycle_indices": false,
+    "timestamp_monotonic": true,
+    "temporal_coverage_ratio": 0.9375,
+    "missing_cycles": [250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950],
+    "duplicate_cycles": null
+  },
+  "comparability": {
+    "cycle_count_match": false,
+    "cycle_indices_identical": false,
+    "coverage_ratio_match": false,
+    "gap_structure_compatible": false,
+    "temporal_structure_compatible": false,
+    "temporal_structure_pass": false,
+    "mismatch_details": "treatment arm has 50 fewer cycles, non-monotonic indices, coverage ratio 0.9375 < 1.0"
+  },
+  "thresholds": {
+    "min_coverage_ratio": 1.0,
+    "max_gap_ratio_divergence": 0.1
+  },
+  "evaluation_window": {
+    "start_cycle": 201,
+    "end_cycle": 1000,
+    "expected_cycle_count": 800
+  },
+  "generated_at": "2025-12-17T12:00:00Z",
+  "_meta": {
+    "generator": "adversarial_fixture_generator",
+    "note": "Synthetic fixture for F5.1 failure testing - NOT FOR PRODUCTION USE"
+  }
+}

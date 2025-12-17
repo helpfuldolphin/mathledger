@@ -849,3 +849,79 @@ def test_adversarial_extra_fields_allowed(valid_temporal_audit, valid_variance_a
 
         # Verifier ignores extra fields
         assert report.passed is True
+
+
+# =============================================================================
+# Red Team Fixture Test
+# =============================================================================
+
+@pytest.mark.unit
+def test_adversarial_fixture_triggers_all_f5_failures():
+    """
+    Red Team fixture must trigger F5.1, F5.2, F5.3, F5.7 failures.
+
+    This test uses the pre-built adversarial fixture at:
+    tests/fixtures/cal_exp_4_adversarial/
+
+    Expected outcomes:
+    - temporal_comparability = False
+    - variance_comparability = False
+    - f5_failure_codes includes F5.1, F5.2, F5.3, F5.7
+    - claim_cap_applied = True
+    - claim_cap_level = "L3"
+    - VERDICT = FAIL
+    - No verifier crash
+    """
+    fixture_dir = Path(__file__).parent.parent / "fixtures" / "cal_exp_4_adversarial"
+
+    # Skip if fixture doesn't exist (CI may not have it)
+    if not fixture_dir.exists():
+        pytest.skip("Adversarial fixture not found")
+
+    report = verify_run(fixture_dir)
+
+    # Verifier must not crash
+    assert report is not None
+
+    # Must FAIL
+    assert report.passed is False, "Adversarial fixture must trigger FAIL"
+
+    # temporal_comparability must be False
+    assert report.temporal_comparability is False, (
+        "temporal_comparability must be False for adversarial fixture"
+    )
+
+    # variance_comparability must be False
+    assert report.variance_comparability is False, (
+        "variance_comparability must be False for adversarial fixture"
+    )
+
+    # F5.1 must be triggered (temporal structure failures)
+    assert "F5.1" in report.f5_failure_codes, (
+        f"F5.1 not in failure codes: {report.f5_failure_codes}"
+    )
+
+    # F5.2 must be triggered (variance ratio failure)
+    assert "F5.2" in report.f5_failure_codes, (
+        f"F5.2 not in failure codes: {report.f5_failure_codes}"
+    )
+
+    # F5.3 must be triggered (windowed drift failure)
+    assert "F5.3" in report.f5_failure_codes, (
+        f"F5.3 not in failure codes: {report.f5_failure_codes}"
+    )
+
+    # F5.7 must be triggered (IQR ratio failure)
+    assert "F5.7" in report.f5_failure_codes, (
+        f"F5.7 not in failure codes: {report.f5_failure_codes}"
+    )
+
+    # Claim must be capped to L3
+    assert report.claim_cap_applied is True, "claim_cap_applied must be True"
+    assert report.claim_cap_level == "L3", (
+        f"claim_cap_level must be L3, got {report.claim_cap_level}"
+    )
+
+    # Verify check counts
+    assert report.fail_count >= 9, f"Expected >= 9 FAIL, got {report.fail_count}"
+    assert report.warn_count >= 3, f"Expected >= 3 WARN, got {report.warn_count}"
