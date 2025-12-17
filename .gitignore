@@ -12,6 +12,9 @@ __pycache__/
 
 # Crypto keys (sensitive)
 .api_keys.json
+keys/*_private.pem
+*.private.pem
+tmp_keys/
 
 # Artifacts / local packs
 artifacts/**/metrics*.json
@@ -52,3 +55,21 @@ results/
 
 # Docker volumes (not needed if named volumes)
 # data/
+
+# =============================================================================
+# FOUNDER PRIVATE / NEGOTIATION SENSITIVE
+# =============================================================================
+# These directories contain private execution documents, negotiation materials,
+# and internal strategy that must NEVER be committed to the repository.
+# See docs/system_law/DOC_PUBLICATION_BOUNDARY.md for policy.
+# =============================================================================
+_founder_notes/
+_private/
+_negotiation/
+_internal_strategy/
+docs/internal/
+
+# Internal review docs (if accidentally created outside designated paths)
+**/TERM_SHEET*.md
+**/VALUATION*.md
+**/NEGOTIATION*.md

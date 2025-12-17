@@ -40,29 +40,45 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Banned terms that should never appear in tracked repository files
 # These indicate negotiation-sensitive content that must stay private
+#
+# NOTE: Patterns are designed to minimize false positives:
+# - "valuation" in logic context (truth valuation) is allowed
+# - LaTeX math ($...$) is not flagged as dollar amounts
+# - "mutual exclusivity" in code is allowed
+# - "million ops/sec" technical context is allowed
 BANNED_NEGOTIATION_TERMS: List[str] = [
-    # Financial/valuation terms
-    r"\bvaluation\b",
+    # Financial/valuation terms (business context, not logic)
+    r"\bcompany\s+valuation\b",
+    r"\bstartup\s+valuation\b",
+    r"\bpre-money\s+valuation\b",
+    r"\bpost-money\s+valuation\b",
+    r"\bvaluation\s+of\s+\$",  # "valuation of $X"
+    r"\bvaluation:\s*\$",      # "Valuation: $X"
     r"\bterm\s+sheet\b",
     r"\bstrike\s+price\b",
     r"\bearnout\b",
-    r"\bexclusivity\b",
     r"\bM&A\b",
     r"\bacquisition\s+price\b",
-    r"\bacquirer\b",
     r"\bacquisition\s+target\b",
-    # Dollar amounts (likely sensitive)
-    r"\$\d+[KMB]?\b",  # $100, $1M, $500K, etc.
-    r"\b\d+\s*million\b",  # "2 million", "2.5 million"
-    # Discount in negotiation context (but allow technical "discount" like "discount factor")
+    # Dollar amounts in business context (not LaTeX math)
+    # Match $XM, $XK, $X million but NOT $\beta$ or $X$ math
+    r"\$\d+\.?\d*[KMB]\b",           # $1M, $500K, $2.5B
+    r"\$\d+\.?\d*\s*million\b",      # "$50 million"
+    r"\$\d+\.?\d*\s*billion\b",      # "$2 billion"
+    # Discount in negotiation context only
     r"\bdiscount\s+removal\b",
-    r"\bdiscount\s+adjusted\b",
-    r"\bdiscount\s+rate\b",  # financial
+    r"\bdiscount[\s-]+adjusted\s+value\b",
+    r"\bdiscount[\s-]+adjusted\s+valuation\b",
     # Negotiation-specific phrases
     r"\bnegotiation\s+position\b",
     r"\bwalk[\s-]?away\s+condition\b",
+    r"\bwalk[\s-]?away\s+price\b",
     r"\bleverage\s+execution\b",
     r"\bmaximize\s+valuation\b",
+    # Acquirer in business context
+    r"\bthe\s+acquirer\b",
+    r"\bpotential\s+acquirer\b",
+    r"\bacquirer\s+owns\b",
 ]
 
 # Paths that are allowlisted (should be gitignored, but if scanned, don't fail)
@@ -74,6 +90,8 @@ ALLOWLIST_PATH_PATTERNS: List[str] = [
     "_internal_strategy/",
     # Test files themselves (they contain banned terms as documentation)
     "tests/policy/test_repo_leak_hygiene.py",
+    # Policy documentation that defines the banned terms
+    "docs/system_law/DOC_PUBLICATION_BOUNDARY.md",
 ]
 
 # File extensions to scan
@@ -301,17 +319,37 @@ class TestBannedTermDetection:
     """Verify the banned term detection works correctly."""
 
     @pytest.mark.parametrize("term,text,should_match", [
-        ("valuation", "The company valuation is important", True),
-        ("valuation", "The metric evaluation passed", False),  # "evaluation" != "valuation"
+        # Business valuation terms - SHOULD match
+        ("company valuation", "The company valuation is $10M", True),
+        ("valuation: $", "Valuation: $50M-$200M", True),
+        # Logic valuation - should NOT match
+        ("valuation", "truth valuation {q=T}", False),
+        ("valuation", "Since valuation makes the formula false", False),
+        # Term sheet - SHOULD match
         ("term sheet", "Sign the term sheet", True),
+        # Dollar amounts with suffixes - SHOULD match
         ("$1M", "Worth $1M", True),
         ("$500K", "Budget: $500K", True),
-        ("million", "2 million dollars", True),
-        ("million", "a million miles", True),  # Will match - acceptable false positive
+        ("$50M", "Valuation: $50M-$200M", True),
+        # LaTeX math dollars - should NOT match
+        ("$\\beta$", "Does $\\beta$ remain stable", False),
+        ("$128", "| $128 \\pm 0.5$ |", False),
+        # Million in technical context - should NOT match
+        ("million ops", "SHA-256: ~1-2 million ops/sec", False),
+        # Earnout - SHOULD match
         ("earnout", "The earnout clause", True),
+        # M&A - SHOULD match
         ("M&A", "M&A transaction", True),
+        # Discount removal - SHOULD match
         ("discount removal", "discount removal evidence", True),
-        ("discount", "discount factor in math", False),  # Plain "discount" not banned
+        # Plain discount - should NOT match
+        ("discount", "discount factor in math", False),
+        # Mutual exclusivity (code) - should NOT match
+        ("exclusivity", "Validate mutual exclusivity", False),
+        # The acquirer - SHOULD match
+        ("the acquirer", "The acquirer owns the substrate", True),
+        # Acquirer in other context - should NOT match
+        ("acquirer", "data acquirer module", False),
     ])
     def test_term_detection(self, term: str, text: str, should_match: bool):
         """Verify banned terms are detected correctly."""
@@ -325,8 +363,8 @@ class TestBannedTermDetection:
 
         if should_match:
             assert matched, f"Expected to match '{term}' in '{text}'"
-        # Note: We don't assert on should_match=False because some terms
-        # have broader patterns that may catch edge cases
+        else:
+            assert not matched, f"Should NOT match '{term}' in '{text}' but did"
 
 
 class TestAllowlistPaths:
@@ -339,6 +377,7 @@ class TestAllowlistPaths:
         ("docs/system_law/spec.md", False),
         ("backend/health/adapter.py", False),
         ("tests/policy/test_repo_leak_hygiene.py", True),  # Self-allowlisted
+        ("docs/system_law/DOC_PUBLICATION_BOUNDARY.md", True),  # Policy doc allowlisted
     ])
     def test_allowlist_detection(self, path: str, expected_allowlisted: bool):
         """Verify allowlist path detection."""

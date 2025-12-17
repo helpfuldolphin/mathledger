@@ -878,6 +878,8 @@ Exit codes:
     output_dir = Path(args.output_dir)
     p3_dir = Path(args.p3_dir) if args.p3_dir else None
     p4_dir = Path(args.p4_dir) if args.p4_dir else None
+    signing_key = Path(args.signing_key) if args.signing_key else None
+    pubkey = Path(args.pubkey) if args.pubkey else None
 
     # Suppress stdout if quiet mode
     if args.quiet:
@@ -891,6 +893,10 @@ Exit codes:
             p4_dir=p4_dir,
             verify_only=args.verify_only,
             regenerate=args.regenerate,
+            sign=args.sign,
+            signing_key=signing_key,
+            verify_sig=args.verify_signature,
+            pubkey=pubkey,
         )
     finally:
         if args.quiet:

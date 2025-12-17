@@ -253,9 +253,44 @@ class ShadowReleaseGate:
         Detect SHADOW mode context in document.
 
         Returns: (is_gated, is_observe)
+
+        Only marks as GATED if the document DECLARES itself as SHADOW-GATED,
+        not if it merely describes or references the concept.
         """
-        is_gated = any(re.search(p, content, re.IGNORECASE) for p in SHADOW_GATED_PATTERNS)
-        is_observe = any(re.search(p, content, re.IGNORECASE) for p in SHADOW_OBSERVE_PATTERNS)
+        # Patterns that indicate the document DECLARES itself as SHADOW-GATED
+        gated_declaration_patterns = [
+            r"\*\*Mode\*\*:\s*SHADOW-GATED",
+            r"\*\*SHADOW MODE\*\*:\s*SHADOW-GATED",
+            r"Mode:\s*SHADOW-GATED",
+            r"SHADOW MODE:\s*SHADOW-GATED",
+            r"sub-mode:\s*SHADOW-GATED",
+            r"operates\s+(?:in\s+)?SHADOW-GATED",
+            r"running\s+(?:in\s+)?SHADOW-GATED",
+            r"This\s+(?:workflow|gate|system|module|document)\s+.*SHADOW-GATED",
+        ]
+
+        # Check for declarations (not just mentions)
+        is_gated = any(
+            re.search(p, content, re.IGNORECASE | re.MULTILINE)
+            for p in gated_declaration_patterns
+        )
+
+        # Similarly for SHADOW-OBSERVE
+        observe_declaration_patterns = [
+            r"\*\*Mode\*\*:\s*SHADOW-OBSERVE",
+            r"\*\*SHADOW MODE\*\*:\s*SHADOW-OBSERVE",
+            r"Mode:\s*SHADOW-OBSERVE",
+            r"SHADOW MODE:\s*SHADOW-OBSERVE",
+            r"sub-mode:\s*SHADOW-OBSERVE",
+            r"operates\s+(?:in\s+)?SHADOW-OBSERVE",
+            r"This\s+(?:workflow|gate|system|module|document)\s+.*SHADOW-OBSERVE",
+        ]
+
+        is_observe = any(
+            re.search(p, content, re.IGNORECASE | re.MULTILINE)
+            for p in observe_declaration_patterns
+        )
+
         return is_gated, is_observe
 
     def _has_gate_registry_reference(self, content: str) -> bool:
@@ -284,7 +319,35 @@ class ShadowReleaseGate:
                         for allowed in ALLOWED_TECHNICAL_PHRASES
                     )
 
-                    if not in_allowed_context:
+                    # Check if phrase is quoted (meta-reference, not usage)
+                    # Patterns: "phrase", 'phrase', `phrase`, ``phrase``
+                    quoted_patterns = [
+                        rf'"{re.escape(phrase)}"',
+                        rf"'{re.escape(phrase)}'",
+                        rf'`{re.escape(phrase)}`',
+                        rf'``{re.escape(phrase)}``',
+                        rf'\*\*{re.escape(phrase)}\*\*',  # **phrase**
+                    ]
+                    in_quoted_context = any(
+                        re.search(qp, line, re.IGNORECASE)
+                        for qp in quoted_patterns
+                    )
+
+                    # Check if line is describing a replacement/removal
+                    replacement_indicators = [
+                        "replaced",
+                        "removed",
+                        "prohibited phrase",
+                        "forbidden phrase",
+                        "canonical replacement",
+                        "prohibited language",
+                        "forbidden language",
+                    ]
+                    in_replacement_context = any(
+                        ind in line_lower for ind in replacement_indicators
+                    )
+
+                    if not (in_allowed_context or in_quoted_context or in_replacement_context):
                         violations.append(GateViolation(
                             file_path=file_path,
                             line_number=i + 1,
@@ -507,6 +570,7 @@ def main() -> int:
         Path(args.output).write_text(report.to_json(), encoding="utf-8")
 
     if not args.quiet:
+        # Use ASCII-safe output for cross-platform compatibility
         print(f"\n{'='*60}")
         print("SHADOW RELEASE GATE REPORT")
         print(f"{'='*60}")
@@ -524,7 +588,9 @@ def main() -> int:
                 print(f"[{v.severity}] {v.file_path}:{v.line_number}")
                 print(f"  Type: {v.violation_type}")
                 print(f"  Message: {v.message}")
-                print(f"  Context: {v.context[:100]}...")
+                # Sanitize context for ASCII output
+                safe_context = v.context[:100].encode('ascii', 'replace').decode('ascii')
+                print(f"  Context: {safe_context}...")
                 print()
 
         print(f"{'='*60}")

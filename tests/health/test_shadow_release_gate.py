@@ -123,7 +123,9 @@ def test_prohibited_phrase_nonblocking_in_gated(gate: ShadowReleaseGate, temp_di
     content = """
 # Non-blocking Gate
 
-SHADOW-GATED mode with non-blocking behavior.
+**Mode**: SHADOW-GATED
+
+This system operates in SHADOW-GATED mode with non-blocking behavior.
 
 gate_id: SRG-001
 """
