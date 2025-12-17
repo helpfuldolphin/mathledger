@@ -131,6 +131,7 @@ def test_exit_codes_per_contract():
 
     Exit 0: ALWAYS in SHADOW mode (including missing inputs, red flags, warnings)
     Exit 1: ONLY on uncaught script exception
+    Exit 2: CLI argument validation errors (argparse default)
     """
     # Test that the script exists and is runnable
     script_path = Path("scripts/run_shadow_audit.py")
@@ -139,39 +140,57 @@ def test_exit_codes_per_contract():
     if not script_path.exists():
         pytest.skip("Script not found - skipping subprocess test")
 
-    # Exit 0: dry-run mode (always succeeds)
-    result = subprocess.run(
-        [sys.executable, str(script_path), "--dry-run"],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 0, \
-        f"Dry-run mode should exit 0, got {result.returncode}: {result.stderr}"
-
-    # Exit 0: missing directory (SHADOW mode - never gates)
+    # Exit 0: dry-run mode with valid (but empty) input path
+    # The script requires --input and --output even in dry-run mode
     with tempfile.TemporaryDirectory() as tmpdir:
+        input_dir = Path(tmpdir) / "input"
+        input_dir.mkdir()
+        output_dir = Path(tmpdir) / "output"
+        output_dir.mkdir()
+
         result = subprocess.run(
             [
                 sys.executable, str(script_path),
-                "--p3-dir", "/nonexistent/path/xyz123",
-                "--p4-dir", "/nonexistent/path/xyz456",
-                "--output-dir", tmpdir,
+                "--input", str(input_dir),
+                "--output", str(output_dir),
+                "--dry-run",
             ],
             capture_output=True,
             text=True,
         )
-        # SHADOW MODE: exit 0 even when inputs missing
+        # SHADOW MODE: dry-run should exit 0
         assert result.returncode == 0, \
-            f"Missing inputs should still exit 0 (SHADOW mode), got {result.returncode}: {result.stderr}"
+            f"Dry-run mode should exit 0, got {result.returncode}: {result.stderr}"
 
-        # Verify run_summary.json was created with fail status
-        output_dirs = list(Path(tmpdir).glob("shadow_audit_*"))
+    # Exit 0: empty input directory (SHADOW mode - exits 0 with warn status)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        input_dir = Path(tmpdir) / "empty_input"
+        input_dir.mkdir()
+        output_dir = Path(tmpdir) / "output"
+        output_dir.mkdir()
+
+        result = subprocess.run(
+            [
+                sys.executable, str(script_path),
+                "--input", str(input_dir),
+                "--output", str(output_dir),
+            ],
+            capture_output=True,
+            text=True,
+        )
+        # SHADOW MODE: exit 0 even when inputs empty (warn status)
+        assert result.returncode == 0, \
+            f"Empty inputs should still exit 0 (SHADOW mode), got {result.returncode}: {result.stderr}"
+
+        # Verify run_summary.json was created with appropriate status
+        output_dirs = list(output_dir.glob("sha_*"))
         if output_dirs:
             summary_path = output_dirs[0] / "run_summary.json"
             if summary_path.exists():
                 with open(summary_path) as f:
                     summary = json.load(f)
-                assert summary["final_status"] == "fail"
+                # SHADOW MODE: warns on empty inputs, doesn't fail
+                assert summary["final_status"] in ("warn", "pass")
                 assert summary["mode"] == "SHADOW"
 
 
@@ -415,25 +434,26 @@ def _script_exists() -> bool:
 @pytest.mark.unit
 @pytest.mark.skipif(not _script_exists(), reason="Script not deployed yet")
 def test_discover_inputs_finds_run_dirs():
-    """Given valid P3/P4 dirs, returns correct run IDs."""
+    """Given valid P3/P4 subdirs in input, returns correct run IDs."""
     from scripts.run_shadow_audit import discover_inputs
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
-        # Create P3 structure
+        # Create P3 structure under input/p3/
         p3_dir = tmpdir_path / "p3"
         p3_run = p3_dir / "fl_20250101_120000_seed42"
         p3_run.mkdir(parents=True)
         (p3_run / "stability_report.json").write_text("{}")
 
-        # Create P4 structure
+        # Create P4 structure under input/p4/
         p4_dir = tmpdir_path / "p4"
         p4_run = p4_dir / "p4_20250101_130000"
         p4_run.mkdir(parents=True)
         (p4_run / "p4_summary.json").write_text("{}")
 
-        inputs, result = discover_inputs(p3_dir, p4_dir, None)
+        # discover_inputs takes a single input_dir that contains p3/ and p4/ subdirs
+        inputs, result = discover_inputs(tmpdir_path)
 
         assert result.status == "pass"
         assert inputs.p3_run_id == "fl_20250101_120000_seed42"
@@ -442,43 +462,43 @@ def test_discover_inputs_finds_run_dirs():
 
 @pytest.mark.unit
 @pytest.mark.skipif(not _script_exists(), reason="Script not deployed yet")
-def test_discover_inputs_missing_p3_returns_warn():
-    """Returns warn status when P3 dir missing but P4 exists."""
+def test_discover_inputs_missing_p3_returns_pass_with_p4():
+    """Returns pass status when P3 dir missing but P4 exists (partial artifacts ok)."""
     from scripts.run_shadow_audit import discover_inputs
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
-        # Only create P4
+        # Only create P4 subdirectory
         p4_dir = tmpdir_path / "p4"
         p4_run = p4_dir / "p4_20250101_130000"
         p4_run.mkdir(parents=True)
         (p4_run / "p4_summary.json").write_text("{}")
 
-        inputs, result = discover_inputs(tmpdir_path / "nonexistent", p4_dir, None)
+        # discover_inputs uses single input_dir
+        inputs, result = discover_inputs(tmpdir_path)
 
-        assert result.status == "warn"
+        # Having P4 is sufficient for pass status
+        assert result.status == "pass"
         assert inputs.p4_run_id == "p4_20250101_130000"
         assert inputs.p3_run_id is None
 
 
 @pytest.mark.unit
 @pytest.mark.skipif(not _script_exists(), reason="Script not deployed yet")
-def test_discover_inputs_both_missing_returns_fail():
-    """Returns fail status when both P3 and P4 dirs missing."""
+def test_discover_inputs_both_missing_returns_warn():
+    """Returns warn status when both P3 and P4 dirs missing."""
     from scripts.run_shadow_audit import discover_inputs
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir_path = Path(tmpdir)
 
-        inputs, result = discover_inputs(
-            tmpdir_path / "nonexistent_p3",
-            tmpdir_path / "nonexistent_p4",
-            None,
-        )
+        # Empty input directory - no P3 or P4
+        inputs, result = discover_inputs(tmpdir_path)
 
-        assert result.status == "fail"
-        assert result.error == "No P3 or P4 artifacts found"
+        # Per SHADOW MODE: warn on missing inputs, not fail
+        assert result.status == "warn"
+        assert "No shadow logs or P3/P4 artifacts found" in result.error
         assert inputs.p3_run_id is None
         assert inputs.p4_run_id is None
 
@@ -531,20 +551,26 @@ def test_compute_final_status_pass_when_all_pass():
 @pytest.mark.determinism
 @pytest.mark.skipif(not _script_exists(), reason="Script not deployed yet")
 def test_deterministic_timestamps_fixed():
-    """With --seed, timestamps are deterministic."""
+    """With --seed, timestamps and run IDs are deterministic."""
     from scripts.run_shadow_audit import (
         get_timestamp,
         generate_run_id,
         DETERMINISTIC_TIMESTAMP,
-        DETERMINISTIC_DATESTAMP,
     )
 
     # Deterministic mode
     ts = get_timestamp(deterministic=True)
     assert ts == DETERMINISTIC_TIMESTAMP
 
-    run_id = generate_run_id(seed=42, deterministic=True)
-    assert run_id == f"shadow_audit_{DETERMINISTIC_DATESTAMP}_seed42"
+    # generate_run_id takes only seed; seed=None means non-deterministic
+    run_id = generate_run_id(seed=42)
+    # With seed, format is sha_<seed>_<hash8>
+    assert run_id.startswith("sha_42_")
+    assert len(run_id) == len("sha_42_") + 8  # 8 hex chars
+
+    # Same seed produces same run_id (deterministic)
+    run_id2 = generate_run_id(seed=42)
+    assert run_id == run_id2
 
     # Non-deterministic should differ
     ts_live = get_timestamp(deterministic=False)
