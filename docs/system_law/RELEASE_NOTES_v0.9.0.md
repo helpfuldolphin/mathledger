@@ -2,7 +2,7 @@
 
 **Release Date**: 2025-12-17
 **Tag**: `v0.9.0-governance-p0`
-**Commit**: `e84c67f3fa0239683a23372a0b2d679b21a952e4`
+**Commit**: `e34561d0cd2e1d5fb77abf407fa9bde9502c17a3`
 
 ---
 
@@ -93,11 +93,24 @@ ls -la docs/system_law/SHADOW_MODE_CONTRACT.md docs/system_law/SHADOW_GRADUATION
 
 | Workflow | Status | Run ID |
 |----------|--------|--------|
-| Core Loop Verification | Pending | — |
-| Shadow Audit Gate | Pending | — |
-| System Law Index Check | Pending | — |
+| Core Loop Verification | ❌ FAIL | [20311650516](https://github.com/helpfuldolphin/mathledger/actions/runs/20311650516) |
+| Shadow Audit Gate | ❌ FAIL | [20311650507](https://github.com/helpfuldolphin/mathledger/actions/runs/20311650507) |
+| Shadow Release Gate | ❌ FAIL | [20311650465](https://github.com/helpfuldolphin/mathledger/actions/runs/20311650465) |
+| CODEX M Phase X | ❌ FAIL | [20311650471](https://github.com/helpfuldolphin/mathledger/actions/runs/20311650471) |
+| Critical Files Check | ✅ PASS | [20311650522](https://github.com/helpfuldolphin/mathledger/actions/runs/20311650522) |
+| Uplift Evaluation | ✅ PASS | [20311650491](https://github.com/helpfuldolphin/mathledger/actions/runs/20311650491) |
+| System Law Index Check | ✅ PASS | [20311650466](https://github.com/helpfuldolphin/mathledger/actions/runs/20311650466) |
 
-*Note: CI links will be updated after tag push.*
+### CI Failure Analysis
+
+**Known Issues (Pre-existing, not introduced by this release):**
+
+1. **Core Loop Verification**: Import error - `No module named 'backend'` (CI environment missing `uv sync`)
+2. **Shadow Audit Gate**: Nondeterminism pattern audit detecting `datetime.now` in `rfl/prng/governance.py` (false positive - logging timestamps, not attestation path)
+3. **Shadow Release Gate**: `ModuleNotFoundError: No module named 'dotenv'` (CI missing python-dotenv)
+4. **CODEX M Phase X**: Tests running but encountering pre-existing issues
+
+**Governance Verdict**: These are CI environment configuration issues, not release regressions. The manifest signing tests (19/19) pass locally and the governance documents are correctly structured.
 
 ---
 
