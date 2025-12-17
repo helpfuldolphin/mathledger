@@ -1,9 +1,10 @@
 # PILOT PHASE INDEX
 
-**Status**: ACTIVE
+**Status**: COMPLETE / FROZEN (SHADOW MODE)
 **Initiated**: 2025-12-13
 **Authority**: STRATCOM
 **Mode**: SHADOW (observational only)
+**Canonical ask-shaped artifact**: `docs/evidence/pilot/PILOT_EVIDENCE_PACKET_v1.0.pdf`
 
 ---
 
