@@ -1075,3 +1075,226 @@ def test_verify_run_with_json_report(valid_run_config, valid_run_metadata, valid
         assert loaded["verdict"] == "PASS"
         assert loaded["schema_version"] == "1.0.0"
         assert loaded["verifier"] == "verify_cal_exp_3_run.py"
+
+
+# =============================================================================
+# Contract Tripwire: Canonical Filename Requirement
+# =============================================================================
+# Per CAL_EXP_3_INDEX.md:
+#   "Harness MUST produce cycles.jsonl (not delta_p_trace.jsonl)"
+# This tripwire test ensures the verifier REJECTS legacy filenames.
+
+@pytest.mark.unit
+def test_tripwire_legacy_filename_delta_p_trace_fails():
+    """
+    TRIPWIRE: Verifier MUST reject legacy filename delta_p_trace.jsonl.
+
+    Contract: CAL_EXP_3_INDEX.md §Verifier/Workflow Alignment
+      - "Harness MUST produce cycles.jsonl (not delta_p_trace.jsonl)"
+
+    This test ensures:
+      1. If only delta_p_trace.jsonl exists and cycles.jsonl is missing → FAIL
+      2. The verifier does NOT accept legacy filenames
+      3. This test will FAIL if someone changes verifier to accept legacy names
+
+    Any change to accept delta_p_trace.jsonl breaks the contract.
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        run_dir = Path(tmpdir) / "run"
+        run_dir.mkdir()
+
+        # Create required directories
+        for d in ["baseline", "treatment", "analysis", "validity"]:
+            (run_dir / d).mkdir()
+
+        # Create valid config
+        config = {
+            "experiment": "CAL-EXP-3",
+            "seed": 42,
+            "baseline_config": {"learning_enabled": False},
+            "treatment_config": {"learning_enabled": True},
+            "windows": {"evaluation_window": {"start_cycle": 0, "end_cycle": 2}}
+        }
+        with open(run_dir / "run_config.json", "w") as f:
+            json.dump(config, f)
+        with open(run_dir / "RUN_METADATA.json", "w") as f:
+            json.dump({"enforcement": False}, f)
+
+        # LEGACY FILENAME: delta_p_trace.jsonl (NOT canonical cycles.jsonl)
+        for arm in ["baseline", "treatment"]:
+            # Write to LEGACY filename
+            with open(run_dir / arm / "delta_p_trace.jsonl", "w") as f:
+                for i in range(3):
+                    f.write(json.dumps({"cycle": i, "delta_p": 0.01}) + "\n")
+            # Do NOT create cycles.jsonl - this is the tripwire condition
+
+        # Create other required validity files
+        with open(run_dir / "validity" / "toolchain_hash.txt", "w") as f:
+            f.write("a" * 64)
+        with open(run_dir / "validity" / "corpus_manifest.json", "w") as f:
+            json.dump({"hash": "a" * 64}, f)
+        with open(run_dir / "validity" / "validity_checks.json", "w") as f:
+            json.dump({"all_passed": True}, f)
+        with open(run_dir / "validity" / "isolation_audit.json", "w") as f:
+            json.dump({"network_calls": [], "file_reads_outside_corpus": [], "isolation_passed": True}, f)
+
+        # Run verification
+        report = verify_run(run_dir)
+
+        # TRIPWIRE ASSERTION: Must FAIL because cycles.jsonl is missing
+        assert report.passed is False, (
+            "TRIPWIRE FAIL: Verifier accepted run with legacy delta_p_trace.jsonl. "
+            "Contract requires cycles.jsonl - do NOT change verifier to accept legacy names."
+        )
+
+        # Verify the specific failure reason is missing cycles.jsonl
+        baseline_cycles_check = next(
+            (c for c in report.checks if c.name == "file_exists:baseline/cycles.jsonl"), None
+        )
+        treatment_cycles_check = next(
+            (c for c in report.checks if c.name == "file_exists:treatment/cycles.jsonl"), None
+        )
+
+        assert baseline_cycles_check is not None, "Expected check for baseline/cycles.jsonl"
+        assert treatment_cycles_check is not None, "Expected check for treatment/cycles.jsonl"
+        assert baseline_cycles_check.passed is False, "baseline/cycles.jsonl should be missing"
+        assert treatment_cycles_check.passed is False, "treatment/cycles.jsonl should be missing"
+
+
+@pytest.mark.unit
+def test_tripwire_canonical_filename_cycles_jsonl_passes():
+    """
+    TRIPWIRE: Verifier MUST accept canonical filename cycles.jsonl.
+
+    Contract: CAL_EXP_3_INDEX.md §Required Files
+      - baseline/cycles.jsonl
+      - treatment/cycles.jsonl
+
+    This test ensures:
+      1. cycles.jsonl is accepted as the canonical filename
+      2. The file_exists check passes for cycles.jsonl
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        run_dir = Path(tmpdir) / "run"
+        run_dir.mkdir()
+
+        # Create required directories
+        for d in ["baseline", "treatment", "analysis", "validity"]:
+            (run_dir / d).mkdir()
+
+        # Create valid config
+        config = {
+            "experiment": "CAL-EXP-3",
+            "seed": 42,
+            "baseline_config": {"learning_enabled": False},
+            "treatment_config": {"learning_enabled": True},
+            "windows": {"evaluation_window": {"start_cycle": 0, "end_cycle": 2}}
+        }
+        with open(run_dir / "run_config.json", "w") as f:
+            json.dump(config, f)
+        with open(run_dir / "RUN_METADATA.json", "w") as f:
+            json.dump({"enforcement": False}, f)
+
+        # CANONICAL FILENAME: cycles.jsonl
+        for arm in ["baseline", "treatment"]:
+            with open(run_dir / arm / "cycles.jsonl", "w") as f:
+                for i in range(3):
+                    f.write(json.dumps({"cycle": i, "delta_p": 0.01}) + "\n")
+
+        # Create required validity files
+        with open(run_dir / "validity" / "toolchain_hash.txt", "w") as f:
+            f.write("a" * 64)
+        with open(run_dir / "validity" / "corpus_manifest.json", "w") as f:
+            json.dump({"hash": "a" * 64}, f)
+        with open(run_dir / "validity" / "validity_checks.json", "w") as f:
+            json.dump({"all_passed": True}, f)
+        with open(run_dir / "validity" / "isolation_audit.json", "w") as f:
+            json.dump({"network_calls": [], "file_reads_outside_corpus": [], "isolation_passed": True}, f)
+
+        # Run verification
+        report = verify_run(run_dir)
+
+        # Verify file_exists checks pass for cycles.jsonl
+        baseline_cycles_check = next(
+            (c for c in report.checks if c.name == "file_exists:baseline/cycles.jsonl"), None
+        )
+        treatment_cycles_check = next(
+            (c for c in report.checks if c.name == "file_exists:treatment/cycles.jsonl"), None
+        )
+
+        assert baseline_cycles_check is not None, "Expected check for baseline/cycles.jsonl"
+        assert treatment_cycles_check is not None, "Expected check for treatment/cycles.jsonl"
+        assert baseline_cycles_check.passed is True, "baseline/cycles.jsonl should be found"
+        assert treatment_cycles_check.passed is True, "treatment/cycles.jsonl should be found"
+
+        # Overall should pass (canonical filename accepted)
+        assert report.passed is True, f"Expected PASS with canonical cycles.jsonl, got {report.fail_count} failures"
+
+
+@pytest.mark.unit
+def test_tripwire_legacy_filename_coexists_with_canonical():
+    """
+    TRIPWIRE: Legacy delta_p_trace.jsonl is IGNORED when canonical cycles.jsonl exists.
+
+    Contract: CAL_EXP_3_INDEX.md §Verifier/Workflow Alignment
+      - Verifier only reads from required file paths (cycles.jsonl)
+      - Legacy filename is not read even if present
+
+    This test ensures:
+      1. cycles.jsonl is used (canonical)
+      2. delta_p_trace.jsonl is ignored
+      3. Verifier does NOT merge or fallback to legacy
+    """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        run_dir = Path(tmpdir) / "run"
+        run_dir.mkdir()
+
+        # Create required directories
+        for d in ["baseline", "treatment", "analysis", "validity"]:
+            (run_dir / d).mkdir()
+
+        # Create valid config
+        config = {
+            "experiment": "CAL-EXP-3",
+            "seed": 42,
+            "baseline_config": {"learning_enabled": False},
+            "treatment_config": {"learning_enabled": True},
+            "windows": {"evaluation_window": {"start_cycle": 0, "end_cycle": 2}}
+        }
+        with open(run_dir / "run_config.json", "w") as f:
+            json.dump(config, f)
+        with open(run_dir / "RUN_METADATA.json", "w") as f:
+            json.dump({"enforcement": False}, f)
+
+        # Create BOTH canonical and legacy files
+        for arm in ["baseline", "treatment"]:
+            # Canonical: cycles.jsonl (correct data)
+            with open(run_dir / arm / "cycles.jsonl", "w") as f:
+                for i in range(3):
+                    f.write(json.dumps({"cycle": i, "delta_p": 0.01}) + "\n")
+
+            # Legacy: delta_p_trace.jsonl (different/wrong data - should be ignored)
+            with open(run_dir / arm / "delta_p_trace.jsonl", "w") as f:
+                # This file has DIFFERENT cycles - if verifier reads it, cycles won't match
+                for i in range(100, 105):
+                    f.write(json.dumps({"cycle": i, "delta_p": 0.99}) + "\n")
+
+        # Create required validity files
+        with open(run_dir / "validity" / "toolchain_hash.txt", "w") as f:
+            f.write("a" * 64)
+        with open(run_dir / "validity" / "corpus_manifest.json", "w") as f:
+            json.dump({"hash": "a" * 64}, f)
+        with open(run_dir / "validity" / "validity_checks.json", "w") as f:
+            json.dump({"all_passed": True}, f)
+        with open(run_dir / "validity" / "isolation_audit.json", "w") as f:
+            json.dump({"network_calls": [], "file_reads_outside_corpus": [], "isolation_passed": True}, f)
+
+        # Run verification
+        report = verify_run(run_dir)
+
+        # Should PASS because verifier uses cycles.jsonl (cycles 0-2)
+        # NOT delta_p_trace.jsonl (cycles 100-104)
+        assert report.passed is True, (
+            "TRIPWIRE FAIL: Verifier may have read legacy delta_p_trace.jsonl. "
+            "Contract requires only cycles.jsonl to be read."
+        )
