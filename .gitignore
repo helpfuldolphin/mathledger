@@ -46,6 +46,9 @@ logs/
 
 # Experiment results (local only, not committed)
 results/
+# Exception: golden reference manifests (determinism verification)
+!results/golden/
+!results/golden/manifest_seed42.json
 
 # Docker volumes (not needed if named volumes)
 # data/

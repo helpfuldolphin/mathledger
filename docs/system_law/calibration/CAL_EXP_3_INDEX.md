@@ -187,7 +187,7 @@ results/cal_exp_3/<run_id>/
 | `cal_exp_3_seed43_20251214_044619` | 43 | +0.0422 | PASS | L4 |
 | `cal_exp_3_seed44_20251214_051658` | 44 | +0.0312 | PASS | L4 |
 
-**Collective claim level**: L5 (Uplift Replicated)
+**Collective claim level**: L5-lite (Replicated in controlled single-environment conditions)
 
 ### What Is Canon
 
@@ -215,6 +215,26 @@ Modifications to CAL-EXP-3 artifacts require:
 1. Update to this index
 2. Explicit rationale
 3. STRATCOM approval for semantic changes
+
+---
+
+## Evaluator Path
+
+External evaluators can verify CAL-EXP-3:
+
+```bash
+# Mock determinism (no Lean required)
+make verify-mock-determinism  # Verify pipeline determinism with synthetic artifacts
+
+# Evidence pack
+make evidence-pack            # Generate and verify evidence pack
+
+# Real Lean verification (optional, requires lean-setup)
+make lean-setup               # Install Lean toolchain (first time, ~10-30 min)
+make verify-lean-single PROOF=<path>  # Verify specific proof with real Lean
+```
+
+See `CAL_EXP_3_RATIFICATION_BRIEF.md` § 8 for scope details.
 
 ---
 

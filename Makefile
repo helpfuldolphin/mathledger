@@ -6,7 +6,7 @@
 #   to be set in the environment. They will fail if not configured.
 # - For First Organism tests, use 'make first-organism-up' and load .env.first_organism
 
-.PHONY: help worker api enqueue-sample db-stats clean check-local qa-metrics-lint first-organism-up first-organism-down first-organism-validate first-organism-test
+.PHONY: help worker api enqueue-sample db-stats clean check-local qa-metrics-lint first-organism-up first-organism-down first-organism-validate first-organism-test lean-setup lean-check verify-mock-determinism verify-mock-determinism-verbose verify-lean-single evidence-pack evidence-pack-verify
 
 # Docs maintenance (optional; run manually before publishing system law docs)
 # first-light-system-law-index:
@@ -29,6 +29,16 @@ help:
 	@echo "    make check-local    - Run local development guardrails"
 	@echo "    make qa-metrics-lint - Run metrics v1 linter QA tool"
 	@echo "    make vibe-check     - Run Vibe Compliance Check (VCP 2.1)"
+	@echo ""
+	@echo "  Lean Toolchain:"
+	@echo "    make lean-setup              - Build Lean project with Mathlib (~2GB, 10-30 min first time)"
+	@echo "    make lean-check              - Verify Lean toolchain is correctly installed"
+	@echo "    make verify-mock-determinism - Verify pipeline determinism using MOCK harness (no Lean)"
+	@echo "    make verify-lean-single      - Verify a single proof with REAL Lean (requires lean-setup)"
+	@echo ""
+	@echo "  Evidence Pack (External Audit):"
+	@echo "    make evidence-pack        - Generate and verify CAL-EXP-3 evidence pack (ONE COMMAND)"
+	@echo "    make evidence-pack-verify - Verify existing evidence pack only"
 	@echo ""
 	@echo "  First Organism (Secure Integration):"
 	@echo "    make first-organism-validate - Validate .env.first_organism configuration"
@@ -113,3 +123,128 @@ fo-cycles:
 	@echo "Running First Organism baseline cycles..."
 	@echo "NOTE: Ensure DATABASE_URL is set in environment"
 	uv run python experiments/run_fo_cycles.py --mode=baseline --cycles=1000 --out=results/fo_baseline.jsonl
+
+# Lean toolchain setup - REQUIRED before verification
+lean-setup:
+	@echo "============================================================"
+	@echo "  LEAN TOOLCHAIN BOOTSTRAP"
+	@echo "============================================================"
+	@echo ""
+	@echo "Building Lean project with pinned Mathlib..."
+	@echo "  Lean version:   v4.23.0-rc2"
+	@echo "  Mathlib commit: a3e910d1569d6b943debabe63afe6e3a3d4061ff"
+	@echo ""
+	@echo "NOTE: First run will download ~2GB of Mathlib cache."
+	@echo "      This may take 10-30 minutes depending on network speed."
+	@echo ""
+	cd backend/lean_proj && lake exe cache get && lake build ML
+	@echo ""
+	@echo "============================================================"
+	@echo "  LEAN SETUP COMPLETE"
+	@echo "============================================================"
+	@echo ""
+	@echo "Verification toolchain is ready. You can now run:"
+	@echo "  - make lean-check              (verify installation)"
+	@echo "  - make verify-lean-single      (verify a proof with REAL Lean)"
+	@echo "  - make verify-mock-determinism (test pipeline determinism, no Lean)"
+	@echo "  - make worker                  (starts verification worker)"
+	@echo ""
+
+# Verify Lean toolchain is correctly installed
+lean-check:
+	@echo "Checking Lean toolchain..."
+	@echo ""
+	cd backend/lean_proj && lake env lean --version
+	@echo ""
+	@echo "Checking ML module builds..."
+	cd backend/lean_proj && lake build ML 2>&1 | head -5
+	@echo ""
+	@echo "OK: Lean toolchain verified"
+
+# ===========================================================================
+# MOCK DETERMINISM VERIFICATION
+# ===========================================================================
+# WARNING: This target uses MOCK/SYNTHETIC mode. It does NOT invoke real Lean.
+# For real Lean verification, use: make verify-lean-single PROOF=<path>
+#
+# What this verifies:
+#   - Pipeline produces identical H_t across runs with same seed
+#   - Cryptographic chaining (R_t, U_t, H_t) is deterministic
+#   - No timestamp/UUID leakage in outputs
+#
+# What this does NOT verify:
+#   - Lean type-checking of proofs (use verify-lean-single for that)
+#   - Real proof validity (mock mode uses synthetic artifacts)
+verify-mock-determinism:
+	@echo "============================================================" 1>&2
+	@echo "  MOCK DETERMINISM VERIFICATION" 1>&2
+	@echo "  WARNING: This does NOT invoke real Lean verification." 1>&2
+	@echo "  For real Lean: make verify-lean-single PROOF=<path>" 1>&2
+	@echo "============================================================" 1>&2
+	@echo "" 1>&2
+	@echo "Mode: MOCK (synthetic artifacts, no Lean)" 1>&2
+	@echo "Runs: 2 (identical seed)" 1>&2
+	@echo "" 1>&2
+	@ML_LEAN_MODE=mock uv run python scripts/verify_core_loop.py --runs 2
+	@echo "" 1>&2
+	@echo "============================================================" 1>&2
+	@echo "  VERIFICATION COMPLETE (MOCK MODE)" 1>&2
+	@echo "============================================================" 1>&2
+
+# Verbose mock verification with detailed output (for debugging)
+verify-mock-determinism-verbose:
+	ML_LEAN_MODE=mock uv run python scripts/verify_core_loop.py --runs 3 --verbose --pretty
+
+# ===========================================================================
+# REAL LEAN VERIFICATION
+# ===========================================================================
+# Verifies a single proof file with REAL Lean 4 type-checking.
+# Requires: make lean-setup (one-time, ~2GB download)
+#
+# Usage:
+#   make verify-lean-single PROOF=backend/lean_proj/ML/Jobs/job_example.lean
+#
+# This is the ONLY target that actually invokes Lean.
+verify-lean-single:
+ifndef PROOF
+	@echo "ERROR: PROOF parameter required" 1>&2
+	@echo "Usage: make verify-lean-single PROOF=<path-to-lean-file>" 1>&2
+	@echo "" 1>&2
+	@echo "Example:" 1>&2
+	@echo "  make verify-lean-single PROOF=backend/lean_proj/ML/Jobs/job_test.lean" 1>&2
+	@exit 1
+else
+	@echo "============================================================" 1>&2
+	@echo "  REAL LEAN VERIFICATION" 1>&2
+	@echo "============================================================" 1>&2
+	@echo "" 1>&2
+	@echo "File: $(PROOF)" 1>&2
+	@echo "" 1>&2
+	cd backend/lean_proj && lake build $(shell basename $(PROOF) .lean)
+	@echo "" 1>&2
+	@echo "============================================================" 1>&2
+	@echo "  LEAN VERIFICATION COMPLETE" 1>&2
+	@echo "============================================================" 1>&2
+endif
+
+# ============================================================================
+# Evidence Pack Generation (External Audit)
+# ============================================================================
+# ONE COMMAND for external evaluators to generate, verify, and receive
+# a compliance verdict for CAL-EXP-3 / First-Light evidence packs.
+
+# Generate and verify evidence pack (auto-discovers P3/P4 artifacts)
+evidence-pack:
+	@echo "============================================================"
+	@echo "  CAL-EXP-3 / FIRST-LIGHT EVIDENCE PACK"
+	@echo "============================================================"
+	@echo ""
+	@echo "This is the ONE COMMAND for external evaluators."
+	@echo "It will: discover artifacts → generate pack → verify integrity"
+	@echo ""
+	@uv run python scripts/generate_and_verify_evidence_pack.py \
+		--json-report results/first_light/compliance_report.json
+
+# Verify existing evidence pack only (no generation)
+evidence-pack-verify:
+	@uv run python scripts/generate_and_verify_evidence_pack.py --verify-only

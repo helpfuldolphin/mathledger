@@ -392,19 +392,58 @@ class LeanModeStatus:
         }
 
 
+class LeanToolchainUnavailableError(Exception):
+    """
+    Raised when Lean toolchain is required but not available.
+
+    This error is raised when ML_LEAN_MODE is not explicitly set to 'mock'
+    and the Lean toolchain cannot be found. This prevents silent fallback
+    to mock mode which would hide verification failures from operators.
+
+    Resolution:
+        1. Run 'make lean-setup' to install the Lean toolchain, OR
+        2. Set ML_LEAN_MODE=mock explicitly if mock mode is intended
+    """
+    pass
+
+
 def get_lean_status() -> LeanModeStatus:
     """
     Get comprehensive status of Lean mode configuration.
 
+    IMPORTANT: This function will raise LeanToolchainUnavailableError if:
+        - Lean is not available on the system, AND
+        - ML_LEAN_MODE is not explicitly set to 'mock'
+
+    This prevents silent fallback to mock mode. Operators must either:
+        1. Run 'make lean-setup' to install the Lean toolchain
+        2. Explicitly set ML_LEAN_MODE=mock if mock mode is intended
+
     Returns:
         LeanModeStatus with all relevant information
+
+    Raises:
+        LeanToolchainUnavailableError: If Lean unavailable and mock not explicit
     """
     configured = get_lean_mode()
     available = is_lean_available()
     recommended = recommended_mode()
 
-    # Effective mode: if configured for real Lean but unavailable, use mock
+    # Check if mock mode was EXPLICITLY requested via environment
+    explicit_mock = os.environ.get("ML_LEAN_MODE", "").lower() == "mock"
+
+    # CRITICAL: If configured for real Lean but unavailable, FAIL LOUDLY
+    # unless mock mode was explicitly requested
     if configured in (LeanMode.FULL, LeanMode.DRY_RUN) and not available:
+        if not explicit_mock:
+            raise LeanToolchainUnavailableError(
+                "Lean toolchain not available but ML_LEAN_MODE is not 'mock'.\n\n"
+                "The Lean verification system requires either:\n"
+                "  1. A working Lean installation (run 'make lean-setup'), OR\n"
+                "  2. Explicit mock mode (set ML_LEAN_MODE=mock)\n\n"
+                "Silent fallback to mock mode is disabled to prevent hidden verification failures.\n"
+                "If you intentionally want mock mode, set: export ML_LEAN_MODE=mock"
+            )
         effective = LeanMode.MOCK
     else:
         effective = configured
@@ -423,6 +462,9 @@ __all__ = [
     # Enums and Config
     "LeanMode",
     "LeanModeConfig",
+
+    # Exceptions
+    "LeanToolchainUnavailableError",
 
     # Build Runners
     "mock_lean_build",

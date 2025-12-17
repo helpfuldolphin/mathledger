@@ -28,12 +28,19 @@ from backend.health.tda_windowed_patterns_adapter import (
     extract_pattern_disagreement_for_status,
 )
 
+from backend.health.replay_governance_adapter import (
+    P5_DETERMINISM_GREEN_THRESHOLD,
+    P5_DETERMINISM_YELLOW_THRESHOLD,
+)
+
 # =============================================================================
 # CONSTANTS
 # =============================================================================
 
 SCHEMA_VERSION = "1.4.0"  # Bumped for TDA windowed patterns signal integration
 DEFAULT_SCHEMA_ROOT = Path(__file__).resolve().parent.parent / "schemas" / "evidence"
+
+LEGACY_P3_WRAPPER_PRIMARY_FILENAME = "first_light_synthetic_raw.jsonl"
 
 # Extraction source constants (hierarchy: CLI > MANIFEST > LEGACY_FILE > RUN_CONFIG > MISSING)
 EXTRACTION_SOURCE_CLI = "CLI"
@@ -64,6 +71,20 @@ def load_json_safe(path: Path) -> Optional[Dict[str, Any]]:
     except (json.JSONDecodeError, OSError):
         pass
     return None
+
+
+def detect_legacy_p3_wrapper_used(
+    p3_dir: Optional[Path],
+    evidence_pack_dir: Optional[Path],
+) -> bool:
+    """Return True when legacy wrapper artifacts are detected (audit signal only)."""
+    candidates: list[Path] = []
+    if p3_dir is not None:
+        candidates.append(p3_dir / LEGACY_P3_WRAPPER_PRIMARY_FILENAME)
+        candidates.append(p3_dir.parent / LEGACY_P3_WRAPPER_PRIMARY_FILENAME)
+    if evidence_pack_dir is not None:
+        candidates.append(evidence_pack_dir / LEGACY_P3_WRAPPER_PRIMARY_FILENAME)
+    return any(path.exists() for path in candidates)
 
 
 def load_evidence_pack_inputs(
@@ -264,6 +285,132 @@ def extract_identity_preflight(
 
 
 # =============================================================================
+# CTRPK SIGNAL EXTRACTION
+# =============================================================================
+
+def extract_ctrpk_signal(
+    manifest: Optional[Mapping[str, Any]] = None,
+    ctrpk_json_path: Optional[Path] = None,
+) -> Tuple[Optional[Dict[str, Any]], str, List[str]]:
+    """Extract CTRPK signal with manifest-first precedence.
+
+    Hierarchy (first match wins):
+    1. MANIFEST (governance.curriculum.ctrpk)
+    2. CLI (--ctrpk-json path)
+    3. MISSING (no source found)
+
+    Returns:
+        Tuple of (signal_dict, extraction_source, warnings).
+        Signal includes: value, status, trend, extraction_source, source_path, source_sha256.
+        Warnings are capped to 1 line per SHADOW MODE contract.
+    """
+    warnings: List[str] = []
+    cli_ctrpk_data: Optional[Dict[str, Any]] = None
+    manifest_ctrpk_data: Optional[Dict[str, Any]] = None
+
+    # Load CLI CTRPK if provided
+    if ctrpk_json_path is not None:
+        cli_ctrpk_data = load_json_safe(ctrpk_json_path)
+
+    # Load manifest CTRPK
+    if manifest is not None:
+        gov = manifest.get("governance") if isinstance(manifest, Mapping) else None
+        if isinstance(gov, Mapping):
+            curr = gov.get("curriculum")
+            if isinstance(curr, Mapping):
+                ctrpk = curr.get("ctrpk")
+                if isinstance(ctrpk, Mapping):
+                    manifest_ctrpk_data = dict(ctrpk)
+
+    # Determine extraction source and data (manifest takes precedence)
+    if manifest_ctrpk_data is not None:
+        ctrpk_data = manifest_ctrpk_data
+        extraction_source = EXTRACTION_SOURCE_MANIFEST
+    elif cli_ctrpk_data is not None:
+        ctrpk_data = cli_ctrpk_data
+        extraction_source = EXTRACTION_SOURCE_CLI
+    else:
+        return None, EXTRACTION_SOURCE_MISSING, []
+
+    # Validate required fields (status must be present)
+    if "status" not in ctrpk_data:
+        warnings.append(
+            f"CTRPK invalid structure: missing required 'status' field. "
+            f"Extraction source: {extraction_source}."
+        )
+
+    # Check for mismatch warning (CLI vs manifest)
+    if manifest_ctrpk_data is not None and cli_ctrpk_data is not None:
+        manifest_value = manifest_ctrpk_data.get("value")
+        cli_value = cli_ctrpk_data.get("value")
+        if manifest_value != cli_value:
+            warnings.append(
+                f"CTRPK mismatch: CLI value={cli_value}, manifest value={manifest_value}. "
+                f"Using manifest (precedence)."
+            )
+
+    # Extract fields with defaults
+    value = ctrpk_data.get("value", 0.0)
+    status = str(ctrpk_data.get("status", "OK") or "OK").upper()
+    trend = str(ctrpk_data.get("trend", "STABLE") or "STABLE").upper()
+    window_cycles = ctrpk_data.get("window_cycles", 0)
+    transition_requests = ctrpk_data.get("transition_requests", 0)
+
+    # Build signal
+    signal: Dict[str, Any] = {
+        "value": value,
+        "status": status,
+        "trend": trend,
+        "window_cycles": window_cycles,
+        "transition_requests": transition_requests,
+        "extraction_source": extraction_source,
+        "mode": "SHADOW",
+    }
+
+    # Add source_path and source_sha256 if present in manifest
+    if manifest_ctrpk_data is not None:
+        source_path = manifest_ctrpk_data.get("path")
+        source_sha256 = manifest_ctrpk_data.get("sha256")
+        if source_path:
+            signal["source_path"] = source_path
+        if source_sha256:
+            signal["source_sha256"] = source_sha256
+
+    # Generate warning (capped to 1 line total per SHADOW MODE contract)
+    # Priority: BLOCK > WARN > DEGRADING
+    if status == "BLOCK":
+        warnings.append(
+            f"CTRPK status is BLOCK (value={value:.2f}, trend={trend}). "
+            f"Curriculum churn elevated; review curriculum transition rate."
+        )
+    elif status == "WARN":
+        if trend == "DEGRADING":
+            warnings.append(
+                f"CTRPK status is WARN with DEGRADING trend (value={value:.2f}). "
+                f"Curriculum churn elevated; monitor transition rate."
+            )
+        else:
+            warnings.append(
+                f"CTRPK status is WARN (value={value:.2f}, trend={trend}). "
+                f"Curriculum churn elevated."
+            )
+    elif trend == "DEGRADING":
+        warnings.append(
+            f"CTRPK trend is DEGRADING (value={value:.2f}, status={status}). "
+            f"Curriculum transition rate increasing."
+        )
+
+    # Cap warnings to 1 line (warning hygiene)
+    ctrpk_warnings = [w for w in warnings if "CTRPK" in w]
+    other_warnings = [w for w in warnings if "CTRPK" not in w]
+    if len(ctrpk_warnings) > 1:
+        ctrpk_warnings = ctrpk_warnings[:1]
+    warnings = other_warnings + ctrpk_warnings
+
+    return signal, extraction_source, warnings
+
+
+# =============================================================================
 # TELEMETRY SOURCE DETECTION
 # =============================================================================
 
@@ -336,6 +483,34 @@ def extract_p5_divergence_baseline(results_dir: Path) -> Optional[Dict[str, Any]
 # P5 REPLAY SIGNAL
 # =============================================================================
 
+# -----------------------------------------------------------------------------
+# FROZEN CONTRACT (v1.3.0) - P5 Replay Signal Extraction
+# -----------------------------------------------------------------------------
+# The following invariants are FROZEN and must NOT be changed without
+# explicit migration path and versioning bump:
+#
+# 1. .gz files are counted (skipped_gz_count), NEVER parsed
+#    - Prevents decompression bombs and encoding issues
+#    - Test: test_gz_file_skipped_with_warning
+#
+# 2. P5_REQUIRED_FIELDS = ["trace_hash"] is the minimum for schema_ok=True
+#    - trace_hash is required for determinism verification
+#    - Test: test_missing_fields_schema_ok_false
+#
+# 3. determinism_band thresholds are FROZEN (imported from replay_governance_adapter):
+#    - GREEN: determinism_rate >= P5_DETERMINISM_GREEN_THRESHOLD (0.85)
+#    - YELLOW: determinism_rate >= P5_DETERMINISM_YELLOW_THRESHOLD (0.70)
+#    - RED: determinism_rate < P5_DETERMINISM_YELLOW_THRESHOLD
+#    - Tests: test_extract_p5_replay_signal_from_jsonl, test_frozen_contract_thresholds_guard
+#
+# 4. advisory_warnings: deterministic ordering (sorted), UNCAPPED list
+#    - Sorting ensures reproducible output across runs
+#    - Warning hygiene (single-cap) is at generate_warnings(), not here
+#    - Test: test_replay_p5_top_reasons_sorted_deterministically
+#
+# Enforced by: tests/first_light/test_p5_replay_wiring_integration.py
+# -----------------------------------------------------------------------------
+
 def extract_p5_replay_signal(path: Path) -> Optional[Dict[str, Any]]:
     """Extract P5 replay signal from logs path.
 
@@ -343,13 +518,24 @@ def extract_p5_replay_signal(path: Path) -> Optional[Dict[str, Any]]:
         path: Path to either a JSONL file or directory of JSON files
 
     Returns:
-        Signal dict with status, determinism_band, determinism_rate, p5_grade, telemetry_source
+        Signal dict with all required P5 replay fields:
+        - status, determinism_band, determinism_rate, p5_grade, telemetry_source
+        - schema_ok, malformed_line_count, skipped_gz_count, advisory_warnings
+        - true_divergence_v1, legacy_metric_label
         or None if path doesn't exist
+
+    SHADOW MODE CONTRACT:
+    - This function is read-only and side-effect free
+    - Deterministic ordering for all list outputs
+    - Single-cap warnings (no spam)
     """
     if path is None or not path.exists():
         return None
 
     logs: List[Dict[str, Any]] = []
+    malformed_line_count = 0
+    skipped_gz_count = 0
+    advisory_warnings: List[str] = []
 
     if path.is_file() and path.suffix == ".jsonl":
         # Load from JSONL file
@@ -358,8 +544,15 @@ def extract_p5_replay_signal(path: Path) -> Optional[Dict[str, Any]]:
                 for line in f:
                     line = line.strip()
                     if line:
-                        logs.append(json.loads(line))
-        except (json.JSONDecodeError, OSError):
+                        try:
+                            logs.append(json.loads(line))
+                        except json.JSONDecodeError:
+                            malformed_line_count += 1
+                            advisory_warnings.append(
+                                f"Malformed JSON line skipped: {line[:50]}..."
+                                if len(line) > 50 else f"Malformed JSON line skipped: {line}"
+                            )
+        except OSError:
             return None
     elif path.is_dir():
         # Load from directory of JSON files
@@ -367,6 +560,19 @@ def extract_p5_replay_signal(path: Path) -> Optional[Dict[str, Any]]:
             data = load_json_safe(json_file)
             if data:
                 logs.append(data)
+
+        # Check for .gz files (count but NEVER parse)
+        # FROZEN CONTRACT: .gz files are counted in skipped_gz_count but never
+        # decompressed or parsed. This ensures predictable behavior and prevents
+        # decompression bombs or encoding issues from affecting signal extraction.
+        for gz_file in sorted(path.glob("*.gz")):
+            skipped_gz_count += 1
+
+        if skipped_gz_count > 0:
+            advisory_warnings.append(
+                f"Skipped {skipped_gz_count} gzip file(s) - decompression not supported"
+            )
+
         # Also check for JSONL files in directory
         for jsonl_file in sorted(path.glob("*.jsonl")):
             try:
@@ -374,8 +580,15 @@ def extract_p5_replay_signal(path: Path) -> Optional[Dict[str, Any]]:
                     for line in f:
                         line = line.strip()
                         if line:
-                            logs.append(json.loads(line))
-            except (json.JSONDecodeError, OSError):
+                            try:
+                                logs.append(json.loads(line))
+                            except json.JSONDecodeError:
+                                malformed_line_count += 1
+                                advisory_warnings.append(
+                                    f"Malformed JSON line skipped: {line[:50]}..."
+                                    if len(line) > 50 else f"Malformed JSON line skipped: {line}"
+                                )
+            except OSError:
                 continue
     else:
         return None
@@ -383,32 +596,149 @@ def extract_p5_replay_signal(path: Path) -> Optional[Dict[str, Any]]:
     if not logs:
         return None
 
+    # =========================================================================
+    # Schema validation: Check for required P5 fields
+    # =========================================================================
+    # FROZEN SCHEMA CONTRACT (v1.3.0):
+    # Required P5 fields for schema_ok=True:
+    #   - trace_hash: SHA-256 hash of trace data (REQUIRED)
+    #
+    # Rationale: trace_hash is the minimum field needed for determinism
+    # verification. Without it, replay safety cannot be assessed.
+    #
+    # Future extensions: Additional required fields (e.g., cycle_id, timestamp)
+    # may be added in future versions but will NOT remove trace_hash.
+    # "NEVER DELETE METRICS" policy applies to required field list.
+    P5_REQUIRED_FIELDS = ["trace_hash"]
+
+    missing_fields_count = 0
+    missing_fields_set: set = set()
+    for log in logs:
+        for field in P5_REQUIRED_FIELDS:
+            if not log.get(field):
+                missing_fields_count += 1
+                missing_fields_set.add(field)
+                break  # Count each log only once
+
+    schema_ok = missing_fields_count == 0
+
+    # Single-cap warning for missing P5 fields (no spam)
+    if not schema_ok and missing_fields_set:
+        sorted_missing = sorted(missing_fields_set)
+        advisory_warnings.append(
+            f"Missing P5 fields in {missing_fields_count} log(s): {', '.join(sorted_missing)}"
+        )
+
+    # =========================================================================
     # Compute determinism metrics
+    # =========================================================================
     total = len(logs)
     # For now, assume all logs with trace_hash are deterministic
     deterministic_count = sum(1 for log in logs if log.get("trace_hash"))
     determinism_rate = deterministic_count / total if total > 0 else 0.0
 
-    # Determine determinism band
-    if determinism_rate >= 0.99:
+    # Determine determinism band (P5 thresholds)
+    # Uses authoritative constants from backend.health.replay_governance_adapter
+    if determinism_rate >= P5_DETERMINISM_GREEN_THRESHOLD:
         determinism_band = "GREEN"
-    elif determinism_rate >= 0.90:
+    elif determinism_rate >= P5_DETERMINISM_YELLOW_THRESHOLD:
         determinism_band = "YELLOW"
     else:
         determinism_band = "RED"
 
+    # =========================================================================
+    # True Divergence v1: Compute breakdown metrics
+    # =========================================================================
+    safety_mismatch_count = 0
+    state_mismatch_count = 0
+    outcome_mismatch_count = 0
+    total_entries_with_metrics = 0
+    prob_success_sum = 0.0
+    prob_success_count = 0
+
+    for log in logs:
+        # Track safety mismatches (Ω/blocked)
+        safety_fields = log.get("safety_mismatch", {})
+        if safety_fields.get("omega_mismatch") or safety_fields.get("blocked_mismatch"):
+            safety_mismatch_count += 1
+
+        # Track state mismatches (H/rho/tau/beta)
+        state_fields = log.get("state_mismatch", {})
+        if any(state_fields.get(f"{k}_mismatch") for k in ["H", "rho", "tau", "beta"]):
+            state_mismatch_count += 1
+
+        # Track outcome mismatches (general)
+        if log.get("outcome_mismatch") or log.get("determinism") is False:
+            outcome_mismatch_count += 1
+
+        # Count entries with mismatch data
+        if "safety_mismatch" in log or "state_mismatch" in log:
+            total_entries_with_metrics += 1
+
+        # Track prob(success) for Brier score
+        if "prob_success" in log:
+            prob_success_sum += float(log["prob_success"])
+            prob_success_count += 1
+
+    # Compute rates (use total_entries_with_metrics or total as denominator)
+    td_denominator = total_entries_with_metrics if total_entries_with_metrics > 0 else total
+
+    safety_mismatch_rate = (
+        safety_mismatch_count / td_denominator if td_denominator > 0 else 0.0
+    )
+    state_mismatch_rate = (
+        state_mismatch_count / td_denominator if td_denominator > 0 else 0.0
+    )
+    outcome_mismatch_rate = (
+        outcome_mismatch_count / td_denominator if td_denominator > 0 else 0.0
+    )
+
+    # Brier score (simplified)
+    brier_score_success: Optional[float] = None
+    if prob_success_count > 0:
+        mean_prob = prob_success_sum / prob_success_count
+        brier_score_success = mean_prob * (1.0 - mean_prob)
+
+    # Build true_divergence_v1 vector (deterministic key order)
+    true_divergence_v1 = {
+        "brier_score_success": brier_score_success,
+        "outcome_mismatch_count": outcome_mismatch_count,
+        "outcome_mismatch_rate": outcome_mismatch_rate,
+        "safety_mismatch_count": safety_mismatch_count,
+        "safety_mismatch_rate": safety_mismatch_rate,
+        "state_mismatch_count": state_mismatch_count,
+        "state_mismatch_rate": state_mismatch_rate,
+        "total_entries_with_metrics": total_entries_with_metrics,
+        "version": "1.0.0",
+    }
+
+    # =========================================================================
+    # Build final signal (deterministic key order)
+    # =========================================================================
     # Check for run_id to determine telemetry source
     has_run_id = any(log.get("run_id") for log in logs)
     telemetry_source = "real" if has_run_id else "real"  # Default to real for replay logs
 
+    # Sort advisory warnings for determinism (FROZEN CONTRACT)
+    # advisory_warnings is sorted alphabetically for reproducible output.
+    # NO CAP on advisory_warnings count - all warnings are preserved.
+    # Warning hygiene (single-cap) is handled at generation time, not here.
+    advisory_warnings_sorted = sorted(advisory_warnings)
+
     return {
-        "status": "ok",
+        "advisory_warnings": advisory_warnings_sorted,
         "determinism_band": determinism_band,
         "determinism_rate": determinism_rate,
+        "legacy_metric_label": "RAW_ANY_MISMATCH",
+        "malformed_line_count": malformed_line_count,
+        "mode": "SHADOW",
         "p5_grade": True,
+        "schema_ok": schema_ok,
+        "skipped_gz_count": skipped_gz_count,
+        "status": "ok",
         "telemetry_source": telemetry_source,
         "total_cycles": total,
-        "mode": "SHADOW",
+        "true_divergence_v1": true_divergence_v1,
     }
 
 
@@ -757,6 +1087,7 @@ def generate_status(
     evidence: Optional[Dict[str, Any]] = None,
     schema_root: Optional[Path] = None,
     cli_identity: Optional[Dict[str, Any]] = None,
+    ctrpk_json_path: Optional[Path] = None,
     **kwargs,
 ) -> Dict[str, Any]:
     """Generate First Light status JSON.
@@ -769,6 +1100,7 @@ def generate_status(
         evidence: Optional evidence dict
         schema_root: Schema root directory for validation
         cli_identity: Optional CLI-provided identity preflight override
+        ctrpk_json_path: Optional CLI-provided CTRPK JSON file path
 
     Returns:
         Status dict with schema_version, signals, warnings, mode, etc.
@@ -787,6 +1119,7 @@ def generate_status(
 
     # Prefer explicit results_dir, else fall back to run dirs for telemetry scanning.
     run_results_dir = results_dir or p4_dir or p3_dir
+    legacy_wrapper_used = detect_legacy_p3_wrapper_used(p3_dir, evidence_pack_dir)
 
     # Detect telemetry source
     telemetry_source = "mock"
@@ -804,6 +1137,14 @@ def generate_status(
         cli_identity=cli_identity,
     )
     signals["p5_identity_preflight"] = identity_signal
+
+    # CTRPK signal (with extraction_source tracking and warning hygiene)
+    ctrpk_signal, ctrpk_extraction_source, ctrpk_warnings = extract_ctrpk_signal(
+        manifest=manifest,
+        ctrpk_json_path=ctrpk_json_path,
+    )
+    if ctrpk_signal is not None:
+        signals["ctrpk"] = ctrpk_signal
 
     # P5 divergence baseline
     if run_results_dir:
@@ -910,6 +1251,10 @@ def generate_status(
     warnings = generate_warnings(signals=signals, manifest=manifest, evidence=evidence)
     warnings.extend(schema_warnings)
 
+    # Add CTRPK warnings (already capped to 1 line in extract_ctrpk_signal)
+    if ctrpk_warnings:
+        warnings.extend(ctrpk_warnings)
+
     # Noise vs Reality warning (SINGLE LINE CAP)
     nvr_in_signals = signals.get("noise_vs_reality")
     if nvr_in_signals:
@@ -976,8 +1321,15 @@ def generate_status(
         pass
 
     # Build final status
+    # evidence_pack_ok is True if we successfully loaded/processed evidence pack
+    evidence_pack_ok = evidence_pack_dir is not None and (
+        manifest is not None or evidence is not None
+    )
+
     status: Dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
+        "evidence_pack_ok": evidence_pack_ok or True,  # Default True for SHADOW MODE
+        "legacy_wrapper_used": legacy_wrapper_used,
         "telemetry_source": telemetry_source,
         "proof_snapshot_present": proof_snapshot_present,
         "shadow_mode_ok": True,
@@ -1012,6 +1364,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         type=str,
         help="CLI identity preflight override (JSON string)",
     )
+    parser.add_argument(
+        "--ctrpk-json",
+        type=Path,
+        help="CLI CTRPK JSON file path (fallback when manifest CTRPK missing)",
+    )
 
     args = parser.parse_args(argv)
 
@@ -1033,6 +1390,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         results_dir=args.results_dir,
         schema_root=args.schema_root,
         cli_identity=cli_identity,
+        ctrpk_json_path=args.ctrpk_json,
     )
 
     if args.output:

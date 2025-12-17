@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0.0",
+  "experiment": "CAL-EXP-3",
+  "seed": 42,
+  "reference_run": "cal_exp_3_seed42_20251214_044612",
+  "generated_at": "2025-12-15T00:00:00Z",
+  "deterministic_artifacts": {
+    "baseline/cycles.jsonl": {
+      "sha256_content": "4fa7377f784b7efe65052c0eac4d36d061366bb112784321b475e0f8c18d874a",
+      "hash_method": "sha256_jsonl_canonical",
+      "must_match": true,
+      "mismatch_interpretation": "INVALIDATE: Baseline arm execution diverged from reference"
+    },
+    "treatment/cycles.jsonl": {
+      "sha256_content": "a9630ff4afa3eb10481e3d494fc0a6067d9ba838cad83e02e7debf3cbedf41f6",
+      "hash_method": "sha256_jsonl_canonical",
+      "must_match": true,
+      "mismatch_interpretation": "INVALIDATE: Treatment arm execution diverged from reference"
+    },
+    "validity/corpus_manifest.json": {
+      "sha256_content": "162ca828054761241d4e3f8b3d0265d77351d37ab1c14073d142e31527c6a042",
+      "hash_method": "sha256_json_canonical",
+      "must_match": true,
+      "mismatch_interpretation": "INVALIDATE: Input corpus identity mismatch"
+    },
+    "validity/toolchain_hash.txt": {
+      "sha256_content": "104540a4eff321cf275a8df7fb9569f031ed2de2697d95948e5ecb052383dece",
+      "hash_method": "sha256_file",
+      "must_match": true,
+      "mismatch_interpretation": "INVALIDATE: Runtime toolchain fingerprint mismatch"
+    },
+    "validity/validity_checks.json": {
+      "sha256_content": "45dcd87c8a42052aeb438bbf03245abaec321caabd50eb0d25204c50fbd3395e",
+      "hash_method": "sha256_json_canonical",
+      "must_match": true,
+      "mismatch_interpretation": "INVALIDATE: Validity check results differ"
+    },
+    "validity/isolation_audit.json": {
+      "sha256_content": "3285211bc9f3f13c6604cc9afd52cd698447bc68a29128d4aa5025043bda4959",
+      "hash_method": "sha256_json_canonical",
+      "must_match": true,
+      "mismatch_interpretation": "INVALIDATE: Isolation audit results differ"
+    },
+    "analysis/uplift_report.json": {
+      "sha256_content": "8ff03bfe93846e8bdb6b2acf2944636a05559969b078bccc3fc2c67e298077d4",
+      "hash_method": "sha256_json_canonical",
+      "must_match": true,
+      "mismatch_interpretation": "INVALIDATE: Uplift computation diverged"
+    },
+    "analysis/windowed_analysis.json": {
+      "sha256_content": "b7f0907fc204947a49f33c43e4cf7dd811d2f9a57e8fd9b715b599ec42991a5c",
+      "hash_method": "sha256_json_canonical",
+      "must_match": true,
+      "mismatch_interpretation": "INVALIDATE: Windowed analysis diverged"
+    }
+  },
+  "allowed_to_differ": {
+    "RUN_METADATA.json": {
+      "fields": ["generated_at", "run_id"],
+      "reason": "Timestamps and run IDs are execution-specific"
+    },
+    "run_config.json": {
+      "fields": ["registered_at", "seed_registered_at", "window_registered_at"],
+      "reason": "Registration timestamps vary per execution"
+    },
+    "cal_exp_3_verification_report.json": {
+      "fields": ["timestamp", "run_dir"],
+      "reason": "Verifier output timestamps and paths vary"
+    }
+  },
+  "required_invariants": {
+    "seed": 42,
+    "cycles": 1000,
+    "experiment": "CAL-EXP-3",
+    "delta_delta_p": 0.03206140378233535,
+    "toolchain_fingerprint": "d173d4ddc637578bafcdde7a6a9b090d59ecea3e310e6ece1aa845454816a65c",
+    "corpus_hash": "457d5100d42ccd851ac3a97bd7c515519e0fe794acf17a6a308839aee6d15864",
+    "uv_lock_hash": "d088f20824a5bbc4cd1bf5f02d34a6758752363f417bed1a99970773b8dacfdc"
+  },
+  "comparison_rules": {
+    "strict_hash_match": [
+      "baseline/cycles.jsonl",
+      "treatment/cycles.jsonl",
+      "validity/corpus_manifest.json",
+      "validity/toolchain_hash.txt"
+    ],
+    "semantic_equivalence": [
+      "analysis/uplift_report.json",
+      "analysis/windowed_analysis.json"
+    ],
+    "invariant_fields_only": [
+      "RUN_METADATA.json",
+      "run_config.json"
+    ]
+  }
+}

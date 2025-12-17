@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
 """
-First Organism Determinism Harness
-==================================
+First Organism Determinism Harness (MOCK/SYNTHETIC MODE)
+========================================================
 
-This module provides deterministic wrappers for the First Organism closed-loop path:
+WARNING: This module provides MOCK/SYNTHETIC deterministic wrappers for testing
+the First Organism closed-loop path. It does NOT invoke real Lean verification.
 
-    UI Event → Curriculum Gate → Derivation → Lean Verify (abstention) →
+For real Lean verification, use:
+    - scripts/verify_core_loop.py (with ML_LEAN_MODE=full or not set)
+    - backend/worker.py execute_lean_job() function
+
+This module is useful for:
+    - Testing pipeline determinism without Lean installed
+    - CI/CD environments where Lean is not available
+    - Rapid iteration during development
+
+The closed-loop path it simulates:
+
+    UI Event → Curriculum Gate → Derivation → [SIMULATED Lean Verify] →
     Dual-Attest seal H_t → RFL runner metabolism.
 
 Every function in this module is designed to produce byte-for-byte identical output

@@ -54,14 +54,20 @@ All three runs passed verification:
 
 ### 1.5 Claim Level Achieved
 
-**L5 (Uplift Replicated)** — per `CAL_EXP_3_UPLIFT_SPEC.md` § "Claim Strength Ladder":
+**L5-lite (Replicated in controlled single-environment conditions)**
 
-> L5 requires L4 achieved across ≥3 independent run-pairs with identical toolchain fingerprint and pre-registered windows.
+Per `CAL_EXP_3_UPLIFT_SPEC.md` § "Claim Strength Ladder", L5 requires L4 achieved across ≥3 independent run-pairs. However, true independence requires different machines, operators, or times.
 
+**What was achieved:**
 - ≥3 run-pairs: **3 runs** (seeds 42, 43, 44)
 - Identical toolchain fingerprint: **Yes** (hash matches)
 - Pre-registered windows: **Yes** (cycles 201-1000, registered before execution)
 - All L4: **Yes** (all validity conditions passed, all |ΔΔp| > noise floor)
+
+**Limitation (L5 → L5-lite):**
+- All runs executed in a single environment with sequential seeds
+- True independent replication (different machines, operators, times) not performed
+- Therefore, claim level is **L5-lite**, not full L5
 
 ---
 
@@ -240,6 +246,61 @@ This brief attests that:
 | `CAL_EXP_3_INDEX.md` | Updated |
 | `verify_cal_exp_3_run.py` | Canonical verifier |
 | `run_cal_exp_3_canonical.py` | Canonical producer |
+
+---
+
+## 8. Evaluator Path
+
+External evaluators can independently verify CAL-EXP-3 claims using three commands.
+
+### 8.1 Commands
+
+```bash
+# 1. Verify pipeline determinism (no Lean required)
+make verify-mock-determinism
+
+# 2. Generate and verify evidence pack
+make evidence-pack
+
+# 3. (Optional) Real Lean verification
+make lean-setup  # First time only, ~10-30 min
+make verify-lean-single PROOF=<path>  # Verify specific proof
+```
+
+### 8.2 What These Commands Verify
+
+| Command | Verifies | Does NOT Verify |
+|---------|----------|-----------------|
+| `make verify-mock-determinism` | Determinism: identical seeds → identical H_t (mock mode) | Lean proof validity |
+| `make evidence-pack` | File integrity: SHA-256 hashes match manifest | Lean proofs, capability claims |
+| `make verify-lean-single` | Lean 4 type-checks a specific proof | Full corpus verification |
+
+### 8.3 Scope Statement
+
+**What is real and reproducible:**
+- Lean 4 is configured to type-check proofs; evaluators must manually invoke Lean to verify specific proofs
+- Dual-root attestation H_t = SHA256(R_t || U_t) is computed per the implementation
+- Evidence pack artifacts exist and are hash-verified for internal consistency
+
+**What is NOT claimed:**
+- Mathematical novelty or difficulty of proofs
+- AI model capability or benchmark performance
+- Generalization beyond the measured corpus
+- Soundness of the Lean kernel (assumed correct)
+
+### 8.4 Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Verification passed |
+| 1 | Verification failed |
+| 2 | Environment/configuration error |
+
+### 8.5 Further Documentation
+
+- `docs/EVALUATOR_QUICKSTART.md` — 5-minute verification guide
+- `docs/system_law/First_Light_External_Verification.md` — Detailed verification steps
+- `results/first_light/evidence_pack_first_light/manifest.json` — Artifact inventory
 
 ---
 
