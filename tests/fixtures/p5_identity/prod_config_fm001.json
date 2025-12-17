@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "params": {
+    "max_depth": 15,
+    "batch_size": 100,
+    "timeout_ms": 5000,
+    "threshold": 0.80
+  },
+  "gates": {
+    "uplift_gate": true,
+    "safety_gate": true,
+    "curriculum": {
+      "enabled": true,
+      "level": 3
+    }
+  },
+  "_curriculum_fingerprint": "curriculum_v3_abc123def456",
+  "_comment": "FM-001: Config Source Divergence - max_depth and threshold differ"
+}

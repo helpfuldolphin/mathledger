@@ -1,0 +1,261 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/evidence_pack/audit_attestation.v1.0.0.json",
+  "title": "Evidence Pack Audit Attestation",
+  "description": "Schema for cryptographic attestation of Evidence Pack integrity. Provides tamper-evident audit trail with Merkle root verification and optional cryptographic signatures.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "attestation_id",
+    "timestamp",
+    "bundle_id",
+    "merkle_root",
+    "artifact_hashes"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "attestation_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for this attestation"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of attestation generation"
+    },
+    "bundle_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Evidence bundle being attested"
+    },
+    "bundle_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Version of the bundle being attested"
+    },
+    "merkle_root": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "Merkle root hash of all artifact hashes (sha256:hex format)"
+    },
+    "merkle_algorithm": {
+      "type": "string",
+      "const": "sha256-binary-merkle",
+      "description": "Merkle tree construction algorithm"
+    },
+    "artifact_hashes": {
+      "type": "array",
+      "description": "Individual artifact hashes (leaves of Merkle tree)",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/artifact_hash"
+      }
+    },
+    "artifact_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Total number of artifacts in bundle"
+    },
+    "total_size_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total size of all artifacts in bytes"
+    },
+    "signing_identity": {
+      "type": "object",
+      "description": "Identity of attestation signer (optional)",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Signer name or identifier"
+        },
+        "organization": {
+          "type": "string",
+          "description": "Signer organization"
+        },
+        "public_key": {
+          "type": "string",
+          "description": "Public key in PEM or hex format"
+        },
+        "key_id": {
+          "type": "string",
+          "description": "Key identifier (fingerprint or short ID)"
+        },
+        "key_type": {
+          "type": "string",
+          "enum": ["ed25519", "secp256k1", "rsa4096"],
+          "description": "Cryptographic key type"
+        },
+        "certificate_chain": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "X.509 certificate chain (if applicable)"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "description": "Cryptographic signature over merkle_root (optional)",
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["ed25519", "ecdsa-secp256k1", "rsa-pss-sha256"],
+          "description": "Signature algorithm"
+        },
+        "value": {
+          "type": "string",
+          "description": "Signature value in base64 or hex"
+        },
+        "encoding": {
+          "type": "string",
+          "enum": ["base64", "hex"],
+          "description": "Signature encoding format"
+        },
+        "signed_data_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Hash of the data that was signed"
+        },
+        "timestamp_authority": {
+          "type": "object",
+          "description": "Trusted timestamp (TSA) if used",
+          "properties": {
+            "tsa_url": {"type": "string", "format": "uri"},
+            "timestamp_token": {"type": "string"},
+            "timestamp": {"type": "string", "format": "date-time"}
+          }
+        }
+      }
+    },
+    "verification_instructions": {
+      "type": "object",
+      "description": "Instructions for verifying this attestation",
+      "properties": {
+        "merkle_verification": {
+          "type": "string",
+          "description": "Steps to verify Merkle root"
+        },
+        "signature_verification": {
+          "type": "string",
+          "description": "Steps to verify signature"
+        },
+        "tool_command": {
+          "type": "string",
+          "description": "Command-line tool invocation for verification"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional attestation metadata",
+      "properties": {
+        "generator": {
+          "type": "string",
+          "description": "Tool that generated this attestation"
+        },
+        "generator_version": {
+          "type": "string",
+          "description": "Version of generator tool"
+        },
+        "environment": {
+          "type": "object",
+          "description": "Generation environment metadata",
+          "properties": {
+            "hostname": {"type": "string"},
+            "platform": {"type": "string"},
+            "git_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"}
+          }
+        },
+        "purpose": {
+          "type": "string",
+          "description": "Purpose of this attestation"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional notes"
+        }
+      }
+    },
+    "compliance_flags": {
+      "type": "object",
+      "description": "Compliance-relevant flags",
+      "properties": {
+        "shadow_mode_verified": {
+          "type": "boolean",
+          "description": "All artifacts verified as SHADOW mode"
+        },
+        "schema_compliance_verified": {
+          "type": "boolean",
+          "description": "All artifacts validated against schemas"
+        },
+        "completeness_verified": {
+          "type": "boolean",
+          "description": "All required artifacts present"
+        },
+        "ndaa_mapping_complete": {
+          "type": "boolean",
+          "description": "NDAA requirement mapping is complete"
+        }
+      }
+    },
+    "chain_link": {
+      "type": "object",
+      "description": "Link to previous attestation in chain (if applicable)",
+      "properties": {
+        "previous_attestation_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "ID of previous attestation"
+        },
+        "previous_merkle_root": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Merkle root of previous attestation"
+        },
+        "chain_position": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Position in attestation chain"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "artifact_hash": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "description": "Hash of a single artifact",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative path within evidence bundle"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash of artifact contents"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "File size in bytes"
+        },
+        "content_type": {
+          "type": "string",
+          "description": "MIME type of artifact"
+        },
+        "leaf_index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Index in Merkle tree leaf array"
+        }
+      }
+    }
+  }
+}

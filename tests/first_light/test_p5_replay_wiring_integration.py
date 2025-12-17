@@ -1350,3 +1350,64 @@ class TestCanonicalizationV130:
         )
         p5_warnings_4 = [w for w in warnings_4 if "P5" in w]
         assert len(p5_warnings_4) == 0, f"Expected 0 P5 warnings for GREEN, got {len(p5_warnings_4)}"
+
+    def test_frozen_contract_thresholds_guard(self) -> None:
+        """
+        FREEZE GUARD: Determinism band thresholds are frozen.
+
+        If this test fails, you have changed a frozen contract.
+        This requires a version bump in replay_p5_metric_versioning.md
+        and explicit migration documentation.
+        """
+        from backend.health.replay_governance_adapter import (
+            P5_DETERMINISM_GREEN_THRESHOLD,
+            P5_DETERMINISM_YELLOW_THRESHOLD,
+        )
+
+        # FROZEN CONTRACT (v1.3.0):
+        # GREEN >= 0.85, YELLOW >= 0.70, RED < 0.70
+        assert P5_DETERMINISM_GREEN_THRESHOLD == 0.85, (
+            "Frozen contract changed: P5_DETERMINISM_GREEN_THRESHOLD must be 0.85. "
+            "Changing this requires a version bump in docs/system_law/replay/replay_p5_metric_versioning.md"
+        )
+        assert P5_DETERMINISM_YELLOW_THRESHOLD == 0.70, (
+            "Frozen contract changed: P5_DETERMINISM_YELLOW_THRESHOLD must be 0.70. "
+            "Changing this requires a version bump in docs/system_law/replay/replay_p5_metric_versioning.md"
+        )
+
+    def test_frozen_contract_p5_required_fields_guard(self, temp_dir: Path) -> None:
+        """
+        FREEZE GUARD: P5_REQUIRED_FIELDS is frozen to ["trace_hash"].
+
+        If this test fails, you have changed a frozen contract.
+        This requires a version bump in replay_p5_metric_versioning.md
+        and explicit migration documentation.
+        """
+        from scripts.generate_first_light_status import extract_p5_replay_signal
+
+        # Create logs with trace_hash (should pass schema_ok)
+        logs_with_trace_hash = temp_dir / "logs_ok.jsonl"
+        with open(logs_with_trace_hash, "w", encoding="utf-8") as f:
+            f.write('{"trace_hash": "abc123"}\n')
+
+        # Create logs without trace_hash (should fail schema_ok)
+        logs_without_trace_hash = temp_dir / "logs_fail.jsonl"
+        with open(logs_without_trace_hash, "w", encoding="utf-8") as f:
+            f.write('{"cycle_id": "cycle_001"}\n')
+
+        signal_ok = extract_p5_replay_signal(logs_with_trace_hash)
+        signal_fail = extract_p5_replay_signal(logs_without_trace_hash)
+
+        # FROZEN CONTRACT (v1.3.0):
+        # P5_REQUIRED_FIELDS = ["trace_hash"] - trace_hash is the minimum for schema_ok=True
+        assert signal_ok is not None
+        assert signal_ok.get("schema_ok") is True, (
+            "Frozen contract changed: trace_hash alone must be sufficient for schema_ok=True. "
+            "Changing this requires a version bump in docs/system_law/replay/replay_p5_metric_versioning.md"
+        )
+
+        assert signal_fail is not None
+        assert signal_fail.get("schema_ok") is False, (
+            "Frozen contract changed: missing trace_hash must cause schema_ok=False. "
+            "Changing this requires a version bump in docs/system_law/replay/replay_p5_metric_versioning.md"
+        )

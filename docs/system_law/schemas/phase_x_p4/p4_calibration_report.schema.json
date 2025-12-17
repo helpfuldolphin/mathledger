@@ -1,0 +1,268 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/phase_x_p4/calibration_report.v1.0.0.json",
+  "title": "P4 Calibration Report",
+  "description": "Schema for calibration report comparing twin predictions against real runner behavior. Generated at end of P4 shadow run. SHADOW MODE: all analysis is observational only.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "timing",
+    "divergence_statistics",
+    "accuracy_metrics",
+    "calibration_assessment"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier for this P4 shadow run"
+    },
+    "timing": {
+      "type": "object",
+      "required": ["start_time", "end_time", "cycles_observed"],
+      "properties": {
+        "start_time": {"type": "string", "format": "date-time"},
+        "end_time": {"type": "string", "format": "date-time"},
+        "cycles_observed": {"type": "integer", "minimum": 0}
+      },
+      "description": "Timing information for the shadow run"
+    },
+    "divergence_statistics": {
+      "type": "object",
+      "description": "Statistical summary of divergence measurements",
+      "properties": {
+        "mean_divergence": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mean absolute divergence"
+        },
+        "std_divergence": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Standard deviation of divergence"
+        },
+        "max_divergence": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum observed divergence"
+        },
+        "min_divergence": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum observed divergence"
+        },
+        "median_divergence": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Median divergence"
+        },
+        "p95_divergence": {
+          "type": "number",
+          "minimum": 0,
+          "description": "95th percentile divergence"
+        },
+        "p99_divergence": {
+          "type": "number",
+          "minimum": 0,
+          "description": "99th percentile divergence"
+        }
+      }
+    },
+    "severity_distribution": {
+      "type": "object",
+      "description": "Distribution of divergence by severity",
+      "properties": {
+        "NONE": {"type": "integer", "minimum": 0},
+        "INFO": {"type": "integer", "minimum": 0},
+        "WARN": {"type": "integer", "minimum": 0},
+        "CRITICAL": {"type": "integer", "minimum": 0}
+      }
+    },
+    "accuracy_metrics": {
+      "type": "object",
+      "description": "Twin prediction accuracy metrics",
+      "properties": {
+        "success_accuracy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Accuracy of success predictions"
+        },
+        "blocked_accuracy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Accuracy of block predictions"
+        },
+        "omega_accuracy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Accuracy of Omega membership predictions"
+        },
+        "hard_ok_accuracy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Accuracy of HARD mode predictions"
+        },
+        "overall_state_correlation": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "Correlation between twin and real state vectors"
+        }
+      }
+    },
+    "streak_analysis": {
+      "type": "object",
+      "description": "Analysis of divergence streaks",
+      "properties": {
+        "max_divergence_streak": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum consecutive cycles with divergence"
+        },
+        "num_streak_events": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of distinct streak events"
+        },
+        "mean_streak_length": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mean streak length"
+        }
+      }
+    },
+    "calibration_assessment": {
+      "type": "object",
+      "required": ["twin_validity", "recommendations"],
+      "properties": {
+        "twin_validity": {
+          "type": "string",
+          "enum": ["VALID", "MARGINAL", "INVALID"],
+          "description": "Overall assessment of twin model validity"
+        },
+        "validity_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Quantitative validity score"
+        },
+        "primary_divergence_sources": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Identified sources of systematic divergence"
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Recommendations for model improvement"
+        }
+      },
+      "description": "Assessment of twin calibration quality"
+    },
+    "hypothetical_alerts": {
+      "type": "object",
+      "description": "SHADOW MODE: Alerts that would have been triggered (for analysis only)",
+      "properties": {
+        "would_alert": {"type": "boolean"},
+        "alert_count": {"type": "integer", "minimum": 0},
+        "first_alert_cycle": {"type": ["integer", "null"]},
+        "alert_reasons": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "probabilistic_calibration": {
+      "type": "object",
+      "description": "Probabilistic calibration metrics (Brier score, calibration curve)",
+      "properties": {
+        "brier_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Brier score (lower is better, 0 = perfect)"
+        },
+        "brier_skill_score": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "Brier skill score relative to climatology"
+        },
+        "expected_calibration_error": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Expected Calibration Error (ECE)"
+        },
+        "calibration_curve": {
+          "type": "array",
+          "description": "Calibration curve bins for reliability diagram",
+          "items": {
+            "type": "object",
+            "properties": {
+              "predicted_prob_low": {"type": "number", "minimum": 0, "maximum": 1},
+              "predicted_prob_high": {"type": "number", "minimum": 0, "maximum": 1},
+              "mean_predicted_prob": {"type": "number", "minimum": 0, "maximum": 1},
+              "observed_frequency": {"type": "number", "minimum": 0, "maximum": 1},
+              "sample_count": {"type": "integer", "minimum": 0}
+            }
+          }
+        }
+      }
+    },
+    "confusion_matrices": {
+      "type": "object",
+      "description": "Confusion matrices for binary predictions",
+      "properties": {
+        "success": {"$ref": "#/$defs/confusion_matrix"},
+        "blocked": {"$ref": "#/$defs/confusion_matrix"},
+        "omega": {"$ref": "#/$defs/confusion_matrix"},
+        "hard_ok": {"$ref": "#/$defs/confusion_matrix"}
+      }
+    },
+    "success_criteria_evaluation": {
+      "type": "object",
+      "description": "Evaluation against P4 success criteria",
+      "properties": {
+        "all_passed": {"type": "boolean"},
+        "criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "threshold": {"type": ["number", "string"]},
+              "actual": {"type": ["number", "string"]},
+              "passed": {"type": "boolean"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "confusion_matrix": {
+      "type": "object",
+      "description": "2x2 confusion matrix for binary classification",
+      "properties": {
+        "true_positive": {"type": "integer", "minimum": 0},
+        "true_negative": {"type": "integer", "minimum": 0},
+        "false_positive": {"type": "integer", "minimum": 0},
+        "false_negative": {"type": "integer", "minimum": 0},
+        "precision": {"type": "number", "minimum": 0, "maximum": 1},
+        "recall": {"type": "number", "minimum": 0, "maximum": 1},
+        "f1_score": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    }
+  }
+}

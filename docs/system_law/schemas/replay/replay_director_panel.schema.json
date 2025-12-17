@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/replay/replay_director_panel.v1.0.0.json",
+  "title": "Replay Safety Director Panel",
+  "description": "Schema for replay safety director panel. Provides executive-level summary for Phase X governance review with conflict detection and manual review triggers.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "timestamp",
+    "status",
+    "safe",
+    "violation_count",
+    "warning_count"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when panel was generated"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["ok", "warn", "block"],
+      "description": "Overall panel status"
+    },
+    "safe": {
+      "type": "boolean",
+      "description": "True if all replay safety checks passed"
+    },
+    "violation_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of violations"
+    },
+    "warning_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of warnings"
+    },
+    "conflict_flag": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if safety-radar conflict detected requiring review"
+    },
+    "conflict_note": {
+      "type": ["string", "null"],
+      "description": "Human-readable conflict description (null if no conflict)"
+    },
+    "headline": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Executive summary headline"
+    },
+    "recommendation": {
+      "type": "string",
+      "enum": ["proceed", "caution", "halt", "manual_review"],
+      "description": "Recommended action for governance review"
+    },
+    "safety_metrics": {
+      "type": "object",
+      "properties": {
+        "determinism_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Determinism confidence (0-100)"
+        },
+        "replay_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall replay confidence (0-1)"
+        },
+        "coverage_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Replay coverage rate (0-1)"
+        }
+      },
+      "description": "Key safety metrics for executive review"
+    },
+    "governance_view": {
+      "type": "object",
+      "properties": {
+        "alignment": {
+          "type": "string",
+          "enum": ["aligned", "tension", "divergent"],
+          "description": "Safety-radar alignment status"
+        },
+        "safety_status": {
+          "type": "string",
+          "enum": ["ok", "warn", "block"],
+          "description": "Safety subsystem status"
+        },
+        "governance_status": {
+          "type": "string",
+          "enum": ["ok", "warn", "block"],
+          "description": "Governance radar status"
+        }
+      },
+      "description": "Governance view summary"
+    },
+    "critical_flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["flag_type", "severity", "description"],
+        "properties": {
+          "flag_type": {
+            "type": "string",
+            "description": "Flag identifier (e.g., 'H_T_MISMATCH', 'DETERMINISM_BELOW_THRESHOLD')"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warning", "critical"],
+            "description": "Flag severity"
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable flag description"
+          },
+          "first_cycle": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "First cycle where flag was raised"
+          },
+          "last_cycle": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Most recent cycle with flag"
+          }
+        }
+      },
+      "description": "List of critical flags raised during replay"
+    },
+    "audit_trail": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "type": "string",
+          "description": "Unique run identifier for audit"
+        },
+        "evidence_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash of evidence payload"
+        },
+        "evaluator_version": {
+          "type": "string",
+          "description": "Version of replay evaluator used"
+        }
+      },
+      "description": "Audit trail metadata"
+    },
+    "phase_x_binding": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": ["P3", "P4"],
+          "description": "Current validation phase"
+        },
+        "doctrine_compliant": {
+          "type": "boolean",
+          "description": "True if panel meets P3/P4 doctrine requirements"
+        },
+        "whitepaper_ready": {
+          "type": "boolean",
+          "description": "True if panel is suitable for whitepaper evidence"
+        }
+      },
+      "description": "Phase X doctrine binding metadata"
+    }
+  },
+  "additionalProperties": false
+}

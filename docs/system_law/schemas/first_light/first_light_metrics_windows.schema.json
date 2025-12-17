@@ -1,0 +1,170 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/first_light/metrics_windows.v1.0.0.json",
+  "title": "First-Light Metrics Windows",
+  "description": "Schema for windowed metrics aggregation in P3 First-Light experiments. Contains per-window statistics for time series analysis.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "window_size",
+    "total_windows",
+    "windows"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier for this First-Light run"
+    },
+    "window_size": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of cycles per window"
+    },
+    "total_windows": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of completed windows"
+    },
+    "windows": {
+      "type": "array",
+      "description": "Array of per-window metrics",
+      "items": {
+        "type": "object",
+        "required": [
+          "window_index",
+          "start_cycle",
+          "end_cycle",
+          "metrics"
+        ],
+        "properties": {
+          "window_index": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "0-indexed window number"
+          },
+          "start_cycle": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "First cycle in this window"
+          },
+          "end_cycle": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Last cycle in this window"
+          },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "success_rate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Success rate in this window"
+              },
+              "abstention_rate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Abstention rate in this window"
+              },
+              "omega_occupancy": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Omega region occupancy in this window"
+              },
+              "hard_ok_rate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "HARD mode OK rate in this window"
+              },
+              "mean_rsi": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Mean RSI in this window"
+              },
+              "min_rsi": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Minimum RSI in this window"
+              },
+              "max_rsi": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Maximum RSI in this window"
+              },
+              "block_rate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Block rate in this window"
+              }
+            },
+            "description": "Aggregated metrics for this window"
+          },
+          "delta_p": {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": ["number", "null"],
+                "description": "Delta-p for success (slope from previous window)"
+              },
+              "abstention": {
+                "type": ["number", "null"],
+                "description": "Delta-p for abstention (slope from previous window)"
+              }
+            },
+            "description": "Delta-p values computed at window boundary"
+          },
+          "red_flags_in_window": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of red-flag events in this window"
+          }
+        }
+      }
+    },
+    "trajectories": {
+      "type": "object",
+      "description": "Full trajectories extracted from windows for plotting",
+      "properties": {
+        "success_rate": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "Success rate trajectory"
+        },
+        "abstention_rate": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "Abstention rate trajectory"
+        },
+        "mean_rsi": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "Mean RSI trajectory"
+        },
+        "omega_occupancy": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "Omega occupancy trajectory"
+        },
+        "hard_ok_rate": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "HARD OK rate trajectory"
+        }
+      }
+    }
+  }
+}

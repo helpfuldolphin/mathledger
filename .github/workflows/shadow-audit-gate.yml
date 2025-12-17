@@ -1,0 +1,267 @@
+# Shadow Audit Gate (CANONICAL)
+#
+# Aligned with CANONICAL CONTRACT: docs/system_law/calibration/RUN_SHADOW_AUDIT_V0_1_CONTRACT.md
+#
+# NON-GATING CONTRACT:
+# - Script failures (syntax, crashes) -> BLOCK
+# - Audit RESULTS (warnings, empty input) -> NEVER BLOCK
+# - All outputs must have mode="SHADOW"
+#
+# FROZEN EXIT CODES:
+# - 0: OK (script completed - success or warnings)
+# - 1: FATAL (missing input, crash, exception)
+# - 2: RESERVED (unused in v0.1)
+
+name: Shadow Audit Gate
+
+on:
+  pull_request:
+    branches: [integrate/ledger-v0.1, master]
+    paths:
+      - 'backend/topology/**'
+      - 'backend/health/**'
+      - 'scripts/run_shadow_audit.py'
+      - 'tests/scripts/test_run_shadow_audit.py'
+      - 'tests/integration/test_shadow_audit_e2e.py'
+      - 'tests/ci/test_shadow_audit_guardrails.py'
+
+  push:
+    branches: [integrate/ledger-v0.1, master]
+    paths:
+      - 'backend/topology/**'
+      - 'backend/health/**'
+      - 'scripts/run_shadow_audit.py'
+
+  schedule:
+    # Nightly at 3 AM UTC (consistent with Phase X)
+    - cron: '0 3 * * *'
+
+  workflow_dispatch:
+    inputs:
+      run_full_audit:
+        description: 'Run full shadow audit (not just tests)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  # SHADOW MODE: Always enabled (Phase X contract)
+  USLA_SHADOW_ENABLED: 'true'
+  SHADOW_MODE_ENABLED: 'true'
+  # Windows-safe encoding
+  PYTHONUTF8: '1'
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Unit Tests (BLOCKING on failures)
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: Unit Tests (U1-U6)
+    runs-on: ubuntu-latest
+    continue-on-error: false  # Script failures BLOCK
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run canonical unit tests
+        run: |
+          echo "=== SHADOW AUDIT UNIT TESTS ==="
+          echo "Testing: U1-U6 per SHADOW_AUDIT_TEST_STRATEGY.md"
+          echo ""
+          uv run pytest tests/scripts/test_run_shadow_audit.py \
+            -v --tb=short \
+            -m unit \
+            --junit-xml=results/unit-tests.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: results/unit-tests.xml
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Integration Tests (BLOCKING on failures)
+  # ---------------------------------------------------------------------------
+  integration-tests:
+    name: Integration Tests (I1-I3)
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs: unit-tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run canonical integration tests
+        run: |
+          echo "=== SHADOW AUDIT INTEGRATION TESTS ==="
+          echo "Testing: I1 (Demo), I2 (Audit), I3 (Verify)"
+          echo ""
+          uv run pytest tests/integration/test_shadow_audit_e2e.py \
+            -v --tb=short \
+            -m integration \
+            --junit-xml=results/integration-tests.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: results/integration-tests.xml
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Guardrail Tests (BLOCKING on contract violations)
+  # ---------------------------------------------------------------------------
+  guardrail-tests:
+    name: Guardrail Tests
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs: unit-tests
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run guardrail tests
+        run: |
+          echo "=== SHADOW MODE GUARDRAILS ==="
+          echo "Verifying: mode=SHADOW, enforcement=False, action=LOGGED_ONLY"
+          echo ""
+          uv run pytest tests/ci/test_shadow_audit_guardrails.py \
+            -v --tb=short \
+            --junit-xml=results/guardrail-tests.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: guardrail-test-results
+          path: results/guardrail-tests.xml
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Nightly Full Audit (NON-BLOCKING on results)
+  # ---------------------------------------------------------------------------
+  nightly-audit:
+    name: Nightly Shadow Audit
+    runs-on: ubuntu-latest
+    # Audit RESULTS are advisory only - never block
+    continue-on-error: true
+    if: github.event_name == 'schedule' || github.event.inputs.run_full_audit == 'true'
+    needs: [unit-tests, integration-tests, guardrail-tests]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run Demo Mode Audit
+        id: audit
+        run: |
+          echo "=== NIGHTLY SHADOW AUDIT ==="
+          echo "Mode: SHADOW (advisory only, not blocking)"
+          echo ""
+
+          mkdir -p results/shadow_audit
+
+          # Run demo mode (always succeeds per contract)
+          uv run python scripts/run_shadow_audit.py demo \
+            --output results/shadow_audit \
+            --seed ${{ github.run_number }}
+
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Verify SHADOW Mode Markers
+        if: always()
+        run: |
+          echo "Verifying SHADOW mode markers..."
+
+          # Find all JSON files
+          find results/shadow_audit -name "*.json" -type f | while read f; do
+            echo "Checking: $f"
+
+            # mode="SHADOW" must be present
+            if ! grep -q '"mode": "SHADOW"' "$f" 2>/dev/null; then
+              if ! grep -q '"mode":"SHADOW"' "$f" 2>/dev/null; then
+                echo "  WARNING: mode=SHADOW not found"
+              fi
+            fi
+
+            # enforcement=true must NOT be present
+            if grep -q '"enforcement": true' "$f" 2>/dev/null; then
+              echo "  ERROR: enforcement=true found!"
+              exit 1
+            fi
+          done
+
+          echo "SHADOW mode markers verified."
+
+      - name: Upload Audit Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shadow-audit-${{ github.run_number }}
+          path: results/shadow_audit/
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Summary (Always runs)
+  # ---------------------------------------------------------------------------
+  summary:
+    name: Gate Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [unit-tests, integration-tests, guardrail-tests]
+
+    steps:
+      - name: Report Status
+        run: |
+          echo "========================================"
+          echo "SHADOW AUDIT GATE SUMMARY"
+          echo "========================================"
+          echo ""
+          echo "NON-GATING CONTRACT:"
+          echo "  - Script failures: BLOCKING"
+          echo "  - Audit results:   NON-BLOCKING"
+          echo "  - Mode marker:     SHADOW"
+          echo "  - Enforcement:     FALSE"
+          echo ""
+          echo "RESULTS:"
+          echo "  Unit Tests:        ${{ needs.unit-tests.result }}"
+          echo "  Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "  Guardrail Tests:   ${{ needs.guardrail-tests.result }}"
+          echo ""
+
+          # Determine overall status
+          if [ "${{ needs.unit-tests.result }}" = "failure" ] || \
+             [ "${{ needs.integration-tests.result }}" = "failure" ] || \
+             [ "${{ needs.guardrail-tests.result }}" = "failure" ]; then
+            echo "STATUS: BLOCKED (script failure or contract violation)"
+            exit 1
+          else
+            echo "STATUS: PASSED (SHADOW mode compliant)"
+          fi
+
+          echo "========================================"

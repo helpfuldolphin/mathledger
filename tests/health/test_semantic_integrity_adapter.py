@@ -11,6 +11,9 @@ from typing import Any, Dict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+# Import reusable warning neutrality helpers (single source of truth)
+from tests.helpers.warning_neutrality import assert_warning_neutral
+
 from backend.health.semantic_integrity_adapter import (
     SEMANTIC_INTEGRITY_TILE_SCHEMA_VERSION,
     SEMANTIC_FOOTPRINT_SCHEMA_VERSION,
@@ -1762,12 +1765,9 @@ class TestSemanticSafetyPanelForAlignmentView(unittest.TestCase):
         summary = result["summary"]
         # Should be a single sentence (ends with period, no newlines)
         self.assertTrue(summary.endswith("."))
-        self.assertNotIn("\n", summary)
-        # Should be neutral (no evaluative terms)
-        forbidden_terms = ["bad", "wrong", "error", "critical", "urgent", "fail"]
-        summary_lower = summary.lower()
-        for term in forbidden_terms:
-            self.assertNotIn(term, summary_lower, f"Evaluative term '{term}' found in summary")
+        # Use reusable helper (single source of truth for banned words)
+        neutrality_result = assert_warning_neutral(summary)
+        self.assertTrue(neutrality_result.passed, f"Summary neutrality check failed: {neutrality_result.message}")
 
     def test_ggfl_works_with_signal_format(self):
         """GGFL adapter should work with signal format (not just panel format)."""

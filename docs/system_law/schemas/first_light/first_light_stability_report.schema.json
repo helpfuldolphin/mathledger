@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/first_light/stability_report.v1.0.0.json",
+  "title": "First-Light Stability Report",
+  "description": "Schema for stability summary report in P3 First-Light experiments. Contains final metrics and pass/fail criteria evaluation.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "config",
+    "timing",
+    "metrics",
+    "criteria_evaluation"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier for this First-Light run"
+    },
+    "config": {
+      "type": "object",
+      "required": ["slice_name", "runner_type", "total_cycles", "tau_0"],
+      "properties": {
+        "slice_name": {"type": "string"},
+        "runner_type": {"type": "string", "enum": ["u2", "rfl"]},
+        "total_cycles": {"type": "integer", "minimum": 1},
+        "tau_0": {"type": "number"},
+        "seed": {"type": ["integer", "null"]}
+      },
+      "description": "Configuration used for this run"
+    },
+    "timing": {
+      "type": "object",
+      "required": ["start_time", "end_time", "cycles_completed"],
+      "properties": {
+        "start_time": {"type": "string", "format": "date-time"},
+        "end_time": {"type": "string", "format": "date-time"},
+        "cycles_completed": {"type": "integer", "minimum": 0}
+      },
+      "description": "Timing information"
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["delta_p", "rsi", "omega", "hard_mode"],
+      "properties": {
+        "delta_p": {
+          "type": "object",
+          "properties": {
+            "success_final": {"type": "number"},
+            "abstention_final": {"type": "number"},
+            "success_slope": {"type": ["number", "null"]},
+            "abstention_slope": {"type": ["number", "null"]}
+          },
+          "description": "Delta-p learning curve metrics"
+        },
+        "rsi": {
+          "type": "object",
+          "properties": {
+            "mean": {"type": "number", "minimum": 0, "maximum": 1},
+            "min": {"type": "number", "minimum": 0, "maximum": 1},
+            "max": {"type": "number", "minimum": 0, "maximum": 1},
+            "std": {"type": "number", "minimum": 0}
+          },
+          "description": "RSI (Reflexive Stability Index) statistics"
+        },
+        "omega": {
+          "type": "object",
+          "properties": {
+            "occupancy_rate": {"type": "number", "minimum": 0, "maximum": 1},
+            "exit_count": {"type": "integer", "minimum": 0},
+            "max_exit_streak": {"type": "integer", "minimum": 0}
+          },
+          "description": "Omega region occupancy metrics"
+        },
+        "hard_mode": {
+          "type": "object",
+          "properties": {
+            "ok_rate": {"type": "number", "minimum": 0, "maximum": 1},
+            "fail_count": {"type": "integer", "minimum": 0},
+            "max_fail_streak": {"type": "integer", "minimum": 0}
+          },
+          "description": "HARD mode metrics"
+        },
+        "success_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Final cumulative success rate"
+        },
+        "abstention_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Final cumulative abstention rate"
+        }
+      },
+      "description": "Core stability metrics"
+    },
+    "criteria_evaluation": {
+      "type": "object",
+      "required": ["all_passed", "criteria"],
+      "properties": {
+        "all_passed": {
+          "type": "boolean",
+          "description": "Whether all success criteria passed"
+        },
+        "criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "threshold", "actual", "passed"],
+            "properties": {
+              "name": {"type": "string"},
+              "threshold": {"type": ["number", "string"]},
+              "actual": {"type": ["number", "string"]},
+              "passed": {"type": "boolean"},
+              "notes": {"type": "string"}
+            }
+          },
+          "description": "Individual criteria evaluations"
+        }
+      },
+      "description": "Success criteria evaluation"
+    },
+    "red_flag_summary": {
+      "type": "object",
+      "properties": {
+        "total_flags": {"type": "integer", "minimum": 0},
+        "by_severity": {"type": "object"},
+        "hypothetical_abort": {"type": "boolean"}
+      },
+      "description": "Summary of red-flag observations"
+    }
+  }
+}

@@ -1,0 +1,300 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/slice_identity/governance_signal.v1.0.0.json",
+  "title": "Slice Identity Governance Signal",
+  "description": "Schema for governance signals emitted when slice identity invariants are violated or drift is detected. Consumed by governance plane for policy enforcement and audit logging.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "signal_type",
+    "signal_id",
+    "emitted_at",
+    "severity",
+    "source",
+    "identity_state",
+    "action"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "signal_type": {
+      "type": "string",
+      "enum": [
+        "IDENTITY_STABLE",
+        "IDENTITY_DRIFT_PARAMETRIC",
+        "IDENTITY_DRIFT_SEMANTIC",
+        "IDENTITY_INVARIANT_VIOLATION",
+        "IDENTITY_VERIFICATION_FAILED",
+        "IDENTITY_RESTORED"
+      ],
+      "description": "Type of governance signal"
+    },
+    "signal_id": {
+      "type": "string",
+      "description": "Unique identifier for this signal instance"
+    },
+    "emitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when signal was emitted"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["INFO", "WARNING", "ERROR", "CRITICAL"],
+      "description": "Signal severity for routing and alerting"
+    },
+    "source": {
+      "type": "object",
+      "required": ["component", "version"],
+      "properties": {
+        "component": {
+          "type": "string",
+          "description": "Component that emitted the signal"
+        },
+        "version": {
+          "type": "string",
+          "description": "Component version"
+        },
+        "run_id": {
+          "type": "string",
+          "description": "Associated run ID if applicable"
+        },
+        "cycle": {
+          "type": "integer",
+          "description": "Associated cycle number if applicable"
+        }
+      },
+      "description": "Source component information"
+    },
+    "identity_state": {
+      "type": "object",
+      "required": [
+        "slice_name",
+        "current_fingerprint",
+        "baseline_fingerprint",
+        "fingerprint_match"
+      ],
+      "properties": {
+        "slice_name": {
+          "type": "string",
+          "description": "Name of slice being observed"
+        },
+        "slice_version": {
+          "type": "string",
+          "description": "Slice version if versioned"
+        },
+        "current_fingerprint": {
+          "type": "string",
+          "description": "Current computed fingerprint"
+        },
+        "baseline_fingerprint": {
+          "type": "string",
+          "description": "Expected baseline fingerprint"
+        },
+        "fingerprint_match": {
+          "type": "boolean",
+          "description": "Whether fingerprints match"
+        },
+        "curriculum_fingerprint": {
+          "type": "string",
+          "description": "Curriculum fingerprint for provenance"
+        }
+      },
+      "description": "Identity state at signal emission"
+    },
+    "drift_details": {
+      "type": ["object", "null"],
+      "properties": {
+        "drift_severity": {
+          "type": "string",
+          "enum": ["NONE", "PARAMETRIC", "SEMANTIC"],
+          "description": "Classification of drift"
+        },
+        "drift_status": {
+          "type": "string",
+          "enum": ["OK", "WARN", "BLOCK"],
+          "description": "Governance status from drift"
+        },
+        "changed_params": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "baseline", "current", "classification"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Parameter path"
+              },
+              "baseline": {
+                "description": "Baseline value"
+              },
+              "current": {
+                "description": "Current value"
+              },
+              "delta": {
+                "type": ["number", "null"],
+                "description": "Numeric delta"
+              },
+              "classification": {
+                "type": "string",
+                "enum": ["PARAMETRIC", "SEMANTIC"]
+              },
+              "constraint": {
+                "type": "string",
+                "enum": ["increasing", "decreasing", "boolean_true", "any"]
+              }
+            }
+          },
+          "description": "Changed parameters if drift detected"
+        },
+        "constraint_violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {"type": "string"},
+              "constraint": {"type": "string"},
+              "expected_direction": {"type": "string"},
+              "actual_direction": {"type": "string"}
+            }
+          },
+          "description": "Specific constraint violations"
+        }
+      },
+      "description": "Drift details if signal type is drift-related"
+    },
+    "invariant_violation": {
+      "type": ["object", "null"],
+      "properties": {
+        "invariant_id": {
+          "type": "string",
+          "enum": ["SI-001", "SI-002", "SI-003", "SI-004", "SI-005", "SI-006"],
+          "description": "Violated invariant ID"
+        },
+        "invariant_name": {
+          "type": "string",
+          "description": "Human-readable invariant name"
+        },
+        "violation_description": {
+          "type": "string",
+          "description": "Description of the violation"
+        },
+        "evidence": {
+          "type": "object",
+          "description": "Evidence supporting violation determination"
+        }
+      },
+      "description": "Invariant violation details if applicable"
+    },
+    "evidence_chain_impact": {
+      "type": "object",
+      "properties": {
+        "admissibility": {
+          "type": "string",
+          "enum": ["FULL", "PARTIAL", "INADMISSIBLE", "UNCHANGED"],
+          "description": "Impact on evidence admissibility"
+        },
+        "affected_run_ids": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Run IDs affected by this signal"
+        },
+        "p4_divergence_analysis_valid": {
+          "type": "boolean",
+          "description": "Whether P4 divergence analysis remains valid"
+        },
+        "remediation_required": {
+          "type": "boolean",
+          "description": "Whether remediation is needed"
+        },
+        "remediation_options": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Available remediation options"
+        }
+      },
+      "description": "Impact on P3/P4 evidence chain"
+    },
+    "action": {
+      "type": "object",
+      "required": ["taken", "description"],
+      "properties": {
+        "taken": {
+          "type": "string",
+          "enum": [
+            "LOGGED_ONLY",
+            "RUN_FLAGGED",
+            "EVIDENCE_MARKED_PARTIAL",
+            "EVIDENCE_MARKED_INADMISSIBLE",
+            "ALERT_RAISED",
+            "NONE"
+          ],
+          "description": "Action taken in response to signal"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of action taken"
+        },
+        "shadow_mode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether signal was emitted in shadow mode"
+        },
+        "governance_modified": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether governance was modified (always false in Phase X)"
+        }
+      },
+      "description": "Action taken in response to signal"
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "preceding_signals": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "IDs of preceding related signals"
+        },
+        "consecutive_drift_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Consecutive drift signals if in a streak"
+        },
+        "time_since_last_stable": {
+          "type": "integer",
+          "description": "Seconds since last stable signal"
+        },
+        "run_phase": {
+          "type": "string",
+          "enum": ["P3", "P4", "PRODUCTION", "UNKNOWN"],
+          "description": "Current run phase"
+        }
+      },
+      "description": "Additional context for signal interpretation"
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["deterministic_timestamp"],
+      "properties": {
+        "deterministic_timestamp": {
+          "type": "string",
+          "description": "Deterministic timestamp for reproducibility"
+        },
+        "signal_hash": {
+          "type": "string",
+          "description": "Hash of signal content for integrity"
+        },
+        "parent_event_id": {
+          "type": "string",
+          "description": "ID of parent provenance event"
+        }
+      },
+      "description": "Provenance chain information"
+    }
+  }
+}

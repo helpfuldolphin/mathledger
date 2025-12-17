@@ -1,0 +1,22 @@
+# TikZ Specification for Diagram 1: The P3 Simulation Loop
+# Description: A cyclical flow diagram showing the core components of the P3 simulation.
+
+\begin{tikzpicture}[
+    node distance=2.5cm,
+    block/.style={rectangle, draw, fill=blue!10, text width=8em, text centered, rounded corners, minimum height=4em},
+    law/.style={rectangle, draw, fill=green!10, text width=8em, text centered, rounded corners, minimum height=4em},
+    line/.style={draw, -{Stealth[length=2mm]}}
+]
+    % Nodes
+    \node [block] (state) {System State \(x_t\)};
+    \node [block, right=of state] (engine) {\(\Delta p\) Physics Engine};
+    \node [law, below=of engine] (laws) {USLA Laws & \(\Omega\) Constraints};
+    \node [block, above=of engine] (state_next) {System State \(x_{t+1}\)};
+
+    % Arrows
+    \path [line] (state) -- node[above] {Compute} (engine);
+    \path [line] (laws) -- (engine);
+    \path [line] (engine) -- node[above, text width=6em] {\(x_{t+1} = x_t + \Delta p(x_t)\)} (state_next);
+    \path [line] (state_next) .. controls +(up:1cm) and +(up:1cm) .. (state);
+\end{tikzpicture}
+

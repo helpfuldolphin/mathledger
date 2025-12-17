@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/replay_safety/governance_signal.v1.0.0.json",
+  "title": "Replay Safety Governance Signal",
+  "description": "Schema for the unified Replay Safety Governance Signal that fuses Safety and Radar evaluations into a single normalized governance decision.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "signal_type",
+    "status",
+    "governance_status",
+    "governance_alignment",
+    "safety_status",
+    "conflict",
+    "reasons",
+    "safe_for_policy_update",
+    "safe_for_promotion"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "signal_type": {
+      "type": "string",
+      "const": "replay_safety",
+      "description": "Signal type identifier"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["OK", "WARN", "BLOCK", "ok", "warn", "block"],
+      "description": "Final fused governance status (normalized from Safety x Radar)"
+    },
+    "governance_status": {
+      "type": "string",
+      "enum": ["OK", "WARN", "BLOCK", "ok", "warn", "block"],
+      "description": "Governance status for evidence pack harmonization (mirrors status)"
+    },
+    "governance_alignment": {
+      "type": "string",
+      "enum": ["ALIGNED", "TENSION", "DIVERGENT", "aligned", "tension", "divergent"],
+      "description": "Alignment state between Safety and Radar evaluations"
+    },
+    "safety_status": {
+      "type": "string",
+      "enum": ["OK", "WARN", "BLOCK", "ok", "warn", "block"],
+      "description": "Status from Safety evaluation (determinism verification)"
+    },
+    "radar_status": {
+      "type": "string",
+      "enum": ["OK", "WARN", "BLOCK", "ok", "warn", "block"],
+      "description": "Status from Radar evaluation (governance drift detection)"
+    },
+    "conflict": {
+      "type": "boolean",
+      "description": "True if Safety and Radar are in irreconcilable conflict"
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^\\[(Safety|Radar|CONFLICT)\\].*",
+        "description": "Reason string prefixed with source tag"
+      },
+      "description": "List of prefixed diagnostic reasons from both Safety and Radar"
+    },
+    "safe_for_policy_update": {
+      "type": "boolean",
+      "description": "Whether the system state is safe for policy updates"
+    },
+    "safe_for_promotion": {
+      "type": "boolean",
+      "description": "Whether the current state is eligible for promotion"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when signal was generated"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Optional run identifier for traceability"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata for extended diagnostics",
+      "properties": {
+        "safety_eval_hash": {
+          "type": "string",
+          "description": "Hash of safety evaluation input"
+        },
+        "radar_eval_hash": {
+          "type": "string",
+          "description": "Hash of radar evaluation input"
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence score from replay verification"
+        },
+        "divergence_details": {
+          "type": "object",
+          "description": "P4 divergence correlation details",
+          "properties": {
+            "p4_cycle": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "P4 cycle number if correlated"
+            },
+            "divergence_severity": {
+              "type": "string",
+              "enum": ["NONE", "MINOR", "MODERATE", "SEVERE"],
+              "description": "P4 divergence severity mapping"
+            },
+            "twin_correlation": {
+              "type": "boolean",
+              "description": "Whether correlated with twin prediction"
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "signal_type": "replay_safety",
+      "status": "OK",
+      "governance_status": "OK",
+      "governance_alignment": "ALIGNED",
+      "safety_status": "OK",
+      "radar_status": "OK",
+      "conflict": false,
+      "reasons": [
+        "[Safety] All checks passed",
+        "[Radar] No drift detected"
+      ],
+      "safe_for_policy_update": true,
+      "safe_for_promotion": true,
+      "timestamp": "2025-12-10T00:00:00Z"
+    },
+    {
+      "schema_version": "1.0.0",
+      "signal_type": "replay_safety",
+      "status": "BLOCK",
+      "governance_status": "BLOCK",
+      "governance_alignment": "DIVERGENT",
+      "safety_status": "OK",
+      "radar_status": "BLOCK",
+      "conflict": true,
+      "reasons": [
+        "[Safety] All checks passed",
+        "[Radar] Drift alert triggered",
+        "[CONFLICT] Safety and Radar diverge - manual review required"
+      ],
+      "safe_for_policy_update": false,
+      "safe_for_promotion": false,
+      "timestamp": "2025-12-10T00:00:00Z",
+      "metadata": {
+        "divergence_details": {
+          "divergence_severity": "SEVERE",
+          "twin_correlation": true
+        }
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "signal_type": "replay_safety",
+      "status": "WARN",
+      "governance_status": "WARN",
+      "governance_alignment": "TENSION",
+      "safety_status": "OK",
+      "radar_status": "WARN",
+      "conflict": false,
+      "reasons": [
+        "[Safety] All checks passed",
+        "[Radar] Approaching drift threshold"
+      ],
+      "safe_for_policy_update": true,
+      "safe_for_promotion": true,
+      "timestamp": "2025-12-10T00:00:00Z"
+    }
+  ]
+}

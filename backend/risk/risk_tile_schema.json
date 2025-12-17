@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Risk Assessment Tile",
+  "description": "A structured representation of a single risk metric assessment for a MathLedger component, providing a snapshot of performance against a defined threshold.",
+  "type": "object",
+  "properties": {
+    "metric_id": {
+      "description": "A unique, machine-readable identifier for the metric.",
+      "type": "string",
+      "examples": ["delta_p", "rsi", "omega", "tda_divergence"]
+    },
+    "metric_name": {
+      "description": "A human-readable name for the metric.",
+      "type": "string",
+      "examples": ["Performance Delta", "Robustness Stress Index", "Generalization Score (Omega)", "TDA Divergence"]
+    },
+    "value": {
+      "description": "The measured value of the metric.",
+      "type": "number"
+    },
+    "threshold": {
+      "description": "The specific gating threshold for this metric. The interpretation depends on the 'operator' field.",
+      "type": "number"
+    },
+    "operator": {
+      "description": "The mathematical operator used for the gate check (e.g., value > threshold).",
+      "type": "string",
+      "enum": [">", ">=", "<", "<=", "=="]
+    },
+    "gate": {
+      "description": "The governance gate this metric influences.",
+      "type": "string",
+      "enum": ["P3", "P4", "Deployment", "Defense Compliance"]
+    },
+    "risk_band": {
+      "description": "The calculated risk level based on the metric's value relative to its threshold.",
+      "type": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    },
+    "timestamp": {
+      "description": "The ISO 8601 timestamp of when the metric was measured.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "justification_ref": {
+      "description": "A reference or link to the documentation justifying the threshold value.",
+      "type": "string",
+      "format": "uri-reference"
+    }
+  },
+  "required": [
+    "metric_id",
+    "metric_name",
+    "value",
+    "threshold",
+    "operator",
+    "gate",
+    "risk_band",
+    "timestamp"
+  ]
+}

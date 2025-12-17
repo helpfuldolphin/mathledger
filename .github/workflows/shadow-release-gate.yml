@@ -1,0 +1,183 @@
+name: Shadow Release Gate
+
+# P0.1: Shadow Release Gate — SHADOW MODE Contract Enforcement
+#
+# WHAT IS GATED:
+# - Documents declaring SHADOW-GATED that use prohibited phrases
+# - SHADOW-GATED contexts without gate registry references
+# - Unqualified "SHADOW MODE" usage (must specify OBSERVE or GATED)
+#
+# WHAT IS NOT GATED:
+# - SHADOW-OBSERVE documents (allowed to use "observational only")
+# - Runtime governance decisions
+# - Frozen harnesses (CAL-EXP-1/2/3, P5)
+#
+# SHADOW MODE: SHADOW-GATED
+# Gate Registry: SRG-001
+# Contract Reference: docs/system_law/SHADOW_MODE_CONTRACT.md v1.0.0
+
+on:
+  pull_request:
+    branches: [master, integrate/ledger-v0.1]
+    paths:
+      # Scan documentation that may contain SHADOW MODE declarations
+      - 'docs/**/*.md'
+      - 'docs/**/*.yaml'
+      - 'docs/**/*.yml'
+      # Scan config files
+      - 'config/**/*.yaml'
+      - 'config/**/*.yml'
+      # Exclude frozen harness paths (do NOT trigger on these)
+      - '!scripts/first_light_cal_exp1_*.py'
+      - '!scripts/first_light_cal_exp2_convergence.py'
+      - '!scripts/verify_cal_exp_3_run.py'
+      - '!scripts/run_p5_cal_exp1.py'
+
+  push:
+    branches: [master, integrate/ledger-v0.1]
+    paths:
+      - 'docs/**/*.md'
+      - 'docs/**/*.yaml'
+      - 'docs/**/*.yml'
+      - 'config/**/*.yaml'
+      - 'config/**/*.yml'
+      - '!scripts/first_light_cal_exp1_*.py'
+      - '!scripts/first_light_cal_exp2_convergence.py'
+      - '!scripts/verify_cal_exp_3_run.py'
+      - '!scripts/run_p5_cal_exp1.py'
+
+  workflow_dispatch:
+    inputs:
+      scan_path:
+        description: 'Path to scan (default: docs/)'
+        required: false
+        default: 'docs/'
+        type: string
+      fail_on_warn:
+        description: 'Fail on warnings (not just errors)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  shadow-release-gate:
+    name: Shadow Release Gate Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Run Shadow Release Gate
+        id: gate
+        run: |
+          SCAN_PATH="${{ github.event.inputs.scan_path || 'docs/' }}"
+          echo "Scanning path: $SCAN_PATH"
+          echo "Gate ID: SRG-001"
+          echo "Contract: SHADOW_MODE_CONTRACT.md v1.0.0"
+          echo ""
+
+          python -m backend.health.shadow_release_gate \
+            --scan-dir "$SCAN_PATH" \
+            --output shadow_release_gate_report.json \
+            --exclude "**/node_modules/**" \
+            --exclude "**/results/**" \
+            --exclude "**/build/**"
+
+          EXIT_CODE=$?
+
+          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✅ Shadow Release Gate: PASS"
+          else
+            echo "❌ Shadow Release Gate: FAIL"
+            echo ""
+            echo "Violations found. See report below."
+          fi
+
+          exit $EXIT_CODE
+
+      - name: Upload Gate Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shadow-release-gate-report
+          path: shadow_release_gate_report.json
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Shadow Release Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f shadow_release_gate_report.json ]; then
+            VIOLATIONS=$(jq '.violation_count' shadow_release_gate_report.json)
+            PASSED=$(jq '.passed' shadow_release_gate_report.json)
+            FILES=$(jq '.files_scanned' shadow_release_gate_report.json)
+
+            echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Files Scanned | $FILES |" >> $GITHUB_STEP_SUMMARY
+            echo "| Violations | $VIOLATIONS |" >> $GITHUB_STEP_SUMMARY
+            echo "| Passed | $PASSED |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            if [ "$PASSED" = "false" ]; then
+              echo "### Violations" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo '```json' >> $GITHUB_STEP_SUMMARY
+              jq '.violations' shadow_release_gate_report.json >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "Report file not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Unit tests for the gate itself
+  gate-unit-tests:
+    name: Shadow Release Gate Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/health/test_shadow_release_gate.py \
+            -v \
+            -m "unit" \
+            --tb=short
+
+      - name: Run integration tests
+        run: |
+          python -m pytest tests/health/test_shadow_release_gate.py \
+            -v \
+            -m "integration" \
+            --tb=short
+        continue-on-error: true  # Integration tests may find real issues

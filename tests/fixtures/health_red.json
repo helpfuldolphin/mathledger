@@ -1,0 +1,11 @@
+{
+  "substrate": {
+    "status_light": "RED",
+    "headline": "Significant substrate drift detected.",
+    "identity_stability_index": 0.7,
+    "drift_flags": ["FILESYSTEM_HASH_MISMATCH"],
+    "last_attestation_timestamp": "2025-12-10T18:30:00Z",
+    "attestation_provider": "INTERNAL_VIRT_HOST",
+    "details_url": "/docs/reports/substrate/red-alert.html"
+  }
+}

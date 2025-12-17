@@ -1,0 +1,182 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/nci/nci_director_panel.v1.0.0.json",
+  "title": "NCI Director Panel",
+  "description": "Schema for Narrative Consistency Index director dashboard panel. Provides high-level status for narrative health using neutral, non-judgmental language.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "timestamp",
+    "status_light",
+    "global_nci",
+    "dominant_area",
+    "headline"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this panel was generated"
+    },
+    "status_light": {
+      "type": "string",
+      "enum": ["green", "yellow", "red"],
+      "description": "Visual status indicator derived from NCI and SLO evaluation. green=OK, yellow=WARN, red=BREACH"
+    },
+    "global_nci": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Global Narrative Consistency Index score [0.0, 1.0]"
+    },
+    "dominant_area": {
+      "type": "string",
+      "enum": ["terminology", "phase", "uplift", "structure", "none"],
+      "description": "Primary area contributing to NCI variance. 'none' if all areas balanced"
+    },
+    "headline": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 200,
+      "description": "Neutral, descriptive headline about narrative consistency posture"
+    },
+    "metrics_summary": {
+      "type": "object",
+      "description": "Breakdown of NCI by dimension",
+      "properties": {
+        "terminology_alignment": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Terminology alignment score [0.0, 1.0]"
+        },
+        "phase_discipline": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Phase terminology discipline score [0.0, 1.0]"
+        },
+        "uplift_avoidance": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Uplift claim avoidance score [0.0, 1.0]"
+        },
+        "structural_coherence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Structural coherence score [0.0, 1.0]"
+        }
+      },
+      "additionalProperties": false
+    },
+    "slo_status": {
+      "type": "object",
+      "description": "SLO evaluation summary",
+      "required": ["status", "violation_count"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["OK", "WARN", "BREACH"],
+          "description": "SLO status derived from threshold evaluation"
+        },
+        "violation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of SLO violations detected"
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of violation descriptions (neutral language)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "trend": {
+      "type": "string",
+      "enum": ["STABLE", "IMPROVING", "DEGRADING"],
+      "description": "NCI trend over recent snapshots. STABLE=<1% change, IMPROVING=>1% increase, DEGRADING=>1% decrease"
+    },
+    "category_breakdown": {
+      "type": "object",
+      "description": "NCI scores by document category",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      }
+    },
+    "priority_areas": {
+      "type": "array",
+      "description": "Ordered list of areas requiring attention (highest priority first)",
+      "items": {
+        "type": "object",
+        "required": ["area", "nci", "reason"],
+        "properties": {
+          "area": {
+            "type": "string",
+            "description": "Area name (terminology, phase, uplift, structure)"
+          },
+          "nci": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "description": "Area-specific NCI score"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Neutral description of why this area is prioritized"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "telemetry_consistency": {
+      "type": "object",
+      "description": "Telemetry schema consistency status",
+      "properties": {
+        "aligned": {
+          "type": "boolean",
+          "description": "True if documentation aligns with telemetry schema"
+        },
+        "drift_detected": {
+          "type": "boolean",
+          "description": "True if telemetry schema drift affects documentation"
+        },
+        "affected_docs_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of documents affected by telemetry drift"
+        }
+      },
+      "additionalProperties": false
+    },
+    "slice_consistency": {
+      "type": "object",
+      "description": "Slice identity consistency status",
+      "properties": {
+        "aligned": {
+          "type": "boolean",
+          "description": "True if slice names use canonical forms"
+        },
+        "violation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of slice naming violations"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

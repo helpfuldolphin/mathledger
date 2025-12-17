@@ -1,0 +1,16 @@
+{
+  "_comment": "P5 CAL-EXP-1 Adapter Configuration - SYNTHETIC Mode",
+  "_architect_note": "This configuration runs the RealTelemetryAdapter in SYNTHETIC mode for baseline calibration. Change 'mode' to 'trace' and provide 'trace_path' for reproducibility verification.",
+  "mode": "synthetic",
+  "runner_type": "u2",
+  "slice_name": "arithmetic_simple",
+  "seed": 42,
+  "source_label": "P5_CAL_EXP1_SYNTHETIC",
+  "lipschitz_thresholds": {
+    "_comment": "RTTS Lipschitz bounds - DO NOT MODIFY without governance approval",
+    "H": 0.15,
+    "rho": 0.10,
+    "tau": 0.05,
+    "beta": 0.20
+  }
+}

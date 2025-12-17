@@ -1,0 +1,322 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/nci/nci_governance_signal.v1.0.0.json",
+  "title": "NCI Governance Signal",
+  "description": "Schema for Narrative Consistency Index governance signal. Provides narrative health status to the global health fusion layer. This signal is INFORMATIONAL only and does NOT make governance decisions.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "timestamp",
+    "source",
+    "health_contribution"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when this signal was generated"
+    },
+    "source": {
+      "type": "string",
+      "const": "nci",
+      "description": "Signal source identifier (always 'nci' for this schema)"
+    },
+    "health_contribution": {
+      "type": "object",
+      "description": "Primary health contribution for fusion layer",
+      "required": ["status", "global_nci", "confidence"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["OK", "WARN", "BREACH"],
+          "description": "Overall narrative health status"
+        },
+        "global_nci": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Global Narrative Consistency Index [0.0, 1.0]"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in this assessment (based on document coverage)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "telemetry_consistency": {
+      "type": "object",
+      "description": "Telemetry schema alignment status (TCL laws)",
+      "required": ["aligned"],
+      "properties": {
+        "aligned": {
+          "type": "boolean",
+          "description": "True if documentation terminology aligns with telemetry schemas"
+        },
+        "drift_detected": {
+          "type": "boolean",
+          "description": "True if telemetry schema changes affect documentation"
+        },
+        "affected_docs_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of documents affected by telemetry drift"
+        },
+        "affected_docs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of affected document paths"
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["doc", "field", "violation_type"],
+            "properties": {
+              "doc": {
+                "type": "string",
+                "description": "Document path"
+              },
+              "field": {
+                "type": "string",
+                "description": "Field name with consistency issue"
+              },
+              "violation_type": {
+                "type": "string",
+                "enum": ["TCL-001", "TCL-002", "TCL-003", "TCL-004"],
+                "description": "Telemetry Consistency Law violated"
+              },
+              "expected": {
+                "type": "string",
+                "description": "Expected canonical form"
+              },
+              "found": {
+                "type": "string",
+                "description": "Actual form found in documentation"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Detailed telemetry consistency violations"
+        }
+      },
+      "additionalProperties": false
+    },
+    "slice_consistency": {
+      "type": "object",
+      "description": "Slice identity alignment status (SIC laws)",
+      "required": ["aligned"],
+      "properties": {
+        "aligned": {
+          "type": "boolean",
+          "description": "True if slice names use canonical forms"
+        },
+        "violation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of slice naming violations"
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["doc", "slice", "violation_type"],
+            "properties": {
+              "doc": {
+                "type": "string",
+                "description": "Document path"
+              },
+              "slice": {
+                "type": "string",
+                "description": "Slice name with consistency issue"
+              },
+              "violation_type": {
+                "type": "string",
+                "enum": ["SIC-001", "SIC-002", "SIC-003", "SIC-004"],
+                "description": "Slice Identity Consistency Law violated"
+              },
+              "expected": {
+                "type": "string",
+                "description": "Expected canonical form"
+              },
+              "found": {
+                "type": "string",
+                "description": "Actual form found in documentation"
+              }
+            },
+            "additionalProperties": false
+          },
+          "description": "Detailed slice consistency violations"
+        }
+      },
+      "additionalProperties": false
+    },
+    "dimensional_breakdown": {
+      "type": "object",
+      "description": "NCI scores by dimension",
+      "properties": {
+        "terminology": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Terminology alignment score"
+        },
+        "phase": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Phase discipline score"
+        },
+        "uplift": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Uplift avoidance score"
+        },
+        "structure": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Structural coherence score"
+        }
+      },
+      "additionalProperties": false
+    },
+    "category_breakdown": {
+      "type": "object",
+      "description": "NCI scores by document category",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      }
+    },
+    "slo_evaluation": {
+      "type": "object",
+      "description": "Service Level Objective evaluation results",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["OK", "WARN", "BREACH"],
+          "description": "SLO status"
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of SLO violations (neutral language)"
+        },
+        "thresholds_used": {
+          "type": "object",
+          "description": "Threshold values used for evaluation",
+          "additionalProperties": {
+            "type": "number"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "trend": {
+      "type": "object",
+      "description": "NCI trend analysis",
+      "properties": {
+        "direction": {
+          "type": "string",
+          "enum": ["STABLE", "IMPROVING", "DEGRADING"],
+          "description": "Trend direction"
+        },
+        "change_rate": {
+          "type": "number",
+          "description": "NCI change rate (positive=improving, negative=degrading)"
+        },
+        "window_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of snapshots in trend analysis window"
+        }
+      },
+      "additionalProperties": false
+    },
+    "recommendations": {
+      "type": "array",
+      "description": "Non-prescriptive recommendations for attention (neutral language)",
+      "items": {
+        "type": "object",
+        "required": ["area", "priority", "description"],
+        "properties": {
+          "area": {
+            "type": "string",
+            "description": "Area requiring attention"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["high", "medium", "low"],
+            "description": "Relative priority"
+          },
+          "description": {
+            "type": "string",
+            "description": "Neutral description of the observation"
+          },
+          "affected_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Files associated with this observation"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "commit_context": {
+      "type": "object",
+      "description": "Git commit context for this signal",
+      "properties": {
+        "commit_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{7,40}$",
+          "description": "Git commit SHA"
+        },
+        "branch": {
+          "type": "string",
+          "description": "Git branch name"
+        },
+        "files_analyzed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of documentation files analyzed"
+        }
+      },
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "generator_version": {
+          "type": "string",
+          "description": "Version of the NCI generator"
+        },
+        "generation_time_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Time to generate this signal in milliseconds"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

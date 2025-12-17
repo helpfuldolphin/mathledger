@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/ndaa_evidence_checklist.v1.0.0.json",
+  "title": "NDAA Evidence Generation Checklist Schema",
+  "description": "Defines the machine-readable structure for the NDAA Evidence Generation Checklist. This schema acts as a frozen contract for automated validation of evidence packs. A script processes a JSON file conforming to this schema to verify the existence and integrity of compliance artifacts.",
+  "version": "1.0.0",
+  "status": "FROZEN",
+  "last_updated": "2025-12-10",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "title",
+    "auditor_workflow",
+    "pillars"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "title": {
+      "type": "string"
+    },
+    "auditor_workflow": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "title", "commands"],
+        "properties": {
+          "step": {"type": "integer"},
+          "title": {"type": "string"},
+          "description": {"type": "string"},
+          "commands": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "pillars": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pillar_id", "pillar_name", "claim", "steps"],
+        "properties": {
+          "pillar_id": {
+            "type": "string",
+            "enum": ["P1", "P2", "P3", "P4"]
+          },
+          "pillar_name": {
+            "type": "string",
+            "enum": [
+              "Risk-Informed Strategy",
+              "Technical Controls",
+              "Human Override Capability",
+              "Auditability"
+            ]
+          },
+          "claim": {"type": "string"},
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["step_id", "action", "expected_output", "verification"],
+              "properties": {
+                "step_id": {
+                  "type": "string",
+                  "pattern": "^[0-9]+\\.[0-9]+$"
+                },
+                "action": {"type": "string"},
+                "generation_command": {
+                  "type": "string",
+                   "description": "The command to generate the artifact."
+                },
+                "expected_output": {
+                  "type": "object",
+                  "required": ["artifact_path", "description"],
+                  "properties": {
+                    "artifact_path": {
+                      "type": "string",
+                      "description": "Path to the artifact, relative to the evidence pack root."
+                    },
+                    "description": {"type": "string"}
+                  }
+                },
+                "verification": {
+                  "type": "object",
+                  "required": ["command", "description"],
+                  "properties": {
+                    "command": {"type": "string"},
+                    "description": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

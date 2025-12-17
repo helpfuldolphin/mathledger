@@ -22,6 +22,9 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# Import reusable warning neutrality helpers (single source of truth)
+from tests.helpers.warning_neutrality import pytest_assert_warnings_neutral
+
 from backend.health.epistemic_p3p4_integration import (
     attach_epistemic_alignment_to_evidence,
     attach_epistemic_alignment_to_p3_stability_report,
@@ -863,11 +866,10 @@ class TestEpistemicBehaviorConsistency:
 
         summary = summarize_epistemic_behavior_consistency(annex, evidence_quality)
 
-        notes_text = " ".join(summary["advisory_notes"]).lower()
-        # Check for neutral language (no evaluative terms)
-        forbidden_terms = ["good", "bad", "wrong", "error", "mistake", "fix", "broken"]
-        for term in forbidden_terms:
-            assert term not in notes_text, f"Evaluative term '{term}' found in notes"
+        # Use reusable helper (single source of truth for banned words)
+        pytest_assert_warnings_neutral(
+            summary["advisory_notes"], context="advisory_notes"
+        )
 
     def test_has_required_fields(
         self,

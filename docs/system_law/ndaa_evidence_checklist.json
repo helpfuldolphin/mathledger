@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0.0",
+  "title": "NDAA Evidence Generation Checklist",
+  "auditor_workflow": [
+    {
+      "step": 1,
+      "title": "Reproduce Evidence Generation",
+      "description": "Execute the primary Phase X test harnesses to generate the full suite of log artifacts.",
+      "commands": [
+        "python ledgerctl.py run-experiment p3 --cycles 1000 --output-dir results/audit_p3",
+        "python ledgerctl.py run-experiment p4 --cycles 1000 --output-dir results/audit_p4"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Verify Artifact Integrity",
+      "description": "Verify that the generated log files have not been tampered with by checking their hashes against a pre-computed manifest.",
+      "commands": [
+        "python verify_config_hashes.py generate --dir results/audit_p3 > manifest_p3_generated.json",
+        "python verify_config_hashes.py generate --dir results/audit_p4 > manifest_p4_generated.json"
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Run Compliance Verification Tests",
+      "description": "Execute the automated test suite designed to parse the generated artifacts and verify they meet the system's own integrity and governance laws.",
+      "commands": [
+        "uv run pytest test_integrity_audit.py --log-dir results/audit_p4",
+        "uv run pytest test_migration_validation.py --log-file results/audit_p4/p4_divergence_log.jsonl"
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Inspect Final Status Reports",
+      "description": "Review the human-readable summary reports. If the previous steps passed, these JSON files represent the final, validated state of the system's compliance.",
+      "commands": [
+        "cat results/audit_p3/first_light_stability_report.json",
+        "cat results/audit_p4/p4_calibration_report.json"
+      ]
+    }
+  ],
+  "pillars": [
+    {
+      "pillar_id": "P1",
+      "pillar_name": "Risk-Informed Strategy",
+      "claim": "Risks are formally identified, measured, and mitigated through proactive monitoring and signal fusion.",
+      "steps": [
+        {
+          "step_id": "1.1",
+          "action": "Generate Red-Flag Logs",
+          "generation_command": "python ledgerctl.py run-experiment p3 --cycles 1000 --output-dir results/audit_p3",
+          "expected_output": {
+            "artifact_path": "audit_p3/first_light_red_flag_matrix.json",
+            "description": "The JSON file must validate against its schema. The summary.total_flags should be greater than zero in a pathological run."
+          },
+          "verification": {
+            "command": "python scripts/validate_ndaa_evidence.py --check-schema docs/system_law/schemas/first_light/first_light_red_flag_matrix.schema.json --file {artifact_path}",
+            "description": "Schema validation must pass."
+          }
+        },
+        {
+          "step_id": "1.2",
+          "action": "Generate Fused Safety Signal",
+          "generation_command": "uv run pytest tests/test_replay_safety_governance_signal.py",
+          "expected_output": {
+            "artifact_path": "_test_output_/replay_safety_signal.json",
+            "description": "A test artifact showing a fused signal. In a real run, this is a stream, not a file."
+          },
+          "verification": {
+            "command": "uv run pytest tests/test_replay_safety_governance_signal.py",
+            "description": "Test suite for signal fusion logic must pass."
+          }
+        },
+        {
+          "step_id": "1.3",
+          "action": "Generate Stability Report",
+          "generation_command": "python ledgerctl.py run-experiment p3 --cycles 1000 --output-dir results/audit_p3",
+          "expected_output": {
+            "artifact_path": "audit_p3/first_light_stability_report.json",
+            "description": "The file must validate against its schema. The .criteria_evaluation.all_passed field determines the final outcome."
+          },
+          "verification": {
+            "command": "python scripts/validate_ndaa_evidence.py --check-field-equals {artifact_path} criteria_evaluation.all_passed true",
+            "description": "The final report must have all_passed: true."
+          }
+        }
+      ]
+    },
+    {
+      "pillar_id": "P2",
+      "pillar_name": "Technical Controls",
+      "claim": "Verifiable mechanisms in the architecture enforce system laws, such as shadow mode and configuration integrity.",
+      "steps": [
+        {
+          "step_id": "2.1",
+          "action": "Generate Divergence Logs",
+          "generation_command": "python ledgerctl.py run-experiment p4 --cycles 1000 --output-dir results/audit_p4",
+          "expected_output": {
+            "artifact_path": "audit_p4/p4_divergence_log.jsonl",
+            "description": "The file must conform to p4_divergence_log.schema.json."
+          },
+          "verification": {
+            "command": "python scripts/validate_ndaa_evidence.py --check-schema-jsonl docs/system_law/schemas/phase_x_p4/p4_divergence_log.schema.json --file {artifact_path}",
+            "description": "Each line in the JSONL must validate against the schema."
+          }
+        },
+        {
+          "step_id": "2.2",
+          "action": "Verify Config Integrity",
+          "generation_command": "uv run pytest curriculum/test_slice_drift_guard.py",
+          "expected_output": {
+            "artifact_path": "_test_output_/config_integrity.txt",
+            "description": "Test output confirming drift detection."
+          },
+          "verification": {
+            "command": "uv run pytest curriculum/test_slice_drift_guard.py",
+            "description": "Test suite for drift detection must pass."
+          }
+        }
+      ]
+    },
+    {
+      "pillar_id": "P3",
+      "pillar_name": "Human Override Capability",
+      "claim": "The system is architecturally incapable of autonomous action and is designed to present clear data to human operators.",
+      "steps": [
+        {
+          "step_id": "3.1",
+          "action": "Confirm Non-Enforcement",
+          "generation_command": "python ledgerctl.py run-experiment p3 --cycles 1000 --output-dir results/audit_p3",
+          "expected_output": {
+            "artifact_path": "audit_p3/first_light_red_flag_matrix.json",
+            "description": "The hypothetical_abort.would_abort field may be true, but the run still completes."
+          },
+          "verification": {
+            "command": "python scripts/validate_ndaa_evidence.py --check-field-exists {artifact_path} summary.hypothetical_abort.would_abort",
+            "description": "The field for hypothetical abort must exist, proving it was considered but not acted upon."
+          }
+        },
+        {
+          "step_id": "3.2",
+          "action": "Generate Operator Tile",
+          "generation_command": "uv run pytest tests/slice_identity/test_console_tile.py",
+          "expected_output": {
+            "artifact_path": "_test_output_/slice_identity_tile.json",
+            "description": "A valid JSON object conforming to slice_identity_console_tile.schema.json."
+          },
+          "verification": {
+            "command": "uv run pytest tests/slice_identity/test_console_tile.py",
+            "description": "Test suite for console tile generation must pass."
+          }
+        }
+      ]
+    },
+    {
+      "pillar_id": "P4",
+      "pillar_name": "Auditability",
+      "claim": "All system events are logged to structured, immutable, and verifiable artifacts from a stable, known baseline.",
+      "steps": [
+        {
+          "step_id": "4.1",
+          "action": "Generate Full Log Suite",
+          "generation_command": "echo 'See P1 and P2 generation commands'",
+          "expected_output": {
+            "artifact_path": "audit_p3/",
+            "description": "The audit_p3 directory populated with JSON and JSONL files."
+          },
+          "verification": {
+            "command": "ls {artifact_path}",
+            "description": "Directory must exist and be populated."
+          }
+        },
+        {
+          "step_id": "4.2",
+          "action": "Verify Log Hashes",
+          "generation_command": "python verify_config_hashes.py generate --dir results/audit_p4 > manifest_p4_generated.json",
+          "expected_output": {
+            "artifact_path": "manifest_p4_generated.json",
+            "description": "A JSON manifest of file hashes."
+          },
+          "verification": {
+            "command": "python verify_config_hashes.py check --manifest {artifact_path}",
+            "description": "The manifest must be internally consistent and verifiable."
+          }
+        }
+      ]
+    }
+  ]
+}

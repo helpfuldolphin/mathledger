@@ -1,0 +1,38 @@
+# .github/workflows/progress-report.yml
+
+name: 'Phase IX Progress Report'
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**' # Or any other relevant branches
+
+jobs:
+  generate-progress-report:
+    name: Generate Progress Report
+    runs-on: ubuntu-latest
+    # This job is advisory and should not block merges if it fails.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Or the version your project uses
+
+      - name: Run Progress Script
+        id: progress
+        run: |
+          python tools/phase_ix_progress.py > progress-report.json
+          echo "Progress report generated."
+
+      - name: Upload Progress Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-ix-progress-report
+          path: progress-report.json
+          retention-days: 7

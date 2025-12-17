@@ -1,0 +1,115 @@
+name: Performance Sanity Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  performance-sanity:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install psutil pytest
+        # Install project dependencies
+        cd backend/orchestrator && pip install -e .
+
+    - name: Run Performance Sanity Tests
+      run: |
+        echo " Cursor B - Performance & Memory Sanity Cartographer"
+        echo " Charting performance currents like Nami with her log pose..."
+        pytest -v -m perf_sanity --tb=short
+
+    - name: Upload Performance Passport
+      if: always()
+      run: |
+        echo " Uploading Performance Passport for Manus A's Trust Demo..."
+        python scripts/upload-performance-passport.py performance_passport.json --ci
+
+    - name: Archive Performance Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-passport-${{ github.run_number }}
+        path: |
+          performance_passport.json
+          artifacts/performance/
+        retention-days: 30
+
+    - name: Performance Regression Check
+      if: always()
+      run: |
+        echo " Checking for performance regressions..."
+        if [ -f "performance_passport.json" ]; then
+          python -c "
+          import json
+          with open('performance_passport.json', 'r') as f:
+              data = json.load(f)
+          summary = data.get('summary', {})
+          regressions = summary.get('performance_regressions', 0) + summary.get('memory_regressions', 0)
+          if regressions > 0:
+              print(f' PERFORMANCE REGRESSIONS DETECTED: {regressions}')
+              print(' Like spotting Cell charging - immediate action required!')
+              exit(1)
+          else:
+              print(' No performance regressions detected')
+              print(' All chakras are in perfect harmony!')
+          "
+        else:
+          echo " Performance passport not found"
+          exit(1)
+
+    - name: Comment PR with Performance Results
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          try {
+            const passport = JSON.parse(fs.readFileSync('performance_passport.json', 'utf8'));
+            const summary = passport.summary;
+            const animeEnergy = passport.anime_energy;
+
+            const comment = `##  Performance Sanity Results - Cursor B Cartographer
+
+            **Anime Energy:** ${animeEnergy.one_piece}
+
+            ###  Performance Summary
+            - **Tests:** ${summary.passed_tests}/${summary.total_tests} passed
+            - **Max Latency:** ${summary.max_latency_ms.toFixed(3)}ms
+            - **Max Memory:** ${summary.max_memory_mb.toFixed(2)}MB
+            - **Status:** ${summary.overall_status}
+            - **Deterministic Score:** ${summary.deterministic_score.toFixed(1)}%
+
+            ###  Performance Guarantee
+            > ${passport.performance_guarantee}
+
+            ###  Chakra Flow Analysis
+            ${summary.performance_regressions > 0 ? ' **Turbulent Flow** - Chakras need attention!' : ' **Perfect Harmony** - All chakras aligned!'}
+
+            *Like Nami with her log pose, I've charted every performance current to keep the ship steady!*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } catch (error) {
+            console.log('Could not read performance passport:', error.message);
+          }

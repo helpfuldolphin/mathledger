@@ -1,0 +1,60 @@
+# This workflow MUST NEVER gate CI.
+name: Substrate Governance Smoke Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  substrate-governance-smoke-test:
+    runs-on: ubuntu-latest
+    strategy:
+      # Run the check for each health status fixture.
+      # This entire job is non-gating, so a failure in one of these matrix
+      # legs will not block the PR, but it will be visible.
+      matrix:
+        health_status: [green, yellow, red, block]
+        include:
+          - health_status: green
+            fixture_path: tests/fixtures/health_green.json
+          - health_status: yellow
+            fixture_path: tests/fixtures/health_yellow.json
+          - health_status: red
+            fixture_path: tests/fixtures/health_red.json
+          - health_status: block
+            fixture_path: tests/fixtures/health_block.json
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install jsonschema
+
+      - name: Run Substrate Governance Check and Capture Stderr
+        # The script defaults to --shadow-only. We redirect stderr to a log file.
+        # The `|| true` ensures that the step doesn't fail if the script has a
+        # non-zero exit code (which it won't in shadow mode, but is good practice).
+        run: |
+          python scripts/substrate_governance_check.py ${{ matrix.fixture_path }} 2> ${{ runner.temp }}/stderr.log || true
+        shell: bash
+
+      - name: Upload Stderr as Artifact
+        # This step creates an artifact for each run that generated stderr output.
+        if: ${{ (matrix.health_status == 'red' || matrix.health_status == 'block') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-advisory-${{ matrix.health_status }}
+          path: ${{ runner.temp }}/stderr.log

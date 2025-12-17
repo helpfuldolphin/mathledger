@@ -1,0 +1,110 @@
+name: CODEX M — Phase X Evidence (SHADOW TESTS ONLY)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  phase-x-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15  # Keep under ~10 minutes; fail fast if hung
+    # SHADOW MODE: informational CI signal only, not a deployment gate (do not mark required)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Prep artifacts directory
+        run: mkdir -p artifacts/phase_x
+
+      - name: P3 harness tests
+        run: uv run pytest tests/first_light --junitxml=artifacts/phase_x/first_light.xml
+
+      - name: Plot generation smoke tests
+        run: uv run pytest tests/evidence --junitxml=artifacts/phase_x/evidence.xml
+
+      - name: Evidence schema validation tests
+        run: uv run pytest tests/schemas --junitxml=artifacts/phase_x/schemas.xml
+
+      - name: Enable proof snapshot hook (nightly shadow-only)
+        if: github.event_name == 'schedule'
+        run: |
+          echo "FIRST_LIGHT_INCLUDE_PROOF_SNAPSHOT=1" >> "$GITHUB_ENV"
+          echo "Configured nightly proof snapshot (non-gating)."
+
+      - name: Generate First Light status (SHADOW; observational)
+        if: always()
+        env:
+          PIPELINE_CONTEXT: ${{ github.event_name == 'pull_request' && 'pr' || 'nightly' }}
+        run: |
+          uv run python scripts/generate_first_light_status.py \
+            --p3-dir results/first_light/golden_run/p3 \
+            --p4-dir results/first_light/golden_run/p4 \
+            --evidence-pack-dir results/first_light/evidence_pack_first_light \
+            --pipeline "${PIPELINE_CONTEXT}" \
+            --validate-schemas \
+            --output artifacts/phase_x/first_light_status.json
+
+      - name: Verify proof snapshot integrity (SHADOW; advisory)
+        if: always()
+        continue-on-error: true
+        run: |
+          uv run python - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts.verify_proof_snapshot_integrity import verify_proof_snapshot_integrity
+
+          pack_dir = Path("results/first_light/evidence_pack_first_light")
+          out_path = Path("artifacts/phase_x/proof_snapshot_integrity.json")
+          result = verify_proof_snapshot_integrity(pack_dir=pack_dir)
+          out_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+          print(f"Wrote {out_path}")
+          PY
+
+      - name: Upload evidence artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase-x-evidence-artifacts-${{ github.run_number }}
+          path: |
+            artifacts/phase_x/*.xml
+            artifacts/phase_x/first_light_status.json
+            artifacts/phase_x/schemas_validation_report.json
+            artifacts/phase_x/proof_snapshot_integrity.json
+          if-no-files-found: ignore
+
+  validate-phase-x-status-artifact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: phase-x-evidence
+    if: always()
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Download Phase X evidence artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: phase-x-evidence-artifacts-${{ github.run_number }}
+          path: downloaded
+
+      - name: Validate downloaded First Light status artifact (non-gating)
+        run: |
+          python scripts/validate_first_light_status_artifact.py \
+            --status-json downloaded/artifacts/phase_x/first_light_status.json

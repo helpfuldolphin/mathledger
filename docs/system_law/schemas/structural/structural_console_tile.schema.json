@@ -1,0 +1,395 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/structural/console_tile.v1.0.0.json",
+  "title": "Structural Console Tile",
+  "description": "Schema for structural cohesion console tile display. Used in dashboard/console views to show cross-layer structural health at a glance.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "tile_id",
+    "timestamp",
+    "overall_status",
+    "cohesion_score",
+    "layers"
+  ],
+  "properties": {
+    "tile_id": {
+      "type": "string",
+      "pattern": "^sct_[a-f0-9]{8}$",
+      "description": "Unique tile identifier (sct_ prefix + 8 hex chars)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of tile generation"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Associated P4 run identifier, if applicable"
+    },
+    "cycle": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Current cycle number"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": ["HEALTHY", "DEGRADED", "CRITICAL"],
+      "description": "Overall structural health status for display"
+    },
+    "overall_status_icon": {
+      "type": "string",
+      "enum": ["check_circle", "warning", "error"],
+      "description": "Icon suggestion for overall status"
+    },
+    "overall_status_color": {
+      "type": "string",
+      "enum": ["green", "yellow", "red"],
+      "description": "Color suggestion for overall status"
+    },
+    "cohesion_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Structural Cohesion Score (0.0-1.0)"
+    },
+    "cohesion_score_display": {
+      "type": "string",
+      "pattern": "^[0-9]{1,3}%$",
+      "description": "Human-readable cohesion score (e.g., '95%')"
+    },
+    "cohesion_trend": {
+      "type": "string",
+      "enum": ["IMPROVING", "STABLE", "DEGRADING"],
+      "description": "Trend direction compared to previous tile"
+    },
+    "cohesion_delta": {
+      "type": "number",
+      "description": "Change in cohesion score since last tile"
+    },
+    "layers": {
+      "type": "object",
+      "description": "Per-layer status summaries",
+      "required": ["dag", "topology", "ht"],
+      "properties": {
+        "dag": {
+          "$ref": "#/definitions/layerTile"
+        },
+        "topology": {
+          "$ref": "#/definitions/layerTile"
+        },
+        "ht": {
+          "$ref": "#/definitions/layerTile"
+        }
+      }
+    },
+    "active_violations": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of currently active violations"
+    },
+    "violation_breakdown": {
+      "type": "object",
+      "description": "Violation counts by severity",
+      "properties": {
+        "conflict": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "CONFLICT severity violations"
+        },
+        "tension": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "TENSION severity violations"
+        }
+      }
+    },
+    "top_violations": {
+      "type": "array",
+      "maxItems": 3,
+      "description": "Top 3 most critical violations for display",
+      "items": {
+        "type": "object",
+        "required": ["invariant_id", "severity", "short_message"],
+        "properties": {
+          "invariant_id": {
+            "type": "string",
+            "pattern": "^SI-0[0-9]{2}$"
+          },
+          "layer": {
+            "type": "string",
+            "enum": ["DAG", "TOPOLOGY", "HT"]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["TENSION", "CONFLICT"]
+          },
+          "short_message": {
+            "type": "string",
+            "maxLength": 50,
+            "description": "Brief message for console display"
+          }
+        }
+      }
+    },
+    "admissibility": {
+      "type": "object",
+      "description": "P4 run admissibility status",
+      "properties": {
+        "admissible": {
+          "type": "boolean",
+          "description": "Whether P4 run can continue"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason if not admissible"
+        },
+        "blocking_invariants": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Invariant IDs blocking admissibility"
+        }
+      }
+    },
+    "sparkline_data": {
+      "type": "object",
+      "description": "Mini-chart data for cohesion trend",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {"type": "number"},
+          "maxItems": 20,
+          "description": "Recent cohesion scores for sparkline"
+        },
+        "window_size": {
+          "type": "integer",
+          "description": "Number of cycles in sparkline window"
+        }
+      }
+    },
+    "refresh_interval_ms": {
+      "type": "integer",
+      "minimum": 1000,
+      "default": 5000,
+      "description": "Suggested refresh interval in milliseconds"
+    },
+    "last_signal_id": {
+      "type": "string",
+      "pattern": "^sgs_[a-f0-9]{16}$",
+      "description": "ID of the StructuralGovernanceSignal this tile was derived from"
+    }
+  },
+  "definitions": {
+    "layerTile": {
+      "type": "object",
+      "required": ["name", "status", "score"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Layer display name"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["CONSISTENT", "TENSION", "CONFLICT"],
+          "description": "Layer status"
+        },
+        "status_icon": {
+          "type": "string",
+          "enum": ["check", "minus", "x"],
+          "description": "Icon suggestion for layer status"
+        },
+        "status_color": {
+          "type": "string",
+          "enum": ["green", "yellow", "red"],
+          "description": "Color suggestion for layer status"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Layer integrity score"
+        },
+        "score_display": {
+          "type": "string",
+          "description": "Human-readable score"
+        },
+        "violation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of violations in this layer"
+        },
+        "key_metric": {
+          "type": "object",
+          "description": "Single most important metric for this layer",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Metric name"
+            },
+            "value": {
+              "type": ["number", "string", "boolean"],
+              "description": "Metric value"
+            },
+            "unit": {
+              "type": "string",
+              "description": "Metric unit if applicable"
+            }
+          }
+        },
+        "detail_link": {
+          "type": "string",
+          "format": "uri-reference",
+          "description": "Link to detailed layer view"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "tile_id": "sct_a1b2c3d4",
+      "timestamp": "2025-12-10T12:00:00.000000+00:00",
+      "run_id": "p4_run_20251210_abc123",
+      "cycle": 500,
+      "overall_status": "HEALTHY",
+      "overall_status_icon": "check_circle",
+      "overall_status_color": "green",
+      "cohesion_score": 0.95,
+      "cohesion_score_display": "95%",
+      "cohesion_trend": "STABLE",
+      "cohesion_delta": 0.01,
+      "layers": {
+        "dag": {
+          "name": "DAG",
+          "status": "CONSISTENT",
+          "status_icon": "check",
+          "status_color": "green",
+          "score": 1.0,
+          "score_display": "100%",
+          "violation_count": 0,
+          "key_metric": {
+            "name": "Nodes",
+            "value": 1250,
+            "unit": ""
+          }
+        },
+        "topology": {
+          "name": "Topology",
+          "status": "CONSISTENT",
+          "status_icon": "check",
+          "status_color": "green",
+          "score": 0.92,
+          "score_display": "92%",
+          "violation_count": 0,
+          "key_metric": {
+            "name": "Omega Occupancy",
+            "value": "94%",
+            "unit": ""
+          }
+        },
+        "ht": {
+          "name": "HT",
+          "status": "CONSISTENT",
+          "status_icon": "check",
+          "status_color": "green",
+          "score": 1.0,
+          "score_display": "100%",
+          "violation_count": 0,
+          "key_metric": {
+            "name": "Verified Anchors",
+            "value": 42,
+            "unit": ""
+          }
+        }
+      },
+      "active_violations": 0,
+      "violation_breakdown": {
+        "conflict": 0,
+        "tension": 0
+      },
+      "top_violations": [],
+      "admissibility": {
+        "admissible": true
+      },
+      "sparkline_data": {
+        "values": [0.94, 0.95, 0.94, 0.95, 0.95],
+        "window_size": 50
+      },
+      "refresh_interval_ms": 5000
+    },
+    {
+      "tile_id": "sct_e5f67890",
+      "timestamp": "2025-12-10T12:05:00.000000+00:00",
+      "run_id": "p4_run_20251210_def456",
+      "cycle": 142,
+      "overall_status": "DEGRADED",
+      "overall_status_icon": "warning",
+      "overall_status_color": "yellow",
+      "cohesion_score": 0.78,
+      "cohesion_score_display": "78%",
+      "cohesion_trend": "DEGRADING",
+      "cohesion_delta": -0.05,
+      "layers": {
+        "dag": {
+          "name": "DAG",
+          "status": "CONSISTENT",
+          "status_icon": "check",
+          "status_color": "green",
+          "score": 1.0,
+          "score_display": "100%",
+          "violation_count": 0
+        },
+        "topology": {
+          "name": "Topology",
+          "status": "TENSION",
+          "status_icon": "minus",
+          "status_color": "yellow",
+          "score": 0.55,
+          "score_display": "55%",
+          "violation_count": 2,
+          "key_metric": {
+            "name": "Omega Exit Streak",
+            "value": 45,
+            "unit": "cycles"
+          }
+        },
+        "ht": {
+          "name": "HT",
+          "status": "CONSISTENT",
+          "status_icon": "check",
+          "status_color": "green",
+          "score": 1.0,
+          "score_display": "100%",
+          "violation_count": 0
+        }
+      },
+      "active_violations": 2,
+      "violation_breakdown": {
+        "conflict": 0,
+        "tension": 2
+      },
+      "top_violations": [
+        {
+          "invariant_id": "SI-006",
+          "layer": "TOPOLOGY",
+          "severity": "TENSION",
+          "short_message": "45 cycles outside safe region"
+        },
+        {
+          "invariant_id": "SI-005",
+          "layer": "TOPOLOGY",
+          "severity": "TENSION",
+          "short_message": "RSI approaching lower bound"
+        }
+      ],
+      "admissibility": {
+        "admissible": true,
+        "reason": "TENSION violations do not block admissibility"
+      },
+      "sparkline_data": {
+        "values": [0.88, 0.85, 0.82, 0.80, 0.78],
+        "window_size": 50
+      },
+      "refresh_interval_ms": 2000
+    }
+  ]
+}

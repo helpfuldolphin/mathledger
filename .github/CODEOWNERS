@@ -47,6 +47,11 @@ scripts/verify_cal_exp_2_run.py                                  @mathledger/sco
 tests/ci/test_verify_cal_exp_2_run.py                            @mathledger/scope-guardians
 .github/workflows/cal-exp-2-verification.yml                     @mathledger/scope-guardians
 
+# CAL-EXP-3 verification (SHADOW MODE)
+scripts/verify_cal_exp_3_run.py                                  @mathledger/scope-guardians
+tests/ci/test_verify_cal_exp_3_run.py                            @mathledger/scope-guardians
+.github/workflows/cal-exp-3-verification.yml                     @mathledger/scope-guardians
+
 # =============================================================================
 # GOVERNANCE & SYSTEM LAW
 # =============================================================================

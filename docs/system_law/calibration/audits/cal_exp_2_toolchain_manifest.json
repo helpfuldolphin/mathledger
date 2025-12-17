@@ -1,0 +1,30 @@
+{
+  "_meta": {
+    "generator": "scripts/cal_exp2_toolchain_hook.py",
+    "note": "Full provenance - all hashes captured at runtime"
+  },
+  "experiment_id": "CAL-EXP-2",
+  "git_evidence": null,
+  "lake_manifest_hash": "f13722c8f13f52ef06e5fc123ba449287887018f2b071ad4da2d8f580045dd3e",
+  "lean_toolchain_hash": "410d5c912b1a040c79883f5e0bb55e733888534e2006eefe186e631c24864546",
+  "provenance_level": "full",
+  "run_metadata_ref": null,
+  "schema_version": "1.0.0",
+  "timestamp": "2025-12-13T11:55:02.816496Z",
+  "toolchain": {
+    "fingerprint": "b828a2185e017e172db966d3158e8e2b91b00a37f0cd7de4c4f7cf707130a20a",
+    "lean": {
+      "lake_manifest_hash": "f13722c8f13f52ef06e5fc123ba449287887018f2b071ad4da2d8f580045dd3e",
+      "toolchain_hash": "410d5c912b1a040c79883f5e0bb55e733888534e2006eefe186e631c24864546",
+      "version": "leanprover/lean4:v4.23.0-rc2"
+    },
+    "python": {
+      "uv_lock_hash": "d088f20824a5bbc4cd1bf5f02d34a6758752363f417bed1a99970773b8dacfdc",
+      "uv_version": "0.8.16",
+      "version": "3.11.9"
+    },
+    "schema_version": "1.0"
+  },
+  "toolchain_fingerprint": "b828a2185e017e172db966d3158e8e2b91b00a37f0cd7de4c4f7cf707130a20a",
+  "uv_lock_hash": "d088f20824a5bbc4cd1bf5f02d34a6758752363f417bed1a99970773b8dacfdc"
+}

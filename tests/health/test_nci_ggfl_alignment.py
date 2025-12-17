@@ -28,6 +28,10 @@ from backend.health.nci_governance_adapter import (
     NCI_CURATED_DOC_PATTERNS,
     MAX_DOC_SIZE_BYTES,
 )
+from tests.doc_samples import (
+    NCI_P5_BREACH_SAMPLE,
+    NCI_P5_BREACH_INPUT,
+)
 
 
 # =============================================================================
@@ -612,3 +616,117 @@ class TestBuildNciStatusWarning:
         # full_nci_result has slo_status WARN and recommendation WARNING
         assert warning is not None
         assert "WARNING" in warning
+
+
+# =============================================================================
+# Test: Warning Format Lock (DOC/TEST SYNC)
+# =============================================================================
+
+
+import re
+
+
+class TestWarningFormatLock:
+    """Regression tests to ensure warning format matches documented sample.
+
+    SHADOW MODE CONTRACT:
+    - Non-gating: format mismatch is a test failure, not a runtime gate
+    - Ensures doc sample in First_Light_External_Verification.md stays in sync
+
+    Frozen format patterns:
+    - BREACH: "NCI BREACH: {pct}% consistency (confidence {pct}%)"
+    - REVIEW/WARNING: "NCI {REC}: {pct}% consistency (confidence {pct}%)"
+    """
+
+    # Frozen regex pattern matching documented sample format
+    WARNING_FORMAT_PATTERN = re.compile(
+        r"^NCI (BREACH|REVIEW|WARNING): \d+% consistency \(confidence \d+%\)$"
+    )
+
+    def test_breach_warning_matches_frozen_format(self):
+        """BREACH warning matches frozen format: 'NCI BREACH: {pct}% consistency (confidence {pct}%)'."""
+        signal = {
+            "slo_status": "BREACH",
+            "recommendation": "NONE",
+            "global_nci": 0.72,
+            "confidence": 0.65,
+        }
+        warning = build_nci_status_warning(signal)
+        assert warning is not None
+        assert self.WARNING_FORMAT_PATTERN.match(warning), (
+            f"Warning format mismatch. Expected pattern: "
+            f"'NCI BREACH: {{pct}}% consistency (confidence {{pct}}%)'. "
+            f"Got: '{warning}'"
+        )
+
+    def test_review_warning_matches_frozen_format(self):
+        """REVIEW warning matches frozen format: 'NCI REVIEW: {pct}% consistency (confidence {pct}%)'."""
+        signal = {
+            "slo_status": "OK",
+            "recommendation": "REVIEW",
+            "global_nci": 0.85,
+            "confidence": 0.70,
+        }
+        warning = build_nci_status_warning(signal)
+        assert warning is not None
+        assert self.WARNING_FORMAT_PATTERN.match(warning), (
+            f"Warning format mismatch. Expected pattern: "
+            f"'NCI REVIEW: {{pct}}% consistency (confidence {{pct}}%)'. "
+            f"Got: '{warning}'"
+        )
+
+    def test_warning_warning_matches_frozen_format(self):
+        """WARNING recommendation matches frozen format: 'NCI WARNING: {pct}% consistency (confidence {pct}%)'."""
+        signal = {
+            "slo_status": "WARN",
+            "recommendation": "WARNING",
+            "global_nci": 0.78,
+            "confidence": 0.60,
+        }
+        warning = build_nci_status_warning(signal)
+        assert warning is not None
+        assert self.WARNING_FORMAT_PATTERN.match(warning), (
+            f"Warning format mismatch. Expected pattern: "
+            f"'NCI WARNING: {{pct}}% consistency (confidence {{pct}}%)'. "
+            f"Got: '{warning}'"
+        )
+
+    def test_documented_sample_exact_match(self):
+        """Exact sample from Section 11.10 via shared constant."""
+        warning = build_nci_status_warning(NCI_P5_BREACH_INPUT)
+        assert warning == NCI_P5_BREACH_SAMPLE, (
+            f"Documented sample mismatch. "
+            f"Expected: '{NCI_P5_BREACH_SAMPLE}'. "
+            f"Got: '{warning}'"
+        )
+
+    def test_triangle_lock_doc_regex_implementation(self):
+        """Triangle lock: doc sample == regex match == implementation output.
+
+        Single source of truth test ensuring:
+        1. Doc sample (from tests/doc_samples.py, matches §11.10) matches frozen regex
+        2. Implementation output matches the doc sample exactly
+        3. All three are in sync: DOC ↔ REGEX ↔ IMPL
+
+        To update: change NCI_P5_BREACH_SAMPLE in tests/doc_samples.py
+        """
+        # 1. Doc sample matches frozen regex
+        assert self.WARNING_FORMAT_PATTERN.match(NCI_P5_BREACH_SAMPLE), (
+            f"Doc sample does not match frozen regex. "
+            f"Sample: '{NCI_P5_BREACH_SAMPLE}'"
+        )
+
+        # 2. Implementation output
+        impl_output = build_nci_status_warning(NCI_P5_BREACH_INPUT)
+
+        # 3. Implementation output matches doc sample exactly
+        assert impl_output == NCI_P5_BREACH_SAMPLE, (
+            f"Implementation output differs from doc sample. "
+            f"Doc: '{NCI_P5_BREACH_SAMPLE}'. Impl: '{impl_output}'"
+        )
+
+        # 4. Implementation output matches frozen regex (redundant but explicit)
+        assert self.WARNING_FORMAT_PATTERN.match(impl_output), (
+            f"Implementation output does not match frozen regex. "
+            f"Output: '{impl_output}'"
+        )

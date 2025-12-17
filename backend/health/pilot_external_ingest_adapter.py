@@ -307,7 +307,7 @@ def ingest_external_log(
         if parse_result != PilotIngestResult.SUCCESS:
             result["result"] = parse_result
             result["data"] = None
-            result["warnings"] = [f"failed to parse JSON: {file_path}"]
+            result["warnings"] = [f"JSON parse unsuccessful: {file_path}"]
             return result
 
         # Validate schema
@@ -327,7 +327,7 @@ def ingest_external_log(
         if parse_result != PilotIngestResult.SUCCESS:
             result["result"] = parse_result
             result["data"] = None
-            result["warnings"] = [f"failed to parse JSONL: {file_path}"]
+            result["warnings"] = [f"JSONL parse unsuccessful: {file_path}"]
             return result
 
         # For JSONL, wrap entries in a container with log_type

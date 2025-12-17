@@ -1,0 +1,140 @@
+name: Monitoring Dashboard
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Allow manual trigger
+  push:
+    branches: [ integrate/ledger-v0.1 ]
+    paths:
+      - 'artifacts/wpv5/run_metrics_v1.jsonl'
+      - 'docs/progress/agent_ledger.jsonl'
+
+jobs:
+  monitoring:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Collect monitoring snapshot
+      id: monitor
+      run: |
+        python3 tools/monitoring_dashboard.py --save --output artifacts/monitoring/snapshot_${{ github.run_number }}.json
+
+        # Extract key metrics for job summary
+        echo "SNAPSHOT_FILE=artifacts/monitoring/snapshot_${{ github.run_number }}.json" >> $GITHUB_ENV
+
+    - name: Generate Job Summary
+      if: always()
+      run: |
+        python3 << 'EOF'
+        import json
+        import os
+
+        # Load snapshot
+        snapshot_file = os.environ.get('SNAPSHOT_FILE', 'artifacts/monitoring/snapshot.json')
+        with open(snapshot_file, 'r') as f:
+            data = json.load(f)
+
+        pm = data['proof_metrics']
+        cs = data['curriculum_status']
+        ast = data['agent_status']
+        ci = data['ci_health']
+        alerts = data['alerts']
+
+        # Generate GitHub Job Summary
+        summary = f"""# MathLedger Monitoring Dashboard
+
+        **Timestamp**: {data['timestamp']}
+
+        ## Proof Generation
+
+        | Metric | Value |
+        |--------|-------|
+        | Total Proofs | {pm['total_proofs']} |
+        | Total Blocks | {pm['total_blocks']} |
+        | Avg Proofs/Block | {pm['avg_proofs_per_block']} |
+        | Success Rate | {pm['success_rate']*100:.1f}% |
+        | Throughput | {pm['throughput_proofs_per_hour']:.1f} proofs/hour |
+
+        ## Curriculum Progression
+
+        | Metric | Value |
+        |--------|-------|
+        | Current Slice | {cs['current_slice']} |
+        | Progress | {cs['total_proofs']}/{cs['threshold']} ({cs['progress_pct']}%) |
+        | Blocks Sealed | {cs['blocks_sealed']} |
+        | Status | {cs['status'].upper()} |
+
+        ## Agent Coordination
+
+        | Metric | Value |
+        |--------|-------|
+        | Total Agents | {ast['total_agents']} |
+        | Active | {ast['active_agents']} |
+        | Ready (with PR) | {ast['ready_agents']} |
+        | Dormant | {ast['dormant_agents']} |
+        | Open PRs | {ast['open_prs']} |
+
+        ## CI/CD Pipeline
+
+        | Metric | Value |
+        |--------|-------|
+        | Total Workflows | {ci['total_workflows']} |
+        | Passing | {ci['passing_workflows']} |
+        | Failing | {ci['failing_workflows']} |
+        | Avg Runtime | {ci['avg_runtime_minutes']:.1f} minutes |
+
+        ## Alerts
+
+        """
+
+        for alert in alerts:
+            summary += f"- {alert}\n"
+
+        # Write to GitHub Step Summary
+        with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
+            f.write(summary)
+        EOF
+
+    - name: Upload monitoring snapshot
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: monitoring-snapshot-${{ github.run_number }}
+        path: artifacts/monitoring/snapshot_${{ github.run_number }}.json
+        retention-days: 30
+
+    - name: Check for critical alerts
+      run: |
+        python3 << 'EOF'
+        import json
+        import sys
+
+        # Load snapshot
+        with open('artifacts/monitoring/snapshot.json', 'r') as f:
+            data = json.load(f)
+
+        alerts = data['alerts']
+
+        # Check for warning alerts ()
+        critical_alerts = [a for a in alerts if '' in a]
+
+        if critical_alerts:
+            print("Critical alerts detected:")
+            for alert in critical_alerts:
+                print(f"  {alert}")
+            sys.exit(1)
+        else:
+            print(" All systems nominal")
+            sys.exit(0)
+        EOF
+

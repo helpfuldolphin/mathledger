@@ -1,0 +1,101 @@
+# .github/workflows/gate-governance-veracity.yml
+name: 'Gate: Governance Veracity'
+
+on:
+  pull_request:
+    paths:
+      - 'artifacts/governance/**.json'
+      - 'schemas/**.json'
+      - 'scripts/validation/governance_validator.py'
+
+jobs:
+  validate-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip3 install jsonschema canonicaljson
+
+      - name: Find and Validate Changed Artifacts
+        id: validate
+        run: |
+          set -e
+          baseline_ref="origin/${{ github.base_ref || 'main' }}"
+          files=$(git diff --name-only --diff-filter=AM $baseline_ref -- 'artifacts/governance/*.json')
+
+          if [[ -z "$files" ]]; then
+            echo "No governance artifacts changed."
+            exit 0
+          fi
+
+          echo "Changed artifacts:"
+          echo "$files"
+          echo ""
+
+          for file in $files; do
+            schema_name=$(basename $file .json)
+            echo "Validating $file against schema $schema_name..."
+            python3 scripts/validation/governance_validator.py validate \
+              --artifact-path $file \
+              --schema-name $schema_name
+          done
+
+      - name: Validate Schema Integrity
+        run: |
+          set -e
+          baseline_ref="origin/${{ github.base_ref || 'main' }}"
+          schema_files=$(git diff --name-only --diff-filter=AM $baseline_ref -- 'schemas/**/*.json')
+
+          if [[ -z "$schema_files" ]]; then
+            echo "No schemas changed."
+            exit 0
+          fi
+
+          echo "Changed schemas:"
+          echo "$schema_files"
+          echo ""
+
+          # Download JSON Schema meta-schema
+          wget -q https://json-schema.org/draft-07/schema -O /tmp/draft07.schema.json
+
+          for schema_file in $schema_files; do
+            echo "Validating schema $schema_file..."
+            python3 -c "
+import json
+import jsonschema
+
+with open('$schema_file', 'r') as f:
+    schema = json.load(f)
+
+with open('/tmp/draft07.schema.json', 'r') as f:
+    meta_schema = json.load(f)
+
+jsonschema.validate(instance=schema, schema=meta_schema)
+print('✅ Schema is valid')
+            "
+          done
+
+      - name: Comment PR with Validation Summary
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const result = '${{ steps.validate.outcome }}';
+            const emoji = result === 'success' ? '✅' : '❌';
+            const status = result === 'success' ? 'PASS' : 'FAIL';
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ${emoji} Governance Veracity Check: ${status}\n\nAll governance artifacts have been validated against their schemas and canonicalization rules.`
+            });

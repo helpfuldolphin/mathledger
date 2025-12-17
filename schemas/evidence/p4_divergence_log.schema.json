@@ -1,0 +1,129 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://mathledger.local/schemas/evidence/p4_divergence_log.schema.json",
+    "title": "P4 Divergence Log",
+    "description": "Per-cycle divergence journal entries captured during the P4 review window.",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "cycle": {
+                "type": "integer",
+                "minimum": 0
+            },
+            "timestamp": {
+                "type": "string",
+                "format": "date-time"
+            },
+            "flags": {
+                "type": "object",
+                "properties": {
+                    "success_diverged": {
+                        "type": "boolean"
+                    },
+                    "blocked_diverged": {
+                        "type": "boolean"
+                    },
+                    "omega_diverged": {
+                        "type": "boolean"
+                    },
+                    "hard_ok_diverged": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "success_diverged",
+                    "blocked_diverged",
+                    "omega_diverged",
+                    "hard_ok_diverged"
+                ],
+                "additionalProperties": false
+            },
+            "magnitudes": {
+                "type": "object",
+                "properties": {
+                    "H_delta": {
+                        "type": "number"
+                    },
+                    "rho_delta": {
+                        "type": "number"
+                    },
+                    "tau_delta": {
+                        "type": "number"
+                    },
+                    "beta_delta": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "H_delta",
+                    "rho_delta",
+                    "tau_delta",
+                    "beta_delta"
+                ],
+                "additionalProperties": false
+            },
+            "delta_p": {
+                "type": "number"
+            },
+            "delta_p_percent": {
+                "type": "number"
+            },
+            "classification": {
+                "type": "object",
+                "properties": {
+                    "severity": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "severity",
+                    "type"
+                ],
+                "additionalProperties": false
+            },
+            "streak": {
+                "type": "object",
+                "properties": {
+                    "consecutive": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "start_cycle": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "consecutive",
+                    "start_cycle"
+                ],
+                "additionalProperties": false
+            },
+            "action": {
+                "type": "string"
+            },
+            "mode": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "cycle",
+            "timestamp",
+            "flags",
+            "magnitudes",
+            "delta_p",
+            "delta_p_percent",
+            "classification",
+            "streak",
+            "action",
+            "mode"
+        ],
+        "additionalProperties": false
+    }
+}

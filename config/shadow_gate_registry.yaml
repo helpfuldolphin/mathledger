@@ -1,0 +1,51 @@
+# Shadow Gate Registry
+#
+# This file defines all registered gates for SHADOW-GATED enforcement.
+# Per SHADOW_MODE_CONTRACT.md §3.4, SHADOW-GATED operations MUST reference
+# a gate registry entry.
+#
+# Schema per §3.4:
+#   gate_id: "<unique identifier>"
+#   operation: "<operation being gated>"
+#   condition: "<enforcement condition>"
+#   enforcement_level: "BLOCK | WARN"
+#   effective_date: "<ISO-8601 date>"
+#   authority: "<authorizing role>"
+#
+# SHADOW MODE: SHADOW-GATED
+# Contract Reference: docs/system_law/SHADOW_MODE_CONTRACT.md v1.0.0
+
+version: "1.0.0"
+contract_reference: "docs/system_law/SHADOW_MODE_CONTRACT.md"
+
+gates:
+  - gate_id: "SRG-001"
+    operation: "shadow_release_gate"
+    condition: "Prohibited phrases in SHADOW-GATED context"
+    enforcement_level: "BLOCK"
+    effective_date: "2025-12-17"
+    authority: "SMGA"
+    description: |
+      Blocks distribution of documents that declare SHADOW-GATED
+      but use prohibited phrases (observational only, advisory,
+      informational, passive, non-blocking).
+
+  - gate_id: "SRG-002"
+    operation: "shadow_qualification_check"
+    condition: "Unqualified SHADOW MODE usage"
+    enforcement_level: "WARN"
+    effective_date: "2025-12-17"
+    authority: "SMGA"
+    description: |
+      Warns when documents use "SHADOW MODE" without qualifying
+      as SHADOW-OBSERVE or SHADOW-GATED per contract §1.1.
+
+  - gate_id: "SRG-003"
+    operation: "gate_registry_requirement"
+    condition: "SHADOW-GATED without gate registry reference"
+    enforcement_level: "BLOCK"
+    effective_date: "2025-12-17"
+    authority: "SMGA"
+    description: |
+      Blocks SHADOW-GATED documents that do not reference a
+      gate registry entry (gate_id required per §3.4).

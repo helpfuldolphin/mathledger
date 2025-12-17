@@ -1,0 +1,109 @@
+name: Performance Check
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  performance-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install uv
+        uv sync
+
+    - name: Start database services
+      run: |
+        docker-compose up -d postgres redis
+        sleep 10
+
+    - name: Run migrations
+      run: |
+        uv run python scripts/run-migrations.py
+
+    - name: Start API server
+      run: |
+        uv run python -m uvicorn backend.orchestrator.app:app --host 0.0.0.0 --port 8000 &
+        sleep 10
+
+    - name: Wait for API
+      run: |
+        timeout 60 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
+
+    - name: Create baseline passport (if not exists)
+      run: |
+        if [ ! -f "baseline_performance_passport.json" ]; then
+          echo "Creating baseline performance passport..."
+          uv run python scripts/create-baseline-passport.py --api-url http://localhost:8000 --ci
+        else
+          echo "Baseline passport already exists"
+        fi
+
+    - name: Run performance check
+      run: |
+        uv run python scripts/ci-performance-check.py \
+          --api-url http://localhost:8000 \
+          --baseline baseline_performance_passport.json \
+          --artifacts-dir artifacts/performance \
+          --wait-timeout 60
+
+    - name: Upload performance artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-passport-${{ github.run_number }}
+        path: artifacts/performance/
+        retention-days: 30
+
+    - name: Comment PR with performance results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+
+          try {
+            const passportFile = 'performance_passport.json';
+            if (fs.existsSync(passportFile)) {
+              const passport = JSON.parse(fs.readFileSync(passportFile, 'utf8'));
+              const summary = passport.summary;
+
+              const comment = `## Performance Check Results
+
+              **Status:** ${summary.overall_status}
+              **Tests:** ${summary.passed_tests}/${summary.total_tests} passed
+              **Performance Regressions:** ${summary.performance_regressions}
+              **Memory Regressions:** ${summary.memory_regressions}
+              **Max Latency:** ${summary.max_latency_ms.toFixed(3)}ms
+              **Max Memory:** ${summary.max_memory_mb.toFixed(2)}MB
+              **Max Objects:** ${summary.max_objects}
+              **Deterministic Score:** ${summary.deterministic_score.toFixed(1)}%
+
+              ${summary.overall_status === 'FAIL' ? ' Performance regressions detected!' : ' No performance regressions detected.'}
+              `;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
+          } catch (error) {
+            console.log('Failed to create performance comment:', error);
+          }

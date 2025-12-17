@@ -1,0 +1,313 @@
+name: Database Migration Check
+
+# This workflow enforces migration idempotency and schema consistency
+# by running migrations twice and comparing the resulting schemas.
+#
+# Success criteria:
+# 1. Migrations run successfully on fresh database (Pass 1)
+# 2. Migrations run successfully on existing database (Pass 2)
+# 3. Schema after Pass 1 == Schema after Pass 2 (idempotency proof)
+
+on:
+  pull_request:
+    paths:
+      - 'migrations/**'
+      - 'scripts/run-migrations.py'
+      - 'scripts/run-migrations-updated.py'
+  push:
+    branches:
+      - integrate/ledger-v0.1
+    paths:
+      - 'migrations/**'
+      - 'scripts/run-migrations.py'
+
+jobs:
+  migration-idempotency:
+    name: 2-Pass Idempotency Test
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: ml
+          POSTGRES_PASSWORD: mlpass
+          POSTGRES_DB: mathledger
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ml"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    
+    env:
+      DATABASE_URL: postgresql://ml:mlpass@localhost:5432/mathledger?connect_timeout=10
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v1
+      
+      - name: Install dependencies
+        run: uv sync
+      
+      - name: Install PostgreSQL client tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      
+      - name: Verify database connection
+        run: |
+          psql "$DATABASE_URL" -c "SELECT version();"
+          echo "Database connection verified"
+      
+      - name: "Pass 1: Run migrations on fresh database"
+        id: pass1
+        run: |
+          echo "=== MIGRATION PASS 1: Fresh Database ==="
+          uv run python scripts/run-migrations.py
+          echo "Pass 1 completed successfully"
+      
+      - name: "Capture schema after Pass 1"
+        run: |
+          echo "Capturing schema after Pass 1..."
+          pg_dump -U ml -h localhost -d mathledger \
+            --schema-only \
+            --no-owner \
+            --no-privileges \
+            --no-tablespaces \
+            --no-security-labels \
+            --no-comments \
+            > schema_pass1.sql
+          
+          # Also capture table list for quick comparison
+          psql "$DATABASE_URL" -c "\dt" > tables_pass1.txt
+          
+          # Count tables, indexes, constraints
+          psql "$DATABASE_URL" -c "SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema='public';" > counts_pass1.txt
+          psql "$DATABASE_URL" -c "SELECT COUNT(*) as index_count FROM pg_indexes WHERE schemaname='public';" >> counts_pass1.txt
+          psql "$DATABASE_URL" -c "SELECT COUNT(*) as constraint_count FROM information_schema.table_constraints WHERE table_schema='public';" >> counts_pass1.txt
+          
+          echo "Schema captured: $(wc -l < schema_pass1.sql) lines"
+      
+      - name: "Pass 2: Re-run migrations (idempotency test)"
+        id: pass2
+        run: |
+          echo "=== MIGRATION PASS 2: Idempotency Test ==="
+          uv run python scripts/run-migrations.py
+          echo "Pass 2 completed successfully"
+      
+      - name: "Capture schema after Pass 2"
+        run: |
+          echo "Capturing schema after Pass 2..."
+          pg_dump -U ml -h localhost -d mathledger \
+            --schema-only \
+            --no-owner \
+            --no-privileges \
+            --no-tablespaces \
+            --no-security-labels \
+            --no-comments \
+            > schema_pass2.sql
+          
+          # Also capture table list
+          psql "$DATABASE_URL" -c "\dt" > tables_pass2.txt
+          
+          # Count tables, indexes, constraints
+          psql "$DATABASE_URL" -c "SELECT COUNT(*) as table_count FROM information_schema.tables WHERE table_schema='public';" > counts_pass2.txt
+          psql "$DATABASE_URL" -c "SELECT COUNT(*) as index_count FROM pg_indexes WHERE schemaname='public';" >> counts_pass2.txt
+          psql "$DATABASE_URL" -c "SELECT COUNT(*) as constraint_count FROM information_schema.table_constraints WHERE table_schema='public';" >> counts_pass2.txt
+          
+          echo "Schema captured: $(wc -l < schema_pass2.sql) lines"
+      
+      - name: "Inline schema diff check (fail-closed)"
+        id: schema_diff
+        run: |
+          echo "=== INLINE SCHEMA DIFF CHECK ==="
+          
+          # Generate checksums for fail-closed verification
+          sha256sum schema_pass1.sql > schema_pass1.sha256
+          sha256sum schema_pass2.sql > schema_pass2.sha256
+          
+          echo "Pass 1 checksum: $(cat schema_pass1.sha256)"
+          echo "Pass 2 checksum: $(cat schema_pass2.sha256)"
+          
+          # Store checksums as outputs
+          echo "pass1_checksum=$(cut -d' ' -f1 schema_pass1.sha256)" >> $GITHUB_OUTPUT
+          echo "pass2_checksum=$(cut -d' ' -f1 schema_pass2.sha256)" >> $GITHUB_OUTPUT
+      
+      - name: "Compare schemas (must be identical)"
+        id: compare
+        run: |
+          echo "=== SCHEMA COMPARISON ==="
+          
+          # Compare full schemas
+          # Fail-closed: If diff fails for any reason, treat as failure
+          if ! diff -u schema_pass1.sql schema_pass2.sql > schema_diff.txt 2>&1; then
+            echo "✗ FAIL: Schema changed between pass 1 and pass 2"
+            echo "Migrations are NOT idempotent"
+            echo ""
+            echo "Differences found:"
+            cat schema_diff.txt || echo "(diff output unavailable)"
+            echo "status=fail" >> $GITHUB_OUTPUT
+            echo "idempotent=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Verify checksums match (double-check)
+          if [ "${{ steps.schema_diff.outputs.pass1_checksum }}" != "${{ steps.schema_diff.outputs.pass2_checksum }}" ]; then
+            echo "✗ FAIL: Checksums differ despite identical diff"
+            echo "Pass 1: ${{ steps.schema_diff.outputs.pass1_checksum }}"
+            echo "Pass 2: ${{ steps.schema_diff.outputs.pass2_checksum }}"
+            echo "status=fail" >> $GITHUB_OUTPUT
+            echo "idempotent=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "✓ PASS: Schemas are identical"
+          echo "✓ PASS: Checksums match"
+          echo "status=pass" >> $GITHUB_OUTPUT
+          echo "idempotent=true" >> $GITHUB_OUTPUT
+          
+          # Compare counts
+          echo ""
+          echo "=== OBJECT COUNTS ==="
+          echo "Pass 1:"
+          cat counts_pass1.txt
+          echo ""
+          echo "Pass 2:"
+          cat counts_pass2.txt
+          
+          if diff counts_pass1.txt counts_pass2.txt; then
+            echo "✓ Object counts match"
+          else
+            echo "✗ Object counts differ"
+            exit 1
+          fi
+      
+      - name: "Verify baseline migration"
+        if: success()
+        run: |
+          echo "=== BASELINE VERIFICATION ==="
+          
+          # Check if schema_migrations table exists
+          if psql "$DATABASE_URL" -c "SELECT * FROM schema_migrations;" > /dev/null 2>&1; then
+            echo "✓ schema_migrations table exists"
+            
+            # Check if baseline is recorded
+            if psql "$DATABASE_URL" -c "SELECT * FROM schema_migrations WHERE version='baseline_20251019';" | grep -q baseline_20251019; then
+              echo "✓ Baseline migration baseline_20251019 is recorded"
+            else
+              echo "⚠ Warning: Baseline migration not recorded (legacy migration path used)"
+            fi
+          else
+            echo "⚠ Warning: schema_migrations table does not exist (legacy migration path)"
+          fi
+          
+          # Verify core tables exist
+          echo ""
+          echo "=== CORE TABLES VERIFICATION ==="
+          required_tables="theories symbols statements proofs dependencies runs blocks lemma_cache"
+          
+          for table in $required_tables; do
+            if psql "$DATABASE_URL" -c "SELECT 1 FROM $table LIMIT 1;" > /dev/null 2>&1; then
+              echo "✓ Table $table exists"
+            else
+              echo "✗ FAIL: Required table $table missing"
+              exit 1
+            fi
+          done
+      
+      - name: "Generate migration report"
+        if: always()
+        run: |
+          cat > migration_report.md << 'EOF'
+          # Migration Idempotency Report
+          
+          **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Workflow**: Database Migration Check
+          **Status**: ${{ steps.compare.outputs.status }}
+          
+          ## Test Results
+          
+          - **Pass 1 (Fresh DB)**: ${{ steps.pass1.outcome }}
+          - **Pass 2 (Re-run)**: ${{ steps.pass2.outcome }}
+          - **Schema Comparison**: ${{ steps.compare.outputs.status }}
+          
+          ## Schema Statistics
+          
+          ### Pass 1
+          ```
+          $(cat counts_pass1.txt)
+          ```
+          
+          ### Pass 2
+          ```
+          $(cat counts_pass2.txt)
+          ```
+          
+          ## Conclusion
+          
+          ${{ steps.compare.outputs.status == 'pass' && '✓ Migrations are idempotent and consistent' || '✗ Migrations failed idempotency test' }}
+          
+          EOF
+          
+          cat migration_report.md
+      
+      - name: "Upload schema artifacts"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-schemas-${{ github.run_number }}
+          path: |
+            schema_pass1.sql
+            schema_pass2.sql
+            schema_diff.txt
+            tables_pass1.txt
+            tables_pass2.txt
+            counts_pass1.txt
+            counts_pass2.txt
+            migration_report.md
+            schema_seal.json
+            schema_checksums.txt
+          retention-days: 30
+      
+      - name: "Seal checksums for rollback verification"
+        if: success()
+        run: |
+          echo "=== SEALING CHECKSUMS ==="
+          echo "Pass 1 checksum: ${{ steps.schema_diff.outputs.pass1_checksum }}" | tee schema_checksums.txt
+          echo "Pass 2 checksum: ${{ steps.schema_diff.outputs.pass2_checksum }}" | tee -a schema_checksums.txt
+          echo "Idempotent: ${{ steps.compare.outputs.idempotent }}" | tee -a schema_checksums.txt
+          echo "Baseline: baseline_20251019" | tee -a schema_checksums.txt
+          
+          # Create sealed checksum file for rollback playbook
+          cat > schema_seal.json << EOF
+          {
+            "baseline_version": "baseline_20251019",
+            "pass1_checksum": "${{ steps.schema_diff.outputs.pass1_checksum }}",
+            "pass2_checksum": "${{ steps.schema_diff.outputs.pass2_checksum }}",
+            "idempotent": ${{ steps.compare.outputs.idempotent }},
+            "verified_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "postgres_version": "15-alpine"
+          }
+          EOF
+          
+          cat schema_seal.json
+          echo ""
+          echo "[PASS] Rollback Playbook: checksum sealed"
+      
+      - name: "Final status"
+        if: success()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "  [PASS] Migrations: 2-pass idempotent"
+          echo "  Baseline consistent"
+          echo "=========================================="
+          echo ""
+          echo "Migration hygiene enforcement: PASSED"
+          echo "CI green status: READY"
+

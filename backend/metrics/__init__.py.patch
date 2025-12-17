@@ -1,0 +1,259 @@
+# backend/metrics/__init__.py — Export Reconciliation Patch
+# CLAUDE D — Metrics Conformance Layer
+# Date: 2025-12-10
+# Version: 1.0.0
+#
+# This patch reconciles the backend/metrics/__init__.py exports to support
+# the Phase X governance binding as specified in Metrics_PhaseX_Spec.md.
+#
+# IMPORTANT: This is a NO-CODE-CHANGE patch. It documents the recommended
+# export reconciliation without modifying existing code behavior.
+#
+# ============================================================================
+# CURRENT STATE
+# ============================================================================
+#
+# File: backend/metrics/__init__.py
+# Current exports:
+#
+#   __all__ = [
+#       "FirstOrganismRunResult",
+#       "FirstOrganismTelemetry",
+#       "emit_first_organism_metrics",
+#       "get_telemetry",
+#   ]
+#
+# Source: backend/metrics/first_organism_telemetry.py
+#
+# ============================================================================
+# RECOMMENDED RECONCILIATION
+# ============================================================================
+#
+# To fully support Phase X governance binding, the following exports should
+# be added to __init__.py. These are already implemented in the codebase but
+# not exposed at the package level.
+#
+# --- BEGIN RECOMMENDED __init__.py ---
+"""
+MathLedger Metrics Package.
+
+Provides telemetry emission and collection for various subsystems.
+Supports Phase X governance binding via FOVitalSigns and FOFeedbackSignal.
+"""
+
+from backend.metrics.first_organism_telemetry import (
+    FirstOrganismRunResult,
+    FirstOrganismTelemetry,
+    emit_first_organism_metrics,
+    get_telemetry,
+)
+
+# Phase X Governance Binding - Canonical Schemas
+from backend.metrics.fo_schema import (
+    # Dataclasses
+    FOVitalSigns,
+    FOTrendSeries,
+    FOFeedbackSignal,
+    # Constants
+    REDIS_KEY_PREFIX,
+    STATUS_SUCCESS,
+    STATUS_FAILURE,
+    STATUS_UNKNOWN,
+    TREND_UP,
+    TREND_DOWN,
+    TREND_FLAT,
+    HISTORY_MAX_LEN,
+    # Field names (for Redis key construction)
+    FIELD_RUNS_TOTAL,
+    FIELD_LAST_HT,
+    FIELD_LAST_HT_FULL,
+    FIELD_DURATION_SECONDS,
+    FIELD_LATENCY_SECONDS,
+    FIELD_LAST_ABSTENTIONS,
+    FIELD_LAST_RUN_TIMESTAMP,
+    FIELD_LAST_STATUS,
+    FIELD_DURATION_HISTORY,
+    FIELD_ABSTENTION_HISTORY,
+    FIELD_SUCCESS_HISTORY,
+    FIELD_HT_HISTORY,
+    # Visualization
+    generate_sparkline,
+    generate_trend_indicator,
+)
+
+# Phase X Governance Binding - Feedback Loop
+from backend.metrics.fo_feedback import (
+    FOFeedbackReader,
+    FOFeedbackWriter,
+    get_fo_feedback_signal,
+    record_fo_feedback_decision,
+)
+
+__all__ = [
+    # Original exports (unchanged)
+    "FirstOrganismRunResult",
+    "FirstOrganismTelemetry",
+    "emit_first_organism_metrics",
+    "get_telemetry",
+    # Phase X: Canonical Schemas
+    "FOVitalSigns",
+    "FOTrendSeries",
+    "FOFeedbackSignal",
+    # Phase X: Constants
+    "REDIS_KEY_PREFIX",
+    "STATUS_SUCCESS",
+    "STATUS_FAILURE",
+    "STATUS_UNKNOWN",
+    "TREND_UP",
+    "TREND_DOWN",
+    "TREND_FLAT",
+    "HISTORY_MAX_LEN",
+    # Phase X: Field Names
+    "FIELD_RUNS_TOTAL",
+    "FIELD_LAST_HT",
+    "FIELD_LAST_HT_FULL",
+    "FIELD_DURATION_SECONDS",
+    "FIELD_LATENCY_SECONDS",
+    "FIELD_LAST_ABSTENTIONS",
+    "FIELD_LAST_RUN_TIMESTAMP",
+    "FIELD_LAST_STATUS",
+    "FIELD_DURATION_HISTORY",
+    "FIELD_ABSTENTION_HISTORY",
+    "FIELD_SUCCESS_HISTORY",
+    "FIELD_HT_HISTORY",
+    # Phase X: Visualization
+    "generate_sparkline",
+    "generate_trend_indicator",
+    # Phase X: Feedback Loop
+    "FOFeedbackReader",
+    "FOFeedbackWriter",
+    "get_fo_feedback_signal",
+    "record_fo_feedback_decision",
+]
+# --- END RECOMMENDED __init__.py ---
+#
+# ============================================================================
+# EXPORT CATEGORIZATION
+# ============================================================================
+#
+# Category 1: Original Exports (UNCHANGED)
+# -----------------------------------------
+# These are the current exports and remain unchanged:
+#
+#   - FirstOrganismRunResult   : Dataclass for run results
+#   - FirstOrganismTelemetry   : Redis telemetry emitter class
+#   - emit_first_organism_metrics : Convenience function
+#   - get_telemetry            : Get singleton telemetry instance
+#
+# Category 2: Canonical Schemas (NEW)
+# -----------------------------------
+# From fo_schema.py - these define the normalized data structures:
+#
+#   - FOVitalSigns    : Normalized vital signs (core metrics)
+#   - FOTrendSeries   : Trend analysis with moving averages
+#   - FOFeedbackSignal: Feedback signal for RFL integration
+#
+# Category 3: Constants (NEW)
+# ---------------------------
+# From fo_schema.py - these ensure consistent key/value usage:
+#
+#   - REDIS_KEY_PREFIX : "ml:metrics:first_organism"
+#   - STATUS_*         : Status enum values
+#   - TREND_*          : Trend enum values
+#   - HISTORY_MAX_LEN  : Rolling window size (20)
+#   - FIELD_*          : Redis field name constants
+#
+# Category 4: Visualization (NEW)
+# -------------------------------
+# From fo_schema.py - ASCII rendering utilities:
+#
+#   - generate_sparkline       : ASCII sparkline from values
+#   - generate_trend_indicator : ASCII trend arrow
+#
+# Category 5: Feedback Loop (NEW)
+# -------------------------------
+# From fo_feedback.py - RFL integration:
+#
+#   - FOFeedbackReader         : Reads FO metrics, generates signals
+#   - FOFeedbackWriter         : Records feedback decisions to Redis
+#   - get_fo_feedback_signal   : Convenience function for reading
+#   - record_fo_feedback_decision : Convenience function for writing
+#
+# ============================================================================
+# GOVERNANCE SIGNAL MAPPING
+# ============================================================================
+#
+# The recommended exports enable the following governance signal flows:
+#
+#   1. FO Vital Signs → Drift Compass
+#      - FOVitalSigns.success_rate → drift_compass.axes[success_rate]
+#      - FOVitalSigns.abstention_count → drift_compass.axes[abstention]
+#      - FOVitalSigns.duration_series → drift_compass.axes[duration]
+#
+#   2. FO Vital Signs → Budget View
+#      - FOVitalSigns.runs_total → budget_view.cycle
+#      - FOTrendSeries.samples → budget_view.consumed
+#
+#   3. FO Feedback Signal → Governance Signal
+#      - FOFeedbackSignal.should_throttle → governance_signal.recommended_action
+#      - FOFeedbackSignal.should_boost → governance_signal.intensity_multiplier
+#      - FOFeedbackSignal.confidence → governance_signal.sub_signals.fo.confidence
+#
+#   4. Cross-Layer Integration
+#      - FOFeedbackSignal → GovernanceSignal (via adapt_metrics_to_governance_signal)
+#      - GovernanceSignal → Director Panel (via build_governance_director_panel)
+#
+# ============================================================================
+# DUPLICATE DEFINITION RESOLUTION
+# ============================================================================
+#
+# NOTE: FOFeedbackSignal is defined in BOTH:
+#   - backend/metrics/fo_schema.py (lines 362-417)
+#   - backend/metrics/fo_feedback.py (lines 42-84)
+#
+# The fo_feedback.py version is more complete (includes intensity_multiplier,
+# abstention_threshold_adjustment, signal_hash computation).
+#
+# RECOMMENDATION: Export from fo_feedback.py, which is the authoritative
+# implementation for RFL integration. The fo_schema.py version serves as
+# documentation of the interface contract.
+#
+# If both need to be available, use qualified imports:
+#   - FOFeedbackSignal (default) → from fo_feedback
+#   - FOFeedbackSignalSpec → from fo_schema (interface spec only)
+#
+# ============================================================================
+# BACKWARDS COMPATIBILITY
+# ============================================================================
+#
+# This reconciliation is ADDITIVE ONLY:
+#   - All existing imports continue to work
+#   - No existing symbols are removed or renamed
+#   - New symbols are added to __all__
+#
+# Existing code:
+#   from backend.metrics import FirstOrganismTelemetry  # Still works
+#
+# New code:
+#   from backend.metrics import FOVitalSigns, FOFeedbackSignal  # Now works
+#
+# ============================================================================
+# TESTING REQUIREMENTS
+# ============================================================================
+#
+# After applying this reconciliation, verify:
+#
+#   1. Import test:
+#      from backend.metrics import FOVitalSigns
+#      from backend.metrics import get_fo_feedback_signal
+#
+#   2. Instantiation test:
+#      vitals = FOVitalSigns()
+#      signal = get_fo_feedback_signal()
+#
+#   3. Schema conformance:
+#      Verify FOVitalSigns.to_dict() output matches expected schema
+#
+# ============================================================================
+# END OF PATCH
+# ============================================================================

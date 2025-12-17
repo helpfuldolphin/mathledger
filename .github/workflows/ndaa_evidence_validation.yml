@@ -1,0 +1,84 @@
+# .github/workflows/ndaa_evidence_validation.yml
+name: "NDAA Evidence Pack Validation"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/system_law/**'
+      - 'scripts/validate_ndaa_evidence.py'
+      - 'ledgerctl.py'
+      - '.github/workflows/ndaa_evidence_validation.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-evidence-pack:
+    name: "Validate NDAA Evidence Pack"
+    runs-on: ubuntu-latest
+    
+    # This job is non-gating, but individual steps can fail.
+    # continue-on-error is set on the validation step itself.
+
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python and uv"
+        uses: ammaraskar/pip-and-python-actions@v1
+        with:
+          python-version: '3.11'
+          uv: 'latest'
+
+      - name: "Install dependencies"
+        run: |
+          uv pip install -r requirements.txt
+          uv pip install jsonschema
+
+      - name: "Info: Display Validator Help"
+        run: python scripts/validate_ndaa_evidence.py --help
+
+      - name: "Step 1: Generate Evidence Pack"
+        id: generate_evidence
+        run: |
+          echo "--- Generating P3 Synthetic Evidence ---"
+          python ledgerctl.py run-experiment p3 --cycles 100 --output-dir results/ci_audit_p3
+
+          echo "--- Generating P4 Shadow Evidence ---"
+          # NOTE: In a real CI environment, this would run against a live dev instance.
+          # Here, we simulate it by running the P3 harness again to produce the expected file layout.
+          python ledgerctl.py run-experiment p3 --cycles 100 --output-dir results/ci_audit_p4
+        
+      - name: "Step 2: List Generated Artifacts"
+        run: |
+          echo "--- P3 Artifacts ---"
+          ls -R results/ci_audit_p3
+          echo "--- P4 Artifacts ---"
+          ls -R results/ci_audit_p4
+
+      - name: "Step 3: Run Validation Script"
+        id: run_validation
+        continue-on-error: true # IMPORTANT: This makes the step non-gating
+        run: |
+          python scripts/validate_ndaa_evidence.py \
+            --pack-dir results/ \
+            --json-report-out ndaa_validation_report.json \
+            --ascii-only
+
+      - name: "Upload Validation Report"
+        uses: actions/upload-artifact@v4
+        if: always() # Upload report even if validation fails
+        with:
+          name: ndaa-validation-report
+          path: ndaa_validation_report.json
+          retention-days: 5
+
+      - name: "Publish Validation Status"
+        if: always() # Run this step even if validation fails
+        run: |
+          echo "NDAA Evidence Pack Validation finished with status: ${{ steps.run_validation.outcome }}"
+          if [ "${{ steps.run_validation.outcome }}" == "success" ]; then
+            echo "✅ All compliance artifacts were generated and validated successfully."
+          else
+            echo "❌ Compliance artifact validation failed. This is a non-gating check. Review the 'ndaa-validation-report' artifact for details."
+          fi

@@ -1,0 +1,11 @@
+{
+  "substrate": {
+    "status_light": "GREEN",
+    "headline": "Substrate stable, identity verified.",
+    "identity_stability_index": 1.0,
+    "drift_flags": [],
+    "last_attestation_timestamp": "2025-12-10T14:00:00Z",
+    "attestation_provider": "INTERNAL_VIRT_HOST",
+    "details_url": "/docs/reports/substrate/latest.html"
+  }
+}

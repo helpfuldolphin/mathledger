@@ -1,0 +1,464 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/phase_x_p5/p5_divergence_real.v1.1.0.json",
+  "title": "P5 Real Telemetry Divergence Report",
+  "description": "Divergence analysis report for P5 real telemetry runs. Links to RTTS (manifold validation), TDA (metric comparison), and GGFL (governance signals). SHADOW MODE: All fields are observational only. v1.1.0: Added true_divergence_vector_v1 with explicit metric fields (no metric laundering).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "telemetry_source",
+    "validation_status",
+    "validation_confidence",
+    "total_cycles",
+    "divergence_rate",
+    "mode"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": ["1.0.0", "1.1.0"],
+      "description": "Schema version identifier (1.0.0 or 1.1.0)"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^p5_[0-9]{8}_[0-9]{6}.*$",
+      "description": "P5 run identifier (format: p5_YYYYMMDD_HHMMSS_*)"
+    },
+    "telemetry_source": {
+      "type": "string",
+      "enum": ["real", "mock"],
+      "description": "Source of telemetry data"
+    },
+    "validation_status": {
+      "type": "string",
+      "enum": ["VALIDATED_REAL", "SUSPECTED_MOCK", "UNVALIDATED"],
+      "description": "RTTS validation status (Section 2.2)"
+    },
+    "validation_confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Validation confidence score [0.0, 1.0]"
+    },
+    "total_cycles": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Total cycles in P5 run"
+    },
+    "divergence_rate": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Fraction of cycles with twin-real divergence [0.0, 1.0]"
+    },
+    "mode": {
+      "type": "string",
+      "const": "SHADOW",
+      "description": "Execution mode (must be SHADOW for Phase X)"
+    },
+    "true_divergence_vector_v1": {
+      "type": "object",
+      "description": "True Divergence Vector v1 — NO METRIC LAUNDERING. Explicit, named fields for each divergence component. SHADOW MODE: All fields are observational only.",
+      "properties": {
+        "safety_state_mismatch_rate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Fraction of cycles where safety-critical state (blocked/omega) differs between twin and real"
+        },
+        "state_error_mean": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Mean absolute state delta (mean_delta_p proxy from H_deltas). Optional: only present if H_deltas available."
+        },
+        "outcome_brier_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Brier score for outcome prediction calibration. Optional: only present if prediction probabilities available."
+        }
+      },
+      "required": ["safety_state_mismatch_rate"],
+      "additionalProperties": false
+    },
+    "metric_versioning": {
+      "type": "object",
+      "description": "Explicit metric versioning block — NO METRIC LAUNDERING. Declares which metrics are legacy vs true_vector. Strings only, no inference.",
+      "properties": {
+        "legacy_metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["divergence_rate", "mock_baseline_divergence_rate", "divergence_delta"]
+          },
+          "description": "List of legacy metric names (pre-v1.1.0)"
+        },
+        "true_vector_v1_metrics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["safety_state_mismatch_rate", "state_error_mean", "outcome_brier_score"]
+          },
+          "description": "List of true_divergence_vector_v1 metric names"
+        },
+        "equivalence_note": {
+          "type": "string",
+          "const": "legacy_outcome_mismatch_rate NOT_EQUIVALENT_TO state_error_mean",
+          "description": "Explicit non-equivalence statement (ASCII-safe)"
+        },
+        "doc_reference": {
+          "type": "string",
+          "const": "docs/system_law/no_metric_laundering.md",
+          "description": "Reference to anti-laundering documentation"
+        }
+      },
+      "required": ["legacy_metrics", "true_vector_v1_metrics", "equivalence_note", "doc_reference"],
+      "additionalProperties": false
+    },
+    "mock_baseline_divergence_rate": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "P4 mock baseline divergence rate for comparison"
+    },
+    "divergence_delta": {
+      "type": "number",
+      "description": "Difference: divergence_rate - mock_baseline_divergence_rate"
+    },
+    "twin_tracking_accuracy": {
+      "type": "object",
+      "description": "Real-world twin prediction accuracy metrics",
+      "properties": {
+        "success": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Accuracy for success outcome prediction"
+        },
+        "omega": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Accuracy for Ω-region membership prediction"
+        },
+        "blocked": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Accuracy for block decision prediction"
+        }
+      },
+      "additionalProperties": false
+    },
+    "manifold_validation": {
+      "type": "object",
+      "description": "RTTS manifold constraint validation (Section 1.2)",
+      "properties": {
+        "boundedness_ok": {
+          "type": "boolean",
+          "description": "All state values in [0,1] (RTTS 1.2.1)"
+        },
+        "continuity_ok": {
+          "type": "boolean",
+          "description": "No jumps exceed δ_max thresholds (RTTS 1.2.2)"
+        },
+        "correlation_ok": {
+          "type": "boolean",
+          "description": "Cross-correlations in expected range (RTTS 1.2.3)"
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(V[0-9]|MOCK-[0-9]{3}).*$"
+          },
+          "description": "List of RTTS violation codes"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tda_comparison": {
+      "type": "object",
+      "description": "TDA metric comparison between real and twin trajectories",
+      "properties": {
+        "sns_delta": {
+          "type": "number",
+          "description": "Structural Non-Triviality Score delta (real - twin)"
+        },
+        "pcs_delta": {
+          "type": "number",
+          "description": "Persistence Coherence Score delta (real - twin)"
+        },
+        "drs_delta": {
+          "type": "number",
+          "description": "Deviation-from-Reference Score delta (real - twin)"
+        },
+        "hss_delta": {
+          "type": "number",
+          "description": "Hallucination Stability Score delta (real - twin)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "warm_start_calibration": {
+      "type": "object",
+      "description": "Twin model warm-start calibration metrics",
+      "properties": {
+        "calibration_cycles": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of cycles used for calibration"
+        },
+        "initial_divergence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Divergence rate at calibration start"
+        },
+        "final_divergence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Divergence rate at calibration end"
+        },
+        "convergence_achieved": {
+          "type": "boolean",
+          "description": "Whether twin converged within tolerance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "divergence_decomposition": {
+      "type": "object",
+      "description": "Divergence decomposition per RTTS Section 3.2",
+      "properties": {
+        "bias": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "|mean(p_twin) - mean(p_real)|"
+        },
+        "variance": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "|std(p_twin) - std(p_real)|"
+        },
+        "timing": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "1 - max(xcorr(p_twin, p_real))"
+        },
+        "structural": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Rate of sign(Δp) changes"
+        }
+      },
+      "additionalProperties": false
+    },
+    "pattern_classification": {
+      "type": "string",
+      "enum": [
+        "DRIFT",
+        "NOISE_AMPLIFICATION",
+        "PHASE_LAG",
+        "ATTRACTOR_MISS",
+        "TRANSIENT_MISS",
+        "STRUCTURAL_BREAK",
+        "NOMINAL"
+      ],
+      "description": "Divergence pattern classification per RTTS Section 3.1"
+    },
+    "pattern_confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence in pattern classification"
+    },
+    "rtts_validation": {
+      "type": "object",
+      "description": "RTTS validation results from rtts_validation.json (P5.2)",
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "description": "RTTS validation schema version"
+        },
+        "overall_status": {
+          "type": "string",
+          "description": "Overall validation status"
+        },
+        "validation_passed": {
+          "type": "boolean",
+          "description": "Whether validation passed"
+        },
+        "warning_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of warnings"
+        },
+        "window": {
+          "type": ["object", "null"],
+          "description": "Validation window metadata"
+        },
+        "source": {
+          "type": "string",
+          "const": "rtts_validation.json",
+          "description": "Source file identifier"
+        }
+      },
+      "additionalProperties": false
+    },
+    "mock_detection_flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^MOCK-[0-9]{3}$"
+      },
+      "description": "Triggered mock detection criteria per RTTS Section 2.1"
+    },
+    "noise_envelope": {
+      "type": "object",
+      "description": "Noise floor analysis per RTTS Section 1.3",
+      "properties": {
+        "sigma_H": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Health measurement noise σ_H"
+        },
+        "sigma_rho": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Stability measurement noise σ_ρ"
+        },
+        "autocorr_lag1": {
+          "type": "number",
+          "description": "Temporal correlation at lag=1"
+        },
+        "kurtosis": {
+          "type": "number",
+          "description": "Excess kurtosis of noise distribution"
+        }
+      },
+      "additionalProperties": false
+    },
+    "governance_signals": {
+      "type": "object",
+      "description": "GGFL signal snapshot (observational only)",
+      "properties": {
+        "sig_top_status": {
+          "type": "string",
+          "description": "Topology signal status"
+        },
+        "sig_rpl_status": {
+          "type": "string",
+          "description": "Replay signal status"
+        },
+        "sig_tel_status": {
+          "type": "string",
+          "description": "Telemetry signal status"
+        },
+        "sig_met_status": {
+          "type": "string",
+          "description": "Metrics signal status"
+        },
+        "sig_bud_status": {
+          "type": "string",
+          "description": "Budget signal status"
+        }
+      },
+      "additionalProperties": true
+    },
+    "fusion_advisory": {
+      "type": "object",
+      "description": "GGFL fusion output (SHADOW MODE - advisory only)",
+      "properties": {
+        "recommendation": {
+          "type": "string",
+          "enum": ["ALLOW", "WARN", "BLOCK"],
+          "description": "Fusion recommendation (not enforced)"
+        },
+        "conflict_detected": {
+          "type": "boolean",
+          "description": "Whether signal conflict was detected"
+        }
+      },
+      "additionalProperties": false
+    },
+    "recalibration_recommendations": {
+      "type": "array",
+      "description": "Suggested twin parameter adjustments per RTTS Section 3.1",
+      "items": {
+        "type": "object",
+        "properties": {
+          "parameter": {
+            "type": "string",
+            "description": "Parameter name to adjust"
+          },
+          "current_value": {
+            "type": "number",
+            "description": "Current parameter value"
+          },
+          "suggested_value": {
+            "type": "number",
+            "description": "Suggested new value"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Reason for recommendation"
+          }
+        },
+        "required": ["parameter", "rationale"],
+        "additionalProperties": false
+      }
+    },
+    "timing": {
+      "type": "object",
+      "description": "Execution timing metadata",
+      "properties": {
+        "start_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO8601 start timestamp"
+        },
+        "end_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO8601 end timestamp"
+        },
+        "duration_seconds": {
+          "type": "number",
+          "minimum": 0.0,
+          "description": "Total runtime in seconds"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sources": {
+      "type": "array",
+      "description": "Optional input files used in report generation. Deterministic order: rtts_validation, tda_comparison, calibration_report. Only present files are listed.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": ["rtts_validation", "tda_comparison", "calibration_report"],
+            "description": "Source file identifier"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path from run directory"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "description": "SHA256 hash of source file"
+          }
+        },
+        "required": ["name", "path", "sha256"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,65 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Natural Language Intermediate Representation",
+    "description": "Schema for the intermediate representation of a natural language claim before it is translated into a formal language.",
+    "type": "object",
+    "properties": {
+        "statement_id": {
+            "description": "A unique identifier for the NL statement.",
+            "type": "string",
+            "pattern": "^NL_[a-zA-Z0-9_]+$"
+        },
+        "source_nl": {
+            "description": "The original, unmodified natural language text.",
+            "type": "string"
+        },
+        "logical_form": {
+            "description": "The structured logical representation of the source text.",
+            "type": "object"
+        },
+        "grounding_context": {
+            "description": "Mapping of entities and concepts from the logical form to the system's ontology.",
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "nl_reference": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                    },
+                    "schema_ref": {
+                        "type": "string"
+                    }
+                },
+                "required": ["nl_reference", "schema_ref"]
+            }
+        },
+        "confidence_score": {
+            "description": "The confidence score from the NL processor (0.0 to 1.0).",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+        },
+        "disambiguation_notes": {
+            "description": "Notes on any ambiguities that were resolved or remain.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string"},
+                    "interpretation": {"type": "string"},
+                    "resolution": {"type": "string"}
+                },
+                "required": ["text", "interpretation", "resolution"]
+            }
+        }
+    },
+    "required": [
+        "statement_id",
+        "source_nl",
+        "logical_form",
+        "grounding_context",
+        "confidence_score",
+        "disambiguation_notes"
+    ]
+}

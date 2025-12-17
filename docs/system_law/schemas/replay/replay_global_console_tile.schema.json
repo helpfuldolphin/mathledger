@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/replay/replay_global_console_tile.v1.0.0.json",
+  "title": "Replay Global Console Tile",
+  "description": "Schema for replay governance tile in global health surface. Provides SHADOW mode observational replay status for console integration.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tile_type",
+    "timestamp",
+    "mode",
+    "status",
+    "safe"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "tile_type": {
+      "type": "string",
+      "const": "replay_governance",
+      "description": "Tile type identifier for global console"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when tile was generated"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["SHADOW", "ACTIVE"],
+      "default": "SHADOW",
+      "description": "Operating mode (Phase X requires SHADOW)"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["ok", "warn", "block"],
+      "description": "Tile status for console display"
+    },
+    "safe": {
+      "type": "boolean",
+      "description": "True if replay verification is healthy"
+    },
+    "governance_signal": {
+      "type": "object",
+      "required": ["signal_type", "status"],
+      "properties": {
+        "signal_type": {
+          "type": "string",
+          "const": "replay_safety",
+          "description": "Signal type identifier for governance registry"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ok", "warn", "block"],
+          "description": "Governance signal status"
+        },
+        "governance_status": {
+          "type": "string",
+          "enum": ["ok", "warn", "block"],
+          "description": "Redundant governance status for evidence pack"
+        },
+        "governance_alignment": {
+          "type": "string",
+          "enum": ["aligned", "tension", "divergent"],
+          "description": "Safety-radar alignment"
+        },
+        "conflict": {
+          "type": "boolean",
+          "description": "True if conflict detected"
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Prefixed reasons list"
+        }
+      },
+      "description": "Collapsed governance signal for CLAUDE I fusion"
+    },
+    "summary_metrics": {
+      "type": "object",
+      "properties": {
+        "replay_confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Overall replay confidence (0-1)"
+        },
+        "determinism_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Determinism score (0-100)"
+        },
+        "violation_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total violations"
+        },
+        "warning_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total warnings"
+        }
+      },
+      "description": "Summary metrics for console display"
+    },
+    "promotion_eval": {
+      "type": "object",
+      "properties": {
+        "promotion_status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected", "abstain"],
+          "description": "Promotion decision"
+        },
+        "safety_level": {
+          "type": "string",
+          "enum": ["safe", "caution", "unsafe", "unknown"],
+          "description": "Safety classification"
+        }
+      },
+      "description": "Embedded promotion evaluation summary"
+    },
+    "director_panel": {
+      "type": "object",
+      "properties": {
+        "headline": {
+          "type": "string",
+          "description": "Executive summary headline"
+        },
+        "recommendation": {
+          "type": "string",
+          "enum": ["proceed", "caution", "halt", "manual_review"],
+          "description": "Recommended action"
+        },
+        "conflict_flag": {
+          "type": "boolean",
+          "description": "True if conflict requires review"
+        }
+      },
+      "description": "Embedded director panel summary"
+    },
+    "radar_summary": {
+      "type": "object",
+      "properties": {
+        "governance_alignment": {
+          "type": "string",
+          "enum": ["aligned", "tension", "divergent"],
+          "description": "Safety-radar alignment"
+        },
+        "safe_for_policy_update": {
+          "type": "boolean",
+          "description": "Whether policy updates permitted"
+        },
+        "safe_for_promotion": {
+          "type": "boolean",
+          "description": "Whether promotion permitted"
+        }
+      },
+      "description": "Embedded radar summary"
+    },
+    "shadow_mode_contract": {
+      "type": "object",
+      "properties": {
+        "observational_only": {
+          "type": "boolean",
+          "const": true,
+          "description": "Tile is purely observational"
+        },
+        "no_control_flow_influence": {
+          "type": "boolean",
+          "const": true,
+          "description": "Tile does not influence control flow"
+        },
+        "no_governance_modification": {
+          "type": "boolean",
+          "const": true,
+          "description": "Tile does not modify governance decisions"
+        }
+      },
+      "description": "SHADOW mode contract attestation"
+    },
+    "phase_x_metadata": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": ["P3", "P4"],
+          "description": "Current validation phase"
+        },
+        "doctrine_ref": {
+          "type": "string",
+          "description": "Reference to doctrine document"
+        },
+        "whitepaper_evidence_tag": {
+          "type": "string",
+          "description": "Tag for whitepaper evidence collection"
+        }
+      },
+      "description": "Phase X integration metadata"
+    }
+  },
+  "additionalProperties": false
+}

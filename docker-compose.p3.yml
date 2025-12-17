@@ -1,0 +1,16 @@
+# Used for containerized First Light P3 harness validation.
+version: "3.9"
+
+services:
+  p3-harness:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.p3
+    working_dir: /app
+    command: ["pytest", "tests/first_light/test_p3_harness_skeleton.py"]
+  p4-harness:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.p4
+    working_dir: /app
+    command: ["python", "scripts/usla_first_light_p4_harness.py", "--cycles", "50", "--output-dir", "results/p4_compose"]

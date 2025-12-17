@@ -23,6 +23,7 @@ from backend.topology.first_light.noise_vs_reality_integration import (
     extract_noise_vs_reality_signal,
     compute_summary_sha256,
     normalize_p5_source,
+    format_advisory_warning,
     P5Source,
     VALID_P5_SOURCES,
     _load_p5_divergence_real_report,
@@ -31,6 +32,10 @@ from backend.topology.first_light.noise_vs_reality_integration import (
 from backend.topology.first_light.noise_vs_reality import (
     SCHEMA_VERSION,
     validate_noise_vs_reality_summary,
+)
+from tests.doc_samples import (
+    NOISE_VS_REALITY_MARGINAL_SAMPLE,
+    NOISE_VS_REALITY_MARGINAL_INPUT,
 )
 
 
@@ -970,3 +975,120 @@ class TestSingleWarningCapTopFactor:
         assert advisory["top_factor"] == "exceedance_rate"
         assert advisory["top_factor_value"] == 0.15
         assert "15.0%" in advisory["message"]
+
+
+# =============================================================================
+# Test: Advisory Warning Format Lock (DOC/TEST SYNC)
+# =============================================================================
+
+
+import re
+
+
+class TestAdvisoryWarningFormatLock:
+    """Regression tests to ensure advisory_warning format matches documented sample.
+
+    SHADOW MODE CONTRACT:
+    - Non-gating: format mismatch is a test failure, not a runtime gate
+    - Ensures doc sample in First_Light_External_Verification.md §11.8/§11.9 stays in sync
+
+    Frozen format pattern from §11.8:
+    - "VERDICT: factor=value [source_abbrev]"
+
+    Doc sample from §11.9:
+    - "MARGINAL: coverage_ratio=0.72 [real]"
+    """
+
+    # Frozen regex pattern matching documented format from §11.8
+    ADVISORY_WARNING_FORMAT_PATTERN = re.compile(
+        r"^(MARGINAL|INSUFFICIENT): (coverage_ratio=\d+\.\d+|exceedance_rate=\d+\.\d+%) \[(real|mock\?|adapter|jsonl)\]$"
+    )
+
+    def test_marginal_coverage_ratio_matches_frozen_format(self):
+        """MARGINAL with coverage_ratio matches frozen format."""
+        warning = format_advisory_warning(
+            verdict="MARGINAL",
+            top_factor="coverage_ratio",
+            top_factor_value=0.75,
+            p5_source=P5Source.REAL_VALIDATED.value,
+        )
+        assert warning is not None
+        assert self.ADVISORY_WARNING_FORMAT_PATTERN.match(warning), (
+            f"Advisory warning format mismatch. "
+            f"Expected pattern: 'VERDICT: factor=value [source]'. "
+            f"Got: '{warning}'"
+        )
+
+    def test_marginal_exceedance_rate_matches_frozen_format(self):
+        """MARGINAL with exceedance_rate matches frozen format."""
+        warning = format_advisory_warning(
+            verdict="MARGINAL",
+            top_factor="exceedance_rate",
+            top_factor_value=0.12,
+            p5_source=P5Source.JSONL_FALLBACK.value,
+        )
+        assert warning is not None
+        assert self.ADVISORY_WARNING_FORMAT_PATTERN.match(warning), (
+            f"Advisory warning format mismatch. "
+            f"Expected pattern: 'VERDICT: factor=value [source]'. "
+            f"Got: '{warning}'"
+        )
+
+    def test_insufficient_matches_frozen_format(self):
+        """INSUFFICIENT verdict matches frozen format."""
+        warning = format_advisory_warning(
+            verdict="INSUFFICIENT",
+            top_factor="coverage_ratio",
+            top_factor_value=0.45,
+            p5_source=P5Source.SUSPECTED_MOCK.value,
+        )
+        assert warning is not None
+        assert self.ADVISORY_WARNING_FORMAT_PATTERN.match(warning), (
+            f"Advisory warning format mismatch. Got: '{warning}'"
+        )
+
+    def test_adequate_returns_none(self):
+        """ADEQUATE verdict returns None (no warning)."""
+        warning = format_advisory_warning(
+            verdict="ADEQUATE",
+            top_factor="coverage_ratio",
+            top_factor_value=0.95,
+            p5_source=P5Source.REAL_VALIDATED.value,
+        )
+        assert warning is None
+
+    def test_triangle_lock_doc_regex_implementation(self):
+        """Triangle lock: doc sample == regex match == implementation output.
+
+        Single source of truth test ensuring:
+        1. Doc sample (from tests/doc_samples.py, matches §11.9) matches frozen regex
+        2. Implementation output matches the doc sample exactly
+        3. All three are in sync: DOC ↔ REGEX ↔ IMPL
+
+        To update: change NOISE_VS_REALITY_MARGINAL_SAMPLE in tests/doc_samples.py
+        """
+        # 1. Doc sample matches frozen regex
+        assert self.ADVISORY_WARNING_FORMAT_PATTERN.match(NOISE_VS_REALITY_MARGINAL_SAMPLE), (
+            f"Doc sample does not match frozen regex. "
+            f"Sample: '{NOISE_VS_REALITY_MARGINAL_SAMPLE}'"
+        )
+
+        # 2. Implementation output
+        impl_output = format_advisory_warning(
+            verdict=NOISE_VS_REALITY_MARGINAL_INPUT["verdict"],
+            top_factor=NOISE_VS_REALITY_MARGINAL_INPUT["top_factor"],
+            top_factor_value=NOISE_VS_REALITY_MARGINAL_INPUT["top_factor_value"],
+            p5_source=NOISE_VS_REALITY_MARGINAL_INPUT["p5_source"],
+        )
+
+        # 3. Implementation output matches doc sample exactly
+        assert impl_output == NOISE_VS_REALITY_MARGINAL_SAMPLE, (
+            f"Implementation output differs from doc sample. "
+            f"Doc: '{NOISE_VS_REALITY_MARGINAL_SAMPLE}'. Impl: '{impl_output}'"
+        )
+
+        # 4. Implementation output matches frozen regex (redundant but explicit)
+        assert self.ADVISORY_WARNING_FORMAT_PATTERN.match(impl_output), (
+            f"Implementation output does not match frozen regex. "
+            f"Output: '{impl_output}'"
+        )

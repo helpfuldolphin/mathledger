@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/first_light/synthetic_raw.v1.0.0.json",
+  "title": "First-Light Synthetic Raw Observation",
+  "description": "Schema for individual cycle observations in P3 synthetic First-Light experiments. JSONL format: one record per line.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "cycle",
+    "timestamp",
+    "runner",
+    "usla_state",
+    "governance",
+    "hard_ok",
+    "abstained"
+  ],
+  "properties": {
+    "cycle": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Cycle index (1-indexed)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of observation"
+    },
+    "runner": {
+      "type": "object",
+      "required": ["success", "depth"],
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether the synthetic runner succeeded this cycle"
+        },
+        "depth": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Proof depth achieved (null if failed)"
+        }
+      }
+    },
+    "usla_state": {
+      "type": "object",
+      "required": ["H", "rho", "tau", "beta", "in_omega"],
+      "properties": {
+        "H": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Entropy/Health metric"
+        },
+        "rho": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "RSI (Reflexive Stability Index)"
+        },
+        "tau": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Threshold parameter"
+        },
+        "beta": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Block rate proxy"
+        },
+        "in_omega": {
+          "type": "boolean",
+          "description": "Whether state is in safe Omega region"
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "required": ["real_blocked", "sim_blocked", "aligned"],
+      "properties": {
+        "real_blocked": {
+          "type": "boolean",
+          "description": "Whether real governance would block"
+        },
+        "sim_blocked": {
+          "type": "boolean",
+          "description": "Whether simulator predicts block"
+        },
+        "aligned": {
+          "type": "boolean",
+          "description": "Whether real and sim agree"
+        }
+      }
+    },
+    "hard_ok": {
+      "type": "boolean",
+      "description": "HARD mode check passed"
+    },
+    "abstained": {
+      "type": "boolean",
+      "description": "RFL abstention occurred"
+    },
+    "delta_p": {
+      "type": "object",
+      "description": "Optional delta-p metrics computed at this cycle",
+      "properties": {
+        "success": {
+          "type": ["number", "null"],
+          "description": "Delta-p for success rate"
+        },
+        "abstention": {
+          "type": ["number", "null"],
+          "description": "Delta-p for abstention rate"
+        }
+      }
+    }
+  }
+}

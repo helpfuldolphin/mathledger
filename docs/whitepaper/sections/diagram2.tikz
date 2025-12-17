@@ -1,0 +1,26 @@
+# TikZ Specification for Diagram 2: The Convergence Landscape
+# Description: A contour map visualizing the stochastic gradient ascent of the state vector towards an optimal equilibrium.
+
+\begin{tikzpicture}[scale=0.8, every node/.style={transform shape}]
+    % Contour lines representing the performance landscape
+    \draw[blue!20] (0,0) ellipse (4cm and 2cm);
+    \draw[blue!30] (0,0) ellipse (3.5cm and 1.75cm);
+    \draw[blue!40] (0,0) ellipse (3cm and 1.5cm);
+    \draw[blue!50] (0,0) ellipse (2.5cm and 1.25cm);
+    \draw[blue!60] (0,0) ellipse (2cm and 1cm);
+    \draw[blue!70] (0,0) ellipse (1.5cm and 0.75cm);
+
+    % The peak of the landscape / optimal state
+    \node at (0,0) [circle, fill=red, inner sep=1.5pt, label=above:{Optimal State (Equilibrium)}] {};
+
+    % The path of the state vector from x_0 to the peak
+    \draw[red, thick, dotted, -{Stealth[length=2mm]}]
+        (-4.5, -2.5) node[below] {\(x_0\)}
+        -- (-3.8, -1.8) -- (-3.0, -1.5) -- (-2.2, -0.8)
+        -- (-1.5, -0.5) -- (-0.8, -0.2) -- (-0.2, 0.1) -- (0,0);
+    
+    % Caption
+    \node at (0, -3) [text width=12cm, text centered]
+    {P3 visualizes the state's trajectory as it performs stochastic gradient ascent, converging towards a desirable system state as guaranteed by the Robbins-Siegmund theorem.};
+\end{tikzpicture}
+

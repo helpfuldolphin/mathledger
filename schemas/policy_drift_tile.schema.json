@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.local/schemas/policy_drift_tile.schema.json",
+  "title": "Policy Drift Tile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_ok",
+    "status",
+    "headline"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "policy_ok": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "OK",
+        "WARN",
+        "BLOCK"
+      ]
+    },
+    "headline": {
+      "type": "string"
+    }
+  }
+}

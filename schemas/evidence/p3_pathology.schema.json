@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.local/schemas/evidence/p3_pathology.schema.json",
+  "title": "P3 Pathology Annotation",
+  "description": "Optional annotation describing synthetic pathology stress tests used during P3 First-Light runs.",
+  "type": "object",
+  "properties": {
+    "pathology": {
+      "description": "Pathology type injected into the synthetic H trajectory.",
+      "type": "string",
+      "enum": ["spike", "drift", "oscillation"]
+    },
+    "pathology_params": {
+      "description": "Resolved parameters for the selected pathology.",
+      "type": "object",
+      "properties": {
+        "magnitude": {
+          "type": "number",
+          "description": "Magnitude of the injected effect (spike amplitude or oscillation amplitude)."
+        },
+        "at": {
+          "type": "integer",
+          "description": "Cycle index for single-point spike injection (0-based).",
+          "minimum": 0
+        },
+        "slope": {
+          "type": "number",
+          "description": "Slope for linear drift injection."
+        },
+        "period": {
+          "type": "integer",
+          "description": "Cycle period for oscillation.",
+          "minimum": 1
+        },
+        "amplitude": {
+          "type": "number",
+          "description": "Oscillation amplitude if distinct from magnitude."
+        }
+      },
+      "additionalProperties": true
+    },
+    "type": {
+      "description": "Governance lens: pathology type reflected in manifest governance block.",
+      "type": "string",
+      "enum": ["spike", "drift", "oscillation"]
+    },
+    "magnitude": {
+      "description": "Governance lens: primary magnitude of the injected stress.",
+      "type": "number"
+    },
+    "expected_effects": {
+      "description": "Human-readable narrative describing intended stress behavior.",
+      "type": "string"
+    },
+    "params": {
+      "description": "Governance lens: resolved parameters for the pathology stress.",
+      "type": "object"
+    }
+  },
+  "required": [],
+  "additionalProperties": false
+}

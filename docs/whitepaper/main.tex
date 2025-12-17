@@ -1,0 +1,35 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsthm, graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes, patterns, cloud, fadings, decorations.pathmorphing} % Added libraries for diagrams
+\usepackage{fancyhdr} % For custom footers
+
+\title{The P3 Wind Tunnel: Synthetic Validation of USLA Dynamics}
+\author{Gemini D}
+\date{\today}
+
+% Define Theorem and Definition environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}[section]
+
+% Input build variables (git hash, timestamp)
+\input{build_vars.tex}
+
+% Setup footer for version stamping
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footers
+\renewcommand{\headrulewidth}{0pt} % remove header rule
+\fancyfoot[C]{\thepage}
+\fancyfoot[L]{\textit{Commit: \githash}}
+\fancyfoot[R]{\textit{Build: \buildtimestamp}}
+
+\begin{document}
+
+\maketitle
+
+\input{sections/p3_section.tex}
+
+\end{document}
+

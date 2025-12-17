@@ -43,6 +43,7 @@ MathLedger automates the generation, derivation, and verification of mathematica
 - Python 3.11+
 - Docker Desktop (PostgreSQL + Redis)
 - `uv` package manager
+- [elan](https://github.com/leanprover/elan) (Lean version manager)
 
 ### Installation
 
@@ -58,6 +59,65 @@ docker compose up -d postgres redis
 # Run database migrations
 python run_all_migrations.py
 ```
+
+### Lean 4 Setup (Required for Verification)
+
+MathLedger uses Lean 4 with Mathlib for proof verification. First-time setup downloads ~2GB of dependencies and takes 10-30 minutes depending on network speed.
+
+```bash
+# Install Lean toolchain and build Mathlib (first time: ~2GB download, 10-30 min)
+make lean-setup
+
+# Verify setup succeeded
+make lean-check
+```
+
+**What `make lean-setup` does:**
+1. Installs the pinned Lean version (`v4.23.0-rc2`) via elan
+2. Downloads pre-built Mathlib cache (~1.5GB)
+3. Builds the MathLedger Lean project
+
+**Cache locations** (safe to delete for clean rebuild):
+- `.lake/packages/` - Downloaded dependencies
+- `backend/lean_proj/.lake/build/` - Build artifacts
+
+### Verification Commands
+
+After setup, two verification targets are available:
+
+```bash
+# 1. Mock determinism verification (no Lean required)
+# Verifies: pipeline produces identical H_t across runs with same seed
+# Does NOT verify: Lean type-checking of proofs
+make verify-mock-determinism
+
+# 2. Real Lean verification (requires lean-setup)
+# Verifies: Lean 4 type-checks a specific proof file
+make verify-lean-single PROOF=backend/lean_proj/ML/Jobs/job_test.lean
+```
+
+### What Mock Determinism Verifies
+
+When you run `make verify-mock-determinism`:
+
+1. **Attestation roots are computed**:
+   - `R_t` (reasoning root): Merkle root over synthetic verification artifacts
+   - `U_t` (UI root): Merkle root over interaction events
+   - `H_t` (composite root): `SHA256(R_t || U_t)`
+
+2. **Determinism is verified**: The same seed produces byte-identical `H_t` across runs. If `deterministic: true` appears in the output, both runs matched exactly.
+
+**What mock mode does NOT prove**: Lean proof validity. Mock mode uses synthetic artifacts to test pipeline determinism without invoking Lean. For real Lean verification, use `make verify-lean-single`.
+
+### What Real Lean Verification Does
+
+When you run `make verify-lean-single PROOF=<path>`:
+
+1. **Lean 4 executes**: The Lean proof assistant type-checks the specified proof file.
+
+2. **Binary verdict**: Lean's kernel accepts or rejects proofs. There is no "soft pass"—either the proof type-checks (exit 0) or it fails (exit non-zero).
+
+**Important**: `verify-lean-single` requires `make lean-setup` to be run first (~2GB download, 10-30 minutes).
 
 ### Running Services
 
@@ -82,6 +142,9 @@ pytest
 pytest -m unit
 pytest -m integration
 pytest -m first_light
+
+# Determinism verification (mock mode, no Lean required)
+make verify-mock-determinism
 ```
 
 ---

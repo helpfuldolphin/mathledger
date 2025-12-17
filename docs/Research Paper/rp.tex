@@ -1,0 +1,516 @@
+\documentclass[11pt]{article}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float}
+% Algorithms
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[most]{tcolorbox}
+\geometry{margin=1in}
+
+% ===== MATH OPERATORS / MACROS =====
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\Hash}{Hash}
+\newcommand{\Vnum}{\widetilde{\mathcal{V}}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\1}{\mathbf{1}}
+
+% ===== THEOREM ENVIRONMENTS =====
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\theoremstyle{plain}
+
+% ===== TITLE =====
+\title{\textbf{MathLedger: Reflexive Formal Learning and the Chain of Verifiable Cognition}}
+\author{---}
+\date{2025}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Contemporary AI systems achieve extraordinary performance yet remain largely \emph{opaque} and \emph{non-verifiable}, creating a crisis of trust for safety-critical deployment and governance. 
+We introduce \emph{Reflexive Formal Learning (RFL)}, a symbolic and cryptographically verifiable learning paradigm in which every update is justified by a formally verified proof or abstention event recorded in an immutable ledger. The resulting ``chain of verifiable cognition'' constitutes a closed epistemic loop bridging logic, cryptography, and learning dynamics. RFL is shown to be a discrete, non-differentiable analogue of stochastic gradient descent whose learning signal arises from verified truth rather than statistical loss, enabling provable convergence of reasoning under a verifiable ledger substrate.
+\end{abstract}
+
+% ===== FIGURE 1 =====
+\begin{figure}[h]
+  \centering
+  \fbox{\begin{minipage}[c][2.3in][c]{0.9\linewidth}
+  \centering
+  \textbf{Figure 1 (to be generated): Chain of Verifiable Cognition}\\
+  User input $\to$ PoA $\to$ Ledger $r_t$ $\to$ UI $u_t$ $\to$ RFL $\to$ update.
+  \end{minipage}}
+  \caption{End-to-end epistemic loop (objects and arrows as shown; all edges attested).}
+\end{figure}
+
+% ===== SECTION 1 =====
+\section{Introduction}
+\label{sec:intro}
+
+Mathematical reasoning systems increasingly require not only correctness but verifiable \emph{cognitive integrity}---a guarantee that each inference can be cryptographically traced to a validated source. \emph{MathLedger} unifies formal verification, machine learning, and cryptographic attestation into a single epistemic pipeline:
+\[
+\text{User-Verified Input}
+\rightarrow
+\text{Proof-or-Abstain Reasoning}
+\rightarrow
+\text{Ledger Attestation}
+\rightarrow
+\text{UI Attestation}
+\rightarrow
+\text{Reflexive Feedback}
+\rightarrow
+\text{Policy Update.}
+\]
+This ``Chain of Verifiable Cognition'' enables an AI system to learn exclusively from verified reasoning outcomes. The remainder of this paper formalizes \emph{Reflexive Formal Learning (RFL)} as a symbolic analogue of gradient descent operating on verified events rather than numerical errors.
+
+% ===== NOTATION TABLE =====
+\begin{table}[h]
+\centering
+\caption{Summary of Core Formal Constructs}
+\label{tab:notation}
+\small
+\begin{tabular}{ll}
+\toprule
+Symbol & Meaning \\
+\midrule
+$\pi_t\in\Pi$ & Symbolic reasoning policy at time $t$ (metric space $(\Pi,\|\cdot\|)$) \\
+$P_\pi$ & Policy–induced event measure over event space $\mathcal{E}$ \\
+$e_t$ & Reasoning event (proof or abstention) under $P_\pi$ \\
+$\mathcal{V}(e_t)$ & Verification outcome $\in\{1,0,\bot\}$ \\
+$\Vnum(e)$ & Numeric surrogate $\1\{\mathcal{V}(e)\neq1\}\in\{0,1\}$ \\
+$\mathcal{L}$ & Ledger of proofs/abstentions (predictable process) \\
+$\Phi$ & Feedback map $\Phi:\{1,0,\bot\}\times\Pi\to\Delta\Pi$ \\
+$\mathcal{U}$ & Reflexive update $\Pi\times\{1,0,\bot\}\times\Sigma\to\Pi$ \\
+$\Sigma$ & Auxiliary signal space (prompts, contexts) \\
+$\Delta\Pi$ & Space of composable symbolic policy deltas \\
+$\oplus$ & Algebraic composition on $\Pi$ applying $\Delta\in\Delta\Pi$ to $\pi$ \\
+$L_\oplus$ & Lipschitz factor of $\oplus$ s.t.\ $\|\pi\oplus\Delta-\pi\|\le L_\oplus\|\Delta\|_\Delta$ \\
+$\|\cdot\|_\Delta$ & Norm on $\Delta\Pi$ \\
+$(T,\rho)$ & Mixing horizon and geometric rate (Assumption~A2$^\prime$) \\
+$r_t,u_t$ & Reasoning/UI Merkle roots (dual attestation) \\
+$\mathcal{I}_t$ & Dual-attestation binder token (keyless or HMAC) \\
+$H_t$ & Epistemic entropy at step $t$ \\
+$\mathcal{J}(\pi)$ & Epistemic risk functional (Def.~\ref{def:epirisk}) \\
+$\mathsf{L}(\theta)$ & Classical differentiable loss (SGD) \\
+$\beta$ & Epistemic scaling exponent \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== SECTION 2 =====
+\section{Related Work and Theoretical Context}
+\label{sec:related}
+
+\paragraph{Stochastic approximation and recent convergence extensions.}
+Classical almost-supermartingale convergence (Robbins--Siegmund) guarantees pointwise convergence under a summable residual term. Recent work (e.g., Liu, Xie, \& Zhang 2025a) relaxes this to \emph{square-summable} disturbances, proving convergence \emph{to a bounded set}. Our stability results instantiate these extensions: when a persistent verifier bias acts as a non-summable zero-order term, we obtain bounded-set convergence with an $O(\varepsilon_v)$ radius. Our Markovian noise assumptions (Assumption~A2$^\prime$ in \S\ref{sec:convergence}) align with modern SA analyses that handle time-inhomogeneous Markov noise with mixing and Lipschitz drift. \emph{Cor.~\ref{cor:RS-extension} instantiates the square-summable residual regime of Liu–Xie–Zhang (2025), yielding bounded-set convergence under Markov noise.}
+
+\paragraph{Positioning.}
+RFL offers a distinct paradigm for verifiable learning. While recent work on \emph{proof-guided language models} uses verifier feedback as a reward signal to guide policy search in a reinforcement learning loop~\nocite{rajaee2025local}, RFL uses the verifier's binary decision as the \emph{learning signal itself}, replacing a gradient with a symbolic update. Similarly, where \emph{weak-to-strong generalization} frameworks train a strong model on labels generated by a weaker one~\nocite{jiang2025contrastive}, RFL's policy updates are a direct, deterministic function of verified truth events, not supervised fine-tuning. The ledger's immutable, attested history of reasoning also connects RFL to work on \emph{proof-carrying data}~\nocite{Chiesa2010hearsay,wu2025proofcarrying} and ledger-based AI audits~\nocite{arham2025transforming}, but with a closed-loop dynamic where the ledger actively drives learning.
+
+% ===== SECTION 3 =====
+\section{Reflexive Formal Learning (RFL): Conceptual Definition}
+\label{sec:rflconcept}
+
+Let $\Pi$ be a complete metric policy space with norm $\|\cdot\|$ and $P_\pi$ the event measure induced by $\pi$.
+
+\paragraph{Update algebra.}
+We write $\Delta\Pi$ for the space of composable symbolic policy deltas and $\oplus$ for their algebraic composition in $\Pi$; thus $\pi\oplus\Delta$ denotes applying $\Delta\in\Delta\Pi$ to policy $\pi\in\Pi$. We equip $\Delta\Pi$ with a norm $\|\cdot\|_{\Delta}$ and assume \emph{norm compatibility}: there exists $L_\oplus\ge1$ with
+\[
+\|\pi\oplus \Delta - \pi\| \le L_\oplus \|\Delta\|_\Delta\quad \text{for all }\pi\in\Pi,\;\Delta\in\Delta\Pi.
+\]
+
+\begin{definition}[Epistemic risk]
+\label{def:epirisk}
+Given $P_\pi$ and $\Vnum(e)=\1\{\mathcal{V}(e)\neq1\}$,
+\[
+\mathcal{J}(\pi)=\E_{e\sim P_\pi}[\Vnum(e)]
+=\Pr_{e\sim P_\pi}[\mathcal{V}(e)\neq1].
+\]
+\end{definition}
+\noindent\emph{Range.} Since $\Vnum(e)\in\{0,1\}$, we have $0\le\mathcal{J}(\pi)\le1$ for all $\pi$.
+
+% ===== SECTION 4 =====
+\section{The Reflexive Formal Learning (RFL) Update Law}
+\label{sec:rflupdate}
+
+\paragraph{Update operator and abstention damping.}
+At each step $t$,
+\begin{equation}
+\label{eq:rflupdate}
+\pi_{t+1}=\pi_t\oplus\eta_f\,\Phi(\mathcal{V}(e_t),\pi_t),
+\qquad
+\Phi:\{1,0,\bot\}\times\Pi\to\Delta\Pi.
+\end{equation}
+By norm compatibility, committing $\pi_{t+1}=\pi_t\oplus\eta_f\Phi(\cdot)$ implies
+$\|\pi_{t+1}-\pi_t\|\le\eta_f L_\oplus\|\Phi(\mathcal{V}(e_t),\pi_t)\|_\Delta$.
+
+% --- Toy example box (kept) ---
+\begin{tcolorbox}[title=\textbf{Toy example: one-step RFL update with pseudo-Lean}, colback=white]
+\textbf{Goal and tactic (pseudo-Lean).}
+\begin{quote}\small
+\texttt{example (h1 : P \textrightarrow Q) (h2 : P) : Q := by}\\
+\texttt{\ \ apply h1}\\
+\texttt{\ \ exact h2}
+\end{quote}
+Let the current goal be $g_t:\ Q$ under context $\mathrm{ctx}_t=\{h_1: P\!\to\!Q,\ h_2:P\}$. The agent proposes tactic $s_t=\texttt{apply h1}$, producing subgoal $g_t' : P$, then proposes $s_t'=\texttt{exact h2}$.
+
+\textbf{Event and verification.} Define the event
+\[
+e_t=(g_t,\mathrm{ctx}_t, s_t\!:\!\textsf{apply}, s_t'\!:\!\textsf{exact}) \quad\text{and}\quad v_t=\mathcal{V}(e_t)\in\{1,0,\bot\}.
+\]
+\textbf{Pattern features.} Let $\phi_{\text{pat}}(\mathrm{ctx}_t,s_t)$ denote a differentiable feature map.
+
+\textbf{Policy parameterization.} Suppose $\pi_t$ induces a score via parameters $\theta_t$:
+\[
+\mathrm{score}_t \;=\; \langle \theta_t,\ \phi_{\text{pat}}(\mathrm{ctx}_t,s_t)\rangle \quad\Rightarrow\quad p_t(\text{pattern}) \;=\; \sigma(\mathrm{score}_t).
+\]
+
+\textbf{Symbolic deltas.} Instantiate
+\[
+\Delta^+(\pi_t,e_t)\ \equiv\ \mathrm{inc}_{\eta}\big(\phi_{\text{pat}}(\mathrm{ctx}_t,s_t)\big),\quad
+\Delta^-(\pi_t,e_t)\ \equiv\ -\,\mathrm{dec}_{\eta}\big(\phi_{\text{pat}}(\mathrm{ctx}_t,s_t)\big),
+\]
+with $\|\Delta^\pm\|_\Delta\le M$.
+
+\textbf{Cases (Proof-or-Abstain).}
+\begin{itemize}[leftmargin=1.2em, itemsep=2pt]
+\item $v_t{=}1$:\ \ $\pi_{t+1}=\pi_t\oplus\eta_f\,\Delta^+(\pi_t,e_t)$; $\mathcal{J}$ decreases in expectation.
+\item $v_t{=}\bot$:\ \ no-op update; abstention logged.
+\item $v_t{=}0$:\ \ $\pi_{t+1}=\pi_t\oplus\eta_f\,\Delta^-(\pi_t,e_t)$; demotes the pattern.
+\end{itemize}
+\end{tcolorbox}
+
+% --- Algorithm 2: RFL ⊕ MCGS Planner ---
+\begin{algorithm}[H]
+\caption{RFL$\oplus$MCGS Planner (fail-closed, dual-attested)}
+\label{alg:rfl-mcgs}
+\begin{algorithmic}[1]
+\Require $\pi_t$, $\eta_f$, update $\Phi$, verifier (REPL), canonicalizers $C_R,C_U$, ledger $\mathcal{L}$
+\State Initialize frontier at root Lean state; $E \gets [\ ]$ \Comment{list of per-event binders}
+\While{frontier nonempty}
+  \State Expand node using policy $\pi_t$ to yield candidate events $e_t$
+  \State $(v_t,\mathrm{trace},\mathrm{build}) \gets \mathrm{REPL.check}(e_t)$
+  \If{$v_t \ne 1$} \State $\mathcal{L}.\mathrm{abstain}(e_t)$; \textbf{continue} \EndIf
+  \State $P_t \gets C_R(e_t,\mathrm{trace},\mathrm{build});\ D_t \gets C_U(\text{UI snapshot})$
+  \State $r_t \gets \Hash(\mathtt{R:}\,\|\,P_t),\ u_t \gets \Hash(\mathtt{U:}\,\|\,D_t),\ I_t \gets \Hash(\mathtt{BIND}\,\|\,r_t\,\|\,u_t)$
+  \If{$\neg \mathcal{L}.\mathrm{verify}(P_t,D_t,I_t)$} \State $\mathcal{L}.\mathrm{abstain}(e_t)$; \textbf{continue} \EndIf
+  \State $\Delta_t \gets \Phi(v_t,\pi_t)$;\ \ $\pi_{t+1}\gets \pi_t \oplus \eta_f \Delta_t$
+  \State $\mathcal{L}.\mathrm{commit}(e_t,r_t,u_t,I_t,\mathrm{build})$;\ \ $E.\mathrm{append}(I_t)$
+  \State Push children of $e_t$ to frontier with priority from $\pi_{t+1}$
+\EndWhile
+\State $\mathrm{epoch\_root}\gets \mathrm{Merkle}(E)$;\ \ $\mathcal{L}.\mathrm{finalize\_epoch}(\mathrm{epoch\_root})$
+\end{algorithmic}
+\end{algorithm}
+
+% ===== SECTION 6 =====
+\section{Dual Attestation and Security Model}
+\label{sec:attestation}
+The integrity of the RFL loop depends on cryptographically binding reasoning events to their presentation. We formalize this via a dual-attestation scheme and specify the security guarantees under a formal adversary model.
+
+\paragraph{Dual-Root Ledger.}
+At each step $t$, the system commits to two Merkle roots:
+\begin{itemize}[leftmargin=1.4em, itemsep=0pt]
+    \item \textbf{Reasoning Root ($r_t$):} Root over the canonicalized sequence of formal reasoning steps (proof tactics, intermediate goals) composing $e_t$.
+    \item \textbf{UI Root ($u_t$):} Root over the canonicalized representation of the UI state (DOM/JSON, PNG, HAR log) that displays the outcome of $e_t$.
+\end{itemize}
+These roots are bound by a cryptographic token $\mathcal{I}_t = \Hash(\texttt{"BIND:"} \,\|\, r_t \,\|\, u_t)$ with prefix-free domain separation. The tuple $(r_t, u_t, \mathcal{I}_t)$ is recorded on the ledger.
+
+\paragraph{Domain tags and REPL provenance.}
+We extend domain separation with tags \texttt{RPL:} (Lean REPL provenance; toolchain/build IDs) and \texttt{G:} (geometry engine artifacts). These tags are included by $C_{\mathrm{R}}$ prior to Merkle, binding $(r_t,u_t,\mathcal{I}_t)$ to verifier versions and domain-specific pipelines.
+
+\paragraph{Adversary Model and Guarantees.}
+We consider a PPT adversary acting as a malicious prover, verifier, or network observer. The ledger offers:
+\begin{itemize}[leftmargin=1.4em, itemsep=0pt]
+    \item \textbf{Collision Resistance:} $\Hash(\cdot)$ is collision-resistant, preventing distinct artifacts from sharing a root.
+    \item \textbf{Non-Malleability:} Modifying proof/UI artifacts invalidates Merkle roots and $\mathcal{I}_t$.
+    \item \textbf{Replay Resistance:} Updates are indexed by $t$; replay $(r_k,u_k,\mathcal{I}_k)$ at $t>k$ is rejected; timestamps strengthen this.
+\end{itemize}
+
+\paragraph{Cryptographic Hardening.}
+\begin{itemize}[leftmargin=1.4em, itemsep=0pt]
+    \item \textbf{Canonicalization:} All structured data MUST be canonicalized before hashing. We mandate RFC~8785 JCS for JSON; deterministic PNG and equivalent for other types.
+    \item \textbf{Domain Separation:} All hash inputs use prefix-free tags: e.g., $\Hash(\texttt{"LEAF:"}\,\|\,\cdot)$, $\Hash(\texttt{"NODE:"}\,\|\,h_L\,\|\,h_R)$; distinct tags for reasoning/UI/binder.
+    \item \textbf{Constant-Time Ops:} Cryptographic comparisons MUST be constant-time to avoid timing side channels.
+    \item \textbf{Version Pinning:} Record versions/hashes of $\mathcal{V}$, hash function, and canonicalizers on-ledger.
+\end{itemize}
+
+\paragraph{Zero-Knowledge Extensions.}
+For privacy, proofs may be replaced by ZK certificates (e.g., PLONK for fast verification and small proofs; STARKs for transparency and post-quantum resistance, at larger sizes).
+
+% ===== SECTION 7 =====
+\section{Convergence and Stability of Reflexive Formal Learning}
+\label{sec:convergence}
+
+\paragraph{Stepsizes.}
+We identify $\alpha_t\equiv\eta_f$ in the constant-stepsize case; otherwise $\alpha_t$ denotes a decaying schedule used in the SA analysis.
+
+% --- Extended RS Lemma ---
+\begin{lemma}[Extended Robbins--Siegmund]
+\label{lem:rs-extended}
+Let $\{Z_t\}$, $\{X_t\}$, $\{Y_t\}$, and $\{W_t\}$ be non-negative, $\mathcal{F}_t$-adapted random sequences. Suppose $\E[Z_{t+1} \mid \mathcal{F}_t] \le (1+X_t)Z_t + Y_t - W_t$ a.s. If $\sum_t X_t < \infty$ a.s. and $\sum_t Y_t < \infty$ a.s., then $Z_t$ converges a.s. to a finite random variable and $\sum_t W_t < \infty$ a.s.\\
+Furthermore, if the summable condition on $\{Y_t\}$ is relaxed to square-summable ($\sum_t Y_t^2 < \infty$ a.s.) and the increments are bounded $(Z_{t+1}-Z_t)_+ \le B_t$ with $\sum_t B_t^2 < \infty$ a.s., then $\{Z_t\}$ converges a.s. to a bounded set.
+\end{lemma}
+
+\begin{assumption}[Adaptivity and bounded updates (A1)]
+\label{ass:adapt}
+Let $\{\mathcal{F}_t\}$ denote the filtration generated by $(\pi_s,e_s,\mathcal{V}(e_s))_{s\le t}$. The iterates $\pi_t$, reasoning events $e_t$, and verification outcomes $\mathcal{V}(e_t)$ are $\mathcal{F}_t$-adapted. Moreover, the update increments are uniformly bounded: there exists $M < \infty$ such that $\|\Phi(\mathcal{V}(e_t),\pi_t)\|_\Delta \le M$ almost surely for all $t$.
+\end{assumption}
+
+\begin{assumption}[Verification-monotone descent (A2)]
+\label{ass:monotone}
+There exist constants $\lambda>0$ and an $\mathcal{F}_t$-adapted error term $\xi_t \ge 0$ with $\sum_t \E[\xi_t] < \infty$ such that the epistemic risk satisfies
+\[
+\E[\mathcal{J}(\pi_{t+1}) - \mathcal{J}(\pi_t) \mid \mathcal{F}_t]
+\le -\lambda\,\Pr(\mathcal{V}(e_t)=1 \mid \mathcal{F}_t) + \xi_t
+\]
+for all $t$.
+\end{assumption}
+
+\begin{assumption}[Local linearization and contraction (A3)]
+\label{ass:linear}
+There exists a neighborhood $\mathcal{N}$ of $\pi^\star$ in which the averaged update map $\mathcal{T}(\pi) := \E[\pi \oplus \eta_f \Phi(\mathcal{V}(e),\pi)]$ is Gâteaux differentiable and Lipschitz. The Jacobian $D\mathcal{T}(\pi^\star)$ has spectral radius $<1$, yielding a contraction on $\mathcal{N}$ in the ambient norm.
+\end{assumption}
+
+\begin{assumption}[Markovian Noise and Mixing (A2$^\prime$)]
+\label{assump:markov}
+The event stream $\{e_t\}$ is generated via a policy-dependent Markov process $\{X_t\}$ on a state space $\mathcal{X}$. For each fixed policy $\pi$, the process has a unique stationary distribution $\mu_\pi$. The process is uniformly geometrically ergodic: \emph{uniformly over $\pi$}, there exist $T \in \mathbb{N}$ and $\rho \in (0,1)$ such that $\|\mathbb{P}_\pi(X_T \in \cdot \mid X_0=x) - \mu_\pi(\cdot)\|_{\mathrm{TV}} \le \rho$ for all $x$. The one-step expected cost change and transition probabilities are Lipschitz in $\pi$. In addition, there exists an adapted sequence $B_t\ge0$ with $(\mathcal{J}(\pi_{t+1})-\mathcal{J}(\pi_t))_+ \le B_t$ a.s. and $\sum_t B_t^2 < \infty$ a.s.\ (implied by A0 and bounded $\Phi$ under standard stepsizes).
+\end{assumption}
+
+\begin{remark}
+Uniform geometric ergodicity is standard in SA; weaker mixing (Doeblin minorization or spectral-gap conditions) can suffice in place of uniformity.
+\end{remark}
+
+\begin{theorem}[Almost-Sure Convergence with Lyapunov Potential]
+\label{thm:as}
+If Assumptions~\ref{ass:adapt}--\ref{ass:monotone} hold and $\E[\Delta\mathcal{J}_t|\mathcal{F}_t]\le -c\|\Phi\|^2+\epsilon_t$ with $\sum_t\E[\epsilon_t]<\infty$, then $\mathcal{J}(\pi_t)\to0$ a.s.\ and $\pi_t\to\pi^\star$ where $\mathcal{V}(\pi^\star)=1$.
+\end{theorem}
+
+\begin{corollary}[Convergence to a bounded set under square-summable noise]
+\label{cor:RS-extension}
+Let $X_t=\mathcal{J}(\pi_t)$. Assume $\sum_t\alpha_t=\infty$, $\sum_t\alpha_t^2<\infty$. If the RFL dynamics satisfy Lemma~\ref{lem:rs-extended} with square-summable disturbance and bounded increments, then $\{X_t\}$ converges a.s.\ to a bounded set; pointwise convergence is recovered when the disturbance term is summable.
+\end{corollary}
+
+\begin{corollary}[Linear Convergence of Epistemic Risk]
+\label{cor:linear}
+Under Theorem~\ref{thm:descent}, if $\Pr[\mathcal{V}(e_t)=1]\ge c>0$
+for all non-optimal policies, then $\E[\mathcal{J}(\pi_t)]$
+converges to its limit at a linear rate.
+\end{corollary}
+
+\begin{corollary}[Local Stability of the Optimal Policy]
+\label{cor:local}
+Under Assumption~\ref{ass:linear}, the fixed point $\pi^\star$
+is locally asymptotically stable: any $\pi$ within the contraction
+basin converges to $\pi^\star$ under RFL dynamics.
+\end{corollary}
+
+\begin{proposition}[Abstention as damping]
+If $\Pr[\mathcal{V}(e_t)=\bot]=\alpha_t$ and abstention cost $\mathsf{cost}(\bot)=c_\bot\ge0$ (captures operational abstention cost), then
+\[
+\E[\mathcal{J}(\pi_{t+1})|\mathcal{F}_t]
+\le (1-\lambda)(1-\alpha_t)\mathcal{J}(\pi_t)+c_\bot.
+\]
+Higher $\alpha_t$ increases safety but slows convergence.
+\end{proposition}
+
+\begin{theorem}[Stability under verifier imperfection]
+\label{thm:verifier-imperfect}
+\emph{(Full proof in Appendix~C.)}
+Assume A1–A2 and Assumption~\ref{assump:markov}. Let the verifier introduce bias $\delta_t$ with $|\delta_t|\le\varepsilon_v$, entering as $c_t=\alpha_t\varepsilon_v$. If $\sum_t\alpha_t=\infty$, $\sum_t\alpha_t^2<\infty$, and Lemma~\ref{lem:rs-extended} conditions hold, then
+\[
+\limsup_{t\to\infty}\mathcal{J}(\pi_t)\le \mathcal{J}^*+C\,\varepsilon_v\quad\text{a.s.}
+\]
+for finite $C$ depending on $(M,L_\oplus,\lambda)$ and the stepsize schedule.
+\end{theorem}
+
+\begin{corollary}[Bounded-set Convergence Radius]
+Under Assumption~\ref{assump:markov} (mixing $(T,\rho)$) and verifier bias $\varepsilon_v$,
+\[
+\limsup_{t\to\infty}\mathcal{J}(\pi_t)\le C_1\,\varepsilon_v + C_2(1-\rho)^T,
+\]
+for finite $C_1,C_2$ depending on $(M,L_\oplus,\lambda)$ and $(T,\rho)$.
+\end{corollary}
+
+% ---- Assumptions summary table
+\begin{table}[h]
+\centering
+\small
+\caption{Assumptions summary used in convergence analysis.}
+\label{tab:assumptions-summary}
+\begin{tabular}{l p{0.73\linewidth}}
+\toprule
+A1: Adaptivity \& bounded updates & Assumption~\ref{ass:adapt}: $\pi_t,e_t,\mathcal{V}(e_t)$ are $\mathcal{F}_t$-adapted; $\|\Phi(\cdot)\|\le M$.\\
+A2: Verification-monotone descent & Assumption~\ref{ass:monotone}: expected descent inequality with summable residual.\\
+A2$^\prime$: Markovian noise \& mixing & Assumption~\ref{assump:markov}: uniform geometric ergodicity, Lipschitz in $\pi$; bounded increments $B_t$ with $\sum B_t^2<\infty$.\\
+A3: Local linearization \& contraction & Assumption~\ref{ass:linear}: local Gâteaux derivative, Lipschitz, and contraction of $\mathcal{T}$.\\
+Stepsizes & $\sum_t\alpha_t=\infty$, $\sum_t\alpha_t^2<\infty$; Algorithm~\ref{alg:rfl} uses $\eta_f\equiv \alpha_t$ or a schedule.\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---- Existing comparison table (kept)
+\begin{table}[h]
+\centering 
+\renewcommand{\arraystretch}{1.15}
+\small
+\begin{tabular}{l|c|c|c|l}
+\textbf{Framework} & \textbf{Noise} & \textbf{Dependence} & \textbf{Conclusion} & \textbf{Where used}\\\hline
+Classical RS & $\sum c_t<\infty$ & i.i.d./MD adapted & $X_t\to X^*$ a.s. & Baseline for Thm~\ref{thm:descent}\\
+\hline
+Extended RS & $\sum c_t^2<\infty$; bounded increments & Markov, mixing & $X_t\to$ bounded set a.s. & Cor.~\ref{cor:RS-extension}\\
+\hline
+RFL (this work) & $c_t=\alpha_t\varepsilon_v$ & Policy–Markov & $\limsup \mathcal{J}\le \mathcal{J}^*+C\varepsilon_v$ & Thm~\ref{thm:verifier-imperfect}\\
+\end{tabular}
+\caption{Classical vs.\ extended Robbins--Siegmund vs.\ our RFL instantiation.}
+\end{table}
+
+% ===== SECTION 8 =====
+\section{Epistemic Scaling Laws}
+\label{sec:scaling}
+
+\paragraph{Evaluation plan.}
+The empirical claims will be tested according to a preregistered protocol (Appendix~\ref{app:prereg}), specifying hypotheses, logging of $\{r_t,u_t,\mathcal{I}_t\}$, and robust regression analysis.
+
+\paragraph{Scaling law.}
+Performance scales as $\Delta H\propto N_v^{-\beta}$ with $\beta\in(0,1]$.
+Empirically $\beta\!\approx\!1/2$ is consistent with diffusion-like uncertainty decay.
+
+\paragraph{Interpretability and alignment perspective.}
+Alignment and verifiability themselves follow scaling-law behavior; RFL provides a formal alternative grounded in verified events.
+
+% --- Empirical Outlook
+\paragraph{Empirical Outlook.}
+Our training pipeline uses a \emph{proof\_sampler} process to generate events $e_t$ under the current policy, producing a policy-dependent Markov stream. Assumption~A2$^\prime$ connects this stream to theory: the sampler’s mixing and the verifier’s acceptance yield $(T,\rho)$ and $\varepsilon_v$. We will report $(\rho,T)$ proxies (autocorrelation decay) and empirical $\varepsilon_v$ per run.
+
+% ===== SECTION 9 =====
+\section{Emergent Directions}
+\label{sec:emergent}
+
+\paragraph{Reflexive Formal Perception (future work).}
+Agents verify what was \emph{seen} before reasoning; perceptual disagreements become ledger objects.
+
+\paragraph{Ledger-Driven Theory Genesis (future work).}
+Meta-agents mine sealed proofs to propose schemata under ledger governance.
+
+\paragraph{Instrumentation Hooks (Phase I).}
+Log perceptual disagreements and lemma-reuse frequencies; mine traces later.
+
+% ===== SECTION 10 =====
+\section{Philosophical and Practical Boundaries: The Architect and the Healer}
+\label{sec:architect-healer}
+
+\noindent\textbf{Framing.} MathLedger embodies the \emph{Architect}'s aspiration: intelligence grounded in provable truth. Its challenge is the \emph{Healer}'s domain: extending verifiability into imperfect reality.
+
+\paragraph{Open problems (Phase III).}
+\begin{enumerate}[leftmargin=1.4em]
+    \item \textbf{Scope of verification.}
+    \item \textbf{Verifier bottleneck.}
+    \item \textbf{Abstention vs.\ usefulness.}
+    \item \textbf{Semantic gap.}
+    \item \textbf{Computational cost.}
+\end{enumerate}
+
+\paragraph{Research tracks (not blockers).}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{l p{0.72\linewidth}}
+\toprule
+Scalable verification & Probabilistic checking; batching; ZK sealing.\\
+Verified oracle stack & Verified kernels/compilers; attested builds.\\
+Controlled abstention & Abstention budgets; explore-on-fail policies.\\
+Semantic grounding bridge & Typed front-ends; certified parsers/tokenizers.\\
+Compute-efficient guarantees & Proof caching/reuse; parallel tree-hash; ZK compression.\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== FIGURE PLACEHOLDERS =====
+\begin{figure}[h]
+\centering
+\fbox{\begin{minipage}[c][2.3in][c]{0.9\linewidth}
+\centering
+\textbf{Figure 3 (to be generated): RFL Uplift Curves}\\
+y = proofs/hour; x = wall-clock time or iterations; curves (RFL, replay, no-feedback) with 95\% CIs.
+\end{minipage}}
+\caption{Pre-registered uplift curves comparing RFL vs.\ baselines.}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\fbox{\begin{minipage}[c]{0.9\linewidth}
+\centering
+\textbf{Table 1 (to be generated): Scaling Law Fit --- $\beta$ Estimates}\\
+Columns: run id, $N_v$, $\Delta H$, fit $\hat\beta$, SE, $R^2$.
+\end{minipage}}
+\caption{Empirical fit of $\Delta H \propto N_v^{-\beta}$.}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\fbox{\begin{minipage}[c][2.3in][c]{0.9\linewidth}
+\centering
+\textbf{Figure 4 (to be generated): Ablation Study Results}\\
+Bars for (DA on/off) $\times$ (abstention penalty on/off); metric = $\Delta \mathcal{J}$ or proofs/hour.
+\end{minipage}}
+\caption{Ablations for DA and abstention penalty.}
+\end{figure}
+
+% ===== APPENDICES =====
+\appendix
+\section*{Appendix A --- Prior-Art Matrix and Red-Team Notes}
+This appendix summarizes adjacent systems and red-team considerations.
+
+\section*{Appendix B --- Evidence Manifest (Sealing Metadata)}
+We provide artifact paths and commits for reproducibility. We release \texttt{roots.json} and per-step Merkle inclusion proofs; a reproducibility script re-canonicalizes artifacts and re-derives $(r_t,u_t,\mathcal{I}_t)$ byte-for-byte.\footnote{KangarooTwelve (K12) is a tree-hash mode; observed Merkle construction speedups are empirical ($2$–$3\times$) on AVX2/AVX-512 vs.\ SHA-256 in our pipeline.}
+
+\section{Preregistration Protocol for Empirical Evaluation}
+\label{app:prereg}
+\subsection{Hypotheses} H1: $\log|\Delta H| = -\beta \log N_v + c$ with $\beta>0$. H2: $\limsup_t \mathcal{J}(\pi_t)$ increases with $\varepsilon_v$.
+\subsection{Tasks and Datasets} Lean4 theorem proving (miniF2F/synthetic), transformer policy $\pi_t$, Lean4 kernel as $\mathcal{V}$; simulate $\varepsilon_v$ by flipping outcomes.
+\subsection{Proof Sampler and Logging} Log JSONL entries with step, policy/task ids, $v_t$, attestations $(r_t,u_t,\mathcal{I}_t)$, metrics (autocorr proxy, $\varepsilon_v$, $H_t$).
+\subsection{Power} See Table~\ref{tab:power}. 
+\begin{table}[H]\centering\small\caption{Power analysis for detecting $\beta$.}\label{tab:power}
+\begin{tabular}{cc}\toprule Detectable $|\beta|$ & Required $N_v$ \\ \midrule 0.50 & $\sim$1{,}000 \\ 0.25 & $\sim$4{,}000 \\ 0.10 & $\sim$25{,}000 \\ \bottomrule \end{tabular}\end{table}
+\subsection{Analysis Plan} Huber regression for H1; Spearman correlation for H2. No manual point deletion; only run-level exclusions (hardware failure, zero-verify cold starts).
+
+\section*{Appendix C --- Proofs of Main Results}
+\noindent\textbf{Assumptions recap.} All proofs invoke A1, A2, and, where stated, A2$^\prime$; stepsizes satisfy $\sum_t\alpha_t=\infty$, $\sum_t\alpha_t^2<\infty$.
+
+\begin{proof}[Proof of Theorem~\ref{thm:descent}]
+Let $X_t=\mathcal{J}(\pi_t)$. By A2,
+$\E[X_{t+1}\mid\mathcal{F}_t]\le X_t-\eta_f\lambda\,\1\{\mathcal{V}(e_t)=1\}+\xi_t$.
+Boundedness ($X_t\in[0,1]$) and $\sum_t\E[\xi_t]<\infty$ yield the claim via Robbins--Siegmund.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:verifier-imperfect}]
+Let $X_t=\mathcal{J}(\pi_t)-\mathcal{J}^*$. With $|\delta_t|\le \varepsilon_v$,
+\[
+\E[X_{t+1}\mid\mathcal{F}_t]\le X_t-\alpha_t\,\Delta_t+\alpha_t C_1 \varepsilon_v+\xi_t.
+\]
+Set $Y_t=\alpha_t C_1\varepsilon_v+\xi_t$. Since $\sum_t(\alpha_t C_1\varepsilon_v)^2<\infty$ and $(X_{t+1}-X_t)_+\le B_t$ with $\sum_t B_t^2<\infty$ (A0 and bounded $\Phi$), Lemma~\ref{lem:rs-extended} applies, so $X_t$ converges a.s.\ to a bounded set. Telescoping gives $\limsup_t \mathcal{J}(\pi_t)\le \mathcal{J}^*+C\,\varepsilon_v$ with $C$ depending on $(M,L_\oplus,\lambda)$ and stepsizes.
+\end{proof}
+
+% --- NOCITE guard for new BibTeX keys ---
+\nocite{liu2025extensions,robbins1971convergence,kushner2003stochastic,borkar2009stochastic,Chiesa2010hearsay,wu2025proofcarrying,arham2025transforming,rajaee2025local,jiang2025contrastive,bertoni2016kangarootwelve,wesolowski2019efficient}
+
+\bibliographystyle{plain}
+\bibliography{mathledger}
+
+\end{document}

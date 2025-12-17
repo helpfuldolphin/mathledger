@@ -1,0 +1,326 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/structural/governance_signal.v1.0.0.json",
+  "title": "Structural Governance Signal",
+  "description": "Schema for cross-layer structural governance signals binding DAG, Topology, and HT layers into P3/P4 doctrine. Emitted when structural invariants are checked.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "signal_id",
+    "timestamp",
+    "dag_status",
+    "topology_status",
+    "ht_status",
+    "combined_severity",
+    "cohesion_score"
+  ],
+  "properties": {
+    "signal_id": {
+      "type": "string",
+      "pattern": "^sgs_[a-f0-9]{16}$",
+      "description": "Unique signal identifier (sgs_ prefix + 16 hex chars)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of signal generation"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Associated P4 run identifier, if applicable"
+    },
+    "cycle": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Cycle number when signal was generated (0 for pre-run check)"
+    },
+    "dag_status": {
+      "type": "string",
+      "enum": ["CONSISTENT", "TENSION", "CONFLICT"],
+      "description": "DAG layer structural status"
+    },
+    "topology_status": {
+      "type": "string",
+      "enum": ["CONSISTENT", "TENSION", "CONFLICT"],
+      "description": "Topology layer structural status"
+    },
+    "ht_status": {
+      "type": "string",
+      "enum": ["CONSISTENT", "TENSION", "CONFLICT"],
+      "description": "HT (Hypothesis Tracking) layer structural status"
+    },
+    "combined_severity": {
+      "type": "string",
+      "enum": ["CONSISTENT", "TENSION", "CONFLICT"],
+      "description": "Combined severity across all layers (maximum severity rule)"
+    },
+    "cohesion_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Structural Cohesion Score (SCS): weighted combination of layer scores"
+    },
+    "admissible": {
+      "type": "boolean",
+      "description": "Whether the current state is admissible for P4 run continuation"
+    },
+    "dag_details": {
+      "type": "object",
+      "description": "Detailed DAG layer status",
+      "properties": {
+        "acyclic": {
+          "type": "boolean",
+          "description": "SI-001: DAG acyclicity check result"
+        },
+        "node_integrity": {
+          "type": "boolean",
+          "description": "SI-002: All nodes have required fields"
+        },
+        "depth_violations": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "SI-003: Count of slice depth bound violations"
+        },
+        "kind_violations": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "SI-004: Count of slice node kind violations"
+        },
+        "nodes_checked": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total nodes checked"
+        },
+        "edges_checked": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total edges checked"
+        },
+        "slices_checked": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "List of slice IDs that were checked"
+        }
+      }
+    },
+    "topology_details": {
+      "type": "object",
+      "description": "Detailed Topology layer status",
+      "properties": {
+        "state_bounds_ok": {
+          "type": "boolean",
+          "description": "SI-005: All state variables within bounds"
+        },
+        "safe_region_defined": {
+          "type": "boolean",
+          "description": "SI-006: Safe region (Omega) properly defined"
+        },
+        "observation_schema_ok": {
+          "type": "boolean",
+          "description": "SI-007: Observation structure validates"
+        },
+        "twin_schema_ok": {
+          "type": "boolean",
+          "description": "SI-008: Twin prediction structure validates"
+        },
+        "divergence_schema_ok": {
+          "type": "boolean",
+          "description": "SI-009: Divergence log structure validates"
+        },
+        "current_state": {
+          "type": "object",
+          "description": "Current topology state snapshot",
+          "properties": {
+            "H": {"type": "number"},
+            "rho": {"type": "number"},
+            "tau": {"type": "number"},
+            "beta": {"type": "number"},
+            "in_omega": {"type": "boolean"}
+          }
+        },
+        "omega_exit_streak": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Consecutive cycles outside safe region"
+        }
+      }
+    },
+    "ht_details": {
+      "type": "object",
+      "description": "Detailed HT layer status",
+      "properties": {
+        "anchor_integrity": {
+          "type": "boolean",
+          "description": "SI-010: All truth anchors verified"
+        },
+        "total_anchors": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total truth anchors registered"
+        },
+        "verified_anchors": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Anchors with successful verification"
+        },
+        "pending_anchors": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Anchors awaiting verification"
+        },
+        "failed_anchors": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Anchors with failed verification"
+        }
+      }
+    },
+    "violations": {
+      "type": "array",
+      "description": "List of structural violations detected",
+      "items": {
+        "type": "object",
+        "required": ["invariant_id", "severity", "message"],
+        "properties": {
+          "invariant_id": {
+            "type": "string",
+            "pattern": "^SI-0[0-9]{2}$",
+            "description": "Structural invariant ID (SI-001 through SI-010)"
+          },
+          "layer": {
+            "type": "string",
+            "enum": ["DAG", "TOPOLOGY", "HT"],
+            "description": "Layer where violation occurred"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["TENSION", "CONFLICT"],
+            "description": "Violation severity"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable violation description"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional violation details"
+          },
+          "remediation_hint": {
+            "type": "string",
+            "description": "Suggested remediation action"
+          }
+        }
+      }
+    },
+    "layer_scores": {
+      "type": "object",
+      "description": "Individual layer scores used in SCS calculation",
+      "properties": {
+        "dag_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "DAG layer integrity score"
+        },
+        "topology_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Topology layer integrity score"
+        },
+        "ht_score": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "HT layer integrity score"
+        }
+      }
+    },
+    "layer_weights": {
+      "type": "object",
+      "description": "Weights used in SCS calculation",
+      "properties": {
+        "dag_weight": {
+          "type": "number",
+          "default": 0.4,
+          "description": "DAG layer weight (default 0.4)"
+        },
+        "topology_weight": {
+          "type": "number",
+          "default": 0.4,
+          "description": "Topology layer weight (default 0.4)"
+        },
+        "ht_weight": {
+          "type": "number",
+          "default": 0.2,
+          "description": "HT layer weight (default 0.2)"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "check_duration_ms": {
+          "type": "number",
+          "description": "Time taken for structural check in milliseconds"
+        },
+        "schema_version": {
+          "type": "string",
+          "description": "Schema version used for validation"
+        },
+        "triggered_by": {
+          "type": "string",
+          "enum": ["PRE_RUN", "CYCLE", "MANUAL", "PERIODIC"],
+          "description": "What triggered this signal generation"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "signal_id": "sgs_a1b2c3d4e5f67890",
+      "timestamp": "2025-12-10T12:00:00.000000+00:00",
+      "run_id": "p4_run_20251210_abc123",
+      "cycle": 0,
+      "dag_status": "CONSISTENT",
+      "topology_status": "CONSISTENT",
+      "ht_status": "CONSISTENT",
+      "combined_severity": "CONSISTENT",
+      "cohesion_score": 1.0,
+      "admissible": true,
+      "violations": [],
+      "layer_scores": {
+        "dag_score": 1.0,
+        "topology_score": 1.0,
+        "ht_score": 1.0
+      }
+    },
+    {
+      "signal_id": "sgs_f0e1d2c3b4a59876",
+      "timestamp": "2025-12-10T12:05:42.000000+00:00",
+      "run_id": "p4_run_20251210_abc123",
+      "cycle": 42,
+      "dag_status": "CONSISTENT",
+      "topology_status": "TENSION",
+      "ht_status": "CONSISTENT",
+      "combined_severity": "TENSION",
+      "cohesion_score": 0.88,
+      "admissible": true,
+      "violations": [
+        {
+          "invariant_id": "SI-006",
+          "layer": "TOPOLOGY",
+          "severity": "TENSION",
+          "message": "State outside safe region for 15 consecutive cycles",
+          "details": {"omega_exit_streak": 15}
+        }
+      ],
+      "layer_scores": {
+        "dag_score": 1.0,
+        "topology_score": 0.70,
+        "ht_score": 1.0
+      }
+    }
+  ]
+}

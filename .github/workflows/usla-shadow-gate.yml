@@ -1,0 +1,93 @@
+name: USLA Shadow Gate
+
+# Phase X P2: USLA Health Tile CI Verification
+#
+# SHADOW MODE CONTRACT:
+# - This workflow only runs when USLA_SHADOW_ENABLED is true
+# - Tests verify serialization and structural stability ONLY
+# - No governance logic is tested or modified
+# - No simulator-driven control paths are activated
+#
+# This is a non-blocking gate that validates USLA observability
+# without affecting any production governance decisions.
+
+on:
+  pull_request:
+    branches: [ integrate/ledger-v0.1 ]
+    paths:
+      - 'backend/topology/**'
+      - 'backend/health/**'
+      - 'tests/topology/**'
+      - 'tests/ci/**'
+  push:
+    branches: [ integrate/ledger-v0.1 ]
+    paths:
+      - 'backend/topology/**'
+      - 'backend/health/**'
+      - 'tests/topology/**'
+      - 'tests/ci/**'
+  workflow_dispatch:
+    inputs:
+      usla_shadow_enabled:
+        description: 'Enable USLA shadow mode for testing'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  usla-tile-validation:
+    name: USLA Health Tile Serialization
+    runs-on: ubuntu-latest
+    env:
+      # SHADOW MODE: Enable for CI validation only
+      USLA_SHADOW_ENABLED: ${{ github.event.inputs.usla_shadow_enabled || 'true' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Verify USLA Health Tile (SHADOW mode)
+        if: env.USLA_SHADOW_ENABLED == 'true'
+        run: |
+          echo "Running USLA health tile serialization tests..."
+          echo "SHADOW MODE: Tests verify serialization only, no governance logic."
+          uv run pytest tests/ci/test_usla_health_tile_serializes.py -v --tb=short
+
+      - name: Skip USLA tests (SHADOW mode disabled)
+        if: env.USLA_SHADOW_ENABLED != 'true'
+        run: |
+          echo "USLA shadow mode is disabled. Skipping health tile tests."
+          echo "Set USLA_SHADOW_ENABLED=true to enable validation."
+
+  usla-topology-tests:
+    name: USLA Topology Integration Tests
+    runs-on: ubuntu-latest
+    env:
+      USLA_SHADOW_ENABLED: ${{ github.event.inputs.usla_shadow_enabled || 'true' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run USLA topology tests (SHADOW mode)
+        if: env.USLA_SHADOW_ENABLED == 'true'
+        run: |
+          echo "Running USLA topology integration tests..."
+          echo "SHADOW MODE: All tests are read-only observability validation."
+          uv run pytest tests/topology/test_usla_*.py -v --tb=short
+
+      - name: Skip topology tests (SHADOW mode disabled)
+        if: env.USLA_SHADOW_ENABLED != 'true'
+        run: |
+          echo "USLA shadow mode is disabled. Skipping topology tests."

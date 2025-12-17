@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "params": {
+    "max_depth": 10,
+    "batch_size": 100,
+    "timeout_ms": 5000,
+    "threshold": 0.85
+  },
+  "gates": {
+    "uplift_gate": true,
+    "safety_gate": true,
+    "curriculum": {
+      "enabled": true,
+      "level": 5
+    },
+    "experimental_feature": false
+  },
+  "_curriculum_fingerprint": "curriculum_v3_abc123def456",
+  "_comment": "FM-003: Environment-Specific Gates - curriculum.level and experimental_feature differ"
+}

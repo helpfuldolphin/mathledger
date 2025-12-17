@@ -1,0 +1,42 @@
+# governance_policies/default_policy.yaml
+#
+# Defines the rules for the Governance Engine.
+# The engine processes rules in order and stops at the first match.
+
+# The action to take if no rules match a given signal.
+default_action: LOG_ADVISORY
+
+# A list of rules to evaluate.
+rules:
+  - name: "CRITICAL: Any Integrity Failure"
+    # Conditions that a signal must meet for this rule to match.
+    # All conditions listed must be true (AND logic).
+    conditions:
+      semanticType: "INTEGRITY_CHECK_FAIL"
+    # The decision to render if the conditions match.
+    decision: INITIATE_ABORT_GATE
+
+  - name: "CRITICAL: Any Abort Gate Trigger"
+    conditions:
+      semanticType: "ABORT_GATE_TRIGGERED"
+    decision: INITIATE_ABORT_GATE
+
+  - name: "HIGH: High-Severity Security or Integrity Issues"
+    conditions:
+      semanticType:
+        - "SECURITY_THRESHOLD_EXCEEDED"
+      severity: { min: 4 }
+    decision: TRIGGER_ALERT
+
+  - name: "MEDIUM: Behavioral Anomalies and Resource Warnings"
+    conditions:
+      semanticType:
+        - "BEHAVIORAL_ANOMALY_WARN"
+        - "RESOURCE_CONSTRAINT_WARN"
+      severity: { min: 3, max: 5 }
+    decision: TRIGGER_ALERT
+  
+  - name: "LOW: Routine Heartbeats are Ignored"
+    conditions:
+      semanticType: "HEARTBEAT_OK"
+    decision: NO_ACTION

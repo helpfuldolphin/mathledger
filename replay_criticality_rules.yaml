@@ -1,0 +1,8 @@
+thresholds:
+  # The minimum acceptable determinism rate for the entire run.
+  # If the aggregated rate is below this, the verdict will be BLOCK.
+  min_determinism_rate: 99.5
+
+  # The maximum acceptable drift metric for any single component.
+  # If any component exceeds this, the verdict will be BLOCK.
+  max_drift_metric: 0.10

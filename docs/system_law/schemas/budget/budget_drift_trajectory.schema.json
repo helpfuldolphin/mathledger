@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/budget/drift_trajectory.v1.0.0.json",
+  "title": "Budget Drift Trajectory Record",
+  "description": "Schema for per-window budget drift measurements in Phase X. JSONL format: one record per measurement window. Tracks deviation of actual budget utilization from expected allocation for P3 noise floor calibration.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "window_index",
+    "timestamp",
+    "expected_budget",
+    "actual_spent",
+    "drift_value",
+    "drift_classification"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for compatibility tracking"
+    },
+    "window_index": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Measurement window index (0-indexed)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of window start"
+    },
+    "expected_budget": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Nominal budget allocation for this window (cycles or seconds)"
+    },
+    "actual_spent": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Actual budget consumed in this window"
+    },
+    "drift_value": {
+      "type": "number",
+      "description": "Budget drift: (actual_spent - expected_budget) / expected_budget. Negative = under-utilization, positive = over-utilization"
+    },
+    "drift_classification": {
+      "type": "string",
+      "enum": ["STABLE", "DRIFTING", "VOLATILE"],
+      "description": "Classification based on drift_value magnitude: STABLE (|drift| <= 0.05), DRIFTING (0.05 < |drift| <= 0.15), VOLATILE (|drift| > 0.15)"
+    },
+    "p3_noise_adjustment": {
+      "type": "number",
+      "minimum": 1.0,
+      "description": "Noise floor multiplier for P3 Δp computation. Formula: 1.0 / sqrt(1 - |drift_value|) clamped to [1.0, 3.0]"
+    },
+    "cumulative_drift": {
+      "type": "number",
+      "description": "Running sum of drift_value across all windows (for trend detection)"
+    },
+    "window_size_cycles": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of cycles in this measurement window"
+    },
+    "budget_exhaustion_events": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of budget exhaustion events (INV-BUD-1 triggers) in this window"
+    },
+    "inv_bud_violations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["INV-BUD-1", "INV-BUD-2", "INV-BUD-3", "INV-BUD-4", "INV-BUD-5"]
+      },
+      "description": "List of budget invariant violations detected in this window"
+    },
+    "health_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Budget health score at window end (from budget_invariants.py)"
+    },
+    "stability_index": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Stability index at window end (from invariant timeline)"
+    },
+    "trend_status": {
+      "type": "string",
+      "enum": ["IMPROVING", "STABLE", "DEGRADING"],
+      "description": "Trend direction based on drift_value change from previous window"
+    },
+    "confounded_cycles": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of cycles in this window flagged as budget-confounded for P3 analysis"
+    },
+    "telemetry_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$",
+      "description": "SHA-256 hash of raw telemetry for audit trail"
+    }
+  },
+  "additionalProperties": false
+}

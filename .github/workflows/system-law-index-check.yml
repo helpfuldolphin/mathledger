@@ -1,0 +1,49 @@
+name: System Law Index Check
+
+# Advisory (non-gating) machine output for downstream tooling.
+#
+# Contract:
+# - This workflow is NON-GATING.
+# - The checker always exits 0 and emits a JSON payload for CI consumption.
+
+on:
+  pull_request:
+    branches: [ master, integrate/ledger-v0.1 ]
+    paths:
+      - 'docs/system_law/**'
+      - 'tools/generate_system_law_index.py'
+      - 'scripts/check_system_law_index.py'
+  push:
+    branches: [ master, integrate/ledger-v0.1 ]
+    paths:
+      - 'docs/system_law/**'
+      - 'tools/generate_system_law_index.py'
+      - 'scripts/check_system_law_index.py'
+  workflow_dispatch:
+
+jobs:
+  system-law-index:
+    name: System Law Index (Advisory)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Check system law index (advisory)
+        continue-on-error: true
+        run: |
+          uv run python scripts/check_system_law_index.py --json --output artifacts/system_law_index_check.json
+
+      - name: Upload system law index JSON
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: system-law-index-check
+          path: artifacts/system_law_index_check.json
+          if-no-files-found: warn
+          retention-days: 30

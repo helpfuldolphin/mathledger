@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/replay/replay_promotion_eval.v1.0.0.json",
+  "title": "Replay Promotion Evaluation",
+  "description": "Schema for replay safety promotion evaluation. Determines whether replay verification permits promotion to next phase or policy update.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "timestamp",
+    "promotion_status",
+    "safety_level",
+    "safe"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when evaluation was performed"
+    },
+    "promotion_status": {
+      "type": "string",
+      "enum": ["pending", "approved", "rejected", "abstain"],
+      "description": "Promotion decision status"
+    },
+    "safety_level": {
+      "type": "string",
+      "enum": ["safe", "caution", "unsafe", "unknown"],
+      "description": "Safety classification for replay verification"
+    },
+    "safe": {
+      "type": "boolean",
+      "description": "True if replay verification passed with no violations"
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "message", "severity"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Violation code (e.g., 'HASH_MISMATCH', 'DETERMINISM_FAILURE')"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable violation description"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warning", "critical"],
+            "description": "Violation severity level"
+          },
+          "context": {
+            "type": "object",
+            "description": "Additional context for debugging"
+          }
+        }
+      },
+      "description": "List of detected violations"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of non-blocking warnings"
+    },
+    "evidence_hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 hash of trace data used for evaluation"
+    },
+    "trace_summary": {
+      "type": "object",
+      "properties": {
+        "trace_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of traces evaluated"
+        },
+        "safe_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of traces passing safety"
+        },
+        "total_violations": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total violations across all traces"
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence in promotion decision (0-1)"
+        }
+      },
+      "description": "Summary statistics for multi-trace evaluation"
+    },
+    "evaluation_criteria": {
+      "type": "object",
+      "properties": {
+        "determinism_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Minimum determinism score required (0-100)"
+        },
+        "max_violations_allowed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum violations before rejection"
+        },
+        "hash_match_required": {
+          "type": "boolean",
+          "description": "Whether hash match is mandatory"
+        }
+      },
+      "description": "Criteria used for evaluation"
+    },
+    "p3_p4_context": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": ["P3", "P4"],
+          "description": "Validation phase context"
+        },
+        "synthetic_mode": {
+          "type": "boolean",
+          "description": "True if P3 synthetic validation"
+        },
+        "shadow_mode": {
+          "type": "boolean",
+          "description": "True if P4 shadow mode"
+        },
+        "twin_divergence_detected": {
+          "type": "boolean",
+          "description": "True if P4 twin-vs-reality divergence detected"
+        }
+      },
+      "description": "Phase X P3/P4 context"
+    }
+  },
+  "additionalProperties": false
+}

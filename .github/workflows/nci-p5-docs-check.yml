@@ -1,0 +1,160 @@
+name: NCI P5 Documentation Check
+
+# Phase X: NCI (Narrative Consistency Index) P5 CI Watchdog
+#
+# SHADOW MODE CONTRACT:
+# - This workflow is NON-GATING (always exits 0 unless --fail-on-breach)
+# - All outputs are advisory only
+# - Recommendations do NOT block PRs
+# - Violations are logged as artifacts for review
+#
+# This workflow runs NCI P5 evaluation on PRs touching documentation
+# to detect terminology drift and slice naming inconsistencies.
+
+on:
+  pull_request:
+    branches: [ master, integrate/ledger-v0.1 ]
+    paths:
+      - 'docs/**'
+      - 'backend/health/nci_*.py'
+      - 'tests/health/test_nci_*.py'
+  push:
+    branches: [ master, integrate/ledger-v0.1 ]
+    paths:
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      fail_on_breach:
+        description: 'Exit with error on SLO BREACH (default: false)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  nci-p5-evaluation:
+    name: NCI P5 Documentation Consistency
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run NCI P5 Evaluation
+        id: nci_eval
+        run: |
+          echo "Running NCI P5 Documentation Consistency Check..."
+          echo "SHADOW MODE: All outputs are advisory only."
+          echo ""
+
+          # Run NCI P5 with optional gating
+          if [ "${{ github.event.inputs.fail_on_breach }}" == "true" ]; then
+            uv run python scripts/run_nci_p5.py --output-dir results/nci_p5 --fail-on-breach
+          else
+            uv run python scripts/run_nci_p5.py --output-dir results/nci_p5
+          fi
+
+      - name: Upload NCI P5 Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nci-p5-results
+          path: |
+            results/nci_p5/nci_p5_result.json
+            results/nci_p5/nci_p5_signal.json
+          retention-days: 30
+
+      - name: Post NCI Summary to PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read the signal file
+            let signal;
+            try {
+              const signalPath = 'results/nci_p5/nci_p5_signal.json';
+              signal = JSON.parse(fs.readFileSync(signalPath, 'utf8'));
+            } catch (e) {
+              console.log('Could not read NCI signal file:', e.message);
+              return;
+            }
+
+            // Build status icon
+            const statusIcon = signal.slo_status === 'OK' ? '✅' :
+                              signal.slo_status === 'WARN' ? '⚠️' : '❌';
+
+            // Build summary message
+            const body = `## ${statusIcon} NCI P5 Documentation Check
+
+            **Mode:** \`${signal.mode}\`
+            **SLO Status:** \`${signal.slo_status}\`
+            **Recommendation:** \`${signal.recommendation}\`
+
+            | Metric | Value |
+            |--------|-------|
+            | Global NCI | ${signal.global_nci.toFixed(4)} |
+            | Confidence | ${signal.confidence.toFixed(4)} |
+            | TCL Aligned | ${signal.tcl_aligned ? '✓' : '✗'} |
+            | SIC Aligned | ${signal.sic_aligned ? '✓' : '✗'} |
+            | TCL Violations | ${signal.tcl_violation_count} |
+            | SIC Violations | ${signal.sic_violation_count} |
+            | Warnings | ${signal.warning_count} |
+
+            ---
+            *SHADOW MODE: This check is advisory only and does not block the PR.*
+            *See the \`nci-p5-results\` artifact for full details.*`;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(c =>
+              c.user.type === 'Bot' &&
+              c.body.includes('NCI P5 Documentation Check')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  nci-adapter-tests:
+    name: NCI Adapter Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v1
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run NCI Adapter Tests
+        run: |
+          echo "Running NCI governance adapter tests..."
+          uv run pytest tests/health/test_nci_governance_adapter.py -v --tb=short

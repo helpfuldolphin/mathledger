@@ -14,6 +14,9 @@ import pytest
 
 from backend.health.epistemic_p3p4_integration import epistemic_panel_for_alignment_view
 
+# Import reusable warning neutrality helpers (single source of truth)
+from tests.helpers.warning_neutrality import pytest_assert_warning_neutral
+
 
 class TestEpistemicPanelGGFLAdapter:
     """Tests for epistemic panel GGFL adapter."""
@@ -179,11 +182,8 @@ class TestEpistemicPanelGGFLAdapter:
 
         result = epistemic_panel_for_alignment_view(panel)
 
-        summary = result["summary"].lower()
-        # Check for neutral language (no evaluative terms)
-        forbidden_terms = ["bad", "wrong", "error", "mistake", "fix", "broken", "fail"]
-        for term in forbidden_terms:
-            assert term not in summary, f"Evaluative term '{term}' found in summary"
+        # Use reusable helper (single source of truth for banned words)
+        pytest_assert_warning_neutral(result["summary"], context="GGFL summary")
 
     def test_is_deterministic(
         self,

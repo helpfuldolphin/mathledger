@@ -1,0 +1,469 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/governance/final_check.v1.0.0.json",
+  "title": "Governance Final Check Record",
+  "description": "Schema for Last-Mile Governance Checker output. CLAUDE K final-pass validation before commitment. Each record represents one governance check cycle.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "check_id",
+    "cycle",
+    "timestamp",
+    "verdict",
+    "gates",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "check_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "description": "UUID for this governance check"
+    },
+    "cycle": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Cycle index (1-indexed)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of check execution"
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["SHADOW", "ACTIVE"],
+      "default": "SHADOW",
+      "description": "Execution mode: SHADOW (observe-only) or ACTIVE (enforced)"
+    },
+    "verdict": {
+      "type": "object",
+      "required": ["decision", "confidence"],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["ALLOW", "BLOCK"],
+          "description": "Final governance decision"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence score for verdict [0, 1]"
+        },
+        "blocking_gate": {
+          "type": ["string", "null"],
+          "enum": ["G0_CATASTROPHIC", "G1_HARD", "G2_INVARIANT", "G3_SAFE_REGION", "G4_SOFT", null],
+          "description": "Gate that caused BLOCK, null if ALLOW"
+        },
+        "blocking_reason": {
+          "type": ["string", "null"],
+          "description": "Human-readable reason for BLOCK"
+        }
+      },
+      "description": "Final verdict with confidence and blocking reason"
+    },
+    "gates": {
+      "type": "object",
+      "required": ["g0_catastrophic", "g1_hard", "g2_invariant", "g3_safe_region", "g4_soft", "g5_advisory"],
+      "properties": {
+        "g0_catastrophic": {
+          "$ref": "#/definitions/gate_result",
+          "description": "Catastrophic gate (CDI-010 detection)"
+        },
+        "g1_hard": {
+          "$ref": "#/definitions/gate_result",
+          "description": "Hard mode gate (HARD_OK streak)"
+        },
+        "g2_invariant": {
+          "$ref": "#/definitions/gate_result",
+          "description": "Invariant gate (INV-001 to INV-008)"
+        },
+        "g3_safe_region": {
+          "$ref": "#/definitions/gate_result",
+          "description": "Safe region gate (Omega membership)"
+        },
+        "g4_soft": {
+          "$ref": "#/definitions/gate_result",
+          "description": "Soft gate (RSI collapse, block rate explosion)"
+        },
+        "g5_advisory": {
+          "$ref": "#/definitions/gate_result",
+          "description": "Advisory gate (TDA metrics, informational only)"
+        }
+      },
+      "description": "Individual gate evaluation results"
+    },
+    "input_signals": {
+      "type": "object",
+      "properties": {
+        "usla_state": {
+          "$ref": "#/definitions/usla_state_vector",
+          "description": "USLA canonical state vector"
+        },
+        "hard_ok": {
+          "type": "boolean",
+          "description": "HARD mode OK status"
+        },
+        "hard_fail_streak": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Consecutive HARD mode failures"
+        },
+        "in_omega": {
+          "type": "boolean",
+          "description": "State within safe region Omega"
+        },
+        "omega_exit_streak": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Consecutive cycles outside Omega"
+        },
+        "invariant_all_pass": {
+          "type": "boolean",
+          "description": "All invariants satisfied"
+        },
+        "invariant_violations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^INV-\\d{3}$"
+          },
+          "description": "List of violated invariants"
+        },
+        "cdi_010_active": {
+          "type": "boolean",
+          "description": "CDI-010 (Fixed-Point Multiplicity) active"
+        },
+        "active_cdis": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CDI-\\d{3}$"
+          },
+          "description": "List of active CDIs"
+        },
+        "rho": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Rolling Stability Index"
+        },
+        "rho_collapse_streak": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Consecutive cycles with rho < rho_min"
+        },
+        "beta": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Block rate"
+        },
+        "beta_explosion_streak": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Consecutive cycles with beta > beta_max"
+        },
+        "tda_metrics": {
+          "$ref": "#/definitions/tda_metrics",
+          "description": "TDA metrics (optional, for advisory gate)"
+        }
+      },
+      "description": "Input signals used for gate evaluation"
+    },
+    "waivers_applied": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/waiver_reference"
+      },
+      "description": "Waivers applied to bypass gates"
+    },
+    "overrides_applied": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/override_reference"
+      },
+      "description": "Overrides applied to bypass soft gates"
+    },
+    "audit": {
+      "type": "object",
+      "required": ["input_hash", "output_hash"],
+      "properties": {
+        "input_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "SHA-256 hash of input signals for integrity verification"
+        },
+        "output_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "SHA-256 hash of output for audit chain"
+        },
+        "previous_check_hash": {
+          "type": ["string", "null"],
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Hash of previous check (null for first check)"
+        },
+        "chain_height": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Position in audit chain"
+        }
+      },
+      "description": "Audit trail for immutability and traceability"
+    },
+    "config_snapshot": {
+      "type": "object",
+      "properties": {
+        "hard_fail_threshold": {
+          "type": "integer",
+          "description": "Threshold for G1 gate"
+        },
+        "invariant_tolerance": {
+          "type": "integer",
+          "description": "Tolerance for G2 gate"
+        },
+        "omega_exit_threshold": {
+          "type": "integer",
+          "description": "Threshold for G3 gate"
+        },
+        "rho_min": {
+          "type": "number",
+          "description": "RSI floor for G4 gate"
+        },
+        "beta_max": {
+          "type": "number",
+          "description": "Block rate ceiling for G4 gate"
+        },
+        "rho_streak_threshold": {
+          "type": "integer",
+          "description": "Streak threshold for rho collapse"
+        },
+        "beta_streak_threshold": {
+          "type": "integer",
+          "description": "Streak threshold for beta explosion"
+        }
+      },
+      "description": "Configuration parameters active during this check"
+    }
+  },
+  "definitions": {
+    "gate_result": {
+      "type": "object",
+      "required": ["gate_id", "status", "severity"],
+      "properties": {
+        "gate_id": {
+          "type": "string",
+          "enum": ["G0_CATASTROPHIC", "G1_HARD", "G2_INVARIANT", "G3_SAFE_REGION", "G4_SOFT", "G5_ADVISORY"],
+          "description": "Gate identifier"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "WAIVED", "OVERRIDDEN"],
+          "description": "Gate evaluation status"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+          "description": "Severity level of gate"
+        },
+        "trigger_value": {
+          "type": ["number", "boolean", "null"],
+          "description": "Value that triggered the gate (if applicable)"
+        },
+        "threshold": {
+          "type": ["number", "null"],
+          "description": "Threshold for gate activation"
+        },
+        "streak": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Streak count for streak-based gates"
+        },
+        "details": {
+          "type": ["string", "null"],
+          "description": "Additional details about gate evaluation"
+        }
+      }
+    },
+    "usla_state_vector": {
+      "type": "object",
+      "properties": {
+        "H": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "HSS (Health Signal Score)"
+        },
+        "D": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Proof depth"
+        },
+        "D_dot": {
+          "type": "number",
+          "description": "Depth velocity"
+        },
+        "B": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Branch factor"
+        },
+        "S": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Semantic shear"
+        },
+        "C": {
+          "type": "integer",
+          "enum": [0, 1, 2],
+          "description": "Convergence class: 0=CONVERGING, 1=OSCILLATING, 2=DIVERGING"
+        },
+        "rho": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Rolling Stability Index"
+        },
+        "tau": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 0.5,
+          "description": "Effective threshold"
+        },
+        "J": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Jacobian max sensitivity"
+        },
+        "W": {
+          "type": "boolean",
+          "description": "Exception window active"
+        },
+        "beta": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Block rate (rolling)"
+        },
+        "kappa": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Coupling strength"
+        },
+        "nu": {
+          "type": "number",
+          "description": "Variance velocity"
+        },
+        "delta": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "CDI defect count"
+        },
+        "Gamma": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "TGRS (readiness score)"
+        }
+      },
+      "description": "USLA canonical 15-element state vector per USLA v0.1"
+    },
+    "tda_metrics": {
+      "type": "object",
+      "properties": {
+        "sns": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Structural Non-Triviality Score"
+        },
+        "pcs": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Persistence Coherence Score"
+        },
+        "drs": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Deviation-from-Reference Score"
+        },
+        "hss": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Hallucination Stability Score (composite)"
+        }
+      },
+      "description": "Topological Data Analysis metrics"
+    },
+    "waiver_reference": {
+      "type": "object",
+      "required": ["waiver_id", "gate_id"],
+      "properties": {
+        "waiver_id": {
+          "type": "string",
+          "description": "Unique waiver identifier"
+        },
+        "gate_id": {
+          "type": "string",
+          "enum": ["G2_INVARIANT", "G3_SAFE_REGION"],
+          "description": "Gate this waiver applies to"
+        },
+        "issued_by": {
+          "type": "string",
+          "description": "Authority that issued the waiver"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Waiver expiration timestamp"
+        },
+        "justification": {
+          "type": "string",
+          "description": "Reason for waiver"
+        }
+      },
+      "description": "Reference to an applied waiver"
+    },
+    "override_reference": {
+      "type": "object",
+      "required": ["override_id", "gate_id"],
+      "properties": {
+        "override_id": {
+          "type": "string",
+          "description": "Unique override identifier"
+        },
+        "gate_id": {
+          "type": "string",
+          "enum": ["G4_SOFT"],
+          "description": "Gate this override applies to"
+        },
+        "issued_by": {
+          "type": "string",
+          "description": "Authority that issued the override"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Reason for override"
+        },
+        "valid_for_cycles": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of cycles override is valid"
+        }
+      },
+      "description": "Reference to an applied override"
+    }
+  }
+}

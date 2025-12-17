@@ -1,0 +1,225 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.org/schemas/evidence_pack/tda_metrics.v1.0.0.json",
+  "title": "TDA Metrics (SNS/PCS/DRS/HSS)",
+  "description": "Schema for Topological Data Analysis metrics in Phase X experiments. Captures SNS (Structural Non-Triviality Score), PCS (Persistence Coherence Score), DRS (Deviation-from-Reference Score), and HSS (Hallucination Stability Score) computed per window.",
+  "version": "1.0.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "source_phase",
+    "window_size",
+    "total_windows",
+    "windows",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility"
+    },
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier for the source run"
+    },
+    "source_phase": {
+      "type": "string",
+      "enum": ["P3", "P4"],
+      "description": "Source phase (P3 synthetic or P4 real-coupled)"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp when metrics were computed"
+    },
+    "window_size": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of cycles per TDA computation window"
+    },
+    "total_windows": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of completed windows"
+    },
+    "reference_topology": {
+      "type": "object",
+      "description": "Reference topology baseline for DRS computation",
+      "properties": {
+        "source": {
+          "type": "string",
+          "description": "Source of reference topology (e.g., 'initial_1000_cycles')"
+        },
+        "betti_numbers": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 0},
+          "description": "Reference Betti numbers [β₀, β₁, β₂, ...]"
+        },
+        "persistence_diagram_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Hash of reference persistence diagram"
+        }
+      }
+    },
+    "windows": {
+      "type": "array",
+      "description": "Per-window TDA metrics",
+      "items": {
+        "$ref": "#/$defs/tda_window"
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/tda_summary"
+    },
+    "trajectories": {
+      "type": "object",
+      "description": "Full metric trajectories for plotting",
+      "properties": {
+        "sns": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "SNS trajectory over windows"
+        },
+        "pcs": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "PCS trajectory over windows"
+        },
+        "drs": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "DRS trajectory over windows"
+        },
+        "hss": {
+          "type": "array",
+          "items": {"type": "number"},
+          "description": "HSS trajectory over windows"
+        }
+      }
+    },
+    "p4_comparison": {
+      "type": "object",
+      "description": "P4-specific: Comparison between real and twin TDA metrics",
+      "properties": {
+        "real_summary": {"$ref": "#/$defs/tda_summary"},
+        "twin_summary": {"$ref": "#/$defs/tda_summary"},
+        "correlation": {
+          "type": "object",
+          "properties": {
+            "sns_correlation": {"type": "number", "minimum": -1, "maximum": 1},
+            "pcs_correlation": {"type": "number", "minimum": -1, "maximum": 1},
+            "drs_correlation": {"type": "number", "minimum": -1, "maximum": 1},
+            "hss_correlation": {"type": "number", "minimum": -1, "maximum": 1}
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "tda_window": {
+      "type": "object",
+      "required": ["window_index", "start_cycle", "end_cycle", "metrics"],
+      "properties": {
+        "window_index": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "0-indexed window number"
+        },
+        "start_cycle": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "First cycle in this window"
+        },
+        "end_cycle": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Last cycle in this window"
+        },
+        "metrics": {
+          "type": "object",
+          "required": ["sns", "pcs", "drs", "hss"],
+          "properties": {
+            "sns": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Structural Non-Triviality Score: topological complexity of reasoning graph"
+            },
+            "pcs": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Persistence Coherence Score: stability of persistent homology features"
+            },
+            "drs": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Deviation-from-Reference Score: drift from reference topology (unbounded)"
+            },
+            "hss": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Hallucination Stability Score: composite metric for hallucination risk"
+            }
+          }
+        },
+        "betti_numbers": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 0},
+          "description": "Betti numbers [β₀, β₁, β₂, ...] for this window"
+        },
+        "persistence_entropy": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Entropy of persistence diagram"
+        },
+        "topological_features": {
+          "type": "object",
+          "description": "Additional topological features",
+          "properties": {
+            "connected_components": {"type": "integer", "minimum": 0},
+            "loops": {"type": "integer", "minimum": 0},
+            "voids": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    },
+    "tda_summary": {
+      "type": "object",
+      "description": "Aggregate TDA statistics over all windows",
+      "properties": {
+        "sns": {"$ref": "#/$defs/metric_stats"},
+        "pcs": {"$ref": "#/$defs/metric_stats"},
+        "drs": {"$ref": "#/$defs/metric_stats"},
+        "hss": {"$ref": "#/$defs/metric_stats"},
+        "topological_stability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Composite topological stability score"
+        },
+        "anomaly_windows": {
+          "type": "array",
+          "items": {"type": "integer"},
+          "description": "Window indices with detected topological anomalies"
+        }
+      }
+    },
+    "metric_stats": {
+      "type": "object",
+      "description": "Statistical summary for a single TDA metric",
+      "properties": {
+        "mean": {"type": "number", "description": "Mean value over all windows"},
+        "min": {"type": "number", "description": "Minimum value"},
+        "max": {"type": "number", "description": "Maximum value"},
+        "std": {"type": "number", "minimum": 0, "description": "Standard deviation"},
+        "trend_slope": {"type": "number", "description": "Linear regression slope (trend direction)"},
+        "variance": {"type": "number", "minimum": 0, "description": "Variance"}
+      }
+    }
+  }
+}
