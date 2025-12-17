@@ -51,6 +51,12 @@ All Pilot Phase operations execute under **SHADOW MODE**:
 | Modification of governance rules based on pilot | FORBIDDEN |
 | Exit from SHADOW MODE | FORBIDDEN |
 
+### 2.3 Single-Path Smoke Proof
+
+Copy/paste proof that pilot ingestion is SHADOW-only and non-interfering.
+
+See: [PILOT_SMOKE_PROOF_SINGLE_PATH.md](PILOT_SMOKE_PROOF_SINGLE_PATH.md)
+
 ---
 
 ## 3. Participating Agents
