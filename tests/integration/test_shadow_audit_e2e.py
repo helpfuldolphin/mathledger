@@ -220,10 +220,13 @@ class TestShadowAuditE2E:
         """--dry-run creates no files (INV-05)."""
         _skip_if_no_canonical_cli()
 
+        # Create empty input directory (script validates input exists)
+        input_dir = TEST_OUTPUT_DIR / "dry_run_input"
+        input_dir.mkdir(parents=True, exist_ok=True)
         output_dir = TEST_OUTPUT_DIR / "dry_run"
 
         result = run_script([
-            "--input", "results/first_light",  # May not exist, but --dry-run validates only
+            "--input", str(input_dir),  # Must exist for script to proceed
             "--output", str(output_dir),
             "--dry-run",
         ])
