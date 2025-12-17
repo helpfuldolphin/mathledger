@@ -1,6 +1,6 @@
 # Pilot CI Isolation
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Created:** 2025-12-13
 **Purpose:** Document the CI isolation guarantees for pilot-phase development.
 
@@ -87,6 +87,73 @@ When working on pilot code:
 4. `summary` - Reports overall status
 
 **Gating:** Boundary violations are **blocking**. Lint failures are **blocking**. Test failures are **advisory**.
+
+---
+
+## Extending Pilot CI Scope Safely
+
+When adding new pilot paths to `pilot-phase-gate.yml`, follow these rules to avoid reintroducing global CI friction or compromising frozen harnesses.
+
+### Rule 1: Never Use Root Wildcards
+
+Path patterns must be **explicitly scoped** to pilot-owned directories. Never match broad patterns that could capture non-pilot files.
+
+### Rule 2: Keep Frozen Harness List Authoritative
+
+The `FROZEN_HARNESSES` array in `pilot-phase-gate.yml` is the **single source of truth** for protected CAL-EXP scripts. If a new harness is frozen:
+1. Add it to `FROZEN_HARNESSES` in the workflow
+2. Document it in `CRITICAL_FILES_MANIFEST.md`
+3. Do NOT remove entries without explicit STRATCOM directive
+
+### Rule 3: Scope Documentation Paths
+
+Documentation triggers must use subdirectory scoping (e.g., `docs/pilot/**`), never `docs/**`.
+
+### Examples
+
+#### Safe Extension
+
+```yaml
+# Adding a new pilot module directory
+paths:
+  - 'pilot/**'
+  - 'pilot_integrations/**'    # NEW: explicit, scoped directory
+  - 'scripts/pilot_*.py'
+  - 'scripts/pilot_integration_*.py'  # NEW: explicit prefix pattern
+```
+
+**Why safe:**
+- `pilot_integrations/**` is a dedicated directory that cannot match `backend/`, `scripts/first_light_*`, or any frozen path
+- `scripts/pilot_integration_*.py` uses explicit prefix, cannot match `scripts/run_p5_cal_exp1.py`
+
+#### Unsafe Extension (DO NOT DO THIS)
+
+```yaml
+# DANGEROUS: These patterns cause global CI friction
+paths:
+  - 'pilot/**'
+  - 'scripts/*.py'           # UNSAFE: matches ALL scripts including frozen harnesses
+  - 'docs/**'                # UNSAFE: triggers on all documentation changes
+  - '**/*.py'                # UNSAFE: matches entire codebase
+  - 'backend/**'             # UNSAFE: overlaps with CAL-EXP dependencies
+```
+
+**Why unsafe:**
+- `scripts/*.py` matches `scripts/first_light_cal_exp2_convergence.py` (frozen)
+- `docs/**` triggers pilot CI on `docs/system_law/` changes (not pilot-related)
+- `**/*.py` triggers on every Python file in the repository
+- `backend/**` overlaps with `backend/topology/first_light/**` (CAL-EXP dependency)
+
+### Checklist for Path Extensions
+
+Before adding a new path to `pilot-phase-gate.yml`:
+
+- [ ] Pattern uses explicit directory name (not `**/` prefix)
+- [ ] Pattern cannot match any file in `FROZEN_HARNESSES`
+- [ ] Pattern cannot match `backend/topology/first_light/**`
+- [ ] Pattern cannot match `results/cal_exp_*`
+- [ ] If documentation, uses `docs/pilot/**` subdirectory scoping
+- [ ] If scripts, uses `pilot_` prefix pattern
 
 ---
 
