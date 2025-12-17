@@ -42,7 +42,8 @@
 | [CAL_EXP_4_VARIANCE_STRESS_SPEC.md](CAL_EXP_4_VARIANCE_STRESS_SPEC.md) | **BINDING** | Charter, definitions, validity conditions |
 | [CAL_EXP_4_IMPLEMENTATION_PLAN.md](CAL_EXP_4_IMPLEMENTATION_PLAN.md) | **PROVISIONAL** | Execution machinery, artifact layout |
 | [CAL_EXP_4_VERIFIER_PLAN.md](CAL_EXP_4_VERIFIER_PLAN.md) | **PROVISIONAL** | Verifier check specification |
-| `scripts/verify_cal_exp_4_run.py` | **NOT YET CREATED** | Verifier implementation |
+| `scripts/verify_cal_exp_4_run.py` | **READY** | Verifier implementation (52 tests passing) |
+| [CAL_EXP_4_READINESS.md](CAL_EXP_4_READINESS.md) | **CURRENT** | Readiness assessment and launch checklist |
 
 ---
 
