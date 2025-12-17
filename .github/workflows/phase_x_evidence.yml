@@ -49,6 +49,7 @@ jobs:
 
       - name: Generate First Light status (SHADOW; observational)
         if: always()
+        continue-on-error: true  # SHADOW MODE: informational, not blocking
         env:
           PIPELINE_CONTEXT: ${{ github.event_name == 'pull_request' && 'pr' || 'nightly' }}
         run: |
