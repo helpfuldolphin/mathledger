@@ -44,5 +44,8 @@ artifacts/
 logs/
 *.backup.py
 
+# Experiment results (local only, not committed)
+results/
+
 # Docker volumes (not needed if named volumes)
 # data/
