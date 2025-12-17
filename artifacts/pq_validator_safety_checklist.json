@@ -1,0 +1,279 @@
+{
+  "$schema": "https://mathledger.org/schemas/pq-validator-checklist-v1.json",
+  "version": "1.0.0",
+  "generated_at": "2025-12-10T00:00:00Z",
+  "description": "Validator safety checklist for PQ migration activation. This JSON artifact is designed to be consumed by block explorers and monitoring dashboards.",
+  "activation_parameters": {
+    "activation_block": "TBD",
+    "epoch_id": "pq-epoch-1",
+    "algorithm_id": "0x01",
+    "algorithm_name": "SHA3-256",
+    "rule_version": "v2-dual-required",
+    "governance_hash": "TBD"
+  },
+  "pre_activation_checklist": {
+    "description": "Checks to perform before activation block",
+    "items": [
+      {
+        "id": "check-001",
+        "category": "software",
+        "name": "Node Software Version",
+        "description": "Verify node is running PQ-compatible software version",
+        "required_version": "v2.1.0-pq",
+        "check_command": "mathledgerd version",
+        "expected_output_pattern": "v2\\.1\\.0-pq",
+        "severity": "critical",
+        "automated": true
+      },
+      {
+        "id": "check-002",
+        "category": "sync",
+        "name": "Node Sync Status",
+        "description": "Verify node is fully synced and not catching up",
+        "check_command": "mathledgerd status | grep catching_up",
+        "expected_output": "catching_up: false",
+        "severity": "critical",
+        "automated": true
+      },
+      {
+        "id": "check-003",
+        "category": "modules",
+        "name": "PQ Consensus Modules Present",
+        "description": "Verify all required PQ consensus modules are present in codebase",
+        "required_files": [
+          "basis/crypto/hash_registry.py",
+          "basis/crypto/hash_versioned.py",
+          "basis/ledger/block_pq.py",
+          "basis/ledger/verification.py",
+          "backend/consensus_pq/rules.py",
+          "backend/consensus_pq/epoch.py"
+        ],
+        "severity": "critical",
+        "automated": true
+      },
+      {
+        "id": "check-004",
+        "category": "monitoring",
+        "name": "Drift Radar Enabled",
+        "description": "Verify drift radar is enabled and configured",
+        "check_command": "grep 'drift_radar_enabled' config.yaml",
+        "expected_output": "drift_radar_enabled: true",
+        "severity": "high",
+        "automated": true
+      },
+      {
+        "id": "check-005",
+        "category": "monitoring",
+        "name": "Monitoring Systems Operational",
+        "description": "Verify monitoring dashboards and alerting are functional",
+        "severity": "high",
+        "automated": false,
+        "manual_steps": [
+          "Check Grafana dashboard is accessible",
+          "Verify Prometheus is scraping metrics",
+          "Test alert delivery (email/Slack)"
+        ]
+      },
+      {
+        "id": "check-006",
+        "category": "resources",
+        "name": "Sufficient Disk Space",
+        "description": "Verify at least 100GB of free disk space",
+        "check_command": "df -h | grep /data",
+        "minimum_free_gb": 100,
+        "severity": "medium",
+        "automated": true
+      },
+      {
+        "id": "check-007",
+        "category": "communication",
+        "name": "Operator Communication Channel",
+        "description": "Confirm access to #pq-migration-operators Discord channel",
+        "severity": "medium",
+        "automated": false,
+        "manual_steps": [
+          "Join Discord server",
+          "Verify you can send/receive messages in #pq-migration-operators"
+        ]
+      }
+    ]
+  },
+  "activation_monitoring": {
+    "description": "Monitoring points during activation",
+    "items": [
+      {
+        "id": "monitor-001",
+        "name": "Activation Log Entry",
+        "description": "Watch for epoch activation log message",
+        "expected_log_pattern": "INFO \\[epoch\\] Activating new epoch: algorithm=SHA3-256",
+        "timing": "at_activation_block",
+        "severity": "critical"
+      },
+      {
+        "id": "monitor-002",
+        "name": "First PQ Block Sealed",
+        "description": "Verify first block after activation has dual commitment",
+        "expected_log_pattern": "INFO \\[consensus\\] Sealed block .* with dual commitment",
+        "timing": "activation_block_plus_1",
+        "severity": "critical"
+      },
+      {
+        "id": "monitor-003",
+        "name": "Block Structure Validation",
+        "description": "Verify new blocks contain required PQ fields",
+        "required_fields": [
+          "pq_algorithm",
+          "pq_merkle_root",
+          "pq_prev_hash",
+          "dual_commitment"
+        ],
+        "check_command": "mathledgerd query block {block_number}",
+        "timing": "post_activation",
+        "severity": "critical"
+      },
+      {
+        "id": "monitor-004",
+        "name": "Drift Radar Alerts",
+        "description": "Monitor for any drift radar alerts",
+        "watch_log_pattern": "\\[DRIFT_RADAR\\]",
+        "alert_on_any_match": true,
+        "timing": "continuous",
+        "severity": "critical"
+      },
+      {
+        "id": "monitor-005",
+        "name": "Block Production Rate",
+        "description": "Verify block production rate remains stable",
+        "expected_block_time_seconds": 6,
+        "tolerance_percent": 20,
+        "timing": "continuous",
+        "severity": "high"
+      },
+      {
+        "id": "monitor-006",
+        "name": "Orphan Rate",
+        "description": "Monitor for increased orphan block rate",
+        "baseline_orphan_rate_percent": 1,
+        "alert_threshold_percent": 5,
+        "timing": "continuous",
+        "severity": "high"
+      }
+    ]
+  },
+  "post_activation_verification": {
+    "description": "Verification steps after activation",
+    "items": [
+      {
+        "id": "verify-001",
+        "name": "Block Explorer Compatibility",
+        "description": "Verify block explorers correctly display dual-commitment blocks",
+        "check_urls": [
+          "https://explorer.mathledger.org/block/{activation_block+1}"
+        ],
+        "expected_fields_visible": [
+          "pq_algorithm",
+          "pq_merkle_root",
+          "dual_commitment"
+        ],
+        "timing": "within_1_hour",
+        "severity": "medium"
+      },
+      {
+        "id": "verify-002",
+        "name": "Chain Continuity",
+        "description": "Verify no gaps or forks in the chain",
+        "check_command": "mathledgerd query chain-info",
+        "timing": "within_1_hour",
+        "severity": "critical"
+      },
+      {
+        "id": "verify-003",
+        "name": "Peer Consensus",
+        "description": "Verify all peers agree on chain tip",
+        "check_command": "mathledgerd query peers",
+        "timing": "within_1_hour",
+        "severity": "high"
+      }
+    ]
+  },
+  "emergency_procedures": {
+    "description": "Emergency response procedures",
+    "scenarios": [
+      {
+        "id": "emergency-001",
+        "name": "Activation Failure",
+        "symptoms": [
+          "Activation block passed but no new blocks produced",
+          "New blocks are still legacy (no PQ fields)"
+        ],
+        "immediate_actions": [
+          "Check logs for epoch activation errors",
+          "Report to #pq-migration-operators with log snippets",
+          "DO NOT restart node unless instructed"
+        ],
+        "escalation": "core_team"
+      },
+      {
+        "id": "emergency-002",
+        "name": "Critical Drift Detected",
+        "symptoms": [
+          "CRITICAL or HIGH severity drift radar alert"
+        ],
+        "immediate_actions": [
+          "Copy full drift alert log message",
+          "Post to #pq-migration-operators with @emergency-response-team",
+          "If validator: isolate node from network (stop mathledgerd)",
+          "Await instructions before bringing node back online"
+        ],
+        "escalation": "emergency_response_team"
+      },
+      {
+        "id": "emergency-003",
+        "name": "Network Fork",
+        "symptoms": [
+          "High orphan block rate",
+          "Frequent fork switching",
+          "Block explorers show conflicting chain tips"
+        ],
+        "immediate_actions": [
+          "Report instability with details (block hashes, peer logs)",
+          "Compare your chain tip with other operators",
+          "Follow core team instructions for canonical chain"
+        ],
+        "escalation": "core_team"
+      }
+    ],
+    "rollback_procedure": {
+      "description": "Network-wide rollback (last resort)",
+      "trigger": "Catastrophic failure declared by core team",
+      "steps": [
+        "Await official rollback announcement with software version",
+        "Download and verify rollback software package",
+        "Stop mathledgerd service",
+        "Install rollback software version",
+        "Reset node state to specified safe block height",
+        "Restart mathledgerd service",
+        "Verify node is on canonical pre-activation chain"
+      ],
+      "coordination_required": true,
+      "authority": "core_team_only"
+    }
+  },
+  "contact_information": {
+    "primary_channel": {
+      "platform": "Discord",
+      "channel": "#pq-migration-operators",
+      "url": "https://discord.gg/mathledger"
+    },
+    "emergency_contacts": {
+      "core_team_lead": "TBD",
+      "emergency_response_team": "@emergency-response-team"
+    }
+  },
+  "metadata": {
+    "document_version": "1.0.0",
+    "last_updated": "2025-12-10T00:00:00Z",
+    "maintained_by": "MathLedger Core Team",
+    "license": "CC-BY-4.0"
+  }
+}
