@@ -71,15 +71,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pyyaml
+        run: uv sync
 
       - name: Run Shadow Release Gate
         id: gate
@@ -90,7 +86,7 @@ jobs:
           echo "Contract: SHADOW_MODE_CONTRACT.md v1.0.0"
           echo ""
 
-          python -m backend.health.shadow_release_gate \
+          uv run python -m backend.health.shadow_release_gate \
             --scan-dir "$SCAN_PATH" \
             --output shadow_release_gate_report.json \
             --exclude "**/node_modules/**" \
@@ -157,26 +153,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v1
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest pyyaml
+        run: uv sync
 
       - name: Run unit tests
         run: |
-          python -m pytest tests/health/test_shadow_release_gate.py \
+          uv run pytest tests/health/test_shadow_release_gate.py \
             -v \
             -m "unit" \
             --tb=short
 
       - name: Run integration tests
         run: |
-          python -m pytest tests/health/test_shadow_release_gate.py \
+          uv run pytest tests/health/test_shadow_release_gate.py \
             -v \
             -m "integration" \
             --tb=short
