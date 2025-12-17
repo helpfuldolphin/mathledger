@@ -24,9 +24,11 @@ from backend.health.shadow_release_gate import (
     ShadowReleaseGate,
     GateViolation,
     GateReport,
+    RatchetConfig,
     scan_file,
     scan_directory,
     load_gate_registry,
+    load_ratchet_config,
     is_legacy_path,
     PROHIBITED_PHRASES_IN_GATED,
     LEGACY_ALLOWLIST_PATHS,
@@ -660,3 +662,230 @@ This system operates in SHADOW MODE without qualification.
     assert len(violations) >= 1
     assert suppressed == 0
     assert any(v.violation_type == "UNQUALIFIED_SHADOW_MODE" for v in violations)
+
+
+# =============================================================================
+# TEST CASE 22: Ratchet configuration loading
+# =============================================================================
+
+@pytest.mark.unit
+def test_ratchet_config_loads():
+    """
+    Ratchet configuration should load from config file.
+    """
+    ratchet = load_ratchet_config()
+
+    # Should have default or configured values
+    assert ratchet.legacy_warn_budget >= 0
+    assert ratchet.ratchet_phase >= 1
+    assert isinstance(ratchet.enforce_budget, bool)
+
+
+@pytest.mark.unit
+def test_ratchet_config_default_values():
+    """
+    RatchetConfig should have sensible defaults.
+    """
+    ratchet = RatchetConfig()
+
+    assert ratchet.legacy_warn_budget == 500
+    assert ratchet.enforce_budget is False
+    assert ratchet.ratchet_phase == 1
+
+
+@pytest.mark.unit
+def test_ratchet_config_from_dict():
+    """
+    RatchetConfig should load from dictionary.
+    """
+    data = {
+        "legacy_warn_budget": 200,
+        "enforce_budget": True,
+        "ratchet_phase": 2,
+        "last_updated": "2025-12-17",
+        "next_review": "2026-03-31",
+    }
+    ratchet = RatchetConfig.from_dict(data)
+
+    assert ratchet.legacy_warn_budget == 200
+    assert ratchet.enforce_budget is True
+    assert ratchet.ratchet_phase == 2
+    assert ratchet.last_updated == "2025-12-17"
+
+
+# =============================================================================
+# TEST CASE 23: Ratchet budget check logic
+# =============================================================================
+
+@pytest.mark.unit
+def test_ratchet_budget_within_limit():
+    """
+    Budget check should pass when within limit.
+    """
+    ratchet = RatchetConfig(legacy_warn_budget=500)
+
+    within, message = ratchet.check_budget(100)
+
+    assert within is True
+    assert "Within budget" in message
+    assert "100/500" in message
+
+
+@pytest.mark.unit
+def test_ratchet_budget_at_limit():
+    """
+    Budget check should pass when exactly at limit.
+    """
+    ratchet = RatchetConfig(legacy_warn_budget=100)
+
+    within, message = ratchet.check_budget(100)
+
+    assert within is True
+    assert "Within budget" in message
+
+
+@pytest.mark.unit
+def test_ratchet_budget_exceeded():
+    """
+    Budget check should fail when exceeded.
+    """
+    ratchet = RatchetConfig(legacy_warn_budget=100)
+
+    within, message = ratchet.check_budget(150)
+
+    assert within is False
+    assert "EXCEEDED" in message
+    assert "over by 50" in message
+
+
+# =============================================================================
+# TEST CASE 24: Ratchet enforcement in GateReport
+# =============================================================================
+
+@pytest.mark.unit
+def test_gate_report_apply_ratchet_passes():
+    """
+    GateReport should pass when budget within limit.
+    """
+    report = GateReport(scan_path="test")
+    report.legacy_warnings_suppressed = 100
+
+    ratchet = RatchetConfig(legacy_warn_budget=500, enforce_budget=True)
+    report.apply_ratchet(ratchet)
+
+    assert report.passed is True
+    assert report.budget_within_limit is True
+    assert report.legacy_warn_budget == 500
+
+
+@pytest.mark.unit
+def test_gate_report_apply_ratchet_fails_when_enforced():
+    """
+    GateReport should fail when budget exceeded AND enforcement enabled.
+    """
+    report = GateReport(scan_path="test")
+    report.legacy_warnings_suppressed = 600
+
+    ratchet = RatchetConfig(legacy_warn_budget=500, enforce_budget=True)
+    report.apply_ratchet(ratchet)
+
+    assert report.passed is False
+    assert report.budget_within_limit is False
+    assert "EXCEEDED" in report.budget_message
+
+
+@pytest.mark.unit
+def test_gate_report_apply_ratchet_not_enforced():
+    """
+    GateReport should still pass when budget exceeded but enforcement disabled.
+    """
+    report = GateReport(scan_path="test")
+    report.legacy_warnings_suppressed = 600
+
+    ratchet = RatchetConfig(legacy_warn_budget=500, enforce_budget=False)
+    report.apply_ratchet(ratchet)
+
+    # Should still pass because enforcement is disabled
+    assert report.passed is True
+    assert report.budget_within_limit is False  # But flag shows exceeded
+
+
+# =============================================================================
+# TEST CASE 25: Ratchet in GateReport JSON output
+# =============================================================================
+
+@pytest.mark.unit
+def test_gate_report_includes_ratchet_in_json():
+    """
+    GateReport JSON output should include ratchet section.
+    """
+    report = GateReport(scan_path="test")
+    report.legacy_warnings_suppressed = 100
+
+    ratchet = RatchetConfig(legacy_warn_budget=500, ratchet_phase=1)
+    report.apply_ratchet(ratchet)
+
+    report_dict = report.to_dict()
+
+    assert "ratchet" in report_dict
+    assert report_dict["ratchet"]["legacy_warn_budget"] == 500
+    assert report_dict["ratchet"]["budget_within_limit"] is True
+    assert report_dict["ratchet"]["ratchet_phase"] == 1
+
+
+# =============================================================================
+# TEST CASE 26: ShadowReleaseGate with ratchet config
+# =============================================================================
+
+@pytest.mark.unit
+def test_gate_accepts_ratchet_config():
+    """
+    ShadowReleaseGate should accept ratchet_config parameter.
+    """
+    ratchet = RatchetConfig(legacy_warn_budget=100, enforce_budget=True)
+    gate = ShadowReleaseGate(ratchet_config=ratchet)
+
+    assert gate.ratchet_config.legacy_warn_budget == 100
+    assert gate.ratchet_config.enforce_budget is True
+
+
+@pytest.mark.unit
+def test_gate_loads_default_ratchet():
+    """
+    ShadowReleaseGate should load default ratchet config if not provided.
+    """
+    gate = ShadowReleaseGate()
+
+    assert gate.ratchet_config is not None
+    assert gate.ratchet_config.legacy_warn_budget >= 0
+
+
+# =============================================================================
+# TEST CASE 27: Strict mode fails on new docs
+# =============================================================================
+
+@pytest.mark.unit
+def test_strict_mode_fails_on_new_docs(temp_dir: Path):
+    """
+    Strict mode (legacy_mode=False) should emit warnings on ALL docs,
+    including those in legacy paths.
+
+    This ensures --strict already fails on new docs outside allowlist.
+    """
+    # Create a doc in a "new" path (not legacy)
+    content = """
+# New Feature Doc
+
+This system operates in SHADOW MODE without qualification.
+"""
+    new_doc = temp_dir / "backend" / "feature.md"
+    new_doc.parent.mkdir(parents=True, exist_ok=True)
+    new_doc.write_text(content, encoding="utf-8")
+
+    # Strict mode should emit warning
+    gate = ShadowReleaseGate(legacy_mode=False)
+    violations, suppressed = gate.scan_file(new_doc)
+
+    assert len(violations) >= 1
+    assert any(v.violation_type == "UNQUALIFIED_SHADOW_MODE" for v in violations)
+    assert suppressed == 0  # Nothing suppressed in strict mode

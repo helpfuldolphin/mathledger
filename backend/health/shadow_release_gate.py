@@ -46,9 +46,13 @@ __all__ = [
     "ShadowReleaseGate",
     "GateViolation",
     "GateReport",
+    "RatchetConfig",
     "scan_file",
     "scan_directory",
     "load_gate_registry",
+    "load_ratchet_config",
+    "is_legacy_path",
+    "LEGACY_ALLOWLIST_PATHS",
 ]
 
 # =============================================================================
@@ -158,10 +162,26 @@ class GateReport:
     contract_version: str = "1.0.0"
     gate_id: str = "SRG-001"
     legacy_warnings_suppressed: int = 0  # Track suppressed legacy WARNs
+    # Ratchet budget fields
+    legacy_warn_budget: int = 500
+    budget_within_limit: bool = True
+    budget_message: str = ""
+    ratchet_phase: int = 1
 
     def add_violation(self, violation: GateViolation) -> None:
         self.violations.append(violation)
         if violation.severity == "ERROR":
+            self.passed = False
+
+    def apply_ratchet(self, ratchet: RatchetConfig) -> None:
+        """Apply ratchet configuration and check budget."""
+        self.legacy_warn_budget = ratchet.legacy_warn_budget
+        self.ratchet_phase = ratchet.ratchet_phase
+        self.budget_within_limit, self.budget_message = ratchet.check_budget(
+            self.legacy_warnings_suppressed
+        )
+        # If enforcement is enabled and budget exceeded, fail the gate
+        if ratchet.enforce_budget and not self.budget_within_limit:
             self.passed = False
 
     def to_dict(self) -> Dict[str, Any]:
@@ -177,6 +197,12 @@ class GateReport:
             "shadow_mode": "SHADOW-GATED",
             "system_impact": "BLOCKED" if not self.passed else "ALLOWED",
             "legacy_warnings_suppressed": self.legacy_warnings_suppressed,
+            "ratchet": {
+                "legacy_warn_budget": self.legacy_warn_budget,
+                "budget_within_limit": self.budget_within_limit,
+                "budget_message": self.budget_message,
+                "ratchet_phase": self.ratchet_phase,
+            },
         }
 
     def to_json(self) -> str:
@@ -203,6 +229,45 @@ class GateRegistryEntry:
             effective_date=d["effective_date"],
             authority=d["authority"],
         )
+
+
+@dataclass
+class RatchetConfig:
+    """
+    Ratchet configuration for forward-only warning budget reduction.
+
+    The ratchet policy enforces that legacy_warn_budget can only decrease over time.
+    See docs/system_law/SHADOW_GATE_RATCHET.md for the 3-step policy.
+    """
+    legacy_warn_budget: int = 500  # Maximum allowed suppressed warnings
+    enforce_budget: bool = False   # Whether to fail when budget exceeded
+    ratchet_phase: int = 1         # Current phase (1=initial, 2=reduced, 3=frozen)
+    last_updated: str = ""
+    next_review: str = ""
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "RatchetConfig":
+        return cls(
+            legacy_warn_budget=d.get("legacy_warn_budget", 500),
+            enforce_budget=d.get("enforce_budget", False),
+            ratchet_phase=d.get("ratchet_phase", 1),
+            last_updated=d.get("last_updated", ""),
+            next_review=d.get("next_review", ""),
+        )
+
+    def check_budget(self, suppressed_count: int) -> Tuple[bool, str]:
+        """
+        Check if suppressed warnings are within budget.
+
+        Returns: (within_budget, message)
+        """
+        if suppressed_count <= self.legacy_warn_budget:
+            return True, f"Within budget: {suppressed_count}/{self.legacy_warn_budget}"
+        else:
+            return False, (
+                f"Budget EXCEEDED: {suppressed_count}/{self.legacy_warn_budget} "
+                f"(over by {suppressed_count - self.legacy_warn_budget})"
+            )
 
 
 # =============================================================================
@@ -257,6 +322,33 @@ def load_gate_registry(registry_path: Optional[Path] = None) -> List[GateRegistr
         return []
 
 
+def load_ratchet_config(registry_path: Optional[Path] = None) -> RatchetConfig:
+    """
+    Load ratchet configuration from gate registry YAML file.
+
+    Returns default RatchetConfig if file doesn't exist or lacks ratchet section.
+    """
+    if registry_path is None:
+        registry_path = get_default_registry_path()
+
+    if not registry_path.exists():
+        return RatchetConfig()
+
+    try:
+        import yaml
+        with open(registry_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+
+        ratchet_data = data.get("ratchet", {})
+        if ratchet_data:
+            return RatchetConfig.from_dict(ratchet_data)
+        return RatchetConfig()
+    except ImportError:
+        return RatchetConfig()
+    except Exception:
+        return RatchetConfig()
+
+
 # =============================================================================
 # SCANNING LOGIC
 # =============================================================================
@@ -274,16 +366,23 @@ class ShadowReleaseGate:
         When legacy_mode=True (default), unqualified SHADOW MODE warnings are
         suppressed for files in LEGACY_ALLOWLIST_PATHS. Per contract §1.1,
         unqualified SHADOW MODE is interpreted as SHADOW-OBSERVE.
+
+    Ratchet Mode:
+        When ratchet_config is provided, enforces a forward-only budget on
+        legacy warnings. The budget can only decrease over time.
+        See docs/system_law/SHADOW_GATE_RATCHET.md for the 3-step policy.
     """
 
     def __init__(
         self,
         registry: Optional[List[GateRegistryEntry]] = None,
-        legacy_mode: bool = True
+        legacy_mode: bool = True,
+        ratchet_config: Optional[RatchetConfig] = None,
     ):
         self.registry = registry or load_gate_registry()
         self.gate_ids = {e.gate_id for e in self.registry}
         self.legacy_mode = legacy_mode
+        self.ratchet_config = ratchet_config or load_ratchet_config()
 
     def _detect_context(self, content: str) -> Tuple[bool, bool]:
         """
@@ -554,6 +653,9 @@ class ShadowReleaseGate:
                 for v in violations:
                     report.add_violation(v)
 
+        # Apply ratchet configuration and check budget
+        report.apply_ratchet(self.ratchet_config)
+
         return report
 
 
@@ -637,6 +739,16 @@ def main() -> int:
         action="store_true",
         help="Disable legacy mode — warn on ALL unqualified SHADOW MODE usage",
     )
+    parser.add_argument(
+        "--warn-budget",
+        type=int,
+        help="Override legacy warning budget (default: from config or 500)",
+    )
+    parser.add_argument(
+        "--enforce-budget",
+        action="store_true",
+        help="Fail if legacy warnings exceed budget (ratchet enforcement)",
+    )
 
     args = parser.parse_args()
 
@@ -644,7 +756,15 @@ def main() -> int:
         parser.error("Must specify --scan-dir or --file")
 
     legacy_mode = not args.strict
-    gate = ShadowReleaseGate(legacy_mode=legacy_mode)
+
+    # Load and optionally override ratchet config
+    ratchet = load_ratchet_config()
+    if args.warn_budget is not None:
+        ratchet.legacy_warn_budget = args.warn_budget
+    if args.enforce_budget:
+        ratchet.enforce_budget = True
+
+    gate = ShadowReleaseGate(legacy_mode=legacy_mode, ratchet_config=ratchet)
 
     if args.file:
         violations, suppressed = gate.scan_file(Path(args.file))
@@ -652,6 +772,7 @@ def main() -> int:
         report.legacy_warnings_suppressed = suppressed
         for v in violations:
             report.add_violation(v)
+        report.apply_ratchet(ratchet)
     else:
         report = gate.scan_directory(Path(args.scan_dir), args.exclude)
 
@@ -675,6 +796,17 @@ def main() -> int:
         print(f"Mode: {'STRICT' if args.strict else 'LEGACY (default)'}")
         print()
 
+        # Ratchet budget status
+        print("RATCHET BUDGET:")
+        print(f"  Phase: {report.ratchet_phase}")
+        print(f"  Budget: {report.legacy_warn_budget}")
+        print(f"  Status: {report.budget_message}")
+        if args.enforce_budget:
+            print(f"  Enforcement: ENABLED")
+        else:
+            print(f"  Enforcement: disabled (use --enforce-budget to enable)")
+        print()
+
         if report.violations:
             print("VIOLATIONS:")
             print("-" * 40)
@@ -692,6 +824,8 @@ def main() -> int:
             print("VERDICT: PASS")
         else:
             print("VERDICT: FAIL")
+            if not report.budget_within_limit and args.enforce_budget:
+                print("  (FAILED due to budget exceeded)")
         print(f"{'='*60}")
 
     return 0 if report.passed else 1

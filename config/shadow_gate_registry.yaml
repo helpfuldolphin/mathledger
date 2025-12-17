@@ -18,6 +18,24 @@
 version: "1.0.0"
 contract_reference: "docs/system_law/SHADOW_MODE_CONTRACT.md"
 
+# =============================================================================
+# RATCHET CONFIGURATION
+# =============================================================================
+#
+# Forward-only budget for legacy warnings. This value can only decrease over time.
+# See docs/system_law/SHADOW_GATE_RATCHET.md for the 3-step ratchet policy.
+#
+# Phase 1 (Current): legacy_warn_budget = 500 (generous initial budget)
+# Phase 2 (Q1 2026): legacy_warn_budget = 200 (reduce after fixing high-volume files)
+# Phase 3 (Q2 2026): legacy_warn_budget = 0 (freeze — all new docs must qualify)
+#
+ratchet:
+  legacy_warn_budget: 500
+  enforce_budget: false  # Set to true to fail when budget exceeded
+  ratchet_phase: 1
+  last_updated: "2025-12-17"
+  next_review: "2026-03-31"
+
 gates:
   - gate_id: "SRG-001"
     operation: "shadow_release_gate"
