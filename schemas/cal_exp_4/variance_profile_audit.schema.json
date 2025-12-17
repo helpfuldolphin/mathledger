@@ -1,0 +1,296 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.io/schemas/cal_exp_4/variance_profile_audit.schema.json",
+  "title": "CAL-EXP-4 Variance Profile Audit Schema",
+  "description": "Schema for variance profile comparability audit between baseline and treatment arms. Validates dispersion compatibility for variance stress testing. Fail-close on incompatible profiles.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "baseline_arm",
+    "treatment_arm",
+    "comparability",
+    "thresholds",
+    "generated_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version (fixed for CAL-EXP-4 v1)"
+    },
+    "experiment_id": {
+      "type": "string",
+      "const": "CAL-EXP-4",
+      "description": "Experiment identifier (must be CAL-EXP-4)"
+    },
+    "baseline_arm": {
+      "$ref": "#/$defs/arm_variance_profile",
+      "description": "Variance profile for baseline arm (learning OFF)"
+    },
+    "treatment_arm": {
+      "$ref": "#/$defs/arm_variance_profile",
+      "description": "Variance profile for treatment arm (learning ON)"
+    },
+    "comparability": {
+      "type": "object",
+      "required": [
+        "variance_ratio",
+        "variance_ratio_acceptable",
+        "windowed_variance_drift",
+        "windowed_drift_acceptable",
+        "iqr_ratio",
+        "iqr_ratio_acceptable",
+        "profile_compatible",
+        "variance_profile_pass",
+        "claim_cap_applied"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "variance_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Ratio of treatment variance to baseline variance"
+        },
+        "variance_ratio_acceptable": {
+          "type": "boolean",
+          "description": "True if variance ratio is within threshold"
+        },
+        "windowed_variance_drift": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum variance drift across sub-windows"
+        },
+        "windowed_drift_acceptable": {
+          "type": "boolean",
+          "description": "True if windowed drift is within threshold"
+        },
+        "iqr_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Ratio of treatment IQR to baseline IQR"
+        },
+        "iqr_ratio_acceptable": {
+          "type": "boolean",
+          "description": "True if IQR ratio is within threshold"
+        },
+        "profile_compatible": {
+          "type": "boolean",
+          "description": "True if overall variance profiles are compatible (composite)"
+        },
+        "variance_profile_pass": {
+          "type": "boolean",
+          "description": "Final pass/fail verdict for variance profile check"
+        },
+        "claim_cap_applied": {
+          "type": "boolean",
+          "description": "True if claim level was capped due to variance concerns"
+        },
+        "claim_cap_level": {
+          "type": ["string", "null"],
+          "enum": ["L0", "L1", "L2", "L3", "L4", "L5", null],
+          "description": "Maximum claim level permitted if claim_cap_applied=true"
+        },
+        "mismatch_details": {
+          "type": ["string", "null"],
+          "description": "Neutral description of mismatch if variance_profile_pass=false"
+        }
+      },
+      "description": "Comparability assessment between arms"
+    },
+    "thresholds": {
+      "type": "object",
+      "required": [
+        "variance_ratio_max",
+        "variance_ratio_min",
+        "windowed_drift_max",
+        "iqr_ratio_max"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "variance_ratio_max": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Maximum acceptable variance ratio (treatment/baseline)"
+        },
+        "variance_ratio_min": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Minimum acceptable variance ratio (treatment/baseline)"
+        },
+        "windowed_drift_max": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum acceptable windowed variance drift"
+        },
+        "iqr_ratio_max": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Maximum acceptable IQR ratio"
+        },
+        "claim_cap_threshold": {
+          "type": ["number", "null"],
+          "description": "Variance ratio threshold that triggers claim cap (vs fail-close)"
+        }
+      },
+      "description": "Thresholds used for pass/fail and claim cap determination"
+    },
+    "windowed_analysis": {
+      "type": ["object", "null"],
+      "description": "Per-window variance breakdown (optional but recommended)",
+      "properties": {
+        "window_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of sub-windows analyzed"
+        },
+        "baseline_windowed_variances": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "description": "Variance values for each sub-window (baseline)"
+        },
+        "treatment_windowed_variances": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "description": "Variance values for each sub-window (treatment)"
+        },
+        "per_window_ratios": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "description": "Variance ratio for each sub-window"
+        }
+      }
+    },
+    "evaluation_window": {
+      "type": "object",
+      "required": ["start_cycle", "end_cycle"],
+      "additionalProperties": false,
+      "properties": {
+        "start_cycle": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "First cycle in evaluation window (inclusive)"
+        },
+        "end_cycle": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Last cycle in evaluation window (inclusive)"
+        }
+      },
+      "description": "Pre-registered evaluation window boundaries"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of audit generation"
+    },
+    "_meta": {
+      "type": ["object", "null"],
+      "description": "Non-semantic metadata (generator info, notes)",
+      "properties": {
+        "generator": {
+          "type": "string",
+          "description": "Tool/script that generated this audit"
+        },
+        "note": {
+          "type": "string",
+          "description": "Neutral explanatory note"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "arm_variance_profile": {
+      "type": "object",
+      "required": [
+        "delta_p_count",
+        "delta_p_mean",
+        "delta_p_variance",
+        "delta_p_std",
+        "delta_p_iqr",
+        "delta_p_range",
+        "delta_p_min",
+        "delta_p_max"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "delta_p_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of delta_p values analyzed"
+        },
+        "delta_p_mean": {
+          "type": "number",
+          "description": "Mean of delta_p values"
+        },
+        "delta_p_variance": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Variance of delta_p values"
+        },
+        "delta_p_std": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Standard deviation of delta_p values"
+        },
+        "delta_p_iqr": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Interquartile range of delta_p values (Q3 - Q1)"
+        },
+        "delta_p_range": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Range of delta_p values (max - min)"
+        },
+        "delta_p_min": {
+          "type": "number",
+          "description": "Minimum delta_p value"
+        },
+        "delta_p_max": {
+          "type": "number",
+          "description": "Maximum delta_p value"
+        },
+        "delta_p_median": {
+          "type": ["number", "null"],
+          "description": "Median of delta_p values (optional)"
+        },
+        "delta_p_q1": {
+          "type": ["number", "null"],
+          "description": "First quartile (25th percentile) of delta_p values"
+        },
+        "delta_p_q3": {
+          "type": ["number", "null"],
+          "description": "Third quartile (75th percentile) of delta_p values"
+        },
+        "has_nan": {
+          "type": "boolean",
+          "description": "True if any NaN values were present (pathology)"
+        },
+        "has_inf": {
+          "type": "boolean",
+          "description": "True if any infinite values were present (pathology)"
+        },
+        "windowed_variances": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "description": "Variance values for each sub-window"
+        }
+      },
+      "description": "Variance profile statistics for a single arm"
+    }
+  }
+}

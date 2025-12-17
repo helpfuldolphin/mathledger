@@ -1,0 +1,216 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mathledger.io/schemas/cal_exp_4/temporal_structure_audit.schema.json",
+  "title": "CAL-EXP-4 Temporal Structure Audit Schema",
+  "description": "Schema for temporal structure comparability audit between baseline and treatment arms. Validates cycle coverage, monotonicity, and temporal alignment for variance stress testing.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "experiment_id",
+    "baseline_arm",
+    "treatment_arm",
+    "comparability",
+    "thresholds",
+    "generated_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version (fixed for CAL-EXP-4 v1)"
+    },
+    "experiment_id": {
+      "type": "string",
+      "const": "CAL-EXP-4",
+      "description": "Experiment identifier (must be CAL-EXP-4)"
+    },
+    "baseline_arm": {
+      "$ref": "#/$defs/arm_temporal_profile",
+      "description": "Temporal structure profile for baseline arm (learning OFF)"
+    },
+    "treatment_arm": {
+      "$ref": "#/$defs/arm_temporal_profile",
+      "description": "Temporal structure profile for treatment arm (learning ON)"
+    },
+    "comparability": {
+      "type": "object",
+      "required": [
+        "cycle_count_match",
+        "cycle_indices_identical",
+        "coverage_ratio_match",
+        "gap_structure_compatible",
+        "temporal_structure_compatible",
+        "temporal_structure_pass"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "cycle_count_match": {
+          "type": "boolean",
+          "description": "True if baseline and treatment have identical cycle counts"
+        },
+        "cycle_indices_identical": {
+          "type": "boolean",
+          "description": "True if baseline and treatment have identical cycle index sets"
+        },
+        "coverage_ratio_match": {
+          "type": "boolean",
+          "description": "True if both arms have acceptable coverage ratios"
+        },
+        "gap_structure_compatible": {
+          "type": "boolean",
+          "description": "True if cycle gap patterns are comparable between arms"
+        },
+        "temporal_structure_compatible": {
+          "type": "boolean",
+          "description": "True if overall temporal structure is comparable (composite)"
+        },
+        "temporal_structure_pass": {
+          "type": "boolean",
+          "description": "Final pass/fail verdict for temporal structure check"
+        },
+        "mismatch_details": {
+          "type": ["string", "null"],
+          "description": "Neutral description of mismatch if temporal_structure_pass=false"
+        }
+      },
+      "description": "Comparability assessment between arms"
+    },
+    "thresholds": {
+      "type": "object",
+      "required": [
+        "min_coverage_ratio",
+        "max_gap_ratio_divergence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "min_coverage_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum required temporal coverage ratio (typically 1.0)"
+        },
+        "max_gap_ratio_divergence": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum allowed divergence in gap ratios between arms"
+        }
+      },
+      "description": "Thresholds used for pass/fail determination"
+    },
+    "evaluation_window": {
+      "type": "object",
+      "required": ["start_cycle", "end_cycle"],
+      "additionalProperties": false,
+      "properties": {
+        "start_cycle": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "First cycle in evaluation window (inclusive)"
+        },
+        "end_cycle": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Last cycle in evaluation window (inclusive)"
+        },
+        "expected_cycle_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Expected number of cycles in window (end - start + 1)"
+        }
+      },
+      "description": "Pre-registered evaluation window boundaries"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of audit generation"
+    },
+    "_meta": {
+      "type": ["object", "null"],
+      "description": "Non-semantic metadata (generator info, notes)",
+      "properties": {
+        "generator": {
+          "type": "string",
+          "description": "Tool/script that generated this audit"
+        },
+        "note": {
+          "type": "string",
+          "description": "Neutral explanatory note"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "arm_temporal_profile": {
+      "type": "object",
+      "required": [
+        "cycle_count",
+        "cycle_min",
+        "cycle_max",
+        "cycle_gap_max",
+        "cycle_gap_mean",
+        "monotonic_cycle_indices",
+        "timestamp_monotonic",
+        "temporal_coverage_ratio"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "cycle_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of cycles recorded for this arm"
+        },
+        "cycle_min": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Minimum cycle index observed"
+        },
+        "cycle_max": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum cycle index observed"
+        },
+        "cycle_gap_max": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum gap between consecutive cycle indices"
+        },
+        "cycle_gap_mean": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Mean gap between consecutive cycle indices"
+        },
+        "monotonic_cycle_indices": {
+          "type": "boolean",
+          "description": "True if cycle indices are strictly increasing"
+        },
+        "timestamp_monotonic": {
+          "type": "boolean",
+          "description": "True if timestamps are monotonically increasing"
+        },
+        "temporal_coverage_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Ratio of actual cycles to expected cycles (1.0 = full coverage)"
+        },
+        "missing_cycles": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "integer"
+          },
+          "description": "List of missing cycle indices within evaluation window (null if none)"
+        },
+        "duplicate_cycles": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "integer"
+          },
+          "description": "List of duplicate cycle indices (null if none)"
+        }
+      },
+      "description": "Temporal structure profile for a single arm"
+    }
+  }
+}

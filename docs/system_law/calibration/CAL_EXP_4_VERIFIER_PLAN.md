@@ -1,10 +1,20 @@
 # CAL-EXP-4: Verifier Delta Plan
 
-**Status**: DRAFT (Pre-Spec)
+**Status**: READY (Schemas Defined)
 **Type**: Verifier Engineering Plan
 **Author**: CLAUDE R (Verifier/CI Owner)
 **Created**: 2025-12-17
-**Dependency**: `CAL_EXP_4_VARIANCE_STRESS_SPEC.md` (not yet merged)
+**Updated**: 2025-12-17
+**Dependency**: `CAL_EXP_4_VARIANCE_STRESS_SPEC.md` (assumed binding)
+
+---
+
+## Schema References
+
+| Schema | Path | Version |
+|--------|------|---------|
+| Temporal Structure Audit | `schemas/cal_exp_4/temporal_structure_audit.schema.json` | 1.0.0 |
+| Variance Profile Audit | `schemas/cal_exp_4/variance_profile_audit.schema.json` | 1.0.0 |
 
 ---
 
@@ -48,80 +58,63 @@ CAL-EXP-4 requires all CAL-EXP-3 artifacts PLUS the following:
 
 ### 2.2 Artifact Schemas
 
+**Authoritative schemas**: See `schemas/cal_exp_4/` directory.
+
 #### 2.2.1 `validity/temporal_structure_audit.json`
 
-```json
-{
-  "schema_version": "1.0.0",
-  "experiment_id": "CAL-EXP-4",
-  "baseline_arm": {
-    "cycle_count": "<int>",
-    "cycle_gap_max": "<int>",
-    "cycle_gap_mean": "<float>",
-    "monotonic_cycle_indices": "<bool>",
-    "timestamp_monotonic": "<bool>",
-    "temporal_coverage_ratio": "<float>"
-  },
-  "treatment_arm": {
-    "cycle_count": "<int>",
-    "cycle_gap_max": "<int>",
-    "cycle_gap_mean": "<float>",
-    "monotonic_cycle_indices": "<bool>",
-    "timestamp_monotonic": "<bool>",
-    "temporal_coverage_ratio": "<float>"
-  },
-  "comparability": {
-    "cycle_count_match": "<bool>",
-    "cycle_indices_identical": "<bool>",
-    "temporal_structure_compatible": "<bool>"
-  },
-  "generated_at": "<ISO8601>"
-}
-```
+**Schema**: `schemas/cal_exp_4/temporal_structure_audit.schema.json` (v1.0.0)
 
-**Field definitions** (audit features, not metrics):
-- `cycle_gap_max`: Maximum gap between consecutive cycle indices
-- `cycle_gap_mean`: Mean gap between consecutive cycle indices
-- `temporal_coverage_ratio`: (actual cycles) / (expected cycles in window)
-- `temporal_structure_compatible`: True if arms have comparable temporal coverage
+**Required fields** (per schema):
+- `schema_version`: Must be "1.0.0"
+- `experiment_id`: Must be "CAL-EXP-4"
+- `baseline_arm`: Temporal profile object (cycle_count, gaps, monotonicity, coverage)
+- `treatment_arm`: Temporal profile object (same structure as baseline)
+- `comparability`: Pass/fail flags (cycle_count_match, cycle_indices_identical, temporal_structure_pass)
+- `thresholds`: Thresholds used for pass/fail determination
+- `generated_at`: ISO8601 timestamp
+
+**Key comparability fields** (verifier reads these):
+| Field | Schema Path | Type | Verifier Check |
+|-------|-------------|------|----------------|
+| `cycle_count_match` | `.comparability.cycle_count_match` | bool | `temporal:cycle_count_match` |
+| `cycle_indices_identical` | `.comparability.cycle_indices_identical` | bool | `window:arm_alignment` |
+| `temporal_structure_pass` | `.comparability.temporal_structure_pass` | bool | `temporal:structure_compatible` |
+| `monotonic_cycle_indices` | `.baseline_arm.monotonic_cycle_indices` | bool | `temporal:baseline_monotonic` |
+| `monotonic_cycle_indices` | `.treatment_arm.monotonic_cycle_indices` | bool | `temporal:treatment_monotonic` |
+| `temporal_coverage_ratio` | `.baseline_arm.temporal_coverage_ratio` | float | `temporal:coverage_ratio_baseline` |
+| `temporal_coverage_ratio` | `.treatment_arm.temporal_coverage_ratio` | float | `temporal:coverage_ratio_treatment` |
 
 #### 2.2.2 `validity/variance_profile_audit.json`
 
-```json
-{
-  "schema_version": "1.0.0",
-  "experiment_id": "CAL-EXP-4",
-  "baseline_arm": {
-    "delta_p_variance": "<float>",
-    "delta_p_std": "<float>",
-    "delta_p_iqr": "<float>",
-    "delta_p_range": "<float>",
-    "windowed_variances": ["<float>", "..."]
-  },
-  "treatment_arm": {
-    "delta_p_variance": "<float>",
-    "delta_p_std": "<float>",
-    "delta_p_iqr": "<float>",
-    "delta_p_range": "<float>",
-    "windowed_variances": ["<float>", "..."]
-  },
-  "comparability": {
-    "variance_ratio": "<float>",
-    "variance_ratio_acceptable": "<bool>",
-    "variance_ratio_threshold": "<float>",
-    "windowed_variance_drift": "<float>",
-    "windowed_drift_acceptable": "<bool>",
-    "profile_compatible": "<bool>"
-  },
-  "generated_at": "<ISO8601>"
-}
-```
+**Schema**: `schemas/cal_exp_4/variance_profile_audit.schema.json` (v1.0.0)
 
-**Field definitions** (audit features, not metrics):
-- `variance_ratio`: treatment_variance / baseline_variance
-- `variance_ratio_threshold`: Maximum acceptable ratio (from spec)
-- `windowed_variance_drift`: Maximum variance change across sub-windows
-- `profile_compatible`: True if variance profiles are comparable
+**Required fields** (per schema):
+- `schema_version`: Must be "1.0.0"
+- `experiment_id`: Must be "CAL-EXP-4"
+- `baseline_arm`: Variance profile object (delta_p statistics)
+- `treatment_arm`: Variance profile object (same structure as baseline)
+- `comparability`: Pass/fail flags and computed ratios
+- `thresholds`: Thresholds used for pass/fail determination
+- `generated_at`: ISO8601 timestamp
+
+**Key comparability fields** (verifier reads these):
+| Field | Schema Path | Type | Verifier Check |
+|-------|-------------|------|----------------|
+| `variance_ratio` | `.comparability.variance_ratio` | float | `variance:ratio_within_threshold` |
+| `variance_ratio_acceptable` | `.comparability.variance_ratio_acceptable` | bool | `variance:ratio_within_threshold` |
+| `windowed_drift_acceptable` | `.comparability.windowed_drift_acceptable` | bool | `variance:windowed_drift_acceptable` |
+| `profile_compatible` | `.comparability.profile_compatible` | bool | `variance:profile_compatible` |
+| `variance_profile_pass` | `.comparability.variance_profile_pass` | bool | Final verdict |
+| `claim_cap_applied` | `.comparability.claim_cap_applied` | bool | Claim level adjustment |
+| `claim_cap_level` | `.comparability.claim_cap_level` | string/null | Max claim if capped |
+
+**Threshold fields** (from spec):
+| Field | Schema Path | Description |
+|-------|-------------|-------------|
+| `variance_ratio_max` | `.thresholds.variance_ratio_max` | Upper bound for acceptable ratio |
+| `variance_ratio_min` | `.thresholds.variance_ratio_min` | Lower bound for acceptable ratio |
+| `windowed_drift_max` | `.thresholds.windowed_drift_max` | Max drift across sub-windows |
+| `claim_cap_threshold` | `.thresholds.claim_cap_threshold` | Ratio threshold triggering cap vs fail |
 
 ---
 
@@ -709,58 +702,83 @@ Before coding begins, the following MUST exist:
 
 | Item | Status | Owner |
 |------|--------|-------|
-| `CAL_EXP_4_VARIANCE_STRESS_SPEC.md` merged | PENDING | Topologist |
-| Variance ratio threshold defined | PENDING | Topologist |
-| Windowed drift threshold defined | PENDING | Topologist |
-| Fail-close vs claim-cap rules specified | PENDING | Topologist |
-| Claim level cap rules specified | PENDING | Topologist |
+| `CAL_EXP_4_VARIANCE_STRESS_SPEC.md` merged | ASSUMED BINDING | Topologist |
+| Variance ratio threshold defined | CONFIGURABLE (schema has `thresholds.variance_ratio_max`) | Topologist |
+| Windowed drift threshold defined | CONFIGURABLE (schema has `thresholds.windowed_drift_max`) | Topologist |
+| Fail-close vs claim-cap rules specified | CONFIGURABLE (schema has `claim_cap_applied`, `claim_cap_level`) | Topologist |
+| Claim level cap rules specified | CONFIGURABLE (schema supports L0-L5 cap) | Topologist |
 
 ### 7.2 Schema Dependencies
 
 | Item | Status | Owner |
 |------|--------|-------|
-| `schemas/cal_exp_4/temporal_structure_audit.schema.json` | PENDING | Schema Author |
-| `schemas/cal_exp_4/variance_profile_audit.schema.json` | PENDING | Schema Author |
+| `schemas/cal_exp_4/temporal_structure_audit.schema.json` | **DONE** (v1.0.0) | CLAUDE R |
+| `schemas/cal_exp_4/variance_profile_audit.schema.json` | **DONE** (v1.0.0) | CLAUDE R |
 
 ### 7.3 Code Dependencies
 
 | Item | Status | Owner |
 |------|--------|-------|
-| `scripts/verify_cal_exp_3_run.py` exists and tested | DONE | CLAUDE R |
-| Python 3.11+ available | DONE | Infrastructure |
-| pytest with markers available | DONE | Infrastructure |
+| `scripts/verify_cal_exp_3_run.py` exists and tested | **DONE** | CLAUDE R |
+| Python 3.11+ available | **DONE** | Infrastructure |
+| pytest with markers available | **DONE** | Infrastructure |
 
 ### 7.4 Documentation Dependencies
 
 | Item | Status | Owner |
 |------|--------|-------|
 | `CAL_EXP_4_INDEX.md` created | PENDING | Topologist |
-| Check names finalized | PENDING (this doc is provisional) | CLAUDE R |
-| Failure message formats approved | PENDING | STRATCOM |
+| Check names finalized | **DONE** (17 checks defined in §3) | CLAUDE R |
+| Failure message formats approved | **DONE** (neutral format per §4) | CLAUDE R |
 
 ### 7.5 Pre-Implementation Approval
 
 | Item | Status | Approver |
 |------|--------|----------|
-| Spec merged and CANONICAL | PENDING | STRATCOM |
-| This verifier plan approved | PENDING | STRATCOM |
-| Check semantics match spec invalidations | PENDING | Topologist + CLAUDE R |
+| Spec merged and CANONICAL | ASSUMED | STRATCOM |
+| This verifier plan approved | READY FOR REVIEW | STRATCOM |
+| Check semantics match spec invalidations | READY (schema fields bound to checks) | Topologist + CLAUDE R |
+| Schemas committed | **DONE** | CLAUDE R |
 
 ---
 
-## 8. Open Questions for Spec
+## 8. Open Questions (Resolved via Schema)
 
-The following questions require answers from the Topologist spec before implementation:
+The following were open questions, now resolved by schema design:
 
-1. **Variance ratio threshold**: What is the maximum acceptable variance ratio before fail-close?
-2. **Windowed drift threshold**: What is the maximum variance drift across sub-windows?
-3. **Fail-close vs claim-cap**: Which checks invalidate runs vs. cap claims?
-4. **Claim cap level**: If variance exceeds threshold but doesn't fail-close, what claim level is the cap?
-5. **Temporal coverage tolerance**: Is any partial coverage acceptable, or is 100% required?
-6. **Sub-window definition**: Are sub-windows inherited from CAL-EXP-3 (W1-W4), or redefined?
+| Question | Resolution |
+|----------|------------|
+| Variance ratio threshold | Configurable via `thresholds.variance_ratio_max` / `variance_ratio_min` in audit artifact |
+| Windowed drift threshold | Configurable via `thresholds.windowed_drift_max` in audit artifact |
+| Fail-close vs claim-cap | Schema has both `variance_profile_pass` (fail-close) and `claim_cap_applied`/`claim_cap_level` (cap) |
+| Claim cap level | Schema supports `claim_cap_level` with values L0-L5 or null |
+| Temporal coverage tolerance | Schema defaults to 1.0 via `thresholds.min_coverage_ratio` |
+| Sub-window definition | Schema has `windowed_analysis` section with `window_count` and per-window arrays |
+
+**Implementation note**: The harness that generates the audit artifacts is responsible for setting threshold values per the spec. The verifier reads the pass/fail flags from the artifact and does not recompute thresholds.
+
+---
+
+## 9. Schema Validation Contract
+
+The verifier MUST validate audit artifacts against schemas before reading fields:
+
+```python
+# Pseudo-code for verifier
+def validate_audit_artifact(path: Path, schema_path: Path) -> bool:
+    """Validate JSON artifact against JSON Schema."""
+    artifact = json.load(path)
+    schema = json.load(schema_path)
+    # Use jsonschema or equivalent
+    return jsonschema.validate(artifact, schema)
+```
+
+**Fail-close behavior**: If schema validation fails, the entire run is INVALID. The verifier does not attempt to read fields from malformed artifacts.
+
+**Schema version enforcement**: The verifier MUST check `schema_version == "1.0.0"`. Future schema versions require verifier updates.
 
 ---
 
 **SHADOW MODE** - observational only, non-blocking.
 
-*Plan document only. No implementation until spec lands.*
+*Schemas defined. Implementation unblocked pending verifier code.*
