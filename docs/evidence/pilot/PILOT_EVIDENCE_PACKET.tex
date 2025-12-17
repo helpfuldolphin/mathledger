@@ -1,0 +1,147 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{array}
+
+\title{Pilot Evidence Packet v1.0\\
+\normalsize SHADOW Mode External Log Ingestion}
+\author{MathLedger Project}
+\date{2025-12-17}
+
+\begin{document}
+\maketitle
+
+\section{Purpose}
+
+This document describes a \textbf{SHADOW ingest interface for external logs}. The pilot ingestion adapter receives external JSON/JSONL logs, attaches toolchain provenance, and routes data to an isolated namespace (\texttt{governance.external\_pilot.*}).
+
+\noindent\textbf{Mode:} SHADOW (observational only)\\
+\textbf{Action:} LOGGED\_ONLY\\
+\textbf{Enforcement:} None
+
+\section{What This Demonstrates}
+
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Property} & \textbf{Verification} \\
+\hline
+Namespace isolation & External data routed to \texttt{governance.external\_pilot.*} only \\
+Non-interference & Internal metrics, verifier state, CAL-EXP surfaces unchanged \\
+Determinism & Repeated runs produce byte-identical outputs (timestamp-stripped) \\
+Schema separation & Pilot schema does not extend v0.1 contract schemas \\
+\hline
+\end{tabular}
+
+\section{What This Does NOT Demonstrate}
+
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Non-Claim} & \textbf{Explanation} \\
+\hline
+Validity & Pilot outputs do not constitute experimental evidence \\
+Correctness & Execution does not imply correctness \\
+Learning & No system learning or adaptation claims \\
+Gating & Pilot outputs never block execution \\
+Readiness & Does not demonstrate production readiness \\
+\hline
+\end{tabular}
+
+\section{Smoke Proof (Copy/Paste)}
+
+Run from repository root:
+
+\begin{verbatim}
+uv run python -c "
+import json, tempfile
+from pathlib import Path
+from backend.health.pilot_external_ingest_adapter import (
+    ingest_external_log, wrap_for_evidence_pack,
+    attach_to_manifest, copy_to_evidence_pack,
+)
+with tempfile.TemporaryDirectory() as t:
+    tmp = Path(t)
+    log_json = tmp / 'sample_external.json'
+    log_json.write_text(json.dumps({
+        'log_type': 'pilot_demo',
+        'entries': [{'event': 'smoke', 'value': 1}]
+    }))
+    pack = tmp / 'evidence_pack'
+    pack.mkdir()
+    r = ingest_external_log(log_json)
+    e = wrap_for_evidence_pack(r, log_json)
+    m = attach_to_manifest({'governance': {}}, [e])
+    print(f'result={r[\"result\"]} mode={m[\"governance\"][\"external_pilot\"][\"mode\"]}')
+"
+\end{verbatim}
+
+\noindent\textbf{Expected output:}
+\begin{verbatim}
+result=SUCCESS mode=SHADOW
+\end{verbatim}
+
+\section{Evidence: Test Suite}
+
+\subsection{Isolation Tests}
+
+\textbf{File:} \texttt{tests/integration/test\_external\_pilot\_signal\_isolation.py}
+
+\begin{itemize}
+\item 11 test classes, 38+ test methods
+\item Covers: valid, malformed, empty, adversarial, oversized logs
+\item Guarantees: namespace isolation, verifier invariance, input purity
+\item Meta-tests: registry tripwire (minimum 35 tests threshold)
+\end{itemize}
+
+\subsection{Text Neutrality Tests}
+
+\textbf{File:} \texttt{tests/policy/test\_pilot\_text\_neutrality.py}
+
+\begin{itemize}
+\item 3 test classes, 8 test methods
+\item Guarantees: no banned alarm words, no evaluative terms
+\item Structured tokens (PASS/WARN) explicitly allowed
+\end{itemize}
+
+\subsection{Summary}
+
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Test Suite} & \textbf{Classes} & \textbf{Methods} \\
+\hline
+Signal Isolation & 11 & 38+ \\
+Text Neutrality & 3 & 8 \\
+\hline
+\textbf{Total} & \textbf{14} & \textbf{46+} \\
+\hline
+\end{tabular}
+
+\section{Language Posture}
+
+All pilot components use neutral language:
+
+\begin{itemize}
+\item Warning strings avoid alarm words
+\item Structured result codes (SUCCESS, SCHEMA\_INVALID, etc.)
+\item Disclaimer included in all outputs
+\end{itemize}
+
+\noindent\textbf{Pilot provenance disclaimer (required in all artifacts):}
+
+\begin{quote}
+\textit{``PILOT PROVENANCE: Binds artifact to toolchain state at ingestion. NOT experiment provenance. Does not imply experimental validity, reproducibility, or parity with CAL-EXP runs.''}
+\end{quote}
+
+\section{Contact / Next Step}
+
+\textbf{Safe Pilot Handshake:} External partners may provide JSON/JSONL logs for ingestion via the pilot adapter. All ingested data is isolated to \texttt{governance.external\_pilot.*} and cannot affect internal metrics, verifier behavior, or CAL-EXP verification surfaces. To initiate a pilot handshake, contact the MathLedger governance council with sample log structure and expected schema.
+
+\vfill
+
+\noindent\rule{\textwidth}{0.4pt}
+
+\small
+\noindent\textbf{Document:} PILOT\_EVIDENCE\_PACKET v1.0\\
+\textbf{Mode:} SHADOW (observational only)\\
+\textbf{Authority:} PILOT\_NON\_INTERFERENCE\_ATTESTATION.md\\
+\textbf{Generated:} 2025-12-17
+
+\end{document}
