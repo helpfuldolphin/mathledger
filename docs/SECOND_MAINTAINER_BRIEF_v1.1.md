@@ -36,7 +36,7 @@ Scope is limited to the checklist and referenced evaluator docs; this is not a f
 **Estimated time**: 10–20 hours for a strong candidate familiar with Python, formal methods, or cryptographic tooling.
 
 **Compensation options** (your choice):
-1. **Paid arrangement**: We can discuss an hourly or fixed rate
+1. **Paid arrangement**: Fixed honorarium or hourly rate, mutually agreed
 2. **Attribution only**: Acknowledgment in project documentation and release notes
 
 ## What You Get
@@ -92,6 +92,8 @@ Produce a 1–2 page document addressing:
 6. **Clarification needed**: Items that are ambiguous or under-documented
 
 Format: Markdown or PDF. Plain language preferred over formal proof notation.
+
+A "negative" note (identifying blocking issues) is as valuable as a positive one.
 
 ## Confidentiality & Sharing
 
