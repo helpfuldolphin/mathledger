@@ -73,3 +73,4 @@ docs/internal/
 **/TERM_SHEET*.md
 **/VALUATION*.md
 **/NEGOTIATION*.md
+.claude/settings.local.json

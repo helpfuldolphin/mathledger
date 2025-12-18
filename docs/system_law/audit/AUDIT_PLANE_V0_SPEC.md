@@ -37,7 +37,7 @@ Agents operating within MathLedger may attempt to probe verifiers, access unexpe
 - Test results and policy evaluations (TEST_RESULT, POLICY_CHECK events)
 - Anomalous patterns flagged by monitoring agents (FUZZ_FINDING events)
 
-Audit Plane v0 **does not block** any of these behaviors. It records and emits evidence.
+Audit Plane v0 **does not block** any of these behaviors. It records and emits evidence. **It does not detect, prevent, or respond to these behaviors.**
 
 ---
 
@@ -163,6 +163,21 @@ Audit Plane v0 explicitly makes **no claims** about:
 | Real-time detection | Events are recorded, not blocked |
 | Correctness validation | Audit records actions, not outcomes |
 | Learning influence | Audit outputs are not training signals |
+
+---
+
+## 7.1 Non-Claims and Explicit Exclusions (Audit Plane v0)
+
+The following exclusions are **unconditional and non-negotiable** for Audit Plane v0:
+
+- **No authority**: Audit Plane v0 has no decision-making power over any MathLedger operation.
+- **No blocking**: Audit Plane v0 does not block, halt, or gate any execution path.
+- **No learning influence**: Audit outputs are not training signals, curriculum inputs, or feedback loops.
+- **No H_t participation**: A_t is not braided into `H_t = SHA256(R_t || U_t)`. The attestation formula is unchanged.
+- **No truth alteration**: Audit Plane v0 does not modify, validate, or influence truth claims.
+- **No contract changes**: This version introduces no changes to existing governance contracts.
+
+Audit Plane v0 produces evidence only.
 
 ---
 

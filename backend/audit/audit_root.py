@@ -45,7 +45,9 @@ def validate_event(event: dict[str, Any], schema: dict[str, Any] | None = None) 
     Returns:
         (is_valid, list of error messages)
 
-    Note: This is a minimal validator. For production, use jsonschema library.
+    Note: This is a minimal validator for schema conformance checking.
+    Validation is informational only; it does not block event recording
+    or influence any MathLedger operation.
     """
     errors: list[str] = []
 

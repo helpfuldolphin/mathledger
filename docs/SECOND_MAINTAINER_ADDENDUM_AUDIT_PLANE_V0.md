@@ -17,6 +17,18 @@ If you choose to proceed, you will:
 
 ---
 
+## Scope Boundary
+
+Audit Plane v0 is an **evidence-only** layer. It:
+- Does NOT block any operation
+- Does NOT participate in H_t computation
+- Does NOT influence learning or verification
+- Does NOT alter any existing claims
+
+This addendum verifies schema and determinism properties only.
+
+---
+
 ## Quick Verification (5 commands)
 
 Run these commands from the repository root after completing `uv sync`:
