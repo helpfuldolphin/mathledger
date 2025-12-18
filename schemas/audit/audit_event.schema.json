@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mathledger.dev/schemas/audit/audit_event.schema.json",
+  "title": "Audit Event Schema v1.0.0",
+  "description": "Schema for Audit Plane v0 events. Events are externally meaningful actions recorded for evidence purposes. This schema supports deterministic canonicalization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "subject",
+    "digest",
+    "timestamp",
+    "severity",
+    "source"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version. Must be exactly '1.0.0' for this version."
+    },
+    "event_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 digest of the canonical event bytes (excluding event_id itself). 64 lowercase hex characters."
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "FS_TOUCH",
+        "CMD_RUN",
+        "HASH_EMITTED",
+        "TEST_RESULT",
+        "FUZZ_FINDING",
+        "POLICY_CHECK",
+        "OTHER"
+      ],
+      "description": "Category of the audit event. FS_TOUCH: file system access. CMD_RUN: command execution. HASH_EMITTED: cryptographic hash output. TEST_RESULT: test execution outcome. FUZZ_FINDING: fuzzer discovery. POLICY_CHECK: policy evaluation. OTHER: uncategorized."
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["FILE", "COMMAND", "HASH", "TEST", "POLICY", "AGENT", "OTHER"],
+          "description": "Category of the subject being audited."
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "Reference identifier for the subject. For FILE: relative path. For COMMAND: command name. For HASH: hash context. For TEST: test identifier. For POLICY: policy name. For AGENT: agent identifier."
+        }
+      },
+      "description": "The entity that is the subject of this audit event."
+    },
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alg", "hex"],
+      "properties": {
+        "alg": {
+          "type": "string",
+          "const": "sha256",
+          "description": "Hash algorithm. Must be 'sha256'."
+        },
+        "hex": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 digest of the subject content or action payload. 64 lowercase hex characters."
+        }
+      },
+      "description": "Cryptographic digest of the subject or action payload."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of event occurrence. NOTE: Timestamps are metadata for human readability and are explicitly non-attestation-critical. They are excluded from A_t computation."
+    },
+    "toolchain_fingerprint": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$|^$",
+      "description": "Optional SHA-256 fingerprint of the toolchain configuration active when event was recorded. Null if not applicable."
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["INFO", "WARN"],
+      "description": "Severity level. INFO: normal operation recorded. WARN: anomaly or unexpected behavior detected."
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[a-zA-Z0-9_:.-]+$",
+      "description": "Identifier of the component that emitted this event. Format: component_type:component_name (e.g., 'audit_plane_v0', 'auditor_agent:fs_monitor')."
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exit_code": {
+          "type": ["integer", "null"],
+          "description": "Exit code for CMD_RUN events."
+        },
+        "test_passed": {
+          "type": ["boolean", "null"],
+          "description": "Pass/fail status for TEST_RESULT events."
+        },
+        "policy_result": {
+          "type": ["string", "null"],
+          "enum": ["PASS", "FAIL", "SKIP", null],
+          "description": "Policy evaluation result for POLICY_CHECK events."
+        },
+        "bytes_touched": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Number of bytes read/written for FS_TOUCH events."
+        },
+        "parent_event_id": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$|^$",
+          "description": "Reference to a parent event for causal chaining."
+        },
+        "note": {
+          "type": ["string", "null"],
+          "maxLength": 512,
+          "description": "Optional human-readable note. Not used in canonicalization."
+        }
+      },
+      "description": "Optional structured metadata. All fields are nullable. Arbitrary keys are forbidden to ensure deterministic canonicalization."
+    }
+  }
+}
