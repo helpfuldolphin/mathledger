@@ -1,6 +1,6 @@
-# Second Maintainer Brief v1.1
+# Second Maintainer Brief v1.2
 
-**Date**: 2025-12-17
+**Date**: 2025-12-18
 **From**: MathLedger Project
 **To**: Prospective Independent Verifier
 
@@ -51,31 +51,41 @@ Scope is limited to the checklist and referenced evaluator docs; this is not a f
 Run these commands and record results. Lean installation is optional for most checks.
 
 ```bash
-# 1. Clone and install
+# 1. Clone and checkout review tag
 git clone https://github.com/helpfuldolphin/mathledger.git
 cd mathledger
+git checkout v0.9.1-pre-maintainer
 uv sync
 
 # 2. Generate a test signing keypair
 uv run python scripts/generate_signing_keypair.py --output-dir tmp_keys --name test
 
-# 3. Run manifest signing tests (should pass)
+# 3. Run manifest signing tests
+# All tests must pass. Any failure is unexpected—stop and report.
 uv run pytest tests/evidence/test_manifest_signing*.py -v
 
 # 4. Run mock determinism check (no Lean required)
 make verify-mock-determinism
+# Windows/no-make alternative:
+# uv run python scripts/verify_first_light_determinism.py --mode mock
 
 # 5. (Optional) Run real Lean verification for a single proof
-# Lean setup may take time; only required for this optional step
+# First-time Lean setup downloads ~2GB and takes 30-60 minutes.
 make verify-lean-single PROOF=backend/lean_proj/ML/Taut.lean
 
 # 6. Confirm governance documents exist
 ls docs/system_law/SHADOW_MODE_CONTRACT.md
 ls docs/system_law/SHADOW_GRADUATION_POLICY.md
 ls docs/system_law/PHASE_2_GOVERNANCE_CLOSURE.md
+# Windows alternative:
+# dir docs\system_law\SHADOW_MODE_CONTRACT.md
+# dir docs\system_law\SHADOW_GRADUATION_POLICY.md
+# dir docs\system_law\PHASE_2_GOVERNANCE_CLOSURE.md
 
 # 7. Cleanup
 rm -rf tmp_keys
+# Windows alternative:
+# rmdir /s /q tmp_keys
 ```
 
 For a faster path (~10 minutes), see `docs/EVALUATOR_10_MINUTE_CHECK.md`.
@@ -109,4 +119,4 @@ If you're open to this, reply with:
 
 ---
 
-*This document is version-controlled at `docs/SECOND_MAINTAINER_BRIEF_v1.1.md` and may be shared with prospective verifiers.*
+*This document is version-controlled at `docs/SECOND_MAINTAINER_BRIEF_v1.2.md` and may be shared with prospective verifiers.*
