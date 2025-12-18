@@ -221,4 +221,5 @@ See `CLAUDE.md` for development guidelines. All contributions must:
 
 ## License
 
-[Specify your license here]
+This project is licensed under the Apache License, Version 2.0.
+See the LICENSE file for details.
