@@ -1,4 +1,4 @@
-# Second Maintainer Brief v1.0
+# Second Maintainer Brief v1.1
 
 **Date**: 2025-12-17
 **From**: MathLedger Project
@@ -8,7 +8,7 @@
 
 ## Purpose
 
-MathLedger is a verifiable ledger of mathematical truths with a governance-first architecture. We seek an independent second maintainer to verify our claims before we make them publicly. This is not a recruitment pitch—it's a request for critical review.
+MathLedger is a governance-first verification substrate for formally checked artifacts, with signed evidence packs and explicit SHADOW-mode semantics. We seek an independent second maintainer to verify our claims before we make them publicly. This is not a recruitment pitch—it's a request for critical review.
 
 ## What I'm Asking You To Do
 
@@ -21,6 +21,8 @@ Specifically:
 - Flag any stop-ship issues or items requiring clarification
 
 You are welcome to be hostile and critical. We prefer honest skepticism over polite agreement.
+
+Scope is limited to the checklist and referenced evaluator docs; this is not a full security audit.
 
 ## What I'm Not Asking
 
@@ -42,6 +44,7 @@ You are welcome to be hostile and critical. We prefer honest skepticism over pol
 - Early access to a governance-first codebase with explicit SHADOW MODE contracts
 - Your Verification Note (if favorable) may be cited in our documentation
 - If you find serious issues, you help prevent overclaims—which we value
+- SHADOW-OBSERVE means verification results are non-blocking; SHADOW-GATED is registered and scoped
 
 ## Verification Checklist
 
@@ -56,14 +59,14 @@ uv sync
 # 2. Generate a test signing keypair
 uv run python scripts/generate_signing_keypair.py --output-dir tmp_keys --name test
 
-# 3. Run manifest signing tests (19 tests)
+# 3. Run manifest signing tests (should pass)
 uv run pytest tests/evidence/test_manifest_signing*.py -v
 
 # 4. Run mock determinism check (no Lean required)
-uv run python scripts/verify_first_light_determinism.py --mode mock
+make verify-mock-determinism
 
 # 5. (Optional) Run real Lean verification for a single proof
-# Requires Lean 4 installation
+# Lean setup may take time; only required for this optional step
 make verify-lean-single PROOF=backend/lean_proj/ML/Taut.lean
 
 # 6. Confirm governance documents exist
@@ -104,4 +107,4 @@ If you're open to this, reply with:
 
 ---
 
-*This document is version-controlled at `docs/SECOND_MAINTAINER_BRIEF_v1.0.md` and may be shared with prospective verifiers.*
+*This document is version-controlled at `docs/SECOND_MAINTAINER_BRIEF_v1.1.md` and may be shared with prospective verifiers.*
