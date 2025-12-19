@@ -48,7 +48,11 @@ Phase I experiments aimed to characterize the behavior of the \projectname{} sub
 
 \label{sec:future_work}
 
-Future work will focus on integrating RFL for measurable uplift in stability and performance. Specifically, the objective is to observe if reflexive feedback can dampen oscillatory states in the decision boundary and achieve measurable reductions in abstention rates and improvements in convergence latency.
+Future work will focus on integrating RFL to observe if reflexive feedback can dampen oscillatory states in the decision boundary and achieve measurable reductions in abstention rates and improvements in convergence latency.
+
+\subsection{Phase II Calibration}
+
+Phase II of the calibration program addresses governance stability: specifically, whether the governance verdict (failure codes, claim level) is invariant under perturbation of auxiliary parameters not part of the frozen predicate set. The Phase II specification is frozen, but execution has not yet occurred. No claims regarding governance invariance or sensitivity are made in this work. Phase II results, when available, will be reported separately and will not retroactively modify the Phase I conclusions presented here.
 
 
 
@@ -84,11 +88,11 @@ The following manifests provide cryptographic verification of the experimental r
 
         \midrule
 
-        $H_t$ Snapshot & \valHtShortHash \\
+        \Ht{} Snapshot & \valHtShortHash \\
 
-        Mirror Audit Report & \texttt{artifacts/mirror/mirror_report.json} \\
+        Mirror Audit Report & \texttt{artifacts/mirror/mirror\_report.json} \\
 
-        Drift Table & \texttt{drift_table.json} \\
+        Drift Table & \texttt{drift\_table.json} \\
 
         \bottomrule
 
