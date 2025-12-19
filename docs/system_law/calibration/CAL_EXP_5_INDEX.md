@@ -1,6 +1,6 @@
 # CAL-EXP-5 Index
 
-**Status**: FROZEN (Awaiting Execution)
+**Status**: EXECUTED (Phase 3 Complete)
 **Phase**: CAL-EXP-5 (Phase-II FAIL-CLOSE Avoidance Test)
 **Created**: 2025-12-19
 **Predecessor**: CAL-EXP-4 (EXECUTED — Phase 3 Complete)
@@ -155,15 +155,13 @@ WARN_CODES = {F5.3, F5.7}
 | 2. Implementation plan frozen | **DONE** | `CAL_EXP_5_IMPLEMENTATION_PLAN.md` |
 | 3. Freeze declaration | **DONE** | `CAL_EXP_5_FREEZE.md` |
 | 4. Index created | **DONE** | This document |
-| 5. Pre-Execution Assertion | **PENDING** | (Below) |
-| 6. Harness implementation | **BLOCKED** | Pending harness authorization |
+| 5. Pre-Execution Assertion | **DONE** | Issued 2025-12-19 |
+| 6. Harness implementation | **DONE** | `scripts/run_cal_exp_5_harness.py` |
+| 7. Execution | **DONE** | 3 runs completed |
 
 ### Execution Authorization
 
-Execution requires:
-1. All freeze documents committed
-2. Pre-Execution Assertion issued
-3. STRATCOM harness authorization
+Execution authorized by STRATCOM directive 2025-12-19.
 
 ---
 
@@ -173,15 +171,28 @@ Execution requires:
 
 | Run ID | Seed | Verdict | F5 Status | Artifact Path |
 |--------|------|---------|-----------|---------------|
-| (pending) | — | — | — | — |
+| `cal_exp_5_seed42_20251219_125232` | 42 | FAIL | F5.2, F5.3 | `results/cal_exp_5/cal_exp_5_seed42_20251219_125232/` |
+| `cal_exp_5_seed43_20251219_125233` | 43 | FAIL | F5.2, F5.3 | `results/cal_exp_5/cal_exp_5_seed43_20251219_125233/` |
+| `cal_exp_5_seed44_20251219_125235` | 44 | FAIL | F5.2, F5.3 | `results/cal_exp_5/cal_exp_5_seed44_20251219_125235/` |
 
 ### Execution Status
 
 | Field | Value |
 |-------|-------|
-| Execution date | (pending) |
-| Runs completed | 0 |
-| Status | **FROZEN — AWAITING EXECUTION** |
+| Execution date | 2025-12-19 |
+| Runs completed | 3 |
+| Artifacts per run | 14 |
+| Status | **COMPLETE** |
+
+### Aggregate Verdict
+
+| Metric | Value |
+|--------|-------|
+| Per-run verdicts | FAIL, FAIL, FAIL |
+| Experiment-level verdict | **FAIL** |
+| FAIL-CLOSE codes triggered | F5.2 (all runs) |
+| WARN codes triggered | F5.3 (all runs) |
+| Claim cap | L0 (all runs) |
 
 ---
 
