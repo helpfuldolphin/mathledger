@@ -1,6 +1,6 @@
 # CAL-EXP-4 Index
 
-**Status**: OPEN (Specification Landed)
+**Status**: EXECUTED (Phase 3 Complete)
 **Phase**: CAL-EXP-4 (Phase-II Measurement Integrity Stress)
 **Created**: 2025-12-17
 **Predecessor**: CAL-EXP-3 (CLOSED — CANONICAL v1.0)
@@ -231,6 +231,27 @@ Modifications to CAL-EXP-4 artifacts require:
 1. Update to this index
 2. Explicit rationale
 3. STRATCOM approval for semantic changes
+
+---
+
+## Execution Record
+
+### Run Inventory
+
+| Run ID | Seed | Claim Level | F5 Status | Artifact Path |
+|--------|------|-------------|-----------|---------------|
+| `cal_exp_4_seed42_20251219_114330` | 42 | L0 | F5.2, F5.3 | `results/cal_exp_4/cal_exp_4_seed42_20251219_114330/` |
+| `cal_exp_4_seed43_20251219_114342` | 43 | L0 | F5.2, F5.3 | `results/cal_exp_4/cal_exp_4_seed43_20251219_114342/` |
+| `cal_exp_4_seed44_20251219_114353` | 44 | L0 | F5.2, F5.3 | `results/cal_exp_4/cal_exp_4_seed44_20251219_114353/` |
+
+### Execution Status
+
+| Field | Value |
+|-------|-------|
+| Execution date | 2025-12-19 |
+| Runs completed | 3 |
+| Artifacts per run | 14 |
+| Status | **COMPLETE** |
 
 ---
 
