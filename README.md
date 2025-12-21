@@ -36,6 +36,18 @@ Expected output:
 
 No database or external services required. The demo runs offline.
 
+## Independent Audit (SHADOW-OBSERVE)
+
+For external reviewers conducting artifact verification:
+
+| Document | Purpose |
+|----------|---------|
+| [`docs/pilot/AUDIT_WALKTHROUGH.md`](docs/pilot/AUDIT_WALKTHROUGH.md) | Complete audit procedure |
+| [`docs/pilot/PILOT_NON_CLAIMS.md`](docs/pilot/PILOT_NON_CLAIMS.md) | Binding non-claims |
+| [`docs/pilot/PILOT_EVALUATION_CHECKLIST.md`](docs/pilot/PILOT_EVALUATION_CHECKLIST.md) | 22-item PASS/FAIL checklist |
+
+This audit verifies artifact integrity and determinism only; it makes no correctness, safety, or compliance claims.
+
 ## Documentation
 
 | Document | Purpose |

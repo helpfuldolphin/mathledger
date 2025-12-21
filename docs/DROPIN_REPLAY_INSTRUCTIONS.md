@@ -159,11 +159,11 @@ These events are deterministically generated from the seed and feed into the att
 
 | Code | Meaning |
 |------|---------|
-| 0 | Demo completed, governance passed |
-| 1 | Demo completed, governance triggered fail-close (expected behavior) |
-| 2 | Infrastructure/environment error |
+| 0 | Demo completed successfully (governance pass OR fail-close) |
+| 1 | Infrastructure/environment error |
+| 2 | Import/dependency error |
 
-**Note**: Exit code 1 is a **successful demonstration** of fail-safe governance, not an error.
+**Note**: Exit code 0 indicates successful execution of the demo; governance may still fail-close (L0), which is an expected and correct outcome for this pilot. Governance fail-close is NOT an error.
 
 ---
 
@@ -230,8 +230,8 @@ Check that you're using the same seed:
 uv run python scripts/run_dropin_demo.py --seed 42
 ```
 
-### Exit code 1 (not 0)
-This is expected behavior. Exit code 1 means governance triggered fail-close, demonstrating that the fail-safe mechanisms work correctly.
+### Governance shows "fail-close" or "L0"
+This is expected behavior for seed 42. Governance triggering fail-close demonstrates that the fail-safe mechanisms work correctly. Exit code remains 0 because the demo executed successfully.
 
 ---
 
