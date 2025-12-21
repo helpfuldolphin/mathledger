@@ -44,9 +44,9 @@
    - Artifact: `docs/system_law/calibration/PHASE_II_GOVERNANCE_STABILITY_MEMO.md` §2.2
    - What this de-risks: Reduces risk of scope creep or overclaiming based on governance tests.
 
-10. **Phase II is frozen — all specifications, thresholds, and interpretation guardrails are locked.**
+10. **Phase II is frozen — all specifications, thresholds, and interpretation guardrails were locked prior to result inspection.**
     - Artifact: `docs/system_law/calibration/PHASE_II_GOVERNANCE_STABILITY_MEMO.md` §9
-    - What this de-risks: Reduces risk of post-hoc modification to match desired outcomes.
+    - What this de-risks: Reduces risk of post-hoc modification to match desired outcomes (anti-p-hacking discipline).
 
 ---
 

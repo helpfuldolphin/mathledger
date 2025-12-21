@@ -19,6 +19,8 @@ Phase II tested **governance stability** — whether the system's fail-closed me
 
 **Note**: Phase II tested governance correctness, not capability or learning performance.
 
+**Distinction from Phase I**: Phase I (CAL-EXP-3) measured Δp and achieved L4 claim level for measurement validation. Phase II (CAL-EXP-4/5/II.c) stress-tested governance under conditions designed to trigger fail-close (L0). The L0 outcomes in Phase II are expected and correct — they demonstrate governance working as designed.
+
 ---
 
 ## Results Summary
@@ -92,7 +94,7 @@ Phase II demonstrated that:
 
 1. **Fail-close works** — The system refuses to claim validity when conditions are out of bounds
 2. **Fail-close is resistant** — The system cannot be trivially bypassed
-3. **Verdict is deterministic** — Auxiliary parameters do not affect governance decisions
+3. **Verdict is deterministic with respect to tested auxiliary parameters** — Tested perturbations do not affect governance decisions
 
 These properties reduce risk of silent degradation, verdict instability, and hidden dependencies.
 
