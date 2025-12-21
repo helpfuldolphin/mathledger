@@ -6,10 +6,9 @@
 
 ---
 
-## Subject Line Options
+## Subject Line (recommended)
 
-- "MathLedger: arXiv draft + replayable demo available"
-- "Follow-up: verifiable learning substrate materials"
+"MathLedger: replayable governance demo + arXiv draft"
 
 ---
 
@@ -19,25 +18,26 @@
 
 Nenad,
 
-Following up on our earlier conversation about verifiable learning substrates.
+Following up on our earlier exchange in case this is useful.
 
-Two items are now available if useful:
+Two materials are now available:
 
-1. **arXiv draft** — "Reflexive Formal Learning: A Verifiable Learning Substrate with Ledger-Attested Feedback"
-   - Formalizes the RFL framework
-   - Includes calibration experiment results (CAL-EXP-3)
-   - Located at: `docs/PAPERS/arxiv/main.tex`
-
-2. **Replayable demo** — Single-command demonstration of the governance substrate
-   - Runs offline, no dependencies beyond Python/uv
-   - Verifies determinism, dual attestation, fail-close behavior
-   - Takes <10 minutes to run and verify
+1. **Replayable governance demo**
+   - Single-command, offline demonstration of the governance substrate
+   - Verifies determinism, dual attestation, and fail-closed behavior
+   - Produces a self-contained audit bundle with independent replay
+   - Takes <10 minutes to run end-to-end
    - Command: `uv run python scripts/run_dropin_demo.py --seed 42`
 
-Both are frozen and stable. No pressure to review — just noting availability in case relevant to ongoing work.
+2. **arXiv draft**
+   - "Reflexive Formal Learning: A Verifiable Learning Substrate with Ledger-Attested Feedback"
+   - Formalizes the learning rule and governance framing
+   - Documents Phase I infrastructure validation (no capability claims)
+
+Both artifacts are frozen and stable. No pressure to review — just noting availability in case it intersects with ongoing work.
 
 Best,
-[Name]
+Ismail
 
 ---
 
@@ -48,6 +48,7 @@ Best,
 - Do not promise capabilities beyond what is demonstrated
 - If no response, do not follow up aggressively
 - The goal is availability awareness, not conversion
+- Demo is primary object; paper is secondary (formalization, not proof)
 
 ---
 

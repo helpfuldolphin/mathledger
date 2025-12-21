@@ -1,6 +1,6 @@
 # Drop-In Governance Demo — Freeze Declaration
 
-**Classification**: Acquisition Diligence Artifact
+**Classification**: Technical Diligence / Governance Artifact
 **Status**: FROZEN
 **Freeze Date**: 2025-12-21
 **Commit**: 6631592
