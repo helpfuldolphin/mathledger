@@ -37,3 +37,8 @@
 # Documentation and scripts
 docs/** text
 scripts/** text
+
+# Override for binary files in docs (must come after docs/** text)
+docs/**/*.png binary
+docs/**/*.jpg binary
+docs/**/*.pdf binary

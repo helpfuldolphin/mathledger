@@ -1,0 +1,36 @@
+\section{Methodology}
+\label{sec:methodology}
+
+This section details the experimental methodology employed to evaluate the \projectname{} system. Our primary focus is on assessing the operational characteristics of the system under various configurations, particularly concerning the RFL (Reflective Feedback Loop) mechanism and the PL (Ponderation Layer) slicing.
+
+\subsection{Test Harness}
+Experiments are conducted within a dedicated FO (Feedback-Optimized) cycle harness. This harness simulates realistic operating conditions, allowing for precise control over input parameters and comprehensive capture of output metrics. The harness is designed to ensure reproducibility and provide a consistent environment for comparative analysis.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\parbox{0.85\linewidth}{\centering\vspace{1em}
+    \textbf{FO Cycle Harness Architecture}\\[0.5em]
+    \small
+    UI Event $\to$ Curriculum Gate $\to$ Derivation $\to$ Lean Verifier $\to$ Dual Attestation ($H_t$) $\to$ RFL\\[0.5em]
+    \textit{SHADOW MODE: verification results non-blocking}\\[0.5em]
+    RFL on: lr $>$ 0 \quad|\quad RFL off: lr $=$ 0\\[0.5em]
+    \textit{Figure intentionally text-based --- vector PDF generation pending.}
+    \vspace{1em}}}
+    \caption{Architectural overview of the FO cycle harness. Semantics derived from fm.tex (Field Manual). The pipeline runs: UI Event $\to$ Curriculum Gate $\to$ Derivation Engine $\to$ Lean Verifier $\to$ Dual Attestation ($H_t = \mathrm{Hash}(R_t \| U_t)$) $\to$ RFL policy update. SHADOW MODE: all verification results are observational and non-blocking.}
+    \label{fig:harness_architecture}
+\end{figure}
+
+\subsection{Configurations Under Test}
+We evaluate several key configurations:
+\begin{enumerate}
+    \item \textbf{RFL vs. Baseline:} We compare the performance of the \projectname{} system with the RFL mechanism enabled against a baseline configuration where RFL is disabled or replaced with a static control mechanism. This comparison aims to characterize the behavior of feedback mechanisms on system stability and output.
+    \item \textbf{PL Slice Analysis:} The system's behavior is further investigated by varying the slicing of the Ponderation Layer. Different PL slice configurations are tested to understand their influence on computational efficiency, decision-making latency, and overall ledger integrity.
+\end{enumerate}
+
+\subsection{Measurement Metrics}
+The following key metrics are recorded and analyzed during the experimental runs:
+\begin{itemize}
+    \item \textbf{Abstention Rate:} The frequency at which the system abstains from making a definitive judgment.
+    \item \textbf{\Ht{} Dynamics:} We meticulously track the evolution and stability of the \Ht{} (Hypothesis Trajectory) dynamics over time, providing insights into the system's state processes.
+    \item \textbf{Simple Capability Metrics:} A suite of fundamental performance indicators, including transaction processing speed, error rates, and resource utilization, are measured to establish a foundational understanding of system capabilities.
+\end{itemize}

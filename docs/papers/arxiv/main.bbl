@@ -1,0 +1,37 @@
+\begin{thebibliography}{1}
+
+\bibitem{Borkar2008}
+Vivek~S. Borkar.
+\newblock {\em Stochastic Approximation: A Dynamical Systems Viewpoint}.
+\newblock Cambridge University Press, 2008.
+
+\bibitem{buzzard2020}
+Kevin Buzzard, Johan Commelin, and Patrick Massot.
+\newblock Formalising perfectoid spaces.
+\newblock {\em Proceedings of the 9th ACM SIGPLAN International Conference on
+  Certified Programs and Proofs}, pages 299--312, 2020.
+
+\bibitem{harrison2008}
+John Harrison.
+\newblock Formal proof---theory and practice.
+\newblock {\em Notices of the American Mathematical Society},
+  55(11):1395--1406, 2008.
+
+\bibitem{Kushner2003}
+Harold~J. Kushner and G.~George Yin.
+\newblock {\em Stochastic Approximation and Recursive Algorithms and
+  Applications}.
+\newblock Springer, 2nd edition, 2003.
+
+\bibitem{marcus2020}
+Gary Marcus and Ernest Davis.
+\newblock Gpt-3, bloviator: Openai's language generator has no idea what it's
+  talking about.
+\newblock {\em MIT Technology Review}, 2020.
+
+\bibitem{Robbins1951}
+Herbert Robbins and Sutton Monro.
+\newblock A stochastic approximation method.
+\newblock {\em The Annals of Mathematical Statistics}, 22(3):400--407, 1951.
+
+\end{thebibliography}
