@@ -1,0 +1,10 @@
+{"axiom_count": 1, "depth": 8, "event_id": "proof_42_0000", "statement_hash": "5bc7cb175604f458a8322f8c3d366999c872bc04f335e5034d6886e346575702", "type": "proof_verification", "verification_result": "PASS"}
+{"axiom_count": 3, "depth": 3, "event_id": "proof_42_0001", "statement_hash": "cfc1ec7f5bee0fb11e342ad9d2f5c813b5b1b93876e3ff35c1c341fbcf72253c", "type": "proof_verification", "verification_result": "PASS"}
+{"axiom_count": 1, "depth": 8, "event_id": "proof_42_0002", "statement_hash": "adc3b2545803003b9dc443183e8cc35e8b6ed208dbcb187b8a97309a0fe92eaf", "type": "proof_verification", "verification_result": "FAIL"}
+{"axiom_count": 3, "depth": 8, "event_id": "proof_42_0003", "statement_hash": "a70a80edde0db6ad44d9806ae00a7664716c2b5707f3d0384c6bfdee73bd49c0", "type": "proof_verification", "verification_result": "PASS"}
+{"axiom_count": 4, "depth": 2, "event_id": "proof_42_0004", "statement_hash": "b2b60bd9acb6c51f4f36a62565489f10c88e090b47d6ae66a88d341ec18e8fbc", "type": "proof_verification", "verification_result": "FAIL"}
+{"axiom_count": 2, "depth": 6, "event_id": "proof_42_0005", "statement_hash": "7abcfbe6b14ef2ef6efbf1629890b2aa2bcff132ebc69cc42b41ce4eb420baf0", "type": "proof_verification", "verification_result": "PASS"}
+{"axiom_count": 1, "depth": 5, "event_id": "proof_42_0006", "statement_hash": "4da680ba6328b5a868a88e4d269b7668fbe516668101e6c3cfa061ac1819f041", "type": "proof_verification", "verification_result": "PASS"}
+{"axiom_count": 1, "depth": 6, "event_id": "proof_42_0007", "statement_hash": "6fe06587db84cc7169421d301da22d1dffc3dabc03b63b32c6c79e5efcf558e5", "type": "proof_verification", "verification_result": "PASS"}
+{"axiom_count": 3, "depth": 1, "event_id": "proof_42_0008", "statement_hash": "acbd8721d10df56f9d583ca0179494c6517096216eff04ddd44566c98a54df64", "type": "proof_verification", "verification_result": "PASS"}
+{"axiom_count": 4, "depth": 3, "event_id": "proof_42_0009", "statement_hash": "ee1f9088664f9d1b573241fc8c4e2c5de6725993dc6f0410b5018be65f594722", "type": "proof_verification", "verification_result": "PASS"}
