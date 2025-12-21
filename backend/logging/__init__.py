@@ -1,2 +1,0 @@
-"""Logging utilities for harnesses."""
-

@@ -1,4 +1,0 @@
-# Topology tests package
-
-
-

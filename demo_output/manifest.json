@@ -1,0 +1,34 @@
+{
+  "attestation": {
+    "composite_attestation_root": "cc9c9d1bd237c2e3e794f13f5f93d336cee0e40b1ef4c1f002f4a480678f2d91",
+    "formula": "H_t = SHA256(R_t || U_t)",
+    "integrity_verified": true,
+    "reasoning_event_count": 10,
+    "reasoning_merkle_root": "32f131f7aa68ba2c8f56bc673cca3ebc248badca37640e364af9335d5ef36231",
+    "ui_event_count": 5,
+    "ui_merkle_root": "8a93fb4ca505054f6e0e1789b686121f615df81965b4db89cf1e54805dc4a38c"
+  },
+  "demo_mode": "SHADOW",
+  "generated_at": "2025-01-01T00:00:42+00:00",
+  "governance": {
+    "claim_level": "L0",
+    "f5_codes": [
+      "F5.2",
+      "F5.3"
+    ],
+    "passed": false,
+    "rationale": "Fail-close triggered by: F5.2, F5.3"
+  },
+  "reproducibility": {
+    "deterministic": true,
+    "same_seed_same_output": true,
+    "verification_command": "uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output_verify/"
+  },
+  "schema_version": "1.0.0",
+  "seed": 42,
+  "toolchain": {
+    "fingerprint": "81f5e0cc3c0c48b683d1746d7fb2dc3a1d86060f88ae74d76dfdb55b35d0a465",
+    "python_version": "3.11.9",
+    "uv_lock_hash": "d088f20824a5bbc4..."
+  }
+}
