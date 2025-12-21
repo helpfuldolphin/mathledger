@@ -43,6 +43,7 @@ No database or external services required. The demo runs offline.
 | `docs/DROPIN_REPLAY_INSTRUCTIONS.md` | Third-party verification guide |
 | `docs/DROPIN_DEMO_FREEZE.md` | Freeze declaration |
 | `docs/INTERNAL_CHAMPION_BRIEF.md` | One-page technical summary |
+| `docs/evidence/cal_exp_3/README.md` | Evidence pack status (ancillary material) |
 
 ## License
 
