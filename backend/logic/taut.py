@@ -12,14 +12,16 @@ warnings.warn(
 )
 
 from normalization.taut import *  # noqa: F401,F403
+
+# Explicitly import internal functions for test compatibility
 from normalization.taut import (  # noqa: F401
     _evaluate_formula,
     _extract_atoms,
 )
 
 __all__ = [
-    "truth_table_is_tautology",
-    "is_tautology",
+    "is_propositional_tautology",
+    "truth_table_check",
     "_evaluate_formula",
     "_extract_atoms",
 ]

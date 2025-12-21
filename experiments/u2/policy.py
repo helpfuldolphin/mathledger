@@ -1,15 +1,13 @@
 """
-U2 Planner Search Policies
-
-Implements:
-- Baseline (random) policy
-- RFL (feedback-driven) policy
-- Policy-based candidate ranking
-- Deterministic policy evaluation
+U2 Planner Search Policies and Lean failure summarizers.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+from backend.lean_interface import LeanFailureSignal
 
 from rfl.prng import DeterministicPRNG
 
@@ -250,3 +248,140 @@ def create_policy(
         return RFLPolicy(prng, feedback_data)
     else:
         raise ValueError(f"Unknown policy mode: {mode}")
+
+
+# --------------------------------------------------------------------------- #
+# Lean failure telemetry summarizers
+# --------------------------------------------------------------------------- #
+
+LEAN_FAILURE_TILE_SCHEMA = "lean-failure-tile.v1"
+LEAN_FAILURE_TRENDS_SCHEMA = "lean-failure-trend.v1"
+_FAILURE_KIND_ORDER = ("timeout", "type_error", "tactic_failure", "unknown")
+_REVIEW_THRESHOLD = 0.25
+
+
+def _normalize_kind(kind: str) -> str:
+    kind = str(kind).lower()
+    if kind in _FAILURE_KIND_ORDER:
+        return kind
+    return "unknown"
+
+
+def summarize_lean_failures_for_global_health(
+    signals: Sequence[LeanFailureSignal],
+) -> Dict[str, Any]:
+    """
+    Produce a compact Lean failure tile for global_health.json.
+    """
+    counts = {kind: 0 for kind in _FAILURE_KIND_ORDER}
+    total_elapsed = 0
+    for signal in signals:
+        counts[_normalize_kind(signal.kind)] += 1
+        total_elapsed += max(0, int(signal.elapsed_ms))
+
+    total = sum(counts.values())
+    rates = {
+        kind: round(counts[kind] / total, 4) if total else 0.0
+        for kind in _FAILURE_KIND_ORDER
+    }
+
+    status = "OK"
+    headline = "Lean failures nominal"
+    alerts: List[str] = []
+
+    timeout_rate = rates["timeout"]
+    type_rate = rates["type_error"]
+    tactic_rate = rates["tactic_failure"]
+
+    if total:
+        if timeout_rate >= 0.4 or type_rate >= 0.3:
+            status = "BLOCK"
+            headline = "Lean failures blocking policy updates"
+            if timeout_rate >= 0.4:
+                alerts.append("timeout_spike")
+            if type_rate >= 0.3:
+                alerts.append("type_error_spike")
+        elif timeout_rate >= 0.2 or type_rate >= 0.15 or tactic_rate >= 0.3:
+            status = "ATTENTION"
+            headline = "Lean failure rate rising"
+            if timeout_rate >= 0.2:
+                alerts.append("timeout_trend")
+            if type_rate >= 0.15:
+                alerts.append("type_error_trend")
+            if tactic_rate >= 0.3:
+                alerts.append("tactic_failure_trend")
+
+    avg_duration = round(total_elapsed / total, 2) if total else 0.0
+
+    return {
+        "schema_version": LEAN_FAILURE_TILE_SCHEMA,
+        "status": status,
+        "headline": headline,
+        "total_invocations": total,
+        "counts": counts,
+        "rates": rates,
+        "avg_duration_ms": avg_duration,
+        "alerts": alerts,
+    }
+
+
+def summarize_lean_failure_trends(
+    tiles: Sequence[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """
+    Aggregate per-run tiles into high-level trend flags.
+    """
+    if not tiles:
+        return {
+            "schema_version": LEAN_FAILURE_TRENDS_SCHEMA,
+            "sampled_runs": 0,
+            "trend_flags": [],
+            "notes": ["no_runs_observed"],
+        }
+
+    trend_flags: List[str] = []
+    notes: List[str] = []
+
+    def _series(kind: str) -> List[float]:
+        return [
+            float(tile.get("rates", {}).get(kind, 0.0))
+            for tile in tiles
+        ]
+
+    timeout_series = _series("timeout")
+    type_series = _series("type_error")
+
+    if len(timeout_series) >= 2 and timeout_series[-1] - timeout_series[0] >= 0.1:
+        trend_flags.append("timeout_increasing")
+    if len(type_series) >= 2 and type_series[-1] - type_series[0] >= 0.08:
+        trend_flags.append("type_error_increasing")
+
+    notes.append(f"latest_status:{tiles[-1].get('status', 'UNKNOWN')}")
+
+    return {
+        "schema_version": LEAN_FAILURE_TRENDS_SCHEMA,
+        "sampled_runs": len(tiles),
+        "trend_flags": trend_flags,
+        "notes": notes,
+    }
+
+
+def slices_needing_review(
+    per_slice_tiles: Dict[str, Dict[str, Any]],
+    *,
+    threshold: float = _REVIEW_THRESHOLD,
+) -> List[str]:
+    """
+    Identify slices whose Lean failure rate exceeds the threshold.
+    """
+    flagged: List[str] = []
+    for slice_name, tile in per_slice_tiles.items():
+        rates = tile.get("rates", {})
+        peak = max(
+            rates.get("timeout", 0.0),
+            rates.get("type_error", 0.0),
+            rates.get("tactic_failure", 0.0),
+        )
+        if peak >= threshold:
+            flagged.append(slice_name)
+    return sorted(flagged)

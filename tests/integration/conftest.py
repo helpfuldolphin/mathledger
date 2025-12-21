@@ -1302,6 +1302,99 @@ def test_client(
 
 
 # ---------------------------------------------------------------------------
+# First Organism API Client
+# ---------------------------------------------------------------------------
+
+@dataclass
+class UIEventResponse:
+    """Response from posting a UI event."""
+    event_id: str
+    timestamp: int
+    leaf_hash: str
+
+
+@dataclass
+class UIEventsListResponse:
+    """Response from listing UI events."""
+    events: List[Dict[str, Any]]
+    count: int
+
+
+@dataclass
+class DerivationSimulationResponse:
+    """Response from simulating a derivation."""
+    statements: List[Dict[str, Any]]
+    proofs: List[Dict[str, Any]]
+    block_hash: str
+
+
+class FirstOrganismApiClient:
+    """
+    High-level API client for First Organism integration tests.
+
+    Provides typed methods for common attestation chain operations.
+    """
+
+    def __init__(self, client: "TestClient", api_key: str = "devkey"):
+        self.client = client
+        self.api_key = api_key
+        self._headers = {"X-API-Key": api_key}
+
+    def post_ui_event(self, payload: Dict[str, Any]) -> UIEventResponse:
+        """Post a UI event and return structured response."""
+        response = self.client.post(
+            "/api/v1/ui-events",
+            json=payload,
+            headers=self._headers,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return UIEventResponse(
+            event_id=data.get("event_id", ""),
+            timestamp=data.get("timestamp", 0),
+            leaf_hash=data.get("leaf_hash", ""),
+        )
+
+    def list_ui_events(self, limit: int = 100) -> UIEventsListResponse:
+        """List recent UI events."""
+        response = self.client.get(
+            f"/api/v1/ui-events?limit={limit}",
+            headers=self._headers,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return UIEventsListResponse(
+            events=data.get("events", []),
+            count=data.get("count", 0),
+        )
+
+    def simulate_derivation(
+        self,
+        formula: str = "(p -> p)",
+        depth: int = 1,
+    ) -> DerivationSimulationResponse:
+        """Simulate a derivation step."""
+        response = self.client.post(
+            "/api/v1/derivations/simulate",
+            json={"formula": formula, "depth": depth},
+            headers=self._headers,
+        )
+        response.raise_for_status()
+        data = response.json()
+        return DerivationSimulationResponse(
+            statements=data.get("statements", []),
+            proofs=data.get("proofs", []),
+            block_hash=data.get("block_hash", ""),
+        )
+
+
+@pytest.fixture
+def first_organism_client(test_client: "TestClient") -> FirstOrganismApiClient:
+    """Fixture providing a FirstOrganismApiClient instance."""
+    return FirstOrganismApiClient(test_client)
+
+
+# ---------------------------------------------------------------------------
 # Certification Logging Helpers - Complete Pipeline
 # ---------------------------------------------------------------------------
 def log_first_organism_pass(h_t: str, short_length: int = 12) -> None:

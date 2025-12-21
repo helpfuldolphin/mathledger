@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(DATABASE_URL='postgresql://ml:mlpass@localhost:5432/mathledger' REDIS_URL='redis://localhost:6379/0' python -m pytest:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(dir C:devmathledgerbackendanalytics /b)",
+      "Bash(powershell -Command \"Get-ChildItem -Path ''C:\\dev\\mathledger\\backend'' -Directory | Select-Object -First 20\")",
+      "Bash(powershell:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

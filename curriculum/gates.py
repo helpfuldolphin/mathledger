@@ -14,7 +14,13 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from substrate.repro.determinism import deterministic_timestamp, deterministic_timestamp_from_content
+from substrate.repro.determinism import (
+    deterministic_hash,
+    deterministic_timestamp,
+    deterministic_timestamp_from_content,
+)
+
+from curriculum.slice_drift_guard import compute_slice_drift_and_provenance
 
 # Try to import yaml, fallback to simple parser if not available
 try:
@@ -905,16 +911,45 @@ def load(system_slug: str) -> CurriculumSystem:
 def should_ratchet(
     metrics: Dict[str, Any],
     system_cfg: CurriculumSystem,
-    now: Optional[datetime] = None
+    now: Optional[datetime] = None,
+    *,
+    current_slice_override: Optional[Dict[str, Any]] = None,
+    curriculum_fingerprint: Optional[str] = None,
 ) -> GateVerdict:
     """
     Evaluate RFL gates for the active slice and determine whether to advance.
+
+    Drift checkpoints:
+        - Per activation: compute_slice_drift_and_provenance with the canonical
+          slice (baseline) and the runtime view (override) so every gate verdict
+          records drift state.
+        - Per promotion: the caller should repeat the comparison when the ratchet
+          advances slices (activate_next_slice) to capture promotion-time deltas.
+
+    Args:
+        metrics: Raw metrics payload.
+        system_cfg: Curriculum system configuration.
+        now: Optional deterministic timestamp override.
+        current_slice_override: Optional runtime slice dict to compare against
+            the canonical slice. Defaults to the active slice from system_cfg.
+        curriculum_fingerprint: Optional deterministic hash for provenance. If
+            omitted, a fingerprint derived from the canonical slice parameters
+            is used.
     """
     # Default to a fixed deterministic time if not provided, to ensure reproducible audit logs
     now = now or deterministic_timestamp(0)
     normalized = NormalizedMetrics.from_raw(metrics)
     evaluator = GateEvaluator(normalized, system_cfg.active_slice)
     statuses = evaluator.evaluate()
+
+    baseline_slice_dict = CurriculumSystem._slice_to_dict(system_cfg.active_slice)
+    runtime_slice_dict = current_slice_override or baseline_slice_dict
+    fingerprint = curriculum_fingerprint or deterministic_hash(baseline_slice_dict)
+    drift_snapshot, drift_event = compute_slice_drift_and_provenance(
+        baseline_slice=baseline_slice_dict,
+        current_slice=runtime_slice_dict,
+        curriculum_fingerprint=fingerprint,
+    )
 
     audit = {
         'version': system_cfg.version,
@@ -923,6 +958,8 @@ def should_ratchet(
         'timestamp': now.isoformat(),
         'attestation_hash': normalized.attestation_hash,
         'gates': [status.to_dict() for status in statuses],
+        'drift_snapshot': drift_snapshot,
+        'drift_provenance_event': drift_event,
     }
 
     for status in statuses:

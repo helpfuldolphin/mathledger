@@ -1,329 +1,254 @@
 #!/usr/bin/env python3
 """
-Mirror Auditor: Dual-Root Attestation Verifier
+Dual-Root Auditor
 
-Recomputes H_t = SHA256(R_t || U_t) for all blocks and validates
-dual-root mirror symmetry integrity.
+Reads R_t, U_t, and H_t from every block (epoch) and verifies the binding
+H_t = SHA256("EPOCH:" || R_t || U_t). Any mismatches are emitted as JSON.
 
-Role: Verifier of Dual-Root Symmetry
-Seal: [PASS] Dual-Root Mirror Integrity OK coverage≥95%
+CI Example::
 
-Note: Uses attestation.dual_root as the single source of truth for
-computing R_t, U_t, and H_t. This ensures that verification uses the
-exact same cryptographic primitives as block sealing.
+    uv run python verify_dual_root.py \
+        --blocks artifacts/blocks.jsonl \
+        --tile-output artifacts/tiles/dual_root_integrity.json
+
+- Exit codes: 0 (pass), 1 (integrity failure / mismatches), 2 (infrastructure/env error).
+- The tile JSON (written when ``--tile-output`` is set) must be merged into the
+  global health feed (e.g., append to ``artifacts/global_health.json``) so the
+  dashboard reflects dual-root status and CI gating honors the exit code.
 """
 
-import os
-import sys
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any, Dict, List, Sequence, Tuple
+
 import psycopg
 
-# Schema version for tile compatibility
-TILE_SCHEMA_VERSION = "1.0.0"
-from typing import List, Dict, Any, Optional
-
-# Import from canonical source of truth for H_t computation
 from attestation.dual_root import compute_composite_root
+from backend.security.runtime_env import MissingEnvironmentVariable, get_database_url
+
+TILE_SCHEMA_VERSION = "1.0.0"
 
 
-def get_blocks_with_dual_roots(conn) -> tuple[List[Dict[str, Any]], bool]:
-    """
-    Fetch all blocks from database with dual-root attestation fields.
+def fetch_block_records(conn: psycopg.Connection) -> Tuple[List[Dict[str, Any]], bool]:
+    """Return all block rows along with schema availability."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'blocks'
+            ORDER BY ordinal_position
+            """
+        )
+        columns = {row[0] for row in cur.fetchall()}
 
-    Returns:
-        Tuple of (blocks list, has_dual_root_schema)
-    """
-    cur = conn.cursor()
+        required = {"reasoning_merkle_root", "ui_merkle_root", "composite_attestation_root"}
+        if not required.issubset(columns):
+            return [], False
 
-    # Check what columns exist in blocks table
-    cur.execute("""
-        SELECT column_name
-        FROM information_schema.columns
-        WHERE table_name = 'blocks'
-        ORDER BY ordinal_position
-    """)
-    columns = [row[0] for row in cur.fetchall()]
+        cur.execute(
+            """
+            SELECT
+                id,
+                block_number,
+                reasoning_merkle_root,
+                ui_merkle_root,
+                composite_attestation_root
+            FROM blocks
+            ORDER BY block_number
+            """
+        )
+        rows = cur.fetchall()
 
-    # Check for dual-root columns
-    has_reasoning = 'reasoning_merkle_root' in columns
-    has_ui = 'ui_merkle_root' in columns
-    has_composite = 'composite_attestation_root' in columns
-
-    has_dual_root_schema = has_reasoning and has_ui and has_composite
-
-    # Build query based on available columns
-    select_parts = ['id', 'block_number', 'merkle_root']
-    if has_reasoning:
-        select_parts.append('reasoning_merkle_root')
-    if has_ui:
-        select_parts.append('ui_merkle_root')
-    if has_composite:
-        select_parts.append('composite_attestation_root')
-
-    query = f"SELECT {', '.join(select_parts)} FROM blocks ORDER BY block_number"
-
-    cur.execute(query)
-    rows = cur.fetchall()
-
-    # Convert to dictionaries
-    blocks = []
+    results = []
     for row in rows:
-        block = {
-            'id': row[0],
-            'block_number': row[1],
-            'merkle_root': row[2]
-        }
-
-        idx = 3
-        if has_reasoning:
-            block['reasoning_merkle_root'] = row[idx] if idx < len(row) else None
-            idx += 1
-        if has_ui:
-            block['ui_merkle_root'] = row[idx] if idx < len(row) else None
-            idx += 1
-        if has_composite:
-            block['composite_attestation_root'] = row[idx] if idx < len(row) else None
-            idx += 1
-
-        blocks.append(block)
-
-    cur.close()
-    return blocks, has_dual_root_schema
+        block_id, block_number, r_t, u_t, h_t = row
+        results.append(
+            {
+                "id": block_id,
+                "block_number": block_number,
+                "reasoning_merkle_root": r_t,
+                "ui_merkle_root": u_t,
+                "composite_attestation_root": h_t,
+            }
+        )
+    return results, True
 
 
-def verify_block(block: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Verify a single block's dual-root integrity.
+def load_blocks_from_file(path: str) -> Tuple[List[Dict[str, Any]], bool]:
+    """Load synthetic block rows from JSON/JSONL."""
+    data_path = Path(path)
+    text = data_path.read_text(encoding="utf-8").strip()
+    if not text:
+        return [], False
 
-    Returns:
-        Dictionary with verification results
-    """
-    block_id = block['id']
-    block_number = block['block_number']
-
-    r_t = block.get('reasoning_merkle_root')
-    u_t = block.get('ui_merkle_root')
-    stored_h_t = block.get('composite_attestation_root')
-
-    has_dual_roots = bool(r_t and u_t)
-
-    if not has_dual_roots:
-        return {
-            'block_id': block_id,
-            'block_number': block_number,
-            'has_dual_roots': False,
-            'verified': False,
-            'error': 'Missing dual-root fields'
-        }
-
-    # Recompute composite root
-    try:
-        computed_h_t = compute_composite_root(r_t, u_t)
-
-        # Check if stored composite matches
-        if stored_h_t:
-            verified = (computed_h_t == stored_h_t)
-            error = None if verified else f"H_t mismatch"
+    if data_path.suffix == ".jsonl":
+        rows = [json.loads(line) for line in text.splitlines() if line.strip()]
+    else:
+        payload = json.loads(text)
+        if isinstance(payload, list):
+            rows = payload
         else:
-            # No stored composite, but we computed it successfully
-            verified = True
-            error = "H_t not stored (computed successfully)"
-            stored_h_t = computed_h_t
+            rows = payload.get("blocks", [])
 
-        return {
-            'block_id': block_id,
-            'block_number': block_number,
-            'has_dual_roots': True,
-            'r_t': r_t,
-            'u_t': u_t,
-            'stored_h_t': stored_h_t,
-            'computed_h_t': computed_h_t,
-            'verified': verified,
-            'error': error
+    required = {"id", "block_number", "reasoning_merkle_root", "ui_merkle_root", "composite_attestation_root"}
+    ready = all(required.issubset(row.keys()) for row in rows)
+    blocks = [
+        {
+            "id": row["id"],
+            "block_number": row["block_number"],
+            "reasoning_merkle_root": row["reasoning_merkle_root"],
+            "ui_merkle_root": row["ui_merkle_root"],
+            "composite_attestation_root": row["composite_attestation_root"],
         }
-    except Exception as e:
-        return {
-            'block_id': block_id,
-            'block_number': block_number,
-            'has_dual_roots': True,
-            'verified': False,
-            'error': f"Computation error: {str(e)}"
+        for row in rows
+    ]
+    return blocks, ready
+
+
+def recompute_epoch_binding(r_t: str, u_t: str) -> str:
+    """Compute H_t' = SHA256("EPOCH:" || R_t || U_t)."""
+    return compute_composite_root(r_t, u_t)
+
+
+def verify_blocks(blocks: List[Dict[str, Any]]) -> Dict[str, Any]:
+    mismatches: List[Dict[str, Any]] = []
+    verified = 0
+
+    for block in blocks:
+        epoch_id = str(block["block_number"])
+        r_t = block["reasoning_merkle_root"]
+        u_t = block["ui_merkle_root"]
+        stored_h_t = block["composite_attestation_root"]
+
+        if not (r_t and u_t and stored_h_t):
+            mismatch = {
+                "epoch": epoch_id,
+                "block_id": block["id"],
+                "status": "missing_fields",
+                "reason": "one or more dual-root columns are NULL",
+            }
+            mismatches.append(mismatch)
+            print(json.dumps(mismatch, sort_keys=True))
+            continue
+
+        computed_h_t = recompute_epoch_binding(r_t, u_t)
+        if computed_h_t == stored_h_t:
+            verified += 1
+            continue
+
+        mismatch = {
+            "epoch": epoch_id,
+            "block_id": block["id"],
+            "status": "mismatch",
+            "reasoning_merkle_root": r_t,
+            "ui_merkle_root": u_t,
+            "stored_h_t": stored_h_t,
+            "computed_h_t": computed_h_t,
         }
-
-
-def main():
-    """Run Mirror Auditor verification and display report."""
-    print()
-    print("🜎 CLAUDE N — THE MIRROR AUDITOR")
-    print("Role: Verifier of Dual-Root Symmetry")
-    print()
-    print("Initiating dual-root attestation verification...")
-    print()
-
-    # Connect to database
-    from backend.security.runtime_env import MissingEnvironmentVariable, get_database_url
-
-    try:
-        db_url = get_database_url()
-    except MissingEnvironmentVariable as exc:
-        print(f"❌ {exc}")
-        sys.exit(2)
-
-    try:
-        conn = psycopg.connect(db_url)
-    except Exception as e:
-        print(f"❌ Database connection failed: {e}")
-        sys.exit(2)
-
-    try:
-        # Fetch all blocks
-        blocks, has_dual_root_schema = get_blocks_with_dual_roots(conn)
-
-        if not blocks:
-            print("⚠️  No blocks found in database")
-            print()
-            print("Seal: [ABSTAIN] No data to verify")
-            sys.exit(1)
-
-        if not has_dual_root_schema:
-            print("⚠️  Database schema does not have dual-root columns")
-            print("     Expected: reasoning_merkle_root, ui_merkle_root, composite_attestation_root")
-            print()
-            print("Seal: [FAIL] Schema incomplete")
-            sys.exit(1)
-
-        print(f"Found {len(blocks)} blocks. Verifying dual-root attestations...")
-        print()
-
-        # Verify each block
-        results = []
-        for block in blocks:
-            result = verify_block(block)
-            results.append(result)
-
-        # Calculate metrics
-        total_blocks = len(results)
-        blocks_with_dual_roots = sum(1 for r in results if r['has_dual_roots'])
-        verified_blocks = sum(1 for r in results if r['verified'])
-        failed_blocks = blocks_with_dual_roots - verified_blocks
-
-        coverage = (blocks_with_dual_roots / total_blocks * 100) if total_blocks > 0 else 0.0
-
-        # Display report
-        print("=" * 80)
-        print("DUAL-ROOT ATTESTATION VERIFICATION REPORT")
-        print("=" * 80)
-        print()
-        print(f"Total Blocks:              {total_blocks}")
-        print(f"Blocks with Dual Roots:    {blocks_with_dual_roots}")
-        print(f"Verified H_t Attestations: {verified_blocks}")
-        print(f"Failed Attestations:       {failed_blocks}")
-        print(f"Coverage:                  {coverage:.2f}%")
-        print()
-
-        # Show detailed results
-        if failed_blocks > 0:
-            print("INTEGRITY FAILURES:")
-            print("-" * 80)
-            for r in results:
-                if r['has_dual_roots'] and not r['verified']:
-                    print(f"Block #{r['block_number']} (ID: {r['block_id']})")
-                    print(f"  Error: {r['error']}")
-                    if 'r_t' in r:
-                        print(f"  R_t (Reasoning):     {r['r_t']}")
-                        print(f"  U_t (UI):            {r['u_t']}")
-                        print(f"  H_t (Stored):        {r['stored_h_t']}")
-                        print(f"  H_t (Computed):      {r['computed_h_t']}")
-                    print()
-        else:
-            print("✓ All dual-root attestations verified successfully")
-            print()
-
-            # Show sample of verified blocks
-            sample_size = min(5, len([r for r in results if r['has_dual_roots']]))
-            sample_results = [r for r in results if r['has_dual_roots']][:sample_size]
-
-            if sample_results:
-                print("Sample Verified Blocks:")
-                print("-" * 80)
-                for r in sample_results:
-                    r_t = r['r_t']
-                    u_t = r['u_t']
-                    h_t = r['computed_h_t']
-                    print(f"Block #{r['block_number']} (ID: {r['block_id']})")
-                    print(f"  R_t: {r_t[:16]}...{r_t[-16:]}")
-                    print(f"  U_t: {u_t[:16]}...{u_t[-16:]}")
-                    print(f"  H_t: {h_t[:16]}...{h_t[-16:]}")
-                    print(f"  ✓ Integrity Valid")
-                    print()
-
-        # Seal
-        print("=" * 80)
-        passes = coverage >= 95.0 and failed_blocks == 0
-
-        if passes:
-            print(f"Seal: [PASS] Dual-Root Mirror Integrity OK (coverage={coverage:.1f}%)")
-        else:
-            if coverage < 95.0:
-                print(f"Seal: [FAIL] Coverage below threshold (coverage={coverage:.1f}% < 95%)")
-            else:
-                print(f"Seal: [FAIL] Integrity validation failed ({failed_blocks} blocks)")
-
-        print("=" * 80)
-        print()
-
-        if passes:
-            print("✨ Dual roots reflect as one.")
-            print()
-
-        sys.exit(0 if passes else 1)
-
-    except Exception as e:
-        print(f"❌ Verification failed with error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(2)
-    finally:
-        conn.close()
-
-
-def summarize_dual_root_health(results: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Summarize dual-root verification results for health dashboard.
-
-    Args:
-        results: List of verification results from verify_block()
-
-    Returns:
-        Dictionary with health summary
-    """
-    if not results:
-        return {
-            "status": "unknown",
-            "total_blocks": 0,
-            "verified_blocks": 0,
-            "failed_blocks": 0,
-            "coverage_pct": 0.0,
-        }
-
-    total_blocks = len(results)
-    verified_blocks = sum(1 for r in results if r.get("verified", False))
-    failed_blocks = sum(1 for r in results if r.get("has_dual_roots", False) and not r.get("verified", False))
-    blocks_with_roots = sum(1 for r in results if r.get("has_dual_roots", False))
-
-    coverage_pct = (blocks_with_roots / total_blocks * 100) if total_blocks > 0 else 0.0
-
-    status = "ok" if coverage_pct >= 95.0 and failed_blocks == 0 else "warn"
-    if failed_blocks > 0:
-        status = "error"
+        mismatches.append(mismatch)
+        print(json.dumps(mismatch, sort_keys=True))
 
     return {
-        "status": status,
-        "total_blocks": total_blocks,
-        "verified_blocks": verified_blocks,
-        "failed_blocks": failed_blocks,
-        "blocks_with_roots": blocks_with_roots,
-        "coverage_pct": coverage_pct,
+        "total_blocks": len(blocks),
+        "verified_blocks": verified,
+        "mismatches": mismatches,
     }
+
+
+def summarize_dual_root_health(results: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    """Build the dashboard tile for dual-root integrity."""
+    mismatch_count = len(results)
+    status = "OK" if mismatch_count == 0 else "FAIL"
+    headline = (
+        "[PASS] Dual roots anchored to epochs"
+        if mismatch_count == 0
+        else f"[FAIL] Dual-root mismatches detected ({mismatch_count})"
+    )
+    return {
+        "schema_version": TILE_SCHEMA_VERSION,
+        "tile_id": "dual_root_integrity",
+        "status": status,
+        "mismatch_count": mismatch_count,
+        "headline": headline,
+    }
+
+
+def dual_root_ci_usage() -> str:
+    """
+    CI wiring instructions.
+
+    - Run ``uv run python verify_dual_root.py --blocks artifacts/blocks.jsonl --tile-output artifacts/tiles/dual_root_integrity.json``.
+    - Exit codes: 0 pass, 1 mismatch failure, 2 infrastructure/env failure.
+    - Append ``artifacts/tiles/dual_root_integrity.json`` to your global health feed for dashboard visibility.
+    """
+    return (
+        "Run `uv run python verify_dual_root.py --blocks artifacts/blocks.jsonl --tile-output "
+        "artifacts/tiles/dual_root_integrity.json` and propagate the tile JSON to global health."
+    )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Verify dual-root attestation integrity.")
+    parser.add_argument(
+        "--blocks",
+        help="Optional path to JSON/JSONL containing block records (bypass database).")
+    parser.add_argument(
+        "--tile-output",
+        help="Optional path to write summarize_dual_root_health() JSON tile.")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    if args.blocks:
+        blocks, ready = load_blocks_from_file(args.blocks)
+    else:
+        try:
+            db_url = get_database_url()
+        except MissingEnvironmentVariable as exc:
+            print(json.dumps({"status": "error", "reason": str(exc)}))
+            sys.exit(2)
+
+        try:
+            conn = psycopg.connect(db_url)
+        except Exception as exc:  # pragma: no cover
+            print(json.dumps({"status": "error", "reason": f"database connection failed: {exc}"}))
+            sys.exit(2)
+
+        try:
+            blocks, ready = fetch_block_records(conn)
+        finally:
+            conn.close()
+
+    if not ready:
+        print(json.dumps({"status": "error", "reason": "blocks table missing dual-root columns"}))
+        sys.exit(1)
+
+    if not blocks:
+        print(json.dumps({"status": "abstain", "reason": "no blocks available"}))
+        sys.exit(1)
+
+    report = verify_blocks(blocks)
+    report["status"] = "pass" if report["mismatches"] == [] else "fail"
+    report["coverage_percent"] = (
+        (report["verified_blocks"] / report["total_blocks"]) * 100 if report["total_blocks"] else 0.0
+    )
+    report["tile"] = summarize_dual_root_health(report["mismatches"])
+    report["ci_usage"] = dual_root_ci_usage()
+
+    if args.tile_output:
+        tile_path = Path(args.tile_output)
+        tile_path.parent.mkdir(parents=True, exist_ok=True)
+        tile_path.write_text(json.dumps(report["tile"], sort_keys=True, indent=2), encoding="utf-8")
+
+    print(json.dumps(report, sort_keys=True, indent=2))
+
+    sys.exit(0 if report["status"] == "pass" else 1)
 
 
 if __name__ == "__main__":

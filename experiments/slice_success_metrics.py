@@ -1,176 +1,136 @@
 """
-Slice success metrics module.
+Slice success metrics for curriculum experiments.
 
-Provides metric computation for slice success analysis.
-This is the canonical location for slice success metrics.
+Provides metric computation functions for different curriculum slice types.
 """
 
-from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 
-METRIC_SCHEMA_VERSION = "1.0.0"
-
-
-@dataclass
-class MetricResult:
-    """Result of a metric computation."""
-    value: float
-    success: bool
-    metadata: Dict[str, Any] = field(default_factory=dict)
-
-
 def compute_goal_hit(
-    achieved: float,
-    target: float,
-    tolerance: float = 0.0,
+    target_hash: str,
+    verified_hashes: List[str],
+    *,
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Compute goal hit metric."""
-    hit = achieved >= (target - tolerance)
+    """Compute goal-hit success metric."""
+    hit = target_hash in verified_hashes
     return {
-        "achieved": achieved,
-        "target": target,
-        "tolerance": tolerance,
+        "metric": "goal_hit",
+        "target_hash": target_hash,
         "hit": hit,
-        "gap": target - achieved if not hit else 0.0,
+        "verified_count": len(verified_hashes),
+        "metadata": metadata or {},
     }
 
 
 def compute_sparse_success(
-    successes: int,
-    total: int,
-    min_rate: float = 0.0,
+    verified_hashes: List[str],
+    total_candidates: int,
+    *,
+    threshold: float = 0.1,
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Compute sparse success metric."""
-    rate = successes / total if total > 0 else 0.0
+    """Compute sparse success metric for wide proof spaces."""
+    rate = len(verified_hashes) / max(total_candidates, 1)
     return {
-        "successes": successes,
-        "total": total,
-        "rate": rate,
-        "passes_threshold": rate >= min_rate,
+        "metric": "sparse_success",
+        "verified_count": len(verified_hashes),
+        "total_candidates": total_candidates,
+        "success_rate": rate,
+        "threshold": threshold,
+        "passed": rate >= threshold,
+        "metadata": metadata or {},
     }
 
 
 def compute_chain_success(
-    chain_results: List[bool],
+    chain_depths: List[int],
+    *,
+    min_depth: int = 2,
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Compute chain success metric."""
-    success_count = sum(1 for r in chain_results if r)
-    total = len(chain_results)
-    all_success = all(chain_results) if chain_results else False
+    """Compute chain success metric for proof trees."""
+    max_depth = max(chain_depths) if chain_depths else 0
+    avg_depth = sum(chain_depths) / len(chain_depths) if chain_depths else 0
     return {
-        "success_count": success_count,
-        "total": total,
-        "all_success": all_success,
-        "chain_rate": success_count / total if total > 0 else 0.0,
+        "metric": "chain_success",
+        "max_depth": max_depth,
+        "avg_depth": avg_depth,
+        "chain_count": len(chain_depths),
+        "min_depth": min_depth,
+        "passed": max_depth >= min_depth,
+        "metadata": metadata or {},
     }
 
 
 def compute_multi_goal_success(
-    goals: List[Dict[str, Any]],
+    goals: List[str],
+    verified_hashes: List[str],
+    *,
+    min_goals: int = 1,
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Compute multi-goal success metric."""
-    results = []
-    for goal in goals:
-        achieved = goal.get("achieved", 0.0)
-        target = goal.get("target", 0.0)
-        results.append(compute_goal_hit(achieved, target))
-
-    hits = sum(1 for r in results if r["hit"])
+    """Compute multi-goal coordination success metric."""
+    goals_hit = [g for g in goals if g in verified_hashes]
     return {
-        "goals": results,
-        "total_goals": len(goals),
-        "goals_hit": hits,
-        "all_hit": hits == len(goals) if goals else True,
-    }
-
-
-def compute_coverage_metric(
-    covered: int,
-    total: int,
-) -> Dict[str, Any]:
-    """Compute coverage metric."""
-    rate = covered / total if total > 0 else 0.0
-    return {
-        "covered": covered,
-        "total": total,
-        "coverage_rate": rate,
-    }
-
-
-def compute_velocity_metric(
-    count: int,
-    duration_seconds: float,
-) -> Dict[str, Any]:
-    """Compute velocity metric."""
-    rate = count / duration_seconds if duration_seconds > 0 else 0.0
-    return {
-        "count": count,
-        "duration_seconds": duration_seconds,
-        "rate_per_second": rate,
-        "rate_per_hour": rate * 3600,
+        "metric": "multi_goal_success",
+        "goals_total": len(goals),
+        "goals_hit": len(goals_hit),
+        "goals_hit_list": goals_hit,
+        "min_goals": min_goals,
+        "passed": len(goals_hit) >= min_goals,
+        "metadata": metadata or {},
     }
 
 
 def compute_metric(kind: str, **kwargs: Any) -> Dict[str, Any]:
-    """Compute metric by kind."""
+    """
+    Unified metric computation dispatcher.
+
+    Args:
+        kind: Metric type - one of "goal_hit", "sparse_success",
+              "chain_success", "multi_goal_success"
+        **kwargs: Arguments passed to the specific metric function
+
+    Returns:
+        Metric result dictionary
+    """
     if kind == "goal_hit":
         return compute_goal_hit(
-            achieved=kwargs.get("achieved", 0.0),
-            target=kwargs.get("target", 0.0),
-            tolerance=kwargs.get("tolerance", 0.0),
+            kwargs.get("target_hash", ""),
+            kwargs.get("verified_hashes", []),
+            metadata=kwargs.get("metadata"),
         )
     elif kind == "sparse_success":
         return compute_sparse_success(
-            successes=kwargs.get("successes", 0),
-            total=kwargs.get("total", 0),
-            min_rate=kwargs.get("min_rate", 0.0),
+            kwargs.get("verified_hashes", []),
+            kwargs.get("total_candidates", 0),
+            threshold=kwargs.get("threshold", 0.1),
+            metadata=kwargs.get("metadata"),
         )
     elif kind == "chain_success":
         return compute_chain_success(
-            chain_results=kwargs.get("chain_results", []),
+            kwargs.get("chain_depths", []),
+            min_depth=kwargs.get("min_depth", 2),
+            metadata=kwargs.get("metadata"),
         )
-    elif kind == "multi_goal":
+    elif kind == "multi_goal_success":
         return compute_multi_goal_success(
-            goals=kwargs.get("goals", []),
-        )
-    elif kind == "coverage":
-        return compute_coverage_metric(
-            covered=kwargs.get("covered", 0),
-            total=kwargs.get("total", 0),
-        )
-    elif kind == "velocity":
-        return compute_velocity_metric(
-            count=kwargs.get("count", 0),
-            duration_seconds=kwargs.get("duration_seconds", 0.0),
+            kwargs.get("goals", []),
+            kwargs.get("verified_hashes", []),
+            min_goals=kwargs.get("min_goals", 1),
+            metadata=kwargs.get("metadata"),
         )
     else:
-        return {"error": f"Unknown metric kind: {kind}"}
-
-
-def validate_metric_params(kind: str, params: Dict[str, Any]) -> bool:
-    """Validate metric parameters."""
-    required = {
-        "goal_hit": ["achieved", "target"],
-        "sparse_success": ["successes", "total"],
-        "chain_success": ["chain_results"],
-        "multi_goal": ["goals"],
-        "coverage": ["covered", "total"],
-        "velocity": ["count", "duration_seconds"],
-    }
-    required_keys = required.get(kind, [])
-    return all(k in params for k in required_keys)
+        return {"metric": kind, "error": f"Unknown metric kind: {kind}"}
 
 
 __all__ = [
-    "METRIC_SCHEMA_VERSION",
-    "MetricResult",
     "compute_goal_hit",
     "compute_sparse_success",
     "compute_chain_success",
     "compute_multi_goal_success",
-    "compute_coverage_metric",
-    "compute_velocity_metric",
     "compute_metric",
-    "validate_metric_params",
 ]
+

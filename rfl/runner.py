@@ -37,6 +37,7 @@ from .bootstrap_stats import (
 from .audit import RFLAuditLog, SymbolicDescentGradient, StepIdComputation
 from .experiment_logging import RFLExperimentLogger
 from .provenance import ManifestBuilder
+from substrate.bridge.context import AttestedRunContext
 
 # Phase X: USLA Shadow Mode Integration (optional)
 try:
@@ -52,6 +53,44 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 logger = logging.getLogger("RFLRunner")
+
+
+@dataclass
+class AttestationInput:
+    """Simplified input structure for attested RFL runs.
+
+    This is a convenience wrapper that can be converted to AttestedRunContext.
+    Used primarily in tests and simpler integration scenarios.
+    """
+    composite_root: str
+    reasoning_root: str
+    ui_root: str
+    abstention_rate: float
+    abstention_mass: float
+    slice_name: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_attested_context(
+        self,
+        statement_hash: str = "0" * 64,
+        proof_status: str = "abstain",
+        block_id: int = 0,
+    ) -> AttestedRunContext:
+        """Convert to AttestedRunContext for RFLRunner.run_with_attestation."""
+        return AttestedRunContext(
+            slice_id=self.slice_name,
+            statement_hash=statement_hash,
+            proof_status=proof_status,
+            block_id=block_id,
+            composite_root=self.composite_root,
+            reasoning_root=self.reasoning_root,
+            ui_root=self.ui_root,
+            abstention_metrics={
+                "rate": self.abstention_rate,
+                "mass": self.abstention_mass,
+            },
+            metadata=self.metadata,
+        )
 
 
 @dataclass
