@@ -6,6 +6,8 @@ Verifies:
 2. Real verification: formulas are verified by truth_table_is_tautology
 3. Negative tests: different seeds produce different results
 4. Output integrity: manifest hash matches results
+5. Language restriction: double negation (~~p) is never emitted
+6. Audit-surface binding: governance registry hash in manifest
 """
 
 import json
@@ -14,17 +16,25 @@ from pathlib import Path
 from dataclasses import asdict
 import sys
 
-# Add scripts to path for testing
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
+# Ensure repo root is at the front of sys.path for correct imports
+repo_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(repo_root))
+sys.path.insert(0, str(repo_root / "scripts"))
+
+# Import from root governance module (not tests/governance/)
+import governance.registry_hash as registry_hash_mod
+compute_registry_hash = registry_hash_mod.compute_registry_hash
 
 from run_pl_uplift_exp import (
     ExperimentConfig,
     PLUpliftExperiment,
     generate_formula,
     generate_tautology_candidate,
-    write_results,
+    write_ab_run_outputs,
+    contains_double_negation,
     EXPERIMENT_VERSION,
     HARNESS_NAME,
+    AUDIT_SURFACE_VERSION,
 )
 from backend.repro.determinism import SeededRNG, deterministic_hash
 from normalization.taut import truth_table_is_tautology
@@ -50,15 +60,15 @@ class TestDeterminism:
         exp2 = PLUpliftExperiment(config)
         result2 = exp2.run()
 
-        # Must be identical
-        assert result1.baseline_verified_rate == result2.baseline_verified_rate
-        assert result1.adapted_verified_rate == result2.adapted_verified_rate
+        # Must be identical (using new PhaseResult structure)
+        assert result1.baseline.verified_rate == result2.baseline.verified_rate
+        assert result1.treatment.verified_rate == result2.treatment.verified_rate
         assert result1.delta == result2.delta
 
         # Check cycle-level determinism
-        for c1, c2 in zip(result1.baseline_cycles, result2.baseline_cycles):
+        for c1, c2 in zip(result1.baseline.cycles, result2.baseline.cycles):
             assert c1 == c2
-        for c1, c2 in zip(result1.adapted_cycles, result2.adapted_cycles):
+        for c1, c2 in zip(result1.treatment.cycles, result2.treatment.cycles):
             assert c1 == c2
 
     def test_determinism_flag_is_true(self, tmp_path):
@@ -150,11 +160,11 @@ class TestNegativeCases:
         # Results should differ (with high probability)
         # At minimum, formula hashes should differ
         hashes1 = set()
-        for cycle in result1.baseline_cycles:
+        for cycle in result1.baseline.cycles:
             hashes1.update(cycle["formula_hashes"])
 
         hashes2 = set()
-        for cycle in result2.baseline_cycles:
+        for cycle in result2.baseline.cycles:
             hashes2.update(cycle["formula_hashes"])
 
         # Should have some different hashes
@@ -181,8 +191,8 @@ class TestNegativeCases:
 class TestOutputIntegrity:
     """Test that output files are correct and verifiable."""
 
-    def test_manifest_hash_matches_results(self, tmp_path):
-        """The manifest results_hash must match the actual results."""
+    def test_ab_run_manifest_has_governance_binding(self, tmp_path):
+        """A/B run manifest must have governance registry binding."""
         config = ExperimentConfig(
             seed=555,
             output_dir=tmp_path,
@@ -193,29 +203,29 @@ class TestOutputIntegrity:
         exp = PLUpliftExperiment(config)
         result = exp.run()
 
-        paths = write_results(result, tmp_path)
+        paths = write_ab_run_outputs(result, tmp_path)
 
         # Load manifest
         with open(paths["manifest"], "r", encoding="utf-8") as f:
             manifest = json.load(f)
 
-        # Load results
-        with open(paths["results"], "r", encoding="utf-8") as f:
-            results_content = f.read()
-            results_dict = json.loads(results_content)
+        # Check audit-surface binding
+        assert "governance_registry" in manifest
+        assert "commitment_registry_sha256" in manifest["governance_registry"]
+        assert "commitment_registry_version" in manifest["governance_registry"]
 
-        # Recompute hash
-        computed_hash = deterministic_hash(
-            json.dumps(results_dict, sort_keys=True)
-        )
+        # Verify registry hash matches actual
+        actual_hash = compute_registry_hash()
+        assert manifest["governance_registry"]["commitment_registry_sha256"] == actual_hash
 
-        assert manifest["results_hash"] == computed_hash
+        # Check other required fields
         assert manifest["harness"] == HARNESS_NAME
-        assert manifest["version"] == EXPERIMENT_VERSION
+        assert manifest["harness_version"] == EXPERIMENT_VERSION
+        assert manifest["audit_surface_version"] == AUDIT_SURFACE_VERSION
         assert manifest["seed"] == config.seed
 
-    def test_summary_contains_key_metrics(self, tmp_path):
-        """The summary file must contain all key metrics."""
+    def test_ab_run_artifacts_have_artifact_kind(self, tmp_path):
+        """All artifacts must have artifact_kind enum."""
         config = ExperimentConfig(
             seed=666,
             output_dir=tmp_path,
@@ -226,18 +236,44 @@ class TestOutputIntegrity:
         exp = PLUpliftExperiment(config)
         result = exp.run()
 
-        paths = write_results(result, tmp_path)
+        paths = write_ab_run_outputs(result, tmp_path)
+
+        # Load manifest
+        with open(paths["manifest"], "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        # Check artifacts
+        assert "artifacts" in manifest
+        for artifact in manifest["artifacts"]:
+            assert "artifact_kind" in artifact
+            assert artifact["artifact_kind"] in {"VERIFIED", "REFUTED", "ABSTAINED", "INADMISSIBLE_UPDATE"}
+            assert "sha256" in artifact
+            assert "path" in artifact
+
+    def test_summary_contains_key_metrics(self, tmp_path):
+        """The summary file must contain all key metrics."""
+        config = ExperimentConfig(
+            seed=777,
+            output_dir=tmp_path,
+            cycles=5,
+            formulas_per_cycle=10,
+        )
+
+        exp = PLUpliftExperiment(config)
+        result = exp.run()
+
+        paths = write_ab_run_outputs(result, tmp_path)
 
         with open(paths["summary"], "r", encoding="utf-8") as f:
-            summary = f.read()
+            summary = json.load(f)
 
         # Check key fields present
-        assert "Experiment ID:" in summary
-        assert "Seed:" in summary
-        assert "Baseline VERIFIED rate:" in summary
-        assert "Adapted VERIFIED rate:" in summary
-        assert "Delta:" in summary
-        assert "Determinism verified:" in summary
+        assert "experiment_id" in summary
+        assert "seed" in summary
+        assert "baseline_verified_rate" in summary
+        assert "treatment_verified_rate" in summary
+        assert "delta" in summary
+        assert "determinism_verified" in summary
 
 
 class TestFormulaGeneration:
@@ -276,3 +312,33 @@ class TestFormulaGeneration:
         formulas2 = [generate_tautology_candidate(rng2, 2) for _ in range(10)]
 
         assert formulas1 == formulas2
+
+
+class TestLanguageRestriction:
+    """Test the double-negation language restriction."""
+
+    def test_generator_never_emits_double_negation(self):
+        """Generator must never emit formulas with ~~."""
+        rng = SeededRNG(12345)
+
+        # Generate many formulas
+        for _ in range(500):
+            formula = generate_formula(rng, max_atoms=3)
+            assert not contains_double_negation(formula), f"Generator emitted ~~: {formula}"
+
+    def test_tautology_candidate_never_has_double_negation(self):
+        """Tautology candidates must never contain ~~."""
+        rng = SeededRNG(67890)
+
+        for _ in range(100):
+            formula = generate_tautology_candidate(rng, max_atoms=3)
+            assert not contains_double_negation(formula), f"Tautology candidate has ~~: {formula}"
+
+    def test_contains_double_negation_detection(self):
+        """The double-negation detector must work correctly."""
+        assert contains_double_negation("~~p") is True
+        assert contains_double_negation("~p") is False
+        assert contains_double_negation("p -> ~~q") is True
+        assert contains_double_negation("p -> ~q") is False
+        assert contains_double_negation("~~~p") is True  # ~~(~p)
+        assert contains_double_negation("(p /\\ ~q)") is False

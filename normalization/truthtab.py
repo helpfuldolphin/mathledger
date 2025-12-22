@@ -1,8 +1,31 @@
 # -*- coding: utf-8 -*-
 """
+DEPRECATED: Use normalization.taut instead.
+
+This module is kept for backwards compatibility but will be removed in v1.0.
+The canonical truth-table verifier is normalization.taut.truth_table_is_tautology().
+
+Migration:
+    # Old (deprecated)
+    from normalization.truthtab import is_tautology
+
+    # New (preferred)
+    from normalization.taut import truth_table_is_tautology as is_tautology
+
+Limitations:
+    - This module only supports atoms p, q, r
+    - normalization.taut supports any lowercase letter a-z
+
 Minimal truth table evaluator for propositional logic tautology checking.
 Supports variables p, q, r and connectives: ->, /\\, \\/, ~
 """
+import warnings
+
+warnings.warn(
+    "normalization.truthtab is deprecated. Use normalization.taut instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 import itertools
 import re
