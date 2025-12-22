@@ -3,8 +3,8 @@
 **Document Type:** Audit Procedure
 **Scope:** Artifact integrity, determinism, and replayability verification
 **Mode:** SHADOW-OBSERVE (observational, non-blocking, non-enforcement)
-**Version:** 1.0
-**Date:** 2025-12-21
+**Version:** 1.5
+**Date:** 2025-12-22
 
 ---
 
@@ -18,7 +18,9 @@ This walkthrough enables independent verification of:
 |------|-------------|
 | Artifact existence | Demo produces expected files |
 | Hash integrity | Composite root equation `H_t = SHA256(R_t || U_t)` verifies |
-| Schema compliance | Manifest conforms to declared structure |
+| Schema compliance | Manifest conforms to declared structure (v1.1.0+) |
+| Governance registry | `commitment_registry_sha256` hash matches registry file |
+| Artifact classification | Each artifact has valid `artifact_kind` enum value |
 | Determinism | Same seed produces identical outputs across runs |
 | Replayability | All inputs/outputs captured for external replay |
 
@@ -130,6 +132,7 @@ After execution, `demo_output/` contains:
 | `epoch_root.txt` | H_t: Composite attestation root |
 | `events/reasoning_events.jsonl` | Raw reasoning events (deterministic, replayable) |
 | `events/ui_events.jsonl` | Raw UI events (deterministic, replayable) |
+| `governance/commitment_registry.json` | Governance commitment registry (v1.1.0+) |
 | `verify.py` | Standalone verification script (no external dependencies) |
 
 ---
@@ -149,9 +152,15 @@ python verify.py
 
 ```
 [PASS] Composite root verified: H_t == SHA256(R_t || U_t)
+[PASS] Governance registry verified: 10db8b35ee24d0d9...
+[PASS] Artifact kinds verified (2 artifacts)
+
+[INFO] Schema version: 1.1.0
 [INFO] Seed: 42
 [INFO] Claim level: L0
 [INFO] F5 codes: ['F5.2', 'F5.3']
+
+[PASS] All verifications passed
 [INFO] To verify reproducibility, run: uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output_verify/
 ```
 
@@ -160,10 +169,52 @@ python verify.py
 | Check | Description |
 |-------|-------------|
 | Composite root integrity | Recomputes `SHA256(R_t || U_t)` and compares to stored `H_t` |
+| Governance registry hash | Verifies `commitment_registry_sha256` matches computed hash of registry file |
+| Artifact kind validation | Confirms each artifact has valid `artifact_kind` enum value |
 | File presence | Reads `reasoning_root.txt`, `ui_root.txt`, `epoch_root.txt` |
 | Manifest parsing | Loads and displays manifest metadata |
 
-**PASS criteria:** Computed composite root matches stored `H_t`.
+**PASS criteria:** All checks pass; verify.py exits with code 0.
+
+### 5.3 Governance Registry and Artifact Kind (v1.1.0+)
+
+Starting with schema v1.1.0, manifests include:
+
+| Field | Location | Description |
+|-------|----------|-------------|
+| `governance_registry.commitment_registry_sha256` | manifest.json | SHA-256 hash of governance/commitment_registry.json |
+| `governance_registry.commitment_registry_version` | manifest.json | Registry schema version |
+| `artifacts[].artifact_kind` | manifest.json | Per-artifact classification enum |
+
+**Valid `artifact_kind` values:**
+
+| Value | Meaning |
+|-------|---------|
+| `VERIFIED` | Artifact passed verification |
+| `REFUTED` | Artifact explicitly failed verification |
+| `ABSTAINED` | Verification not attempted or not applicable |
+| `INADMISSIBLE_UPDATE` | Governance-blocked update |
+
+**Note:** In v0.9.x, the governance commitments in `commitment_registry.json` are placeholder/illustrative. The mechanism (hash binding) is being audited, not the specific commitment content.
+
+### 5.4 Registry Hashing Specification
+
+The `commitment_registry_sha256` is computed as follows:
+
+1. **Load**: Read `governance/commitment_registry.json` as UTF-8 text
+2. **Parse**: Deserialize to JSON object
+3. **Canonicalize**: Serialize with canonical JSON rules (RFC 8785-style, not fully compliant):
+   - Keys sorted lexicographically at all nesting levels
+   - No whitespace between tokens (compact form)
+   - ASCII-safe encoding (non-ASCII escaped as `\uXXXX`)
+   - UTF-8 output encoding
+4. **Hash**: Compute `SHA256(canonical_bytes).hexdigest()`
+
+**Note on RFC 8785**: The canonicalization is RFC 8785-*style* but not fully compliant. RFC 8785 specifies additional number formatting rules that Python's `json.dumps` does not guarantee. For this registry (which contains only strings and simple objects), the difference is immaterial.
+
+**Fields included in hash**: ALL fields in the registry file, including `schema_version`, `status`, `status_note`, and all commitment entries.
+
+**Canonicalization invariant**: Reformatting the registry file (changing indentation, key order, whitespace) does not change the computed hash, as long as the parsed JSON structure is identical.
 
 ---
 
@@ -202,7 +253,7 @@ For seed 42, the following SHA-256 hashes are expected. Both runs must produce b
 
 | Artifact | SHA-256 Hash |
 |----------|--------------|
-| `manifest.json` | `f5f7d95fd12fa3fb1c2f16400920b4f5f137864d372bc4e496e63b2264ad6312` |
+| `manifest.json` | `e43905a1ffa341d66eccd2e13e5baf08269f62d6bb721a35c8909d1cc13e14b3` |
 | `epoch_root.txt` | `34a941e522c0521f29f5071ddb051616ff1c6e9960c86abbf260ae9f40faaa7f` |
 | `reasoning_root.txt` | `314646adf474bd92a56862cc1fcbe9f13407aa1c037d3fe1eb10edbf135b3918` |
 | `ui_root.txt` | `250d98261d1160e39d9380dca3d6f0015ba0e3eda8719f7922617429b89e1f68` |
@@ -319,6 +370,57 @@ ______________________________________________________________________
 Signature: ____________________
 ```
 
+### 8.1 Release Audit Note (Complete Form)
+
+For external reviewers, use this template with filled values from actual runs:
+
+```
+RELEASE AUDIT NOTE — MathLedger SHADOW-OBSERVE Pilot
+=====================================================
+Tag / commit:   v0.9.4-pilot-audit-hardened → <git SHA>
+Date:           ____________________
+Evaluator:      ____________________
+Environment:    OS __________, Python __________, uv __________
+
+SCOPE: Artifact hash integrity + determinism + schema/enum/registry binding ONLY.
+       NOT correctness, safety, alignment, or compliance.
+
+COMMANDS EXECUTED
+-----------------
+Run:    uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output/
+Verify: python demo_output/verify.py
+
+HASHES (from actual outputs)
+----------------------------
+commitment_registry_sha256: ____________________
+manifest.json SHA-256:      ____________________
+reasoning_root.txt (R_t):   ____________________
+ui_root.txt (U_t):          ____________________
+epoch_root.txt (H_t):       ____________________
+audit_surface_version:      ____________________
+
+DETERMINISM PROOF
+-----------------
+Run A manifest.json SHA-256: ____________________
+Run B manifest.json SHA-256: ____________________
+[ ] Hashes match (byte-for-byte identical)
+
+FAIL-CLOSED MUTATION PROOF
+--------------------------
+Mutation performed: ____________________
+Verify command:     python demo_output/verify.py
+Result:             [ ] FAIL with error code: ____________________
+
+RESULT
+------
+[ ] PASS — verify.py exit 0, H_t = SHA256(R_t || U_t) confirmed, determinism verified
+[ ] FAIL — Reason: ____________________
+
+Signature: ____________________
+```
+
+This note confirms only cryptographic binding and replay integrity. It does not evaluate the substantive adequacy of governance commitments.
+
 ---
 
 ## 9. Reference Documents
@@ -338,6 +440,10 @@ Signature: ____________________
 |---------|------|--------|
 | 1.0 | 2025-12-21 | Initial release |
 | 1.1 | 2025-12-21 | Hardened determinism proof with SHA-256 hashes; updated references |
+| 1.2 | 2025-12-22 | Added governance_registry and artifact_kind verification (schema v1.1.0) |
+| 1.3 | 2025-12-22 | Added registry hashing specification, scope boundary disclaimers |
+| 1.4 | 2025-12-22 | Added Release Audit Note short-form template |
+| 1.5 | 2025-12-22 | RFC 8785 wording fix, audit_surface_version field, updated hashes |
 
 ---
 
