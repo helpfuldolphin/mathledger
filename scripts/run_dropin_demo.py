@@ -56,6 +56,12 @@ try:
         deterministic_merkle_root,
         SeededRNG,
     )
+    from governance import (
+        compute_registry_hash,
+        get_registry_version,
+        ARTIFACT_KIND_VERIFIED,
+        ARTIFACT_KIND_ABSTAINED,
+    )
 except ImportError as e:
     print(f"ERROR: Missing MathLedger primitive: {e}", file=sys.stderr)
     print("Ensure you are running from the repo root with: uv run python scripts/run_dropin_demo.py", file=sys.stderr)
@@ -66,8 +72,9 @@ except ImportError as e:
 # Demo Configuration
 # ---------------------------------------------------------------------------
 
-DEMO_SCHEMA_VERSION = "1.0.0"
+DEMO_SCHEMA_VERSION = "1.1.0"  # Bumped for artifact_kind and governance_registry
 DEMO_MODE = "SHADOW"  # Observational only, non-gating
+AUDIT_SURFACE_VERSION = "0.9.4"  # Stable contract for external auditors
 
 
 @dataclass
@@ -238,6 +245,7 @@ def generate_manifest(
     attestation: Dict[str, Any],
     verdict: GovernanceVerdict,
     toolchain: Optional[ToolchainSnapshot],
+    artifact_hashes: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """Generate the complete demo manifest for external verification."""
 
@@ -246,6 +254,7 @@ def generate_manifest(
 
     manifest = {
         "schema_version": DEMO_SCHEMA_VERSION,
+        "audit_surface_version": AUDIT_SURFACE_VERSION,
         "demo_mode": DEMO_MODE,
         "generated_at": ts.isoformat(),
         "seed": config.seed,
@@ -269,6 +278,12 @@ def generate_manifest(
             "rationale": verdict.rationale,
         },
 
+        # Governance Commitment Registry (new in v1.1.0)
+        "governance_registry": {
+            "commitment_registry_sha256": compute_registry_hash(),
+            "commitment_registry_version": get_registry_version(),
+        },
+
         # Reproducibility
         "reproducibility": {
             "deterministic": True,
@@ -285,6 +300,23 @@ def generate_manifest(
             "uv_lock_hash": toolchain.python.uv_lock_hash[:16] + "...",
         }
 
+    # Artifacts with artifact_kind (new in v1.1.0)
+    if artifact_hashes:
+        manifest["artifacts"] = [
+            {
+                "artifact_id": "reasoning_events",
+                "path": "events/reasoning_events.jsonl",
+                "artifact_kind": ARTIFACT_KIND_VERIFIED,
+                "sha256": artifact_hashes.get("reasoning_events", ""),
+            },
+            {
+                "artifact_id": "ui_events",
+                "path": "events/ui_events.jsonl",
+                "artifact_kind": ARTIFACT_KIND_ABSTAINED,
+                "sha256": artifact_hashes.get("ui_events", ""),
+            },
+        ]
+
     return manifest
 
 
@@ -292,26 +324,25 @@ def generate_manifest(
 # Output Generation
 # ---------------------------------------------------------------------------
 
+def compute_file_hash(content: str) -> str:
+    """Compute SHA-256 hash of file content."""
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
 def write_outputs(
     config: DemoConfig,
-    manifest: Dict[str, Any],
     attestation: Dict[str, Any],
+    verdict: GovernanceVerdict,
+    toolchain: Optional[ToolchainSnapshot],
     reasoning_events: List[Dict[str, Any]],
     ui_events: List[Dict[str, Any]],
-) -> None:
-    """Write all demo outputs to the output directory."""
+) -> Dict[str, Any]:
+    """Write all demo outputs to the output directory and return manifest."""
 
     output_dir = config.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Manifest (main verification artifact)
-    manifest_path = output_dir / "manifest.json"
-    manifest_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
-
-    # 2. Individual root files (for easy diffing)
+    # 1. Individual root files (for easy diffing)
     (output_dir / "reasoning_root.txt").write_text(
         attestation["reasoning_root"] + "\n",
         encoding="utf-8",
@@ -325,25 +356,49 @@ def write_outputs(
         encoding="utf-8",
     )
 
-    # 3. Events (for full replay)
+    # 2. Events (for full replay) - compute hashes for manifest
     events_dir = output_dir / "events"
     events_dir.mkdir(exist_ok=True)
 
-    (events_dir / "reasoning_events.jsonl").write_text(
-        "\n".join(json.dumps(e, sort_keys=True) for e in reasoning_events) + "\n",
-        encoding="utf-8",
-    )
-    (events_dir / "ui_events.jsonl").write_text(
-        "\n".join(json.dumps(e, sort_keys=True) for e in ui_events) + "\n",
+    reasoning_content = "\n".join(json.dumps(e, sort_keys=True) for e in reasoning_events) + "\n"
+    ui_content = "\n".join(json.dumps(e, sort_keys=True) for e in ui_events) + "\n"
+
+    (events_dir / "reasoning_events.jsonl").write_text(reasoning_content, encoding="utf-8")
+    (events_dir / "ui_events.jsonl").write_text(ui_content, encoding="utf-8")
+
+    # Compute artifact hashes
+    artifact_hashes = {
+        "reasoning_events": compute_file_hash(reasoning_content),
+        "ui_events": compute_file_hash(ui_content),
+    }
+
+    # 3. Generate manifest with artifact hashes
+    manifest = generate_manifest(config, attestation, verdict, toolchain, artifact_hashes)
+
+    # 4. Write manifest (main verification artifact)
+    manifest_path = output_dir / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True),
         encoding="utf-8",
     )
 
-    # 4. Verification script
+    # 5. Copy governance registry to output for standalone verification
+    registry_dest = output_dir / "governance"
+    registry_dest.mkdir(exist_ok=True)
+    from governance.registry_hash import DEFAULT_REGISTRY_PATH
+    (registry_dest / "commitment_registry.json").write_text(
+        DEFAULT_REGISTRY_PATH.read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+
+    # 6. Verification script
     verify_script = output_dir / "verify.py"
     verify_script.write_text(
         generate_verification_script(config.seed),
         encoding="utf-8",
     )
+
+    return manifest
 
 
 def generate_verification_script(seed: int) -> str:
@@ -354,13 +409,17 @@ Standalone verification script for MathLedger drop-in demo.
 
 This script can be run independently to verify:
 1. Composite root integrity: H_t == SHA256(R_t || U_t)
-2. Reproducibility: re-running demo produces identical outputs
+2. Governance registry hash matches manifest
+3. Artifact kind values are valid
+4. Reproducibility: re-running demo produces identical outputs
 
 Usage:
     python verify.py
 
 Expected output:
     [PASS] Composite root verified
+    [PASS] Governance registry verified
+    [PASS] Artifact kinds verified
     [INFO] To verify reproducibility, run the demo again with seed {seed}
 """
 
@@ -368,13 +427,31 @@ import hashlib
 import json
 from pathlib import Path
 
+# Valid artifact_kind values
+VALID_ARTIFACT_KINDS = {{"VERIFIED", "REFUTED", "ABSTAINED", "INADMISSIBLE_UPDATE"}}
+
+
+def canonicalize_json(data):
+    """Canonicalize JSON for deterministic hashing."""
+    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+
+
+def compute_registry_hash(registry_path):
+    """Compute SHA-256 hash of registry file."""
+    content = json.loads(registry_path.read_text())
+    canonical = canonicalize_json(content)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def main():
-    # Load roots
+    errors = []
+
+    # 1. Load roots
     r_t = Path("reasoning_root.txt").read_text().strip()
     u_t = Path("ui_root.txt").read_text().strip()
     h_t = Path("epoch_root.txt").read_text().strip()
 
-    # Verify composite
+    # 2. Verify composite root
     computed = hashlib.sha256((r_t + u_t).encode("ascii")).hexdigest()
 
     if computed == h_t:
@@ -383,14 +460,67 @@ def main():
         print("[FAIL] Composite root mismatch!")
         print(f"  Expected: {{h_t}}")
         print(f"  Computed: {{computed}}")
-        exit(1)
+        errors.append("composite_root_mismatch")
 
-    # Load manifest
+    # 3. Load manifest
     manifest = json.loads(Path("manifest.json").read_text())
+
+    # 4. Verify governance registry (new in v1.1.0)
+    if "governance_registry" not in manifest:
+        print("[FAIL] Missing governance_registry block in manifest")
+        errors.append("missing_governance_registry")
+    else:
+        registry_path = Path("governance/commitment_registry.json")
+        if not registry_path.exists():
+            print("[FAIL] Missing governance/commitment_registry.json")
+            errors.append("missing_registry_file")
+        else:
+            expected_hash = manifest["governance_registry"]["commitment_registry_sha256"]
+            actual_hash = compute_registry_hash(registry_path)
+            if expected_hash == actual_hash:
+                print(f"[PASS] Governance registry verified: {{expected_hash[:16]}}...")
+            else:
+                print("[FAIL] Governance registry hash mismatch!")
+                print(f"  Expected: {{expected_hash}}")
+                print(f"  Computed: {{actual_hash}}")
+                errors.append("registry_hash_mismatch")
+
+    # 5. Verify artifact kinds (new in v1.1.0)
+    if "artifacts" not in manifest:
+        print("[WARN] No artifacts block in manifest (schema < 1.1.0)")
+    else:
+        artifact_errors = []
+        for artifact in manifest["artifacts"]:
+            artifact_id = artifact.get("artifact_id", "unknown")
+            kind = artifact.get("artifact_kind")
+            if kind is None:
+                artifact_errors.append(f"{{artifact_id}}: missing artifact_kind")
+            elif kind not in VALID_ARTIFACT_KINDS:
+                artifact_errors.append(f"{{artifact_id}}: invalid artifact_kind '{{kind}}'")
+
+        if artifact_errors:
+            print("[FAIL] Artifact kind validation failed:")
+            for err in artifact_errors:
+                print(f"  - {{err}}")
+            errors.append("artifact_kind_validation")
+        else:
+            print(f"[PASS] Artifact kinds verified ({{len(manifest['artifacts'])}} artifacts)")
+
+    # 6. Summary
+    print()
+    print(f"[INFO] Schema version: {{manifest.get('schema_version', 'unknown')}}")
     print(f"[INFO] Seed: {{manifest['seed']}}")
     print(f"[INFO] Claim level: {{manifest['governance']['claim_level']}}")
     print(f"[INFO] F5 codes: {{manifest['governance']['f5_codes']}}")
-    print(f"[INFO] To verify reproducibility, run: uv run python scripts/run_dropin_demo.py --seed {seed} --output demo_output_verify/")
+
+    if errors:
+        print()
+        print(f"[FAIL] Verification failed with {{len(errors)}} error(s): {{', '.join(errors)}}")
+        exit(1)
+    else:
+        print()
+        print("[PASS] All verifications passed")
+        print(f"[INFO] To verify reproducibility, run: uv run python scripts/run_dropin_demo.py --seed {seed} --output demo_output_verify/")
 
 if __name__ == "__main__":
     main()
@@ -451,12 +581,13 @@ def run_demo(config: DemoConfig) -> int:
 
     # Step 5: Generate outputs
     print("[5/5] Writing outputs...")
-    manifest = generate_manifest(config, attestation, verdict, toolchain)
-    write_outputs(config, manifest, attestation, reasoning_events, ui_events)
+    manifest = write_outputs(config, attestation, verdict, toolchain, reasoning_events, ui_events)
     print(f"      Manifest: {config.output_dir / 'manifest.json'}")
     print(f"      Roots: reasoning_root.txt, ui_root.txt, epoch_root.txt")
     print(f"      Events: events/reasoning_events.jsonl, events/ui_events.jsonl")
+    print(f"      Registry: governance/commitment_registry.json")
     print(f"      Verifier: verify.py")
+    print(f"      Registry hash: {manifest['governance_registry']['commitment_registry_sha256'][:16]}...")
 
     # Summary
     print()
@@ -473,6 +604,8 @@ def run_demo(config: DemoConfig) -> int:
     print("  - Deterministic execution: Same seed -> same outputs")
     print("  - Dual attestation: R_t (reasoning) + U_t (UI) -> H_t (composite)")
     print("  - Governance: F5.x predicates evaluate fail-close behavior")
+    print("  - Governance registry: Commitment binding via SHA-256 hash")
+    print("  - Artifact classification: Per-artifact artifact_kind typing")
     print("  - Replayability: All inputs/outputs captured for audit")
     print()
 

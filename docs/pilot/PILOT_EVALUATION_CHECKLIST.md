@@ -2,14 +2,18 @@
 
 **Document Type:** External Reviewer Checklist
 **Scope:** SHADOW-OBSERVE Pilot Audit
-**Version:** 1.0
-**Date:** 2025-12-21
+**Version:** 1.2
+**Date:** 2025-12-22
 
 ---
 
 ## Instructions
 
 This checklist defines binary PASS/FAIL criteria for external reviewers. Each item must be independently verifiable. No interpretive or qualitative judgments are required.
+
+**Scope Boundary:** PASS means cryptographic binding + schema compliance only; it does not evaluate the substantive adequacy, correctness, or appropriateness of governance commitments.
+
+**GCR Commitments:** The governance commitments in `commitment_registry.json` are illustrative placeholders in v0.9.x. This audit validates hash binding and replay integrity, not the normative correctness of commitment content.
 
 **Evaluation command:**
 ```bash
@@ -38,6 +42,7 @@ uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output/
 | B4 | epoch_root.txt exists | File present in output directory | [ ] PASS / [ ] FAIL |
 | B5 | verify.py exists | File present in output directory | [ ] PASS / [ ] FAIL |
 | B6 | events/ directory exists | Directory present with .jsonl files | [ ] PASS / [ ] FAIL |
+| B7 | governance/ directory exists | Directory present with commitment_registry.json | [ ] PASS / [ ] FAIL |
 
 ---
 
@@ -49,6 +54,8 @@ uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output/
 | C2 | Required fields present | `seed`, `attestation`, `governance` keys exist | [ ] PASS / [ ] FAIL |
 | C3 | Attestation structure | `reasoning_merkle_root`, `ui_merkle_root`, `composite_attestation_root` present | [ ] PASS / [ ] FAIL |
 | C4 | Governance structure | `claim_level`, `f5_codes`, `passed` present | [ ] PASS / [ ] FAIL |
+| C5 | Governance registry present | `governance_registry.commitment_registry_sha256` present (v1.1.0+) | [ ] PASS / [ ] FAIL |
+| C6 | Artifacts block present | `artifacts` array with `artifact_kind` per entry (v1.1.0+) | [ ] PASS / [ ] FAIL |
 
 ---
 
@@ -59,6 +66,8 @@ uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output/
 | D1 | verify.py executes | Exit code is `0` | [ ] PASS / [ ] FAIL |
 | D2 | Composite root verifies | Output contains `[PASS] Composite root verified` | [ ] PASS / [ ] FAIL |
 | D3 | Equation holds | `H_t == SHA256(R_t || U_t)` verified by verify.py | [ ] PASS / [ ] FAIL |
+| D4 | Registry hash verifies | Output contains `[PASS] Governance registry verified` (v1.1.0+) | [ ] PASS / [ ] FAIL |
+| D5 | Artifact kinds valid | Output contains `[PASS] Artifact kinds verified` (v1.1.0+) | [ ] PASS / [ ] FAIL |
 
 ---
 
@@ -87,18 +96,18 @@ uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output/
 | Section | Items | Passed | Failed |
 |---------|-------|--------|--------|
 | A: Execution | 3 | ___ | ___ |
-| B: Artifact Presence | 6 | ___ | ___ |
-| C: Schema Validity | 4 | ___ | ___ |
-| D: Hash Verification | 3 | ___ | ___ |
+| B: Artifact Presence | 7 | ___ | ___ |
+| C: Schema Validity | 6 | ___ | ___ |
+| D: Hash Verification | 5 | ___ | ___ |
 | E: Determinism | 3 | ___ | ___ |
 | F: SHADOW Mode | 3 | ___ | ___ |
-| **Total** | **22** | ___ | ___ |
+| **Total** | **27** | ___ | ___ |
 
 ---
 
 ## Evaluation Outcome
 
-- [ ] **PASS** - All 22 items passed
+- [ ] **PASS** - All 27 items passed
 - [ ] **FAIL** - One or more items failed (list below)
 
 **Failed items:** _______________________________________________
@@ -112,6 +121,20 @@ Name:       ____________________
 Date:       ____________________
 Signature:  ____________________
 ```
+
+---
+
+---
+
+## Notes on v1.1.0 Fields
+
+The following fields were added in schema v1.1.0:
+
+- `governance_registry.commitment_registry_sha256`: Binds run to governance commitments
+- `governance_registry.commitment_registry_version`: Registry schema version
+- `artifacts[].artifact_kind`: Per-artifact classification (VERIFIED/REFUTED/ABSTAINED/INADMISSIBLE_UPDATE)
+
+**Note:** In v0.9.x, the governance commitments in `commitment_registry.json` are placeholder/illustrative. The mechanism (hash binding) is being audited, not the specific commitment content.
 
 ---
 

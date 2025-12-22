@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0.0",
+  "registry_id": "gcr-mathledger-v1",
+  "created_at": "2025-01-01T00:00:00+00:00",
+  "status": "placeholder",
+  "status_note": "In v0.9.x, these commitments are illustrative. The mechanism (hash binding) is being audited, not the specific commitment content.",
+  "commitments": [
+    {
+      "commitment_id": "C001",
+      "description": "Shadow mode invariant: no enforcement actions permitted",
+      "constraint_type": "INVARIANT",
+      "status": "ACTIVE"
+    },
+    {
+      "commitment_id": "C002",
+      "description": "Fail-close on F5.x predicate violation",
+      "constraint_type": "POLICY",
+      "status": "ACTIVE"
+    },
+    {
+      "commitment_id": "C003",
+      "description": "Deterministic execution: same seed produces identical outputs",
+      "constraint_type": "INVARIANT",
+      "status": "ACTIVE"
+    },
+    {
+      "commitment_id": "C004",
+      "description": "Dual-root attestation formula: H_t = SHA256(R_t || U_t)",
+      "constraint_type": "INVARIANT",
+      "status": "ACTIVE"
+    }
+  ]
+}

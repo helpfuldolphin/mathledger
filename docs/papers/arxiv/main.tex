@@ -1,5 +1,8 @@
 \documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage{lmodern}
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{booktabs}
@@ -17,7 +20,8 @@
 \newtheorem{remark}{Remark}
 
 \title{\textbf{\projectname}: A Verifiable Learning Substrate with Ledger-Attested Feedback}
-\author{The MathLedger Research Fleet}
+\author{Ismail Ahmad Abdullah\\
+\texttt{ismail.abdullah.23@cnu.edu}}
 \date{\today}
 
 \begin{document}
@@ -25,9 +29,9 @@
 \maketitle
 
 \begin{abstract}
-Contemporary AI systems achieve extraordinary performance yet remain opaque and non-verifiable, creating a crisis of trust for safety-critical deployment. We introduce \projectname{}, a substrate for \emph{verifiable machine cognition} that integrates formal verification, cryptographic attestation, and learning dynamics into a single epistemic loop. The system implements \emph{Reflexive Formal Learning} (RFL), a symbolic analogue of gradient descent where updates are driven by verified proof events rather than statistical loss.
+Contemporary AI systems achieve extraordinary performance yet remain opaque and non-verifiable, creating a crisis of trust for safety-critical deployment. We introduce \projectname{}, a substrate for \emph{verifiable machine cognition} that integrates formal verification, cryptographic attestation, and learning dynamics into a single epistemic loop. The system implements \emph{Reflexive Formal Learning} (RFL), a symbolic analogue of gradient descent where updates are driven by verifier outcomes rather than statistical loss.
 
-Phase I experiments validate the measurement and governance substrate under controlled conditions. All runs produced the expected fail-closed behavior; no convergence or capability claims are made. The contribution is infrastructural: a working prototype of ledger-attested learning that enables auditability at scale.
+Phase I experiments validate the measurement and governance substrate under controlled conditions. CAL-EXP-3 validates measurement infrastructure ($\Delta p$ computation, variance tracking); separate stress tests confirm fail-closed governance triggers correctly under out-of-bounds conditions. No convergence or capability claims are made. The contribution is infrastructural: a working prototype of ledger-attested learning that enables auditability at scale.
 
 \textbf{Keywords:} verifiable learning, formal verification, cryptographic attestation, reflexive feedback, fail-closed governance
 \end{abstract}
@@ -57,7 +61,7 @@ Existing approaches to improving AI reliability fall into three categories, each
 \item \textbf{Benchmark scaling:} Larger test sets reduce variance but do not establish correctness. Passing benchmarks does not imply understanding.
 \end{enumerate}
 
-\projectname{} takes a different approach: \emph{the verifier's binary decision becomes the learning signal itself}. Every update is justified by a formally verified proof or explicit abstention, recorded in an immutable ledger. This creates a closed epistemic loop where learning is constrained to verified truth.
+\projectname{} takes a different approach: \emph{the verifier's outcome becomes the learning signal itself}. Every update is justified by a configured verifier outcome (pass/fail/abstain), recorded in an immutable ledger. This creates a closed epistemic loop where learning is constrained to verifier-attested outcomes.
 
 \subsection{The Chain of Verifiable Cognition}
 
@@ -68,22 +72,22 @@ The system implements an end-to-end pipeline:
 
 Each component is cryptographically bound:
 \begin{itemize}[leftmargin=1.5em]
-\item \textbf{Proof-or-Abstain:} The Lean kernel verifies reasoning or the system explicitly abstains. No middle ground.
-\item \textbf{Ledger Attestation:} Verified events are sealed into a monotone, append-only ledger with Merkle roots.
+\item \textbf{Proof-or-Abstain:} A configured verifier (Phase I: synthetic proxy; Phase II+: Lean kernel) validates reasoning or the system explicitly abstains. No middle ground.
+\item \textbf{Ledger Attestation:} Verifier-accepted events are sealed into a monotone, append-only ledger with Merkle roots.
 \item \textbf{Dual Commitment:} Both reasoning artifacts ($r_t$) and interface state ($u_t$) are committed: $H_t = \mathrm{Hash}(\texttt{EPOCH:} \| r_t \| u_t)$.
 \item \textbf{Policy Update:} Reflexive Formal Learning (RFL) adjusts the policy based on verification outcomes.
 \end{itemize}
 
-This architecture enables a new primitive: \emph{learning from verified truth rather than statistical loss}.
+This architecture enables a new primitive: \emph{learning from verifier-attested outcomes rather than statistical loss}.
 
 \subsection{What Is Genuinely New}
 
-\projectname{} combines three elements not previously integrated:
+\projectname{} combines three elements not commonly integrated end-to-end \cite{harrison2008,buzzard2020}:
 
 \begin{enumerate}[leftmargin=1.5em]
 \item \textbf{Ledger-attested learning signals:} Unlike reward models or human feedback, the learning signal is a cryptographically committed verification outcome.
 
-\item \textbf{Fail-closed governance:} The system cannot silently degrade. Either verification succeeds and learning proceeds, or the system abstains and logs the failure.
+\item \textbf{Fail-closed governance:} The system cannot silently degrade. Either verification succeeds and the outcome is admitted to the ledger, or the system abstains and logs the failure.
 
 \item \textbf{Auditability as infrastructure:} Every update has a replayable provenance chain. Post-hoc analysis can reconstruct exactly what was learned and why.
 \end{enumerate}
@@ -96,15 +100,48 @@ This paper reports Phase I experiments that validate the substrate. No capabilit
 
 \subsection{Pipeline Overview}
 
-\input{sections/02_methodology}
+The experimental methodology evaluates the \projectname{} substrate under controlled conditions. Phase I focuses on measurement validation ($\Delta p$ computation, variance tracking) and fail-closed governance verification.
+
+\subsubsection{Test Harness}
+Experiments are conducted within a dedicated FO (Feedback-Optimized) cycle harness. This harness simulates realistic operating conditions, allowing for precise control over input parameters and comprehensive capture of output metrics. The harness is designed to ensure reproducibility and provide a consistent environment for comparative analysis.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\parbox{0.85\linewidth}{\centering\vspace{1em}
+    \textbf{FO Cycle Harness Architecture}\\[0.5em]
+    \small
+    UI Event $\to$ Curriculum Gate $\to$ Derivation $\to$ Verifier$^\dagger$ $\to$ Dual Attestation ($H_t$) $\to$ RFL\\[0.5em]
+    {\footnotesize $^\dagger$Phase I: synthetic proxy; Phase II+: Lean kernel}
+    \textit{SHADOW MODE: verification results non-blocking}\\[0.5em]
+    RFL on: lr $>$ 0 \quad|\quad RFL off: lr $=$ 0\\[0.5em]
+    \textit{Figure intentionally text-based --- vector PDF generation pending.}
+    \vspace{1em}}}
+    \caption{Architectural overview of the FO cycle harness. The pipeline runs: UI Event $\to$ Curriculum Gate $\to$ Derivation Engine $\to$ Configured Verifier $\to$ Dual Attestation ($H_t$) $\to$ RFL policy update. Phase I uses a synthetic proxy verifier; Lean kernel integration is Phase II+. SHADOW MODE: all verification results are observational and non-blocking.}
+    \label{fig:harness_architecture}
+\end{figure}
+
+\subsubsection{Configurations Under Test}
+We evaluate several key configurations:
+\begin{enumerate}
+    \item \textbf{RFL vs. Baseline:} We compare the performance of the \projectname{} system with the RFL mechanism enabled against a baseline configuration where RFL is disabled or replaced with a static control mechanism. This comparison aims to characterize the behavior of feedback mechanisms on system stability and output.
+    \item \textbf{PL slice analysis (propositional logic slices):} The system's behavior is further investigated by varying propositional-logic curriculum slices under fixed seeds and budgets. Different PL slice configurations are tested to understand their influence on computational efficiency, decision-making latency, and overall ledger integrity.
+\end{enumerate}
+
+\subsubsection{Measurement Metrics}
+The following key metrics are recorded and analyzed during the experimental runs:
+\begin{itemize}
+    \item \textbf{Abstention Rate:} The frequency at which the system abstains from making a definitive judgment.
+    \item \textbf{$H_t$ Dynamics:} We track the evolution and stability of the dual attestation hash $H_t$ over time, providing insights into the system's state processes.
+    \item \textbf{Operational Metrics (runtime telemetry):} A suite of fundamental performance indicators, including transaction processing speed, error rates, and resource utilization, are measured to establish a foundational understanding of system behavior.
+\end{itemize}
 
 \subsection{The Monotone Ledger}
 
 \begin{definition}[Monotone Ledger]
-A ledger $\mathcal{L}$ is a sequence of blocks $(B_1, B_2, \ldots)$ where each $B_t$ contains verified proofs with: (i) canonical statement hashes, (ii) Lean verification status, and (iii) a Merkle root $R_t$ over sorted proof IDs. The ledger is \emph{monotone} if $\bigcup_{i \le t} B_i \subseteq \bigcup_{i \le t+1} B_i$.
+A ledger $\mathcal{L}$ is a sequence of blocks $(B_1, B_2, \ldots)$ where each $B_t$ contains verifier-accepted proof artifacts (Phase I: proxy-accepted; Phase II+: Lean-verified) with: (i) canonical statement hashes, (ii) configured verifier status, and (iii) a Merkle root $R_t$ over sorted proof IDs. The ledger is \emph{monotone} if $\bigcup_{i \le t} B_i \subseteq \bigcup_{i \le t+1} B_i$.
 \end{definition}
 
-Monotonicity ensures that verified knowledge only grows. Statements cannot be retracted; only new proofs can be added.
+Monotonicity ensures that accepted knowledge only grows. Statements cannot be retracted; only new proof artifacts can be added.
 
 \subsection{Dual Attestation}
 
@@ -115,6 +152,82 @@ At each epoch $t$, the system commits to two roots:
 \end{itemize}
 
 These are bound by $H_t = \mathrm{Hash}(\texttt{EPOCH:} \| r_t \| u_t)$ with prefix-free domain separation. The tuple $(r_t, u_t, H_t)$ is the \emph{epistemic fingerprint} of the epoch---the only scalar permitted as a summary of what occurred.
+
+\subsection{Governance-Bound Negative Knowledge}
+\label{sec:negative-knowledge}
+
+A critical requirement for fail-closed learning systems is that rejected,
+failed, or inadmissible events must not disappear silently. While such events
+must not influence learning or epistemic authority, they must remain
+cryptographically visible for audit, replay, and governance verification.
+
+\paragraph{Negative Knowledge as Evidence.}
+\projectname{} therefore treats certain non-admitted outcomes as first-class,
+audit-grade artifacts. These include:
+\begin{itemize}[leftmargin=1.5em]
+\item \textbf{Refuted artifacts}: reasoning attempts that were explicitly rejected
+      by the configured verifier;
+\item \textbf{Abstentions}: attempts that failed to satisfy verification criteria
+      under bounded resources;
+\item \textbf{Inadmissible updates}: learning updates blocked by active governance
+      predicates or frozen commitments.
+\end{itemize}
+
+These artifacts are \emph{not} promoted to knowledge and do not enter the
+monotone ledger of verified statements. Instead, they are recorded as
+governance-bound evidence, preserving a verifiable record of what was
+attempted and explicitly not learned. This ensures that rejected or blocked
+updates constrain future interpretation and auditability without acquiring
+epistemic or learning authority.
+
+\paragraph{Frozen Governance Commitments.}
+Each experimental run is bound to a versioned \emph{Governance Commitment
+Registry} (GCR), whose cryptographic hash is recorded in the run manifest.
+The registry enumerates non-negotiable constraints (e.g., claim ceilings,
+variance bounds, update admissibility rules) that are frozen for the duration
+of the run.
+
+As a result, the system can support statements of the form:
+\begin{quote}
+``This update did not occur because constraint $C$ was active under
+governance version $v$ for the run.''
+\end{quote}
+
+Such statements are verifiable via replay of the evidence pack and do not rely
+on post-hoc interpretation or informal policy descriptions.
+
+\paragraph{Separation from Learning Authority.}
+Negative-knowledge artifacts are explicitly excluded from Reflexive Formal
+Learning updates. RFL consumes only verifier outcomes summarized by
+$\mathcal{V}(e) \in \{1,0,\bot\}$ as a \emph{negative signal}, never as positive
+instructional content. Failed or blocked artifacts constrain admissibility but
+do not teach structure.
+
+This separation preserves three invariants:
+\begin{enumerate}[leftmargin=1.5em]
+\item \textbf{Soundness}: invalid reasoning cannot contaminate policy updates;
+\item \textbf{Auditability}: all epistemically relevant failures remain replayable;
+\item \textbf{Non-silent governance}: no event may influence future authority
+      without leaving a typed, cryptographically bound trace.
+\end{enumerate}
+
+\paragraph{Relation to Dual Attestation.}
+Dual attestation ($H_t = \mathrm{Hash}(\texttt{EPOCH:} \| r_t \| u_t)$) remains the
+sole canonical commitment for learning and epistemic state. Governance-bound
+negative knowledge operates as an \emph{orthogonal evidentiary layer}: additive,
+non-authoritative, and non-interventional in Phase~I.
+This evidentiary layer is replay-verified and fail-closed, but it cannot escalate claims or authorize learning updates.
+
+\paragraph{Threat Model.}
+This architecture defends against \emph{silent drift} (governance constraints
+changing without trace) and \emph{policy laundering} (informal post-hoc
+reinterpretation of what was permitted). It does \emph{not} protect against
+malicious verifier design, compromised registry authorship, or adversarial
+manipulation of the run environment itself. Phase~I assumes an honest-but-fallible
+operator; Byzantine fault tolerance is out of scope.
+
+Future phases may introduce explicit governance-state commitments, but no such
+extension is required for the Phase~I claims reported here.
 
 %=============================================================================
 \section{Reflexive Formal Learning: Formal Anchor}
@@ -131,7 +244,7 @@ For reasoning event $e_t$, the verifier produces:
 \[
 \mathcal{V}(e_t) \in \{1, 0, \bot\}
 \]
-where $1$ = verified proof, $0$ = failed proof, $\bot$ = abstention.
+where $1$ = verification passed, $0$ = verification failed, $\bot$ = abstention.
 \end{definition}
 
 \begin{definition}[Epistemic Risk]
@@ -148,7 +261,7 @@ This measures the probability mass on non-verified events (failures and abstenti
 At each step $t$:
 \begin{equation}
 \label{eq:rfl-update}
-\pi_{t+1} = \pi_t \oplus \eta \cdot \Phi(\mathcal{V}(e_t), \pi_t)
+\pi_{t+1} = \pi_t \oplus \eta_t \cdot \Phi(\mathcal{V}(e_t), \pi_t)
 \end{equation}
 where $\oplus$ is algebraic composition on policy space and $\Phi: \{1, 0, \bot\} \times \Pi \to \Delta\Pi$ maps verification outcomes to policy adjustments.
 
@@ -157,13 +270,8 @@ The intuition is:
 \emph{Policies that cause fewer failures and abstentions become more likely; policies that cause them become less likely.}
 \end{quote}
 
-\begin{proposition}[RFL as Stochastic Approximation]
-\label{prop:sa}
-Under standard regularity conditions (bounded updates, filtration adaptivity, summable step sizes), the RFL dynamics constitute a stochastic approximation process on $\mathcal{J}(\pi)$. The learning signal arises from verified truth rather than statistical loss.
-\end{proposition}
-
 \begin{remark}
-Proposition~\ref{prop:sa} establishes that RFL has the mathematical structure of a learning algorithm. It does not claim convergence in finite time or under Phase I conditions. The RFL recursion has stochastic approximation form; convergence to a minimum requires additional stability assumptions that are not claimed in Phase I. Full proofs appear in Appendix~\ref{app:formal-proofs}.
+RFL has the mathematical structure of a stochastic approximation process (see Proposition~\ref{prop:sa-formal} in Section~\ref{sec:formal-properties}). This does not claim convergence in finite time or under Phase I conditions; convergence requires additional stability assumptions that are not claimed here. Full proofs appear in Appendix~\ref{app:formal-proofs}.
 \end{remark}
 
 \subsection{Abstention as First-Class Outcome}
@@ -187,31 +295,31 @@ To strengthen the theoretical rigor of Phase I, we state formal results for thre
 
 \begin{proposition}[RFL as Stochastic Approximation]
 \label{prop:sa-formal}
-Consider the RFL policy update $\pi_{t+1} = \pi_t \oplus \eta_t \Phi(\mathcal{V}(e_t), \pi_t)$, where $\Phi(\mathcal{V}(e_t), \pi_t)$ is the adjustment induced by verification outcome $\mathcal{V}(e_t) \in \{1, 0, \bot\}$ at time $t$, and $\eta_t > 0$ is the learning step size. Assume:
+Consider the RFL policy update $\pi_{t+1} = \pi_t \oplus \eta_t \Phi(\mathcal{V}(e_t), \pi_t)$, where $\Phi(\mathcal{V}(e_t), \pi_t)$ is the adjustment induced by verification outcome $\mathcal{V}(e_t) \in \{1, 0, \bot\}$ at time $t$, and $\eta_t > 0$ is the learning step size. Assume $\Pi$ embeds locally into a normed vector space (or admits a coordinate chart) so that the additive form below is well-defined. Additionally assume:
 \begin{enumerate}[leftmargin=1.5em]
 \item \textbf{(Bounded updates)} There exists $L < \infty$ such that $\|\Phi(\mathcal{V}(e), \pi)\| \le L$ for all events and policies.
 \item \textbf{(Martingale noise)} The update deviations $M_{t+1} := \Phi(\mathcal{V}(e_t), \pi_t) - h(\pi_t)$ satisfy $\mathbb{E}[M_{t+1} \mid \mathcal{F}_t] = 0$ with bounded variance, where $h(\pi) := \mathbb{E}[\Phi(\mathcal{V}(e), \pi) \mid \pi]$.
 \item \textbf{(Robbins--Monro stepsizes)} $\sum_{t=0}^\infty \eta_t = \infty$ and $\sum_{t=0}^\infty \eta_t^2 < \infty$.
 \end{enumerate}
-Under these conditions, the RFL recursion can be written in canonical stochastic approximation form:
+Under these conditions, working in the local coordinate chart where $\oplus$ corresponds to vector addition, the RFL recursion can be written in canonical stochastic approximation form:
 \[
 \pi_{t+1} = \pi_t + \eta_t \big( h(\pi_t) + M_{t+1} \big)
 \]
-where $M_{t+1}$ is a martingale-difference noise term. This establishes that RFL has the mathematical structure of a learning algorithm. Convergence to an equilibrium requires additional stability assumptions (e.g., contraction of $h$) that are not claimed in Phase I.
+where $M_{t+1}$ is a martingale-difference noise term. By classical stochastic approximation theory \cite{Robbins1951,Kushner2003,Borkar2008}, this establishes that RFL has the mathematical structure of a learning algorithm. Convergence to an equilibrium requires additional stability assumptions (e.g., contraction of $h$) that are not claimed in Phase I.
 \end{proposition}
 
 \subsection{Monotone Ledger and Tamper-Evidence}
 
 \begin{proposition}[Monotonicity and Tamper-Evidence]
 \label{prop:ledger-formal}
-Let $\mathcal{L} = (B_1, B_2, \ldots, B_T)$ be a ledger of sequential blocks, where each block $B_t$ contains verified proofs. Define the knowledge state $K_t := \bigcup_{i=1}^t B_i$. Let $L_t$ denote the ledger head hash after block $t$, computed as $L_t = \mathrm{Hash}(L_{t-1} \| R_t)$ where $R_t$ is the Merkle root of $B_t$. Assume:
+Let $\mathcal{L} = (B_1, B_2, \ldots, B_T)$ be a ledger of sequential blocks, where each block $B_t$ contains verifier-accepted proof artifacts. Define the knowledge state $K_t := \bigcup_{i=1}^t B_i$. Let $L_t$ denote the ledger head hash after block $t$, computed as $L_t = \mathrm{Hash}(L_{t-1} \| R_t)$ where $R_t$ is the Merkle root of $B_t$. Assume:
 \begin{enumerate}[leftmargin=1.5em]
 \item Blocks are append-only (no modification after appending).
 \item The hash function is collision-resistant.
 \end{enumerate}
 Then:
 \begin{enumerate}[leftmargin=1.5em]
-\item \textbf{(Monotonicity)} $K_t \subseteq K_{t+1}$ for all $t$. Verified knowledge only grows.
+\item \textbf{(Monotonicity)} $K_t \subseteq K_{t+1}$ for all $t$. Accepted knowledge only grows.
 \item \textbf{(Tamper-Evidence)} For any altered ledger $\tilde{\mathcal{L}} \neq \mathcal{L}$, the head hash $\tilde{L}_T \neq L_T$ except with negligible probability.
 \end{enumerate}
 \end{proposition}
@@ -224,14 +332,37 @@ At each epoch $t$, the system commits to reasoning root $r_t$ (32-byte digest) a
 \end{lemma}
 
 \begin{remark}
-The fixed-width encoding (32-byte digests) eliminates concatenation ambiguity. The prefix \texttt{EPOCH:} provides domain separation from other hash uses in the system. Together with Proposition~\ref{prop:ledger-formal}, this ensures every aspect of the system's state is tamper-evident and auditably linked to verified proofs.
+The fixed-width encoding (32-byte digests) eliminates concatenation ambiguity. The prefix \texttt{EPOCH:} provides domain separation from other hash uses in the system. Together with Proposition~\ref{prop:ledger-formal}, this ensures every aspect of the system's state is tamper-evident and auditably linked to verifier-accepted proof artifacts.
 \end{remark}
 
 %=============================================================================
 \section{Phase I Experimental Results}
 \label{sec:results}
 
-\input{sections/03_results}
+This section presents Phase I experimental findings. The primary goal is validating measurement infrastructure and fail-closed governance, not demonstrating capability or convergence.
+
+\subsection{CAL-EXP-3: Measurement Validation}
+
+CAL-EXP-3 validates that $\Delta p$ (success rate proxy) is computable per cycle and that variance between experimental arms is measurable. The experiment compares:
+\begin{itemize}[leftmargin=1.5em]
+\item \textbf{Baseline (lr=0.0):} RFL disabled; policy static
+\item \textbf{Treatment (lr=0.1):} RFL enabled; policy updated based on verifier outcomes
+\end{itemize}
+
+Both conditions exhibited oscillatory $\Delta p$ dynamics around the decision threshold. No convergence or uplift is claimed; the purpose is infrastructure validation. Full time-series plots are available in the evidence pack (ancillary material).
+
+\subsection{Fail-Closed Governance}
+
+Separate stress tests confirm that governance predicates trigger correctly under out-of-bounds conditions:
+\begin{itemize}[leftmargin=1.5em]
+\item \textbf{F5.2 (variance ratio):} Fires when inter-arm variance exceeds threshold
+\item \textbf{F5.3 (windowed drift):} Fires when $\Delta p$ drift exceeds tolerance
+\end{itemize}
+When triggered, these predicates cap the claim level at L0 (no capability claim). This is the expected behavior for Phase I stress tests.
+
+\subsection{Dual-Root Attestation}
+
+The Mirror Auditor confirmed the integrity of the dual-root attestation mechanism. For the \experimentID{\valHtShortHash} snapshot, coverage was \valMirrorCoverage\%, with \valBlocksAudited{} blocks fully audited and verified.
 
 \subsection{Interpreting Phase I Outcomes}
 
@@ -240,7 +371,7 @@ The Phase I results establish three facts:
 \begin{enumerate}[leftmargin=1.5em]
 \item \textbf{The measurement substrate works.} $\Delta p$ (success rate proxy) is computable per cycle. Variance between arms is measurable.
 
-\item \textbf{Fail-closed governance triggers correctly.} F5.2 (variance ratio out of bounds) and F5.3 (windowed drift excessive) fired in all runs, capping claims at L0.
+\item \textbf{Fail-closed governance triggers correctly.} In stress tests, F5.2 (variance ratio out of bounds) and F5.3 (windowed drift excessive) fired as expected, capping claims at L0.
 
 \item \textbf{Non-convergence is informative, not a failure.} Phase I was designed to validate infrastructure, not demonstrate capability. The fact that fail-close triggers fired correctly \emph{is} the success condition.
 \end{enumerate}
@@ -249,7 +380,7 @@ The Phase I results establish three facts:
 \section{Discussion: Why This Matters}
 \label{sec:discussion}
 
-Phase I experiments aimed to characterize the behavior of the \projectname{} substrate under various configurations. The \Ht{} dynamics (Figure~\ref{fig:rfl_ht_convergence}) were observed to understand system states.
+Phase I experiments characterized the behavior of the \projectname{} substrate under controlled conditions. The focus was validating measurement infrastructure and fail-closed governance, not demonstrating capability.
 
 \subsection{Comparison to Adjacent Work}
 
@@ -263,9 +394,9 @@ Phase I experiments aimed to characterize the behavior of the \projectname{} sub
 RLHF & Human preference & Low & No \\
 Verifier-guided & Post-hoc filter & Medium & No \\
 Proof-carrying code & None (static) & High & Yes \\
-\textbf{\projectname{} (RFL)} & \textbf{Verified truth} & \textbf{High} & \textbf{Yes} \\
+\textbf{\projectname{} (RFL)} & \textbf{Verifier outcome$^\dagger$} & \textbf{High} & \textbf{Yes} \\
 \end{tabular}
-\caption{Comparison of approaches to reliable AI. \projectname{} uniquely combines verified learning signals with fail-closed governance.}
+\caption{Comparison of approaches to reliable AI. \projectname{} uniquely combines verified learning signals with fail-closed governance. $^\dagger$Phase I uses a synthetic proxy verifier; formal proof verification (Lean) is Phase II+.}
 \label{tab:comparison}
 \end{table}
 
@@ -299,7 +430,7 @@ To maintain epistemic discipline, we explicitly state what Phase I does \emph{no
 
 \subsection{SHADOW Mode Semantics}
 
-All Phase I experiments operate in SHADOW mode: verification results are \emph{observational and non-blocking}. The system records what happened but does not gate production decisions.
+All Phase I experiments operate in SHADOW mode: verification results are \emph{observational and non-blocking}. The system records what happened but does not gate production decisions. In this context, ``fail-closed'' means claim-capping and evidence-rejection, not production blocking---governance predicates cap the claim level at L0 when triggered, but do not halt execution.
 
 \subsection{Phase Quarantine}
 
@@ -336,7 +467,7 @@ Phase II of the calibration program addresses governance stability: specifically
 
 The contribution is infrastructural, not empirical. We have built the substrate; demonstrating capability on that substrate is future work.
 
-The system stands as proof-of-concept for a new paradigm: \emph{learning from verified truth}. Whether this paradigm scales to complex reasoning remains an open question. What Phase I establishes is that the question can now be asked with rigor.
+The system stands as proof-of-concept for a new paradigm: \emph{learning from verifier-attested outcomes}. Whether this paradigm scales to complex reasoning remains an open question. What Phase I establishes is that the question can now be asked with rigor.
 
 %=============================================================================
 \appendix
@@ -344,30 +475,49 @@ The system stands as proof-of-concept for a new paradigm: \emph{learning from ve
 \section{Evidence Pack}
 \label{app:evidence}
 
-The following manifests provide cryptographic verification of the experimental runs.
+The evidence pack provides cryptographic verification of experimental runs. Key artifacts:
 
 \begin{table}[h]
     \centering
     \begin{tabular}{l l}
         \toprule
-        \textbf{Artifact} & \textbf{SHA-256 (Short)} \\
+        \textbf{Artifact} & \textbf{Contents} \\
         \midrule
-        \Ht{} Snapshot & \valHtShortHash \\
-        Mirror Audit Report & \texttt{artifacts/mirror/mirror\_report.json} \\
-        Drift Table & \texttt{drift\_table.json} \\
+        Evidence Manifest & File list with SHA-256 hashes (JSON) \\
+        Run Metadata & Experiment configuration and timing (JSON) \\
+        Governance Verdict & Claim level and predicate outcomes (JSON) \\
         \bottomrule
     \end{tabular}
-    \caption{Cryptographic manifest of key experimental artifacts.}
+    \caption{Key experimental artifacts. Exact paths and SHA-256 hashes provided in ancillary material.}
     \label{tab:manifest}
 \end{table}
 
-All artifacts are available in the evidence directory: \texttt{docs/evidence/cal\_exp\_3/}.
+The complete evidence pack (run manifests, cryptographic hashes, raw $\Delta p$ time series) will be published as ancillary material with this submission.
+
+\paragraph{Governance binding in the evidence manifest.}
+In addition to file hashes, the evidence manifest records:
+\begin{enumerate}[leftmargin=1.5em]
+\item a SHA-256 hash of the active Governance Commitment Registry (GCR), computed over RFC~8785-style canonical JSON (keys sorted lexicographically, no whitespace, ASCII-safe encoding);
+\item a per-artifact classification tag (\texttt{artifact\_kind}) with values: \texttt{VERIFIED}, \texttt{REFUTED}, \texttt{ABSTAINED}, or \texttt{INADMISSIBLE\_UPDATE}.
+\end{enumerate}
+The replay verifier checks these fields fail-closed: (i)~missing or invalid \texttt{artifact\_kind} enum values, (ii)~missing \texttt{commitment\_registry\_sha256} field, and (iii)~mismatched registry file hash all cause verification failure with exit code~1. This makes governance constraints and rejected updates cryptographically visible without elevating them to knowledge claims.
+
+\paragraph{Scope disclaimer.}
+The evidence pack verifies artifact integrity, determinism, and governance binding only. It does \emph{not} validate correctness, safety, alignment, or legal compliance. The governance commitments in the registry are illustrative placeholders in v0.9.x; the mechanism (hash binding) is what is being validated, not the normative content.
+
+\paragraph{Version pinning.}
+The external audit surface for Phase~I corresponds to Git tag \texttt{v0.9.4-pilot-audit-hardened}. The canonical verification command is:
+\begin{verbatim}
+uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output/
+cd demo_output && python verify.py
+\end{verbatim}
+Expected test vectors (SHA-256 hashes for seed=42) are documented in \texttt{docs/pilot/AUDIT\_WALKTHROUGH.md} within the tagged release.
 
 %=============================================================================
 \section{Formal Proofs}
 \label{app:formal-proofs}
 
-This appendix provides complete proofs for the formal properties stated in Section~\ref{sec:formal-properties}.
+This appendix provides complete proofs for the formal properties stated in Section~\ref{sec:formal-properties}. Stronger convergence and robustness results under additional assumptions are developed in a separate technical companion and are intentionally excluded here to preserve Phase I scope.
 
 \subsection{Proof of Proposition~\ref{prop:sa-formal} (RFL as Stochastic Approximation)}
 
