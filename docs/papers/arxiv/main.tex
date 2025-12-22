@@ -1,5 +1,8 @@
 \documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{textcomp}
+\usepackage{lmodern}
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{booktabs}
@@ -173,7 +176,9 @@ audit-grade artifacts. These include:
 These artifacts are \emph{not} promoted to knowledge and do not enter the
 monotone ledger of verified statements. Instead, they are recorded as
 governance-bound evidence, preserving a verifiable record of what was
-attempted and explicitly not learned.
+attempted and explicitly not learned. This ensures that rejected or blocked
+updates constrain future interpretation and auditability without acquiring
+epistemic or learning authority.
 
 \paragraph{Frozen Governance Commitments.}
 Each experimental run is bound to a versioned \emph{Governance Commitment
@@ -212,6 +217,14 @@ sole canonical commitment for learning and epistemic state. Governance-bound
 negative knowledge operates as an \emph{orthogonal evidentiary layer}: additive,
 non-authoritative, and non-interventional in Phase~I.
 This evidentiary layer is replay-verified and fail-closed, but it cannot escalate claims or authorize learning updates.
+
+\paragraph{Threat Model.}
+This architecture defends against \emph{silent drift} (governance constraints
+changing without trace) and \emph{policy laundering} (informal post-hoc
+reinterpretation of what was permitted). It does \emph{not} protect against
+malicious verifier design, compromised registry authorship, or adversarial
+manipulation of the run environment itself. Phase~I assumes an honest-but-fallible
+operator; Byzantine fault tolerance is out of scope.
 
 Future phases may introduce explicit governance-state commitments, but no such
 extension is required for the Phase~I claims reported here.

@@ -5,81 +5,86 @@
 \citation{marcus2020}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction: The Verifiability Gap}{1}{section.1}\protected@file@percent }
 \newlabel{sec:intro}{{1}{1}{Introduction: The Verifiability Gap}{section.1}{}}
+\citation{harrison2008}
+\citation{buzzard2020}
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.1}What Problem Does This Address?}{2}{subsection.1.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.2}The Chain of Verifiable Cognition}{2}{subsection.1.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.3}What Is Genuinely New}{3}{subsection.1.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2}System Architecture}{3}{section.2}\protected@file@percent }
 \newlabel{sec:architecture}{{2}{3}{System Architecture}{section.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Pipeline Overview}{3}{subsection.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3}Methodology}{3}{section.3}\protected@file@percent }
-\newlabel{sec:methodology}{{3}{3}{Methodology}{section.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Test Harness}{3}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Configurations Under Test}{3}{subsection.3.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Architectural overview of the FO cycle harness. Semantics derived from fm.tex (Field Manual). The pipeline runs: UI Event $\to $ Curriculum Gate $\to $ Derivation Engine $\to $ Lean Verifier $\to $ Dual Attestation ($H_t = \mathrm  {Hash}(R_t \| U_t)$) $\to $ RFL policy update. SHADOW MODE: all verification results are observational and non-blocking.}}{4}{figure.1}\protected@file@percent }
-\newlabel{fig:harness_architecture}{{1}{4}{Architectural overview of the FO cycle harness. Semantics derived from fm.tex (Field Manual). The pipeline runs: UI Event $\to $ Curriculum Gate $\to $ Derivation Engine $\to $ Lean Verifier $\to $ Dual Attestation ($H_t = \mathrm {Hash}(R_t \| U_t)$) $\to $ RFL policy update. SHADOW MODE: all verification results are observational and non-blocking}{figure.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Measurement Metrics}{4}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}The Monotone Ledger}{4}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Dual Attestation}{5}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Reflexive Formal Learning: Formal Anchor}{5}{section.4}\protected@file@percent }
-\newlabel{sec:rfl}{{4}{5}{Reflexive Formal Learning: Formal Anchor}{section.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Core Definitions}{5}{subsection.4.1}\protected@file@percent }
-\newlabel{def:epistemic-risk}{{3}{5}{Epistemic Risk}{definition.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}The RFL Update Rule}{5}{subsection.4.2}\protected@file@percent }
-\newlabel{eq:rfl-update}{{1}{5}{The RFL Update Rule}{equation.4.1}{}}
-\newlabel{prop:sa}{{1}{6}{RFL as Stochastic Approximation}{proposition.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Abstention as First-Class Outcome}{6}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Formal Properties of the Substrate}{6}{section.5}\protected@file@percent }
-\newlabel{sec:formal-properties}{{5}{6}{Formal Properties of the Substrate}{section.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}RFL Update as Stochastic Approximation}{6}{subsection.5.1}\protected@file@percent }
-\newlabel{prop:sa-formal}{{2}{6}{RFL as Stochastic Approximation}{proposition.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Monotone Ledger and Tamper-Evidence}{7}{subsection.5.2}\protected@file@percent }
-\newlabel{prop:ledger-formal}{{3}{7}{Monotonicity and Tamper-Evidence}{proposition.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Dual Attestation Binding}{7}{subsection.5.3}\protected@file@percent }
-\newlabel{lem:binding}{{1}{7}{Binding Property of Dual Attestation}{lemma.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Phase I Experimental Results}{8}{section.6}\protected@file@percent }
-\newlabel{sec:results}{{6}{8}{Phase I Experimental Results}{section.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Phase I Baseline Observations}{8}{subsection.6.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces CAL-EXP-3: Observed $\Delta p$ (success rate proxy) over cycles. Baseline (lr=0.0, blue) vs Treatment (lr=0.1, green). Phase I observation: both conditions exhibit oscillatory behavior around the threshold (red dashed line at 0.05). No convergence or uplift observed. Data source: \texttt  {docs/evidence/cal\_exp\_3/}.}}{8}{figure.2}\protected@file@percent }
-\newlabel{fig:rfl_abstention_reduction}{{2}{8}{CAL-EXP-3: Observed $\Delta p$ (success rate proxy) over cycles. Baseline (lr=0.0, blue) vs Treatment (lr=0.1, green). Phase I observation: both conditions exhibit oscillatory behavior around the threshold (red dashed line at 0.05). No convergence or uplift observed. Data source: \texttt {docs/evidence/cal\_exp\_3/}}{figure.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}PL Slicing Operational Characteristics}{8}{subsection.6.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces CAL-EXP-3: $\Delta p$ dynamics over cycles (top) and windowed comparison (bottom). Baseline (lr=0.0, blue) vs Treatment (lr=0.1, green). \textbf  {Phase I: no convergence observed.} The treatment condition shows lower variance but both conditions remain oscillatory. No smoothing applied. Data source: \texttt  {docs/evidence/cal\_exp\_3/}.}}{9}{figure.3}\protected@file@percent }
-\newlabel{fig:rfl_ht_convergence}{{3}{9}{CAL-EXP-3: $\Delta p$ dynamics over cycles (top) and windowed comparison (bottom). Baseline (lr=0.0, blue) vs Treatment (lr=0.1, green). \textbf {Phase I: no convergence observed.} The treatment condition shows lower variance but both conditions remain oscillatory. No smoothing applied. Data source: \texttt {docs/evidence/cal\_exp\_3/}}{figure.3}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Performance metrics across varying Ponderation Layer (PL) slice configurations.}}{10}{table.1}\protected@file@percent }
-\newlabel{tab:pl_slice_efficiency}{{1}{10}{Performance metrics across varying Ponderation Layer (PL) slice configurations}{table.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Dual-Root Attestation}{10}{subsection.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Observed Capability Metrics}{10}{subsection.6.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Interpreting Phase I Outcomes}{10}{subsection.6.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion: Why This Matters}{10}{section.7}\protected@file@percent }
-\newlabel{sec:discussion}{{7}{10}{Discussion: Why This Matters}{section.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Comparison to Adjacent Work}{11}{subsection.7.1}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Comparison of approaches to reliable AI. MathLedger{} uniquely combines verified learning signals with fail-closed governance.}}{11}{table.2}\protected@file@percent }
-\newlabel{tab:comparison}{{2}{11}{Comparison of approaches to reliable AI. \projectname {} uniquely combines verified learning signals with fail-closed governance}{table.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Layer-3 Infrastructure}{11}{subsection.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Explicit Non-Claims and Scope Boundaries}{11}{section.8}\protected@file@percent }
-\newlabel{sec:non-claims}{{8}{11}{Explicit Non-Claims and Scope Boundaries}{section.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}What Phase I Does NOT Establish}{11}{subsection.8.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}SHADOW Mode Semantics}{12}{subsection.8.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Phase Quarantine}{12}{subsection.8.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {9}Future Work}{12}{section.9}\protected@file@percent }
-\newlabel{sec:future_work}{{9}{12}{Future Work}{section.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}Phase II Calibration}{12}{subsection.9.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {10}Conclusion}{12}{section.10}\protected@file@percent }
-\newlabel{sec:conclusion}{{10}{12}{Conclusion}{section.10}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.1}Test Harness}{3}{subsubsection.2.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.2}Configurations Under Test}{3}{subsubsection.2.1.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Architectural overview of the FO cycle harness. The pipeline runs: UI Event $\to $ Curriculum Gate $\to $ Derivation Engine $\to $ Configured Verifier $\to $ Dual Attestation ($H_t$) $\to $ RFL policy update. Phase I uses a synthetic proxy verifier; Lean kernel integration is Phase II+. SHADOW MODE: all verification results are observational and non-blocking.}}{4}{figure.1}\protected@file@percent }
+\newlabel{fig:harness_architecture}{{1}{4}{Architectural overview of the FO cycle harness. The pipeline runs: UI Event $\to $ Curriculum Gate $\to $ Derivation Engine $\to $ Configured Verifier $\to $ Dual Attestation ($H_t$) $\to $ RFL policy update. Phase I uses a synthetic proxy verifier; Lean kernel integration is Phase II+. SHADOW MODE: all verification results are observational and non-blocking}{figure.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {2.1.3}Measurement Metrics}{4}{subsubsection.2.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}The Monotone Ledger}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Dual Attestation}{5}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Governance-Bound Negative Knowledge}{5}{subsection.2.4}\protected@file@percent }
+\newlabel{sec:negative-knowledge}{{2.4}{5}{Governance-Bound Negative Knowledge}{subsection.2.4}{}}
+\@writefile{toc}{\contentsline {paragraph}{Negative Knowledge as Evidence.}{5}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Frozen Governance Commitments.}{6}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Separation from Learning Authority.}{6}{section*.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Relation to Dual Attestation.}{6}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Threat Model.}{6}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Reflexive Formal Learning: Formal Anchor}{7}{section.3}\protected@file@percent }
+\newlabel{sec:rfl}{{3}{7}{Reflexive Formal Learning: Formal Anchor}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Core Definitions}{7}{subsection.3.1}\protected@file@percent }
+\newlabel{def:epistemic-risk}{{3}{7}{Epistemic Risk}{definition.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}The RFL Update Rule}{7}{subsection.3.2}\protected@file@percent }
+\newlabel{eq:rfl-update}{{1}{7}{The RFL Update Rule}{equation.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Abstention as First-Class Outcome}{7}{subsection.3.3}\protected@file@percent }
+\citation{Robbins1951}
+\citation{Kushner2003}
+\citation{Borkar2008}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Formal Properties of the Substrate}{8}{section.4}\protected@file@percent }
+\newlabel{sec:formal-properties}{{4}{8}{Formal Properties of the Substrate}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}RFL Update as Stochastic Approximation}{8}{subsection.4.1}\protected@file@percent }
+\newlabel{prop:sa-formal}{{1}{8}{RFL as Stochastic Approximation}{proposition.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Monotone Ledger and Tamper-Evidence}{9}{subsection.4.2}\protected@file@percent }
+\newlabel{prop:ledger-formal}{{2}{9}{Monotonicity and Tamper-Evidence}{proposition.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Dual Attestation Binding}{9}{subsection.4.3}\protected@file@percent }
+\newlabel{lem:binding}{{1}{9}{Binding Property of Dual Attestation}{lemma.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Phase I Experimental Results}{9}{section.5}\protected@file@percent }
+\newlabel{sec:results}{{5}{9}{Phase I Experimental Results}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}CAL-EXP-3: Measurement Validation}{9}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Fail-Closed Governance}{10}{subsection.5.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Dual-Root Attestation}{10}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}Interpreting Phase I Outcomes}{10}{subsection.5.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Discussion: Why This Matters}{10}{section.6}\protected@file@percent }
+\newlabel{sec:discussion}{{6}{10}{Discussion: Why This Matters}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Comparison to Adjacent Work}{11}{subsection.6.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Comparison of approaches to reliable AI. MathLedger{} uniquely combines verified learning signals with fail-closed governance. $^\dagger $Phase I uses a synthetic proxy verifier; formal proof verification (Lean) is Phase II+.}}{11}{table.1}\protected@file@percent }
+\newlabel{tab:comparison}{{1}{11}{Comparison of approaches to reliable AI. \projectname {} uniquely combines verified learning signals with fail-closed governance. $^\dagger $Phase I uses a synthetic proxy verifier; formal proof verification (Lean) is Phase II+}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Layer-3 Infrastructure}{11}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Explicit Non-Claims and Scope Boundaries}{11}{section.7}\protected@file@percent }
+\newlabel{sec:non-claims}{{7}{11}{Explicit Non-Claims and Scope Boundaries}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}What Phase I Does NOT Establish}{11}{subsection.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}SHADOW Mode Semantics}{12}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Phase Quarantine}{12}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Future Work}{12}{section.8}\protected@file@percent }
+\newlabel{sec:future_work}{{8}{12}{Future Work}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Phase II Calibration}{12}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{12}{section.9}\protected@file@percent }
+\newlabel{sec:conclusion}{{9}{12}{Conclusion}{section.9}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {A}Evidence Pack}{13}{appendix.A}\protected@file@percent }
 \newlabel{app:evidence}{{A}{13}{Evidence Pack}{appendix.A}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Cryptographic manifest of key experimental artifacts.}}{13}{table.3}\protected@file@percent }
-\newlabel{tab:manifest}{{3}{13}{Cryptographic manifest of key experimental artifacts}{table.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {B}Formal Proofs}{13}{appendix.B}\protected@file@percent }
-\newlabel{app:formal-proofs}{{B}{13}{Formal Proofs}{appendix.B}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Proof of Proposition~\ref {prop:sa-formal} (RFL as Stochastic Approximation)}{13}{subsection.B.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Key experimental artifacts. Exact paths and SHA-256 hashes provided in ancillary material.}}{13}{table.2}\protected@file@percent }
+\newlabel{tab:manifest}{{2}{13}{Key experimental artifacts. Exact paths and SHA-256 hashes provided in ancillary material}{table.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Governance binding in the evidence manifest.}{13}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Scope disclaimer.}{14}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Version pinning.}{14}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Formal Proofs}{14}{appendix.B}\protected@file@percent }
+\newlabel{app:formal-proofs}{{B}{14}{Formal Proofs}{appendix.B}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1}Proof of Proposition~\ref {prop:sa-formal} (RFL as Stochastic Approximation)}{14}{subsection.B.1}\protected@file@percent }
 \bibstyle{plain}
 \bibdata{references}
 \bibcite{Borkar2008}{1}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Proof of Proposition~\ref {prop:ledger-formal} (Monotonicity and Tamper-Evidence)}{14}{subsection.B.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Proof of Lemma~\ref {lem:binding} (Dual Attestation Binding)}{14}{subsection.B.3}\protected@file@percent }
 \bibcite{buzzard2020}{2}
 \bibcite{harrison2008}{3}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2}Proof of Proposition~\ref {prop:ledger-formal} (Monotonicity and Tamper-Evidence)}{15}{subsection.B.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.3}Proof of Lemma~\ref {lem:binding} (Dual Attestation Binding)}{15}{subsection.B.3}\protected@file@percent }
 \bibcite{Kushner2003}{4}
 \bibcite{marcus2020}{5}
 \bibcite{Robbins1951}{6}
-\gdef \@abspage@last{15}
+\gdef \@abspage@last{16}
