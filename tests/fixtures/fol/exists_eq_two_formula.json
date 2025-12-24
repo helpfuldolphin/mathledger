@@ -1,0 +1,15 @@
+{
+  "description": "∃y. y = two (unique witness test - requires Z3 domain with 'two' constant)",
+  "formula": {
+    "type": "exists",
+    "variable": "y",
+    "body": {
+      "type": "equals",
+      "left": {"type": "var", "name": "y"},
+      "right": {"type": "const", "value": "two"}
+    }
+  },
+  "expected_z3": "VERIFIED",
+  "expected_witness": {"y": "2"},
+  "note": "Const 'two' resolves via domain_spec.constants['two'] to element '2'. Tests R2 (witness is first satisfying)."
+}

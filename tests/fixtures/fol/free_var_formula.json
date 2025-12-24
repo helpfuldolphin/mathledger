@@ -1,0 +1,18 @@
+{
+  "description": "x * identity = x (FREE VARIABLE x - must raise ValidationError, NOT produce certificate)",
+  "formula": {
+    "type": "equals",
+    "left": {
+      "type": "apply",
+      "function": "mul",
+      "args": [
+        {"type": "var", "name": "x"},
+        {"type": "const", "value": "identity"}
+      ]
+    },
+    "right": {"type": "var", "name": "x"}
+  },
+  "expected_error": "ValidationError",
+  "expected_error_match": "free variable.*x|FREE_VARIABLES",
+  "note": "FREE_VARIABLES_DETECTED is a validation error (fail-closed), NOT an ABSTAIN case. See EXECUTION_PACKET Section 0.3."
+}

@@ -1,0 +1,14 @@
+{
+  "description": "∀x. x = x (reflexivity of equality - trivially true)",
+  "formula": {
+    "type": "forall",
+    "variable": "x",
+    "body": {
+      "type": "equals",
+      "left": {"type": "var", "name": "x"},
+      "right": {"type": "var", "name": "x"}
+    }
+  },
+  "expected": "VERIFIED",
+  "note": "Should be VERIFIED for any domain"
+}
