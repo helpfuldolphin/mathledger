@@ -13,6 +13,8 @@ Domain Separation Tags:
 - NODE_: (0x05) - For node attestation namespace
 - DOSSIER_: (0x06) - For celestial dossier namespace
 - ROOT_: (0x07) - For root hash namespace
+- FOL_AST: (0x08) - For FOL formula AST hashing
+- FOL_CERT: (0x09) - For FOL verification certificate hashing
 """
 
 import hashlib
@@ -29,6 +31,10 @@ DOMAIN_FED = b'\x04'
 DOMAIN_NODE_ATTEST = b'\x05'
 DOMAIN_DOSSIER = b'\x06'
 DOMAIN_ROOT = b'\x07'
+
+# FOL_FIN_EQ_v1 domain tags (finite-domain first-order logic with equality)
+DOMAIN_FOL_AST = b'\x08'   # For FOL formula AST hashing
+DOMAIN_FOL_CERT = b'\x09'  # For FOL verification certificate hashing
 
 
 def sha256_hex(data: Union[str, bytes], domain: bytes = b'') -> str:
