@@ -1,0 +1,13 @@
+{
+  "label": "PHASE II — NOT USED IN PHASE I",
+  "slice": "slice_uplift_sparse",
+  "mode": "both",
+  "cycles": 5,
+  "initial_seed": 42,
+  "slice_config_hash": "abc123def456",
+  "prereg_hash": "xyz789abc123",
+  "outputs": {
+    "baseline": "results/uplift_u2/slice_uplift_sparse/baseline.jsonl",
+    "rfl": "results/uplift_u2/slice_uplift_sparse/rfl.jsonl"
+  }
+}
