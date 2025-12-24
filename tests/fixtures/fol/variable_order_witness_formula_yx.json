@@ -1,0 +1,36 @@
+{
+  "description": "∃y. ∃x. x * y = identity ∧ x ≠ y (witness ordering test - y then x)",
+  "formula": {
+    "type": "exists",
+    "variable": "y",
+    "body": {
+      "type": "exists",
+      "variable": "x",
+      "body": {
+        "type": "and",
+        "left": {
+          "type": "equals",
+          "left": {
+            "type": "apply",
+            "function": "mul",
+            "args": [
+              {"type": "var", "name": "x"},
+              {"type": "var", "name": "y"}
+            ]
+          },
+          "right": {"type": "const", "value": "identity"}
+        },
+        "right": {
+          "type": "not",
+          "inner": {
+            "type": "equals",
+            "left": {"type": "var", "name": "x"},
+            "right": {"type": "var", "name": "y"}
+          }
+        }
+      }
+    }
+  },
+  "expected_z2": "REFUTED",
+  "note": "Same as xy version but quantifier order is y then x - tests that enumeration respects quantifier nesting order"
+}

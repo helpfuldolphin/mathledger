@@ -1,0 +1,50 @@
+{
+  "description": "∀x. ∀y. ∀z. (x * y) * z = x * (y * z) (associativity)",
+  "formula": {
+    "type": "forall",
+    "variable": "x",
+    "body": {
+      "type": "forall",
+      "variable": "y",
+      "body": {
+        "type": "forall",
+        "variable": "z",
+        "body": {
+          "type": "equals",
+          "left": {
+            "type": "apply",
+            "function": "mul",
+            "args": [
+              {
+                "type": "apply",
+                "function": "mul",
+                "args": [
+                  {"type": "var", "name": "x"},
+                  {"type": "var", "name": "y"}
+                ]
+              },
+              {"type": "var", "name": "z"}
+            ]
+          },
+          "right": {
+            "type": "apply",
+            "function": "mul",
+            "args": [
+              {"type": "var", "name": "x"},
+              {
+                "type": "apply",
+                "function": "mul",
+                "args": [
+                  {"type": "var", "name": "y"},
+                  {"type": "var", "name": "z"}
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "expected_z2": "VERIFIED",
+  "expected_z3": "VERIFIED"
+}

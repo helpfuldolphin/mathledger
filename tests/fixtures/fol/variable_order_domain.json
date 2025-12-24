@@ -1,0 +1,13 @@
+{
+  "domain_id": "VariableOrder",
+  "elements": ["alpha", "beta"],
+  "constants": {
+    "identity": "alpha"
+  },
+  "functions": {
+    "mul": {
+      "alpha": {"alpha": "alpha", "beta": "beta"},
+      "beta": {"alpha": "beta", "beta": "alpha"}
+    }
+  }
+}

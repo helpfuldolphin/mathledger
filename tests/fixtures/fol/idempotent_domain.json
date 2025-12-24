@@ -1,0 +1,13 @@
+{
+  "domain_id": "Idempotent",
+  "elements": ["a", "b"],
+  "constants": {
+    "identity": "a"
+  },
+  "functions": {
+    "mul": {
+      "a": {"a": "a", "b": "a"},
+      "b": {"a": "a", "b": "b"}
+    }
+  }
+}

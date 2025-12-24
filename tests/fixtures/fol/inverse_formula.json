@@ -1,0 +1,40 @@
+{
+  "description": "∀x. ∃y. x*y=identity ∧ y*x=identity (two-sided inverse axiom)",
+  "formula": {
+    "type": "forall",
+    "variable": "x",
+    "body": {
+      "type": "exists",
+      "variable": "y",
+      "body": {
+        "type": "and",
+        "left": {
+          "type": "equals",
+          "left": {
+            "type": "apply",
+            "function": "mul",
+            "args": [
+              {"type": "var", "name": "x"},
+              {"type": "var", "name": "y"}
+            ]
+          },
+          "right": {"type": "const", "value": "identity"}
+        },
+        "right": {
+          "type": "equals",
+          "left": {
+            "type": "apply",
+            "function": "mul",
+            "args": [
+              {"type": "var", "name": "y"},
+              {"type": "var", "name": "x"}
+            ]
+          },
+          "right": {"type": "const", "value": "identity"}
+        }
+      }
+    }
+  },
+  "expected_z2": "VERIFIED",
+  "expected_z2_broken": "REFUTED"
+}

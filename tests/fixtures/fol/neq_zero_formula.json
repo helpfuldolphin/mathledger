@@ -1,0 +1,18 @@
+{
+  "description": "∀x. x ≠ identity (all elements are non-identity - tests ∀ early-exit counterexample)",
+  "formula": {
+    "type": "forall",
+    "variable": "x",
+    "body": {
+      "type": "not",
+      "inner": {
+        "type": "equals",
+        "left": {"type": "var", "name": "x"},
+        "right": {"type": "const", "value": "identity"}
+      }
+    }
+  },
+  "expected_z2": "REFUTED",
+  "expected_counterexample": {"x": "0"},
+  "note": "Identity element is first in domain, so counterexample is first falsifying assignment. Tests R3 (counterexample selection)."
+}

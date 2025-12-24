@@ -1,0 +1,22 @@
+{
+  "description": "∃x. x * x = x (idempotent element exists - in Z2 both 0 and 1 qualify)",
+  "formula": {
+    "type": "exists",
+    "variable": "x",
+    "body": {
+      "type": "equals",
+      "left": {
+        "type": "apply",
+        "function": "mul",
+        "args": [
+          {"type": "var", "name": "x"},
+          {"type": "var", "name": "x"}
+        ]
+      },
+      "right": {"type": "var", "name": "x"}
+    }
+  },
+  "expected_z2": "VERIFIED",
+  "expected_witness": "0",
+  "note": "First witness in lex order is 0 (0+0=0). 1 also works (1+1=0≠1 in Z2 addition, but this is mul)"
+}

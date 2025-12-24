@@ -1,0 +1,36 @@
+{
+  "description": "∀x. identity*x=x ∧ x*identity=x (two-sided identity axiom)",
+  "formula": {
+    "type": "forall",
+    "variable": "x",
+    "body": {
+      "type": "and",
+      "left": {
+        "type": "equals",
+        "left": {
+          "type": "apply",
+          "function": "mul",
+          "args": [
+            {"type": "const", "value": "identity"},
+            {"type": "var", "name": "x"}
+          ]
+        },
+        "right": {"type": "var", "name": "x"}
+      },
+      "right": {
+        "type": "equals",
+        "left": {
+          "type": "apply",
+          "function": "mul",
+          "args": [
+            {"type": "var", "name": "x"},
+            {"type": "const", "value": "identity"}
+          ]
+        },
+        "right": {"type": "var", "name": "x"}
+      }
+    }
+  },
+  "expected_z2": "VERIFIED",
+  "expected_z2_broken": "VERIFIED"
+}

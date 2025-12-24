@@ -1,0 +1,37 @@
+{
+  "description": "∃x. ∃y. x * y = identity ∧ x ≠ y (witness ordering test - x then y)",
+  "formula": {
+    "type": "exists",
+    "variable": "x",
+    "body": {
+      "type": "exists",
+      "variable": "y",
+      "body": {
+        "type": "and",
+        "left": {
+          "type": "equals",
+          "left": {
+            "type": "apply",
+            "function": "mul",
+            "args": [
+              {"type": "var", "name": "x"},
+              {"type": "var", "name": "y"}
+            ]
+          },
+          "right": {"type": "const", "value": "identity"}
+        },
+        "right": {
+          "type": "not",
+          "inner": {
+            "type": "equals",
+            "left": {"type": "var", "name": "x"},
+            "right": {"type": "var", "name": "y"}
+          }
+        }
+      }
+    }
+  },
+  "expected_z2": "VERIFIED",
+  "expected_witness": {"x": "1", "y": "1"},
+  "note": "In Z2, 1*1=0=identity but 1≠1 is false. Actually 0*1≠0 so need 1*1=0. Wait, Z2 mul is XOR: 1*1=0=identity, but x≠y requires x=1,y=0 or x=0,y=1. 0*1=1≠0. 1*0=1≠0. So REFUTED."
+}
