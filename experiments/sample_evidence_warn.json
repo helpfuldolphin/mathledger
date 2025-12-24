@@ -1,0 +1,23 @@
+{
+  "runs": [
+    {
+      "run_id": "U2_EXP_002_seed_50",
+      "uplift": {
+        "delta_p": 0.15,
+        "abstention_rate": 0.20,
+        "promotion_decision": "PASS"
+      },
+      "tda": {
+        "HSS": 0.55,
+        "block_rate": 0.0,
+        "tda_outcome": "OK"
+      },
+      "metadata": {
+        "slice": "SLICE_B",
+        "seed": "0x50abc123",
+        "cycles": 200,
+        "note": "Low HSS indicates hidden instability"
+      }
+    }
+  ]
+}
