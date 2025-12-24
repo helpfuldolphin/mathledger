@@ -1,0 +1,222 @@
+name: Documentation Governance Radar
+
+on:
+  pull_request:
+    paths:
+      - '**.md'
+      - 'docs/**'
+  push:
+    branches:
+      - main
+    paths:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Scan mode (full-scan, watchdog, pr-diff)'
+        required: false
+        default: 'watchdog'
+        type: choice
+        options:
+          - full-scan
+          - watchdog
+          - pr-diff
+
+jobs:
+  governance-check:
+    name: Documentation Governance Check
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      pull-requests: write  # To post comments
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for diff
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Determine scan mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.mode }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "mode=pr-diff" >> $GITHUB_OUTPUT
+          else
+            echo "mode=watchdog" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate PR diff (if PR mode)
+        if: steps.mode.outputs.mode == 'pr-diff' && github.event_name == 'pull_request'
+        run: |
+          mkdir -p artifacts/drift
+          git diff origin/${{ github.base_ref }}...HEAD -- '*.md' > artifacts/drift/pr_diff.patch
+          echo "Generated PR diff with $(wc -l < artifacts/drift/pr_diff.patch) lines"
+      
+      - name: Run governance radar
+        id: radar
+        continue-on-error: true
+        run: |
+          set +e
+          ./scripts/governance-watchdog.sh ${{ steps.mode.outputs.mode }}
+          RADAR_EXIT_CODE=$?
+          echo "exit_code=$RADAR_EXIT_CODE" >> $GITHUB_OUTPUT
+          exit $RADAR_EXIT_CODE
+      
+      - name: Set job status
+        id: status
+        if: always()
+        run: |
+          EXIT_CODE=${{ steps.radar.outputs.exit_code }}
+          
+          # Map exit codes to status
+          case $EXIT_CODE in
+            0)
+              echo "status=pass" >> $GITHUB_OUTPUT
+              echo "emoji=✅" >> $GITHUB_OUTPUT
+              echo "color=green" >> $GITHUB_OUTPUT
+              ;;
+            1)
+              echo "status=fail" >> $GITHUB_OUTPUT
+              echo "emoji=❌" >> $GITHUB_OUTPUT
+              echo "color=red" >> $GITHUB_OUTPUT
+              ;;
+            2)
+              echo "status=warn" >> $GITHUB_OUTPUT
+              echo "emoji=⚠️" >> $GITHUB_OUTPUT
+              echo "color=yellow" >> $GITHUB_OUTPUT
+              ;;
+            4)
+              echo "status=skip" >> $GITHUB_OUTPUT
+              echo "emoji=⏭️" >> $GITHUB_OUTPUT
+              echo "color=gray" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "status=error" >> $GITHUB_OUTPUT
+              echo "emoji=💥" >> $GITHUB_OUTPUT
+              echo "color=red" >> $GITHUB_OUTPUT
+              ;;
+          esac
+      
+      - name: Generate summary
+        if: always()
+        run: |
+          if [ -f artifacts/drift/doc_governance_drift_summary.md ]; then
+            cat >> $GITHUB_STEP_SUMMARY << 'EOF'
+          # ${{ steps.status.outputs.emoji }} Documentation Governance Report
+          
+          **Mode**: ${{ steps.mode.outputs.mode }}
+          
+          EOF
+            cat artifacts/drift/doc_governance_drift_summary.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No governance report generated" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: governance-report-${{ github.run_number }}
+          path: artifacts/drift/
+          retention-days: 30
+      
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let reportContent = '## 🔍 Documentation Governance Report\n\n';
+            reportContent += `**Mode**: ${{ steps.mode.outputs.mode }}\n`;
+            reportContent += `**Status**: ${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.status }}\n\n`;
+            
+            if (fs.existsSync('artifacts/drift/doc_governance_drift_report.json')) {
+              const report = JSON.parse(fs.readFileSync('artifacts/drift/doc_governance_drift_report.json', 'utf8'));
+              
+              reportContent += '### Summary\n\n';
+              reportContent += `- **Critical**: ${report.summary.critical}\n`;
+              reportContent += `- **Warning**: ${report.summary.warning}\n`;
+              reportContent += `- **Info**: ${report.summary.info}\n\n`;
+              
+              if (report.violations.length > 0) {
+                reportContent += '### Violations\n\n';
+                
+                // Show up to 5 violations
+                const maxShow = 5;
+                for (let i = 0; i < Math.min(report.violations.length, maxShow); i++) {
+                  const v = report.violations[i];
+                  const icon = v.severity === 'CRITICAL' ? '❌' : v.severity === 'WARNING' ? '⚠️' : 'ℹ️';
+                  reportContent += `${icon} **[${v.severity}]** ${v.message}\n`;
+                  if (v.file) reportContent += `   - File: \`${v.file}\`\n`;
+                  if (v.line) reportContent += `   - Line: ${v.line}\n`;
+                  if (v.snippet) reportContent += `   - Snippet: \`${v.snippet.substring(0, 80)}...\`\n`;
+                  reportContent += '\n';
+                }
+                
+                if (report.violations.length > maxShow) {
+                  reportContent += `\n_... and ${report.violations.length - maxShow} more violations_\n\n`;
+                }
+              }
+              
+              reportContent += '\n---\n\n';
+              if (report.status === 'FAIL') {
+                reportContent += '⛔ **ORGANISM NOT ALIVE**: Narrative integrity compromised.\n';
+                reportContent += 'No document may imply "organism alive" until First Light run completes.\n\n';
+              }
+              
+              reportContent += '### Governance Rules\n\n';
+              reportContent += '1. ❌ Any mention of uplift MUST include "integrated-run pending" disclaimer\n';
+              reportContent += '2. ❌ No TDA enforcement claims before runner wiring complete\n';
+              reportContent += '3. ❌ No contradiction to Phase I-II disclaimers\n\n';
+              
+              reportContent += `📄 [Full Report](${context.payload.repository.html_url}/actions/runs/${context.runId})\n`;
+            } else {
+              reportContent += '⚠️ No governance report generated. Check workflow logs.\n';
+            }
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Documentation Governance Report')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: reportContent
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: reportContent
+              });
+            }
+      
+      - name: Fail if critical violations
+        if: steps.status.outputs.status == 'fail'
+        run: |
+          echo "::error::Critical governance violations detected"
+          echo "⛔ ORGANISM NOT ALIVE: Narrative integrity compromised"
+          exit 1
