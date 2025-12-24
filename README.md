@@ -48,10 +48,29 @@ For external reviewers conducting artifact verification:
 
 This audit verifies artifact integrity and determinism only; it makes no correctness, safety, or compliance claims.
 
+## FOL_FIN_EQ_v1 (First-Order Logic Verification)
+
+Verify first-order logic formulas with equality over finite domains:
+
+```bash
+python -m scripts.run_fol_fin_eq_demo --domain z2 --output demo_z2
+python demo_z2/verify.py
+```
+
+Expected output:
+```
+PASS: All certificates verified
+```
+
+Golden manifest SHA256: `096ee79e4e20c94fffbc2ec9964dde98f8058cba47a887031085e0800d6d2113`
+
+See [`docs/FOL_FIN_EQ_PHASE3_CLOSURE.md`](docs/FOL_FIN_EQ_PHASE3_CLOSURE.md) for the sealed specification.
+
 ## Documentation
 
 | Document | Purpose |
 |----------|---------|
+| [`docs/FOL_FIN_EQ_PHASE3_CLOSURE.md`](docs/FOL_FIN_EQ_PHASE3_CLOSURE.md) | FOL_FIN_EQ_v1 sealed specification |
 | `docs/DROPIN_REPLAY_INSTRUCTIONS.md` | Third-party verification guide |
 | `docs/DROPIN_DEMO_FREEZE.md` | Freeze declaration |
 | `docs/INTERNAL_CHAMPION_BRIEF.md` | One-page technical summary |
