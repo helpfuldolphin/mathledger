@@ -1,0 +1,24 @@
+# RFL Policy Configuration - Phase II
+#
+# Configuration for policy updates, safety guards, and telemetry.
+
+# Policy Update Parameters
+learning_rate: 0.01
+max_weight_norm_l2: 10.0  # L2 norm clamping threshold
+max_abs_weight: 5.0       # Per-weight clipping threshold
+
+# Feature Telemetry Settings
+feature_telemetry:
+  enabled: false          # Enable per-feature telemetry in snapshots
+  top_k: 5               # Number of top features to track
+
+# Snapshot Settings
+snapshot_interval: 10     # Save policy snapshot every N updates
+save_snapshots: true      # Whether to save snapshots to disk
+
+# Initialization
+warm_start: false         # Load from checkpoint if available
+checkpoint_path: null     # Path to checkpoint file (if warm_start=true)
+
+# Reward Settings
+bonus_for_short_proof: false  # Apply chain length penalty
