@@ -186,7 +186,7 @@ uv run python tools/run_demo_cases.py --ui-tests
 ## Release Notes: v0.2.0
 
 **Tag**: `v0.2.0-demo-lock`
-**Commit**: `6670438302d7c42e92ead99275590e29abf6f5ad`
+**Commit**: `27a94c8a58139cb10349f6418336c618f528cbab`
 **Date Locked**: 2026-01-02
 
 ### Tier Counts (from docs/invariants_status.md)
