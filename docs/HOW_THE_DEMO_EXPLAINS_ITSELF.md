@@ -69,6 +69,53 @@ You do not need to understand cryptography to use these values. You need to unde
 
 ---
 
+## Evidence Pack + Replay Verification
+
+The demo provides audit-grade closure through evidence packs.
+
+**What is an evidence pack?**
+
+An evidence pack is a self-contained JSON file containing:
+- The committed partition snapshot (all claims and their trust classes)
+- UVIL events (what the human did)
+- Reasoning artifacts (what the system established)
+- The attestation hashes (U_t, R_t, H_t)
+- The formula note explaining how H_t is computed
+- Replay instructions for independent verification
+
+**Why evidence packs matter:**
+
+Evidence packs enable independent verification. An auditor with the evidence pack can:
+1. Recompute U_t from the UVIL events
+2. Recompute R_t from the reasoning artifacts
+3. Recompute H_t = SHA256(R_t || U_t)
+4. Compare the computed values to the recorded values
+
+If all three match, the attestation is verified. If any differ, something changed.
+
+**No external calls required:**
+
+Replay verification is fully local. The evidence pack contains everything needed. No API calls, no network access, no external dependencies. The computation is deterministic and reproducible.
+
+**Tamper detection:**
+
+If anyone modifies the evidence pack—changing a claim, altering a trust class, editing an artifact—the replay verification fails. The hashes will not match. There is no way to tamper with the evidence without detection.
+
+**How to use:**
+
+1. After verification, click "Download Evidence Pack" to save the JSON file
+2. Click "Replay & Verify" to recompute and compare hashes locally
+3. A PASS result confirms the attestation is intact
+4. A FAIL result shows which hashes diverged
+
+This is the audit trail. Same inputs, same hashes, same evidence. Every time.
+
+**What replay does NOT prove:**
+
+Replay verification proves structural integrity, not truth. A PASS result means: the recorded hashes match what the inputs produce. It does not mean: the claims are correct, the verification was sound, or the system behaved safely. The evidence pack proves the audit trail is intact. It proves nothing about what that trail represents.
+
+---
+
 ## What This Demo Refuses to Claim
 
 This demo does not claim the system is aligned with human values.
@@ -118,3 +165,55 @@ A system that does more than it can justify is not more capable. It is less trus
 The demo is shaped this way because the alternative—a system that blurs the line between suggestion and claim, between exploration and authority, between what it knows and what it guesses—is worse. Not harder to build. Worse.
 
 This demo is boring. That is also the point.
+
+---
+
+## Where the Demo Explains Itself in the UI
+
+As of v0.2.0, the demo includes integrated self-explanation that appears directly in the interface. This is not decorative. These explanations are structurally enforced via regression tests.
+
+### UI Self-Explanation Integration Points
+
+| Location | What It Explains | Key Copy |
+|----------|-----------------|----------|
+| Framing Box (top) | What the system does NOT do | "The system does not decide what is true. It decides what is justified under a declared verification route." |
+| Framing Expandable | What "justified" means | "A claim is justified when it passes through attestation with a declared trust class." |
+| Trust Class Selector | What each trust class means | Tooltips explain FV, MV, PA, ADV |
+| Trust Class Note | Trust class determines route, not correctness | "Trust class determines verification route, not correctness." |
+| Transition Note | What changes at commit | "The random proposal_id is discarded. The committed_id is derived from claim content." |
+| Outcome Display | What each outcome means | VERIFIED/REFUTED/ABSTAINED explanations |
+| ABSTAINED Explanation | Why ABSTAINED is first-class | "ABSTAINED is recorded in R_t. It is a first-class outcome, not a missing value." |
+| ADV Badge | Why ADV is excluded | "ADV claims are exploration-only. They do not enter R_t." |
+| Hash Labels | What U_t, R_t, H_t commit to | Tooltips on each hash label |
+| Evidence Pack Details | What the pack contains | Expandable explanation of contents |
+| Boundary Demo | What the demo proves | "Same claim text, different trust class → different outcome." |
+
+### UI Doc Sources
+
+Auditors reviewing the demo UI should reference:
+
+1. **DEMO_SELF_EXPLANATION_UI_PLAN.md** - Full specification of all 9 integration points
+2. **demo/app.py:UI_COPY** - Canonical copy strings (line ~83)
+3. **tests/governance/test_ui_copy_drift.py** - Regression tests for copy integrity
+4. **tools/run_demo_cases.py --ui-tests** - Runtime self-explanation verification
+
+### Enforcement
+
+Self-explanation content is enforced through:
+
+1. **UI_COPY dictionary**: All explanation strings are canonical and versioned
+2. **Copy drift tests**: `test_ui_copy_drift.py` verifies required phrases are present
+3. **Regression harness**: `run_demo_cases.py --ui-tests` checks endpoint availability
+4. **No capability claims**: Tests verify absence of "safe", "aligned", "intelligent"
+
+### What the UI Copy Does NOT Say
+
+The UI self-explanation follows strict constraints:
+
+- Does NOT say "the system believes" (anthropomorphizing)
+- Does NOT say "verified correct" (overclaiming validator capability)
+- Does NOT say "safe" or "aligned" (capability claims)
+- Does NOT use emojis or exclamation marks (false enthusiasm)
+- Does NOT promise future capabilities (scope creep)
+
+The copy style is deliberately flat. It explains what happens, not what it means for safety or alignment.

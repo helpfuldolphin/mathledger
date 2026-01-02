@@ -23,6 +23,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from governance.trust_class import TrustClass, Outcome, is_authority_bearing
 from governance.registry_hash import canonicalize_json
+from governance.abstention_preservation import (
+    verify_outcome_present,
+    ValidationOutcome,
+)
 from attestation.dual_root import (
     compute_ui_root,
     compute_reasoning_root,
@@ -189,22 +193,29 @@ def build_uvil_event_payload(event: UVIL_Event) -> Dict[str, Any]:
     }
 
 
-def build_reasoning_artifact_payload(artifact: ReasoningArtifact) -> Dict[str, Any]:
+def build_reasoning_artifact_payload(
+    artifact: ReasoningArtifact,
+    artifact_index: int = 0,
+) -> Dict[str, Any]:
     """
     Build raw dict payload for R_t computation.
 
     CRITICAL:
     - Returns raw dict, NOT pre-hashed string
     - MUST reject if artifact.trust_class == ADV
+    - ABSTENTION PRESERVATION GATE: Enforces validation_outcome is present and valid
+      (Tier A invariant per FM §4.1)
 
     Args:
         artifact: Reasoning artifact to convert
+        artifact_index: Index in batch for error reporting
 
     Returns:
         Raw dict payload for compute_reasoning_root()
 
     Raises:
         ValueError: If artifact.trust_class is ADV
+        AbstentionPreservationViolation: If validation_outcome is missing, null, or invalid
     """
     if artifact.trust_class == TrustClass.ADV:
         raise ValueError(
@@ -218,12 +229,27 @@ def build_reasoning_artifact_payload(artifact: ReasoningArtifact) -> Dict[str, A
             f"Got: {artifact.trust_class}"
         )
 
-    return {
+    # Extract validation_outcome from proof_payload if present
+    # Default to ABSTAINED if no validator ran (FV/PA in v0)
+    validation_outcome = artifact.proof_payload.get(
+        "validation_outcome",
+        ValidationOutcome.ABSTAINED.value,
+    )
+
+    # Build payload with validation_outcome at top level (abstention preservation)
+    payload = {
         "artifact_id": artifact.artifact_id,
         "claim_id": artifact.claim_id,
         "trust_class": artifact.trust_class.value,
+        "validation_outcome": validation_outcome,
         "proof_payload": artifact.proof_payload,
     }
+
+    # ABSTENTION PRESERVATION GATE (Tier A)
+    # Ensures validation_outcome is present and valid before entering R_t
+    verify_outcome_present(payload, artifact_index=artifact_index)
+
+    return payload
 
 
 # ---------------------------------------------------------------------------
@@ -258,7 +284,11 @@ def compute_full_attestation(
     ui_payloads = [build_uvil_event_payload(e) for e in uvil_events]
 
     # Build reasoning payloads (raw dicts) - will raise if ADV present
-    reasoning_payloads = [build_reasoning_artifact_payload(a) for a in reasoning_artifacts]
+    # ABSTENTION PRESERVATION: Each artifact is validated via verify_outcome_present
+    reasoning_payloads = [
+        build_reasoning_artifact_payload(a, artifact_index=i)
+        for i, a in enumerate(reasoning_artifacts)
+    ]
 
     # Compute roots - dual_root handles canonicalization internally
     u_t = compute_ui_root(ui_payloads)
