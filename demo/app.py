@@ -402,14 +402,14 @@ HTML_CONTENT = """
                     <span class="step-reason" id="reason-mv"></span>
                 </div>
                 <div class="boundary-step" id="step-4">
-                    <span class="step-label">4. MV (Unparseable)</span>
-                    <code class="step-claim">"forall x, x = x"</code>
+                    <span class="step-label">4. MV (False)</span>
+                    <code class="step-claim">"3 * 3 = 8"</code>
                     <span class="step-arrow">→</span>
-                    <span class="step-outcome" id="outcome-unparseable">...</span>
-                    <span class="step-reason" id="reason-unparseable"></span>
+                    <span class="step-outcome" id="outcome-refuted">...</span>
+                    <span class="step-reason" id="reason-refuted"></span>
                 </div>
                 <div class="boundary-conclusion" id="boundary-conclusion">
-                    <p><strong>Same text. Different outcomes. The trust class determines the route. The route determines what the system can assert.</strong></p>
+                    <p><strong>Same claim text, different trust class → different outcome. Same trust class, different truth → VERIFIED vs REFUTED.</strong></p>
                 </div>
             </div>
         </div>
@@ -841,8 +841,8 @@ HTML_CONTENT = """
                   claim: '2 + 2 = 4', trustClass: 'PA', task: 'Boundary demo: PA' },
                 { id: 'step-3', outcomeId: 'outcome-mv', reasonId: 'reason-mv',
                   claim: '2 + 2 = 4', trustClass: 'MV', task: 'Boundary demo: MV verified' },
-                { id: 'step-4', outcomeId: 'outcome-unparseable', reasonId: 'reason-unparseable',
-                  claim: 'forall x, x = x', trustClass: 'MV', task: 'Boundary demo: MV unparseable' }
+                { id: 'step-4', outcomeId: 'outcome-refuted', reasonId: 'reason-refuted',
+                  claim: '3 * 3 = 8', trustClass: 'MV', task: 'Boundary demo: MV refuted' }
             ];
 
             for (const step of steps) {
@@ -894,6 +894,8 @@ HTML_CONTENT = """
                         reasonEl.textContent = 'Authority-bearing but no validator';
                     } else if (verifyData.outcome === 'VERIFIED') {
                         reasonEl.textContent = 'Arithmetic validator confirmed';
+                    } else if (verifyData.outcome === 'REFUTED') {
+                        reasonEl.textContent = 'Arithmetic validator disproved (3*3=9)';
                     } else if (verifyData.outcome === 'ABSTAINED') {
                         reasonEl.textContent = 'Cannot parse as arithmetic';
                     }
