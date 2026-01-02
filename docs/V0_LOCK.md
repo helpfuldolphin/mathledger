@@ -122,7 +122,7 @@ This scope is frozen. Changes require explicit scope unlock with rationale.
 ## Release Notes: v0-demo-lock
 
 **Tag**: `v0-demo-lock`
-**Commit**: `2bc6bfb6496ab0cee2a8877d0b4b3e2edaedd16b`
+**Commit**: `ab8f51ab389aed7b3412cb987fc70d0d4f2bbe0b`
 **Date**: 2026-01-02
 
 ### Key Deliverables
