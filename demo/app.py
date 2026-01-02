@@ -283,6 +283,84 @@ HTML_CONTENT = """
             font-size: 0.8rem;
             color: #888;
         }
+
+        /* Boundary Demo */
+        .boundary-demo {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .boundary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .boundary-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        .boundary-header button {
+            background: #fff;
+            color: #1a1a1a;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .boundary-header button:hover { background: #e0e0e0; }
+        .boundary-header button:disabled { background: #666; color: #999; cursor: not-allowed; }
+        .boundary-results { margin-top: 1rem; }
+        .boundary-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #333;
+            opacity: 0.4;
+            transition: opacity 0.3s;
+        }
+        .boundary-step.active { opacity: 1; }
+        .boundary-step.done { opacity: 1; }
+        .step-label {
+            min-width: 140px;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+        .step-claim {
+            font-family: monospace;
+            background: #333;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+        .step-arrow { color: #666; }
+        .step-outcome {
+            font-weight: 700;
+            min-width: 100px;
+            font-size: 0.9rem;
+        }
+        .step-outcome.verified { color: #4caf50; }
+        .step-outcome.refuted { color: #f44336; }
+        .step-outcome.abstained { color: #ff9800; }
+        .step-reason {
+            font-size: 0.75rem;
+            color: #888;
+            flex: 1;
+        }
+        .boundary-conclusion {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #444;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .boundary-conclusion.visible { opacity: 1; }
+        .boundary-conclusion p { margin: 0; color: #ccc; }
     </style>
 </head>
 <body>
@@ -290,9 +368,50 @@ HTML_CONTENT = """
         <h1>MathLedger Demo</h1>
 
         <div class="framing">
+            <p><strong>The system does not decide what is true. It decides what is justified under a declared verification route.</strong></p>
             <p>This demo will stop more often than you expect. It reports what it cannot verify.</p>
-            <p>The goal is not to be impressive. The goal is to be legible.</p>
             <p>If you are looking for a system that always has an answer, this demo is not it.</p>
+        </div>
+
+        <!-- Boundary Demo -->
+        <div class="boundary-demo" id="boundary-demo-section">
+            <div class="boundary-header">
+                <span class="boundary-title">Same Claim, Different Authority</span>
+                <button id="btn-boundary-demo" onclick="runBoundaryDemo()">Run 90-Second Proof</button>
+            </div>
+            <div id="boundary-results" class="boundary-results hidden">
+                <div class="boundary-step" id="step-1">
+                    <span class="step-label">1. ADV (Advisory)</span>
+                    <code class="step-claim">"2 + 2 = 4"</code>
+                    <span class="step-arrow">→</span>
+                    <span class="step-outcome" id="outcome-adv">...</span>
+                    <span class="step-reason" id="reason-adv"></span>
+                </div>
+                <div class="boundary-step" id="step-2">
+                    <span class="step-label">2. PA (Attested)</span>
+                    <code class="step-claim">"2 + 2 = 4"</code>
+                    <span class="step-arrow">→</span>
+                    <span class="step-outcome" id="outcome-pa">...</span>
+                    <span class="step-reason" id="reason-pa"></span>
+                </div>
+                <div class="boundary-step" id="step-3">
+                    <span class="step-label">3. MV (Validated)</span>
+                    <code class="step-claim">"2 + 2 = 4"</code>
+                    <span class="step-arrow">→</span>
+                    <span class="step-outcome" id="outcome-mv">...</span>
+                    <span class="step-reason" id="reason-mv"></span>
+                </div>
+                <div class="boundary-step" id="step-4">
+                    <span class="step-label">4. MV (Unparseable)</span>
+                    <code class="step-claim">"forall x, x = x"</code>
+                    <span class="step-arrow">→</span>
+                    <span class="step-outcome" id="outcome-unparseable">...</span>
+                    <span class="step-reason" id="reason-unparseable"></span>
+                </div>
+                <div class="boundary-conclusion" id="boundary-conclusion">
+                    <p><strong>Same text. Different outcomes. The trust class determines the route. The route determines what the system can assert.</strong></p>
+                </div>
+            </div>
         </div>
 
         <!-- Scenario selector -->
@@ -691,6 +810,112 @@ HTML_CONTENT = """
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // Boundary Demo - orchestrated sequence
+        async function runBoundaryDemo() {
+            const btn = document.getElementById('btn-boundary-demo');
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+
+            const results = document.getElementById('boundary-results');
+            results.classList.remove('hidden');
+
+            // Reset all steps
+            document.querySelectorAll('.boundary-step').forEach(el => {
+                el.classList.remove('active', 'done');
+            });
+            document.querySelectorAll('.step-outcome').forEach(el => {
+                el.textContent = '...';
+                el.className = 'step-outcome';
+            });
+            document.querySelectorAll('.step-reason').forEach(el => {
+                el.textContent = '';
+            });
+            document.getElementById('boundary-conclusion').classList.remove('visible');
+
+            const steps = [
+                { id: 'step-1', outcomeId: 'outcome-adv', reasonId: 'reason-adv',
+                  claim: '2 + 2 = 4', trustClass: 'ADV', task: 'Boundary demo: ADV' },
+                { id: 'step-2', outcomeId: 'outcome-pa', reasonId: 'reason-pa',
+                  claim: '2 + 2 = 4', trustClass: 'PA', task: 'Boundary demo: PA' },
+                { id: 'step-3', outcomeId: 'outcome-mv', reasonId: 'reason-mv',
+                  claim: '2 + 2 = 4', trustClass: 'MV', task: 'Boundary demo: MV verified' },
+                { id: 'step-4', outcomeId: 'outcome-unparseable', reasonId: 'reason-unparseable',
+                  claim: 'forall x, x = x', trustClass: 'MV', task: 'Boundary demo: MV unparseable' }
+            ];
+
+            for (const step of steps) {
+                const stepEl = document.getElementById(step.id);
+                stepEl.classList.add('active');
+
+                try {
+                    // Propose
+                    const proposeRes = await fetch('/uvil/propose_partition', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ problem_statement: step.task })
+                    });
+                    const proposeData = await proposeRes.json();
+
+                    // Commit
+                    const commitRes = await fetch('/uvil/commit_uvil', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            proposal_id: proposeData.proposal_id,
+                            edited_claims: [{
+                                claim_text: step.claim,
+                                trust_class: step.trustClass,
+                                rationale: 'Boundary demo'
+                            }],
+                            user_fingerprint: 'boundary_demo'
+                        })
+                    });
+                    const commitData = await commitRes.json();
+
+                    // Verify
+                    const verifyRes = await fetch('/uvil/run_verification', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ committed_partition_id: commitData.committed_partition_id })
+                    });
+                    const verifyData = await verifyRes.json();
+
+                    // Display result
+                    const outcomeEl = document.getElementById(step.outcomeId);
+                    outcomeEl.textContent = verifyData.outcome;
+                    outcomeEl.className = 'step-outcome ' + verifyData.outcome.toLowerCase();
+
+                    const reasonEl = document.getElementById(step.reasonId);
+                    if (step.trustClass === 'ADV') {
+                        reasonEl.textContent = 'Excluded from authority stream';
+                    } else if (step.trustClass === 'PA') {
+                        reasonEl.textContent = 'Authority-bearing but no validator';
+                    } else if (verifyData.outcome === 'VERIFIED') {
+                        reasonEl.textContent = 'Arithmetic validator confirmed';
+                    } else if (verifyData.outcome === 'ABSTAINED') {
+                        reasonEl.textContent = 'Cannot parse as arithmetic';
+                    }
+
+                    stepEl.classList.remove('active');
+                    stepEl.classList.add('done');
+
+                } catch (e) {
+                    document.getElementById(step.outcomeId).textContent = 'ERROR';
+                    stepEl.classList.remove('active');
+                }
+
+                // Pause for dramatic effect
+                await new Promise(r => setTimeout(r, 800));
+            }
+
+            // Show conclusion
+            await new Promise(r => setTimeout(r, 500));
+            document.getElementById('boundary-conclusion').classList.add('visible');
+
+            btn.disabled = false;
+            btn.textContent = 'Run Again';
         }
     </script>
 </body>
