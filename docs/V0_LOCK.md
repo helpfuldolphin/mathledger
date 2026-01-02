@@ -185,8 +185,17 @@ uv run python tools/run_demo_cases.py --ui-tests
 
 ## Release Notes: v0.2.0
 
-**Tag**: `v0.2.0-ui-self-explanation`
-**Date**: 2026-01-02
+**Tag**: `v0.2.0-demo-lock`
+**Commit**: `6670438302d7c42e92ead99275590e29abf6f5ad`
+**Date Locked**: 2026-01-02
+
+### Tier Counts (from docs/invariants_status.md)
+
+| Tier | Count | Description |
+|------|-------|-------------|
+| A | 9 | Cryptographically or structurally enforced |
+| B | 1 | Logged and replay-visible |
+| C | 3 | Documented but not enforced in v0 |
 
 ### What Changed
 
