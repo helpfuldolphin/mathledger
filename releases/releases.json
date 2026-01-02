@@ -1,0 +1,52 @@
+{
+  "$schema": "releases.schema.json",
+  "metadata": {
+    "description": "Canonical release metadata for MathLedger governance demo",
+    "authoritative": true,
+    "contract": "docs/RELEASE_METADATA_CONTRACT.md"
+  },
+  "current_version": "0.2.0",
+  "releases": [
+    {
+      "version": "0.0.0",
+      "git_tag": "v0-demo-lock",
+      "commit_hash": "ab8f51ab389aed7b3412cb987fc70d0d4f2bbe0b",
+      "date_locked": "2026-01-02",
+      "status": "superseded",
+      "tier_counts": {
+        "tier_a": 6,
+        "tier_b": 4,
+        "tier_c": 3
+      },
+      "notes": "Initial v0 demo lock. All claims return ABSTAINED. No MV validator.",
+      "verification_commands": [
+        "uv run python demo/app.py",
+        "uv run python tools/run_demo_cases.py"
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "git_tag": "v0.2.0-demo-lock",
+      "commit_hash": "27a94c8a58139cb10349f6418336c618f528cbab",
+      "date_locked": "2026-01-02",
+      "status": "current",
+      "tier_counts": {
+        "tier_a": 9,
+        "tier_b": 1,
+        "tier_c": 3
+      },
+      "notes": "UI self-explanation + abstention preservation integration. MV arithmetic validator.",
+      "verification_commands": [
+        "uv run pytest tests/governance/test_ui_copy_drift.py tests/governance/test_abstention_preservation.py -v",
+        "uv run python demo/app.py",
+        "uv run python tools/run_demo_cases.py --ui-tests"
+      ],
+      "new_invariants": [
+        "T13: UI_COPY dictionary contains all required self-explanation keys",
+        "T14: No capability claims in UI copy",
+        "T15: ABSTAINED explanation mentions first-class outcome",
+        "T16: Abstention preservation gate enforced on all R_t entries"
+      ]
+    }
+  ]
+}
