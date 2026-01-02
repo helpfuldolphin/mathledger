@@ -1,14 +1,14 @@
 {
   "success": true,
   "error": null,
-  "captured_at": "2026-01-02T06:22:21.401527+00:00",
+  "captured_at": "2026-01-02T06:22:21.441459+00:00",
   "exploration": {
-    "proposal_id": "b2782756-4218-466d-8a58-a494b1aad283",
+    "proposal_id": "6e00c1ee-db98-472a-97cf-331f7b409daf",
     "draft_proposal": {
-      "proposal_id": "b2782756-4218-466d-8a58-a494b1aad283",
+      "proposal_id": "6e00c1ee-db98-472a-97cf-331f7b409daf",
       "claims": [
         {
-          "claim_text": "Claim derived from: Prove that addition is commutative for natural numbers...",
+          "claim_text": "Claim derived from: Verify that 2 + 2 = 5...",
           "suggested_trust_class": "ADV",
           "rationale": "Template partitioner - user must edit and promote"
         }
@@ -17,23 +17,23 @@
     "note": "proposal_id is exploration-only and MUST NOT appear in attestation"
   },
   "authority": {
-    "committed_partition_id": "50d1cbe861cbc5ec0bd7b43d118f6fbb6df3779f0c8a10050147e6cf4ed9457b",
+    "committed_partition_id": "6382ce7a3b3bf2b233cc2ea6e7f22733312a10e82965fc2788ab0f4eeee4312f",
     "commit_response": {
-      "committed_partition_id": "50d1cbe861cbc5ec0bd7b43d118f6fbb6df3779f0c8a10050147e6cf4ed9457b",
-      "u_t": "bd357f557df4da25f232feb43466d5decfdad9b98aa6cc7a3936b64ef14ab284",
+      "committed_partition_id": "6382ce7a3b3bf2b233cc2ea6e7f22733312a10e82965fc2788ab0f4eeee4312f",
+      "u_t": "f4b32af9397fc7836ea0c72ceadcac22e2fbc447fa533722cb2bcc92afa7a004",
       "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
-      "h_t": "8e1f5c0b0c4f912cbac93e6ca5bafce5a458aa5112eff1639878a1ec6f9620e5",
+      "h_t": "080f41edb07090a625312306ab6abc0bf1f6d3bd7da2f4d81f10b2fcb44e9a80",
       "claim_count": 1
     }
   },
   "verification": {
     "response": {
-      "outcome": "ABSTAINED",
-      "committed_partition_id": "50d1cbe861cbc5ec0bd7b43d118f6fbb6df3779f0c8a10050147e6cf4ed9457b",
+      "outcome": "REFUTED",
+      "committed_partition_id": "6382ce7a3b3bf2b233cc2ea6e7f22733312a10e82965fc2788ab0f4eeee4312f",
       "attestation": {
-        "u_t": "bd357f557df4da25f232feb43466d5decfdad9b98aa6cc7a3936b64ef14ab284",
-        "r_t": "6ecc0dc3b66bfa79e5f94b28172358119cb016fcb8e28ed73789543741e3bb77",
-        "h_t": "480abe2eaf60665f1e685d7852a60d3a1d8d870ee16dab76f89ead3c8740ecfb",
+        "u_t": "f4b32af9397fc7836ea0c72ceadcac22e2fbc447fa533722cb2bcc92afa7a004",
+        "r_t": "6a8f7a816a1e4597c099125c2976818fa91d2b6c87fd1836971890e455e807eb",
+        "h_t": "12fdf7cd0cfbf24eeafe664ab267f36fde3a6c93b842e5508d15ab11d2e49755",
         "authority_claim_count": 1,
         "total_claim_count": 1
       },
@@ -43,13 +43,13 @@
         "pa_count": 0,
         "adv_count": 0,
         "adv_excluded": false,
-        "mechanically_verified": false,
+        "mechanically_verified": true,
         "authority_bearing_accepted": true,
-        "explanation": "1 MV claim(s) could not be parsed by arithmetic validator.",
+        "explanation": "Mechanical verification REFUTED: 1 MV claim(s) failed arithmetic check.",
         "mv_validation": {
           "verified": 0,
-          "refuted": 0,
-          "abstained": 1
+          "refuted": 1,
+          "abstained": 0
         },
         "trust_class_breakdown": {
           "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
@@ -61,9 +61,9 @@
     }
   },
   "attestation": {
-    "u_t": "bd357f557df4da25f232feb43466d5decfdad9b98aa6cc7a3936b64ef14ab284",
-    "r_t": "6ecc0dc3b66bfa79e5f94b28172358119cb016fcb8e28ed73789543741e3bb77",
-    "h_t": "480abe2eaf60665f1e685d7852a60d3a1d8d870ee16dab76f89ead3c8740ecfb"
+    "u_t": "f4b32af9397fc7836ea0c72ceadcac22e2fbc447fa533722cb2bcc92afa7a004",
+    "r_t": "6a8f7a816a1e4597c099125c2976818fa91d2b6c87fd1836971890e455e807eb",
+    "h_t": "12fdf7cd0cfbf24eeafe664ab267f36fde3a6c93b842e5508d15ab11d2e49755"
   },
   "authority_basis": {
     "fv_count": 0,
@@ -71,13 +71,13 @@
     "pa_count": 0,
     "adv_count": 0,
     "adv_excluded": false,
-    "mechanically_verified": false,
+    "mechanically_verified": true,
     "authority_bearing_accepted": true,
-    "explanation": "1 MV claim(s) could not be parsed by arithmetic validator.",
+    "explanation": "Mechanical verification REFUTED: 1 MV claim(s) failed arithmetic check.",
     "mv_validation": {
       "verified": 0,
-      "refuted": 0,
-      "abstained": 1
+      "refuted": 1,
+      "abstained": 0
     },
     "trust_class_breakdown": {
       "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
@@ -86,11 +86,11 @@
       "ADV": "Advisory - exploration only, excluded from authority stream"
     }
   },
-  "outcome": "ABSTAINED",
+  "outcome": "REFUTED",
   "analysis": {
     "authority_claim_count": 1,
     "total_claim_count": 1,
     "adv_excluded_from_rt": true,
-    "outcome_explanation": "1 MV claim(s) could not be parsed by arithmetic validator."
+    "outcome_explanation": "Mechanical verification REFUTED: 1 MV claim(s) failed arithmetic check."
   }
 }

@@ -33,6 +33,7 @@ from governance.uvil import (
     compute_full_attestation,
 )
 from governance.trust_class import TrustClass, Outcome, DEFAULT_SUGGESTED_TRUST_CLASS
+from governance.mv_validator import validate_mv_claim, ValidatorOutcome
 
 router = APIRouter(prefix="/uvil", tags=["uvil"])
 
@@ -359,13 +360,32 @@ async def run_verification(req: RunVerificationRequest) -> RunVerificationRespon
         c for c in snapshot.claims if c.trust_class != TrustClass.ADV
     ]
 
-    # 4. Build ReasoningArtifacts for authority-bearing claims
+    # 4. Run MV validator on MV claims, build ReasoningArtifacts
     reasoning_artifacts = []
+    mv_results = []  # Track MV validation results
+
     for claim in authority_claims:
+        # For MV claims: run the arithmetic validator
+        if claim.trust_class == TrustClass.MV:
+            validation = validate_mv_claim(claim.claim_text)
+            proof_payload = {
+                "validator": "arithmetic_v1",
+                "claim_text": claim.claim_text,
+                "validation_outcome": validation.outcome.value,
+                "validation_explanation": validation.explanation,
+                "parsed_lhs": validation.parsed_lhs,
+                "parsed_rhs": validation.parsed_rhs,
+                "computed_value": validation.computed_value,
+            }
+            mv_results.append(validation.outcome)
+        else:
+            # FV/PA: no validator in v0
+            proof_payload = {"v0_mock": True, "claim_text": claim.claim_text}
+
         artifact_content = {
             "claim_id": claim.claim_id,
             "trust_class": claim.trust_class.value,
-            "proof_payload": {"v0_mock": True, "claim_text": claim.claim_text},
+            "proof_payload": proof_payload,
         }
         artifact_id = derive_committed_id(artifact_content)
 
@@ -374,7 +394,7 @@ async def run_verification(req: RunVerificationRequest) -> RunVerificationRespon
                 artifact_id=artifact_id,
                 claim_id=claim.claim_id,
                 trust_class=claim.trust_class,
-                proof_payload={"v0_mock": True, "claim_text": claim.claim_text},
+                proof_payload=proof_payload,
             )
         )
 
@@ -387,38 +407,68 @@ async def run_verification(req: RunVerificationRequest) -> RunVerificationRespon
     u_t, r_t, h_t = compute_full_attestation(partition_events, reasoning_artifacts)
 
     # 7. Determine outcome and authority basis
-    # v0 has no real verifier, so we must be honest about what we can claim:
-    # - FV/MV: would be mechanically verified if we had a verifier (v0: ABSTAINED)
-    # - PA: user-attested, not mechanically verified (always ABSTAINED for verification)
-    # - All ADV: ABSTAINED (nothing to verify)
-
     # Count claims by trust class
     fv_count = sum(1 for c in authority_claims if c.trust_class == TrustClass.FV)
     mv_count = sum(1 for c in authority_claims if c.trust_class == TrustClass.MV)
     pa_count = sum(1 for c in authority_claims if c.trust_class == TrustClass.PA)
     adv_count = len(snapshot.claims) - len(authority_claims)
 
-    # Determine outcome
-    # v0: No real verifier, so all claims are ABSTAINED for mechanical verification
-    # But we distinguish between "accepted into authority stream" vs "verified"
+    # MV validation summary
+    mv_verified = sum(1 for r in mv_results if r == ValidatorOutcome.VERIFIED)
+    mv_refuted = sum(1 for r in mv_results if r == ValidatorOutcome.REFUTED)
+    mv_abstained = sum(1 for r in mv_results if r == ValidatorOutcome.ABSTAINED)
+
+    # Determine outcome based on validation results
+    # Priority: REFUTED > VERIFIED > ABSTAINED
+    # VERIFIED only if: all MV claims verified AND no PA/FV claims
     if not authority_claims:
         outcome = Outcome.ABSTAINED
         outcome_explanation = "No authority-bearing claims. Nothing entered the reasoning stream."
-    elif fv_count > 0 or mv_count > 0:
-        # FV/MV claims exist but v0 has no verifier
+        mechanically_verified = False
+    elif mv_refuted > 0:
+        # Any refuted MV claim → overall REFUTED
+        outcome = Outcome.REFUTED
+        outcome_explanation = (
+            f"Mechanical verification REFUTED: {mv_refuted} MV claim(s) failed arithmetic check."
+        )
+        mechanically_verified = True  # Verification ran (and failed)
+    elif mv_verified > 0 and mv_abstained == 0 and fv_count == 0 and pa_count == 0:
+        # All MV claims verified, no other claim types → VERIFIED
+        outcome = Outcome.VERIFIED
+        outcome_explanation = (
+            f"Mechanical verification PASSED: {mv_verified} MV claim(s) verified via arithmetic validator."
+        )
+        mechanically_verified = True
+    elif mv_verified > 0:
+        # Some MV verified but mixed with PA/FV/abstained → ABSTAINED overall
         outcome = Outcome.ABSTAINED
         outcome_explanation = (
-            f"v0 demo has no mechanical verifier. "
-            f"{fv_count} FV and {mv_count} MV claims are authority-bearing "
-            f"but verification is not yet implemented."
+            f"{mv_verified} MV claim(s) verified, but partition contains "
+            f"{pa_count} PA and {fv_count} FV claim(s) that cannot be mechanically verified."
         )
-    else:
-        # PA-only: user-attested, cannot be mechanically verified
+        mechanically_verified = False  # Partial verification
+    elif fv_count > 0:
+        # FV claims but no FV verifier
+        outcome = Outcome.ABSTAINED
+        outcome_explanation = (
+            f"{fv_count} FV claim(s) require formal proof checker (not implemented in v0)."
+        )
+        mechanically_verified = False
+    elif pa_count > 0:
+        # PA-only: user-attested
         outcome = Outcome.ABSTAINED
         outcome_explanation = (
             f"{pa_count} PA claim(s) accepted via user attestation. "
             f"PA claims are authority-bearing but not mechanically verified."
         )
+        mechanically_verified = False
+    else:
+        # MV claims that all abstained (unparseable)
+        outcome = Outcome.ABSTAINED
+        outcome_explanation = (
+            f"{mv_abstained} MV claim(s) could not be parsed by arithmetic validator."
+        )
+        mechanically_verified = False
 
     # Build authority basis explanation
     authority_basis = {
@@ -427,12 +477,17 @@ async def run_verification(req: RunVerificationRequest) -> RunVerificationRespon
         "pa_count": pa_count,
         "adv_count": adv_count,
         "adv_excluded": adv_count > 0,
-        "mechanically_verified": False,  # v0 has no verifier
+        "mechanically_verified": mechanically_verified,
         "authority_bearing_accepted": len(authority_claims) > 0,
         "explanation": outcome_explanation,
+        "mv_validation": {
+            "verified": mv_verified,
+            "refuted": mv_refuted,
+            "abstained": mv_abstained,
+        },
         "trust_class_breakdown": {
-            "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
-            "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+            "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+            "MV": "Mechanically Validated - checked by arithmetic validator",
             "PA": "Procedurally Attested - user attestation, not mechanically verified",
             "ADV": "Advisory - exploration only, excluded from authority stream",
         },

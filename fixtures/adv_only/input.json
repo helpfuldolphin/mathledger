@@ -17,5 +17,6 @@
   "actor_id": "demo_harness",
   "seed": 42,
   "expected_authority_count": 0,
-  "expected_adv_excluded": true
+  "expected_adv_excluded": true,
+  "expected_outcome": null
 }

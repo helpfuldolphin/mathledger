@@ -58,6 +58,7 @@ class DemoCase:
     seed: int = 42
     expected_authority_count: Optional[int] = None
     expected_adv_excluded: bool = True
+    expected_outcome: Optional[str] = None  # VERIFIED, REFUTED, or ABSTAINED
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +150,66 @@ DEMO_CASES: List[DemoCase] = [
             ),
         ],
         expected_authority_count=0,  # All ADV - system should abstain
+        expected_outcome="ABSTAINED",
+    ),
+    # ---------------------------------------------------------------------------
+    # MV Arithmetic Validator Cases (v0.1)
+    # ---------------------------------------------------------------------------
+    DemoCase(
+        name="mv_arithmetic_verified",
+        description="MV with valid arithmetic - demonstrates real verification",
+        task_text="Verify that 2 + 2 = 4",
+        claims=[
+            DemoClaim(
+                claim_text="2 + 2 = 4",
+                trust_class="MV",
+                rationale="Simple arithmetic - mechanically checkable",
+            ),
+        ],
+        expected_authority_count=1,
+        expected_outcome="VERIFIED",  # Arithmetic validator confirms
+    ),
+    DemoCase(
+        name="mv_arithmetic_refuted",
+        description="MV with invalid arithmetic - demonstrates refutation",
+        task_text="Verify that 2 + 2 = 5",
+        claims=[
+            DemoClaim(
+                claim_text="2 + 2 = 5",
+                trust_class="MV",
+                rationale="Incorrect arithmetic",
+            ),
+        ],
+        expected_authority_count=1,
+        expected_outcome="REFUTED",  # Arithmetic validator refutes
+    ),
+    DemoCase(
+        name="same_claim_as_pa",
+        description="Same arithmetic claim as PA - demonstrates trust class matters",
+        task_text="Attest that 2 + 2 = 4",
+        claims=[
+            DemoClaim(
+                claim_text="2 + 2 = 4",
+                trust_class="PA",  # Same text, but PA not MV
+                rationale="User attestation - not mechanically verified",
+            ),
+        ],
+        expected_authority_count=1,
+        expected_outcome="ABSTAINED",  # PA is not verified, even if claim is true
+    ),
+    DemoCase(
+        name="same_claim_as_adv",
+        description="Same arithmetic claim as ADV - excluded from authority entirely",
+        task_text="Consider whether 2 + 2 = 4",
+        claims=[
+            DemoClaim(
+                claim_text="2 + 2 = 4",
+                trust_class="ADV",  # Same text, but ADV
+                rationale="Advisory only - exploring the claim",
+            ),
+        ],
+        expected_authority_count=0,  # ADV excluded
+        expected_outcome="ABSTAINED",  # Nothing in authority stream
     ),
 ]
 
@@ -247,6 +308,7 @@ class CaseResult:
     adv_excluded_from_rt: Optional[bool] = None
     authority_basis: Optional[Dict[str, Any]] = None
     outcome_explanation: Optional[str] = None
+    outcome: Optional[str] = None  # VERIFIED, REFUTED, or ABSTAINED
 
 
 def run_case(client: UVILClient, case: DemoCase) -> CaseResult:
@@ -297,8 +359,9 @@ def run_case(client: UVILClient, case: DemoCase) -> CaseResult:
             result.authority_claim_count == result.total_claim_count - adv_count
         )
 
+        result.outcome = verify["outcome"]
         result.success = True
-        print(f"        outcome: {verify['outcome']}")
+        print(f"        outcome: {result.outcome}")
 
     except httpx.HTTPStatusError as e:
         result.error = f"HTTP {e.response.status_code}: {e.response.text}"
@@ -328,6 +391,7 @@ def save_fixtures(case: DemoCase, result: CaseResult) -> Path:
         "seed": case.seed,
         "expected_authority_count": case.expected_authority_count,
         "expected_adv_excluded": case.expected_adv_excluded,
+        "expected_outcome": case.expected_outcome,
     }
     input_path = case_dir / "input.json"
     input_path.write_text(json.dumps(input_data, indent=2))
@@ -355,6 +419,7 @@ def save_fixtures(case: DemoCase, result: CaseResult) -> Path:
             "h_t": result.h_t,
         },
         "authority_basis": result.authority_basis,
+        "outcome": result.outcome,
         "analysis": {
             "authority_claim_count": result.authority_claim_count,
             "total_claim_count": result.total_claim_count,
@@ -401,6 +466,12 @@ def print_summary(case: DemoCase, result: CaseResult):
 
     if case.expected_adv_excluded and not result.adv_excluded_from_rt:
         print(f"  [!!] ADV was NOT excluded from R_t (invariant violation!)")
+
+    if case.expected_outcome is not None:
+        if result.outcome == case.expected_outcome:
+            print(f"  [OK] Outcome matches expected ({case.expected_outcome})")
+        else:
+            print(f"  [!!] Outcome {result.outcome} != expected {case.expected_outcome}")
 
 
 # ---------------------------------------------------------------------------

@@ -1,11 +1,11 @@
 {
   "success": true,
   "error": null,
-  "captured_at": "2026-01-02T05:49:40.042044+00:00",
+  "captured_at": "2026-01-02T06:22:21.430941+00:00",
   "exploration": {
-    "proposal_id": "970839d7-c44b-46ec-b579-f06b33dfa78d",
+    "proposal_id": "fe6d51d3-7e50-4823-8a27-7f389a374561",
     "draft_proposal": {
-      "proposal_id": "970839d7-c44b-46ec-b579-f06b33dfa78d",
+      "proposal_id": "fe6d51d3-7e50-4823-8a27-7f389a374561",
       "claims": [
         {
           "claim_text": "Claim derived from: Prove existence and smoothness of Navier-Stokes solutions in 3D...",
@@ -20,9 +20,9 @@
     "committed_partition_id": "c6b5759edcef4f3d293e324b1e2a82f19e365136fd9a8cb9b122c4165634d7d9",
     "commit_response": {
       "committed_partition_id": "c6b5759edcef4f3d293e324b1e2a82f19e365136fd9a8cb9b122c4165634d7d9",
-      "u_t": "949838b82bfb9571f3fce7d31f98c1e59f4c012a827745f57952ef88cdf7f894",
+      "u_t": "888e27a30ba1da268a3b277e2f891a5d1416672218e6a1ef51bba2df695d95ac",
       "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
-      "h_t": "34ad817e1c2d2fa9f1fbeeb4c5bc17165244c18d131a43c4bbcd21caf7409567",
+      "h_t": "2af7e886a6f06403f87e9536f48916dad446f16db337c71381af99d655122b93",
       "claim_count": 3
     }
   },
@@ -31,9 +31,9 @@
       "outcome": "ABSTAINED",
       "committed_partition_id": "c6b5759edcef4f3d293e324b1e2a82f19e365136fd9a8cb9b122c4165634d7d9",
       "attestation": {
-        "u_t": "949838b82bfb9571f3fce7d31f98c1e59f4c012a827745f57952ef88cdf7f894",
+        "u_t": "888e27a30ba1da268a3b277e2f891a5d1416672218e6a1ef51bba2df695d95ac",
         "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
-        "h_t": "34ad817e1c2d2fa9f1fbeeb4c5bc17165244c18d131a43c4bbcd21caf7409567",
+        "h_t": "2af7e886a6f06403f87e9536f48916dad446f16db337c71381af99d655122b93",
         "authority_claim_count": 0,
         "total_claim_count": 3
       },
@@ -46,9 +46,14 @@
         "mechanically_verified": false,
         "authority_bearing_accepted": false,
         "explanation": "No authority-bearing claims. Nothing entered the reasoning stream.",
+        "mv_validation": {
+          "verified": 0,
+          "refuted": 0,
+          "abstained": 0
+        },
         "trust_class_breakdown": {
-          "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
-          "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+          "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+          "MV": "Mechanically Validated - checked by arithmetic validator",
           "PA": "Procedurally Attested - user attestation, not mechanically verified",
           "ADV": "Advisory - exploration only, excluded from authority stream"
         }
@@ -56,9 +61,9 @@
     }
   },
   "attestation": {
-    "u_t": "949838b82bfb9571f3fce7d31f98c1e59f4c012a827745f57952ef88cdf7f894",
+    "u_t": "888e27a30ba1da268a3b277e2f891a5d1416672218e6a1ef51bba2df695d95ac",
     "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
-    "h_t": "34ad817e1c2d2fa9f1fbeeb4c5bc17165244c18d131a43c4bbcd21caf7409567"
+    "h_t": "2af7e886a6f06403f87e9536f48916dad446f16db337c71381af99d655122b93"
   },
   "authority_basis": {
     "fv_count": 0,
@@ -69,13 +74,19 @@
     "mechanically_verified": false,
     "authority_bearing_accepted": false,
     "explanation": "No authority-bearing claims. Nothing entered the reasoning stream.",
+    "mv_validation": {
+      "verified": 0,
+      "refuted": 0,
+      "abstained": 0
+    },
     "trust_class_breakdown": {
-      "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
-      "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+      "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+      "MV": "Mechanically Validated - checked by arithmetic validator",
       "PA": "Procedurally Attested - user attestation, not mechanically verified",
       "ADV": "Advisory - exploration only, excluded from authority stream"
     }
   },
+  "outcome": "ABSTAINED",
   "analysis": {
     "authority_claim_count": 0,
     "total_claim_count": 3,

@@ -1,6 +1,6 @@
 # Hostile Demo Rehearsal Kit
 
-**Version**: v0-demo-lock (`ab8f51a`)
+**Version**: v0.1 (MV arithmetic validator added)
 **Audience**: Safety leads, preparedness teams, external auditors
 **Purpose**: Defend the demo honestly under adversarial questioning
 
@@ -16,7 +16,7 @@ If asked "what can this do?", redirect to "what does this *refuse* to do?"
 
 ---
 
-## 8 Hostile Questions
+## 9 Hostile Questions
 
 ### Q1: "Why does everything say ABSTAINED? Is this broken?"
 
@@ -216,6 +216,38 @@ curl -X POST http://localhost:8000/uvil/commit_uvil -H "Content-Type: applicatio
 
 ---
 
+### Q9: "Why does THIS claim verify but not that one?"
+
+**(a) What they're really testing:**
+Whether verification is real or arbitrary. This is the key question once MV arithmetic validation exists.
+
+**(b) UI click-path:**
+1. Run "mv_arithmetic_verified" scenario: claim is "2 + 2 = 4" marked MV
+2. Observe outcome: `VERIFIED`
+3. Run "same_claim_as_pa" scenario: claim is "2 + 2 = 4" marked PA
+4. Observe outcome: `ABSTAINED`
+5. Run "mv_arithmetic_refuted" scenario: claim is "2 + 2 = 5" marked MV
+6. Observe outcome: `REFUTED`
+
+**(c) Answer (1-2 sentences):**
+"VERIFIED only occurs when: (1) the claim is marked MV, AND (2) the arithmetic validator can parse and confirm it. Same text marked PA doesn't go through the validator—that's the trust class distinction. `2 + 2 = 5` marked MV returns REFUTED because the validator ran and found it false."
+
+**(d) What NOT to say:**
+- "The system knows math" (it knows one pattern: `a op b = c`)
+- "MV claims are verified" (only if the validator can parse them)
+- "This proves the system is intelligent" (it's a regex + arithmetic)
+
+**(e) On-screen evidence:**
+- mv_arithmetic_verified: `outcome: VERIFIED`, `mechanically_verified: true`
+- same_claim_as_pa: `outcome: ABSTAINED`, `mechanically_verified: false`
+- mv_arithmetic_refuted: `outcome: REFUTED`, `mechanically_verified: true`
+- Authority Basis shows `mv_validation: { verified: 1, refuted: 0, abstained: 0 }`
+
+**(f) Key insight:**
+The trust class determines *which validator runs*. The validator determines the outcome. PA bypasses all validators. MV goes through the arithmetic validator. FV would go through a formal proof checker (not implemented). The governance layer routes; the verifier layer decides.
+
+---
+
 ## 10-Minute Live Run Script
 
 **Setup** (before demo):
@@ -226,7 +258,7 @@ uv run python demo/app.py
 ```
 
 **Minute 0-1: Frame**
-> "This is a governance demo. It shows boundary enforcement, not capability. Everything you'll see says ABSTAINED—that's correct because v0 has no verifier."
+> "This is a governance demo. It shows boundary enforcement and routing. Most claims return ABSTAINED. One type—MV with simple arithmetic—actually verifies. That's intentional: we show the full spectrum."
 
 **Minute 1-3: Exploration vs Authority**
 1. Select "mixed_mv_adv" from dropdown
@@ -247,26 +279,36 @@ uv run python demo/app.py
 3. "PA is authority-bearing—it enters R_t. But look at the Authority Basis: `mechanically_verified: false`."
 4. "The system accepts the human's attestation but refuses to claim it verified anything."
 
-**Minute 7-9: Determinism**
+**Minute 7-8: MV Verification (The Key Demo)**
+1. Select "mv_arithmetic_verified" scenario
+2. Click "Run Full Flow"
+3. "This claim is `2 + 2 = 4` marked MV. Outcome: VERIFIED."
+4. Select "same_claim_as_pa" scenario
+5. "Same text, but marked PA. Outcome: ABSTAINED."
+6. "Trust class determines routing. MV goes to validator. PA bypasses it."
+7. Select "mv_arithmetic_refuted"
+8. "`2 + 2 = 5` marked MV. Outcome: REFUTED. The validator ran and found it false."
+
+**Minute 8-9: Determinism**
 1. Open terminal
 2. `uv run python tools/run_demo_cases.py`
-3. "Same inputs, same hashes. The `committed_partition_id` values are content-derived."
+3. "All 9 cases pass. Same inputs, same hashes."
 4. "You can run this tomorrow and get identical results."
 
 **Minute 9-10: Close**
-> "This demo shows three things: (1) boundaries between exploration and authority are real, (2) ADV never enters the authority stream, (3) the system stops when it can't verify. That's what governance infrastructure looks like before capability is added."
+> "This demo shows four things: (1) boundaries between exploration and authority are real, (2) ADV never enters the authority stream, (3) the system stops when it can't verify, (4) when verification exists (MV arithmetic), it runs and returns VERIFIED or REFUTED. That's the full governance stack."
 
 ---
 
 ## 60-Second Cold Outreach Version
 
-> "30 seconds to show you one thing: run this demo, observe every claim returns ABSTAINED. That's not a bug—v0 has no verifier, so refusing to claim correctness is the honest output.
+> "30 seconds to show you one thing: run `2 + 2 = 4` as MV—it returns VERIFIED. Run `2 + 2 = 5` as MV—it returns REFUTED. Run `2 + 2 = 4` as PA—it returns ABSTAINED.
 >
-> What you're seeing is governance substrate: the boundary between exploration and authority is enforced in code, not policy. ADV claims are excluded from the authority stream. PA claims enter but are marked 'not mechanically verified.'
+> Same claim text, different trust class, different outcome. That's governance routing: the trust class determines which validator runs. MV goes to arithmetic. PA bypasses validators. ADV never enters the authority stream at all.
 >
-> This isn't a capability demo. It's a demo that the system stops when it should stop. The hashes are deterministic—same inputs, same outputs, replayable.
+> This isn't a capability demo. It's a demo of boundary enforcement. The system verifies what it can, refuses to claim what it can't, and excludes what it shouldn't.
 >
-> If you want to see what 'failing safely' looks like before verification exists, this is it."
+> If you want to see what 'honest verification infrastructure' looks like, this is it."
 
 ---
 
@@ -274,14 +316,15 @@ uv run python demo/app.py
 
 | Question | One-liner |
 |----------|-----------|
-| Why ABSTAINED? | v0 has no verifier; refusing to claim correctness is honest |
+| Why ABSTAINED? | No verifier for that trust class; refusing to claim is honest |
 | What's the point? | Boundary enforcement works even without verification |
 | ADV excluded? | Yes—`authority_claim_count` shows it, R_t commits to empty set |
-| Mark everything FV? | Allowed, but `mechanically_verified: false` in every response |
+| Mark everything FV? | Allowed, but `mechanically_verified: false` without FV verifier |
 | Security theater? | Hashes are content-derived, deterministic, replayable |
 | PA proves what? | Human attestation recorded, not truth confirmed |
 | Draft vs Committed? | Random ID (exploration) vs content-derived ID (authority) |
 | Double commit? | 409 Conflict—immutability enforced |
+| Why THIS verifies? | MV + parseable arithmetic → validator runs → VERIFIED/REFUTED |
 
 ---
 
@@ -291,7 +334,8 @@ uv run python demo/app.py
 2. Terminal 1: demo server running
 3. Terminal 2: ready for `uv run python tools/run_demo_cases.py`
 4. Code reference: `backend/api/uvil.py` (for Q7, Q8 if pressed)
-5. Fixtures: `fixtures/adv_only/output.json` (for Q3 if pressed)
+5. Code reference: `governance/mv_validator.py` (for Q9 if pressed)
+6. Fixtures: `fixtures/mv_arithmetic_verified/output.json` (for Q9 comparison)
 
 ---
 
@@ -299,13 +343,15 @@ uv run python demo/app.py
 
 | Claim | Why it's wrong |
 |-------|----------------|
-| "It works" | v0 verifies nothing |
+| "It works" | Only arithmetic MV claims verify; everything else abstains |
 | "It's safe" | Demo doesn't prove safety |
 | "Trust the system" | System proves structure, not truth |
 | "This is aligned" | No alignment claim is made |
 | "The verifier will fix it" | Future capability isn't demonstrated |
 | "PA means verified" | PA means attested |
 | "ADV is just deprioritized" | ADV is architecturally excluded |
+| "The system knows math" | It knows one pattern: `a op b = c` |
+| "MV always verifies" | Only parseable arithmetic; unparseable MV → ABSTAINED |
 
 ---
 

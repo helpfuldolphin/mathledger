@@ -1,14 +1,14 @@
 {
   "success": true,
   "error": null,
-  "captured_at": "2026-01-02T06:22:21.425936+00:00",
+  "captured_at": "2026-01-02T06:22:21.453006+00:00",
   "exploration": {
-    "proposal_id": "7d156cf4-5061-467a-bfbe-9bbb5313d4b9",
+    "proposal_id": "3fdbe591-57c0-453f-8e9d-3b78dbd78bbc",
     "draft_proposal": {
-      "proposal_id": "7d156cf4-5061-467a-bfbe-9bbb5313d4b9",
+      "proposal_id": "3fdbe591-57c0-453f-8e9d-3b78dbd78bbc",
       "claims": [
         {
-          "claim_text": "Claim derived from: Speculate about Navier-Stokes...",
+          "claim_text": "Claim derived from: Consider whether 2 + 2 = 4...",
           "suggested_trust_class": "ADV",
           "rationale": "Template partitioner - user must edit and promote"
         }
@@ -17,31 +17,31 @@
     "note": "proposal_id is exploration-only and MUST NOT appear in attestation"
   },
   "authority": {
-    "committed_partition_id": "73c0836370a201649d08e397bb91e9f45ea92e58603a7b9b5ca5137aeb9f0e1c",
+    "committed_partition_id": "fb6f4c934c8c0fa48f263e2f0981cfc3b0a9524eddf5ea7e8e024ace9be61ec5",
     "commit_response": {
-      "committed_partition_id": "73c0836370a201649d08e397bb91e9f45ea92e58603a7b9b5ca5137aeb9f0e1c",
-      "u_t": "8f0bc79a6ae541f4b6d319f71f4b599b39407a44cae41591e34fff71d9687329",
+      "committed_partition_id": "fb6f4c934c8c0fa48f263e2f0981cfc3b0a9524eddf5ea7e8e024ace9be61ec5",
+      "u_t": "c948781af12e18e3c4e42d649efca40c47c352bd37786c8dd6c21c061d90a0c1",
       "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
-      "h_t": "336759c0e91ea453a79d7f5aca6458ff123f5246b1cf86c757c1118492d2989c",
-      "claim_count": 2
+      "h_t": "baf3403bc719af29655e9852d1f54730722baf3860299b4ed6ba0648f250d40f",
+      "claim_count": 1
     }
   },
   "verification": {
     "response": {
       "outcome": "ABSTAINED",
-      "committed_partition_id": "73c0836370a201649d08e397bb91e9f45ea92e58603a7b9b5ca5137aeb9f0e1c",
+      "committed_partition_id": "fb6f4c934c8c0fa48f263e2f0981cfc3b0a9524eddf5ea7e8e024ace9be61ec5",
       "attestation": {
-        "u_t": "8f0bc79a6ae541f4b6d319f71f4b599b39407a44cae41591e34fff71d9687329",
+        "u_t": "c948781af12e18e3c4e42d649efca40c47c352bd37786c8dd6c21c061d90a0c1",
         "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
-        "h_t": "336759c0e91ea453a79d7f5aca6458ff123f5246b1cf86c757c1118492d2989c",
+        "h_t": "baf3403bc719af29655e9852d1f54730722baf3860299b4ed6ba0648f250d40f",
         "authority_claim_count": 0,
-        "total_claim_count": 2
+        "total_claim_count": 1
       },
       "authority_basis": {
         "fv_count": 0,
         "mv_count": 0,
         "pa_count": 0,
-        "adv_count": 2,
+        "adv_count": 1,
         "adv_excluded": true,
         "mechanically_verified": false,
         "authority_bearing_accepted": false,
@@ -61,15 +61,15 @@
     }
   },
   "attestation": {
-    "u_t": "8f0bc79a6ae541f4b6d319f71f4b599b39407a44cae41591e34fff71d9687329",
+    "u_t": "c948781af12e18e3c4e42d649efca40c47c352bd37786c8dd6c21c061d90a0c1",
     "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
-    "h_t": "336759c0e91ea453a79d7f5aca6458ff123f5246b1cf86c757c1118492d2989c"
+    "h_t": "baf3403bc719af29655e9852d1f54730722baf3860299b4ed6ba0648f250d40f"
   },
   "authority_basis": {
     "fv_count": 0,
     "mv_count": 0,
     "pa_count": 0,
-    "adv_count": 2,
+    "adv_count": 1,
     "adv_excluded": true,
     "mechanically_verified": false,
     "authority_bearing_accepted": false,
@@ -89,7 +89,7 @@
   "outcome": "ABSTAINED",
   "analysis": {
     "authority_claim_count": 0,
-    "total_claim_count": 2,
+    "total_claim_count": 1,
     "adv_excluded_from_rt": true,
     "outcome_explanation": "No authority-bearing claims. Nothing entered the reasoning stream."
   }

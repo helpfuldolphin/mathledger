@@ -1,11 +1,11 @@
 {
   "success": true,
   "error": null,
-  "captured_at": "2026-01-02T05:49:40.042044+00:00",
+  "captured_at": "2026-01-02T06:22:21.419916+00:00",
   "exploration": {
-    "proposal_id": "e70ffeeb-f88b-4bb2-a742-7c5adca1e136",
+    "proposal_id": "d24b96fd-21f6-429b-ad80-5a25fe286523",
     "draft_proposal": {
-      "proposal_id": "e70ffeeb-f88b-4bb2-a742-7c5adca1e136",
+      "proposal_id": "d24b96fd-21f6-429b-ad80-5a25fe286523",
       "claims": [
         {
           "claim_text": "Claim derived from: Attest that requirement REQ-001 is satisfied...",
@@ -20,9 +20,9 @@
     "committed_partition_id": "2056cfa691fe5c541a1dd3b206df865277c678829627c6fee13b85957d4f0452",
     "commit_response": {
       "committed_partition_id": "2056cfa691fe5c541a1dd3b206df865277c678829627c6fee13b85957d4f0452",
-      "u_t": "165b2b39608c4e1eae25206e7c671c1a852bc6af5b880427427e456e7af26a7b",
+      "u_t": "fcd2c5e99d5806f63cc919d498cfc18b0404ea91d38272f9d51788c315868fad",
       "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
-      "h_t": "bf04e672d396eb5f85ba3a5d888f265c49d2a56ec09e43d613e0870db7dd98fa",
+      "h_t": "d5a18745178557aa7fc0bf6b035def93ec12788063df68498b6a9c42c703b760",
       "claim_count": 1
     }
   },
@@ -31,9 +31,9 @@
       "outcome": "ABSTAINED",
       "committed_partition_id": "2056cfa691fe5c541a1dd3b206df865277c678829627c6fee13b85957d4f0452",
       "attestation": {
-        "u_t": "3e922bd849ca7ff00109c4bb457f5b9688c020c3625372371c0ed1c8014dda82",
+        "u_t": "fcd2c5e99d5806f63cc919d498cfc18b0404ea91d38272f9d51788c315868fad",
         "r_t": "1ccb6a26641fa913f633a000d00bb3db9b39fddedd0ab67758845483f4afdbbc",
-        "h_t": "6f54e1c10aa72fceeca68de19a5ffd7f700dde81cabebf9db34e91b7166c5cb8",
+        "h_t": "5baa6b191cafacb096cf1d8c4048e13a5f35bb8c8454ab31d33a7806a4beaaca",
         "authority_claim_count": 1,
         "total_claim_count": 1
       },
@@ -46,9 +46,14 @@
         "mechanically_verified": false,
         "authority_bearing_accepted": true,
         "explanation": "1 PA claim(s) accepted via user attestation. PA claims are authority-bearing but not mechanically verified.",
+        "mv_validation": {
+          "verified": 0,
+          "refuted": 0,
+          "abstained": 0
+        },
         "trust_class_breakdown": {
-          "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
-          "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+          "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+          "MV": "Mechanically Validated - checked by arithmetic validator",
           "PA": "Procedurally Attested - user attestation, not mechanically verified",
           "ADV": "Advisory - exploration only, excluded from authority stream"
         }
@@ -56,9 +61,9 @@
     }
   },
   "attestation": {
-    "u_t": "3e922bd849ca7ff00109c4bb457f5b9688c020c3625372371c0ed1c8014dda82",
+    "u_t": "fcd2c5e99d5806f63cc919d498cfc18b0404ea91d38272f9d51788c315868fad",
     "r_t": "1ccb6a26641fa913f633a000d00bb3db9b39fddedd0ab67758845483f4afdbbc",
-    "h_t": "6f54e1c10aa72fceeca68de19a5ffd7f700dde81cabebf9db34e91b7166c5cb8"
+    "h_t": "5baa6b191cafacb096cf1d8c4048e13a5f35bb8c8454ab31d33a7806a4beaaca"
   },
   "authority_basis": {
     "fv_count": 0,
@@ -69,13 +74,19 @@
     "mechanically_verified": false,
     "authority_bearing_accepted": true,
     "explanation": "1 PA claim(s) accepted via user attestation. PA claims are authority-bearing but not mechanically verified.",
+    "mv_validation": {
+      "verified": 0,
+      "refuted": 0,
+      "abstained": 0
+    },
     "trust_class_breakdown": {
-      "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
-      "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+      "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+      "MV": "Mechanically Validated - checked by arithmetic validator",
       "PA": "Procedurally Attested - user attestation, not mechanically verified",
       "ADV": "Advisory - exploration only, excluded from authority stream"
     }
   },
+  "outcome": "ABSTAINED",
   "analysis": {
     "authority_claim_count": 1,
     "total_claim_count": 1,
