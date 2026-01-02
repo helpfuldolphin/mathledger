@@ -1,0 +1,85 @@
+{
+  "success": true,
+  "error": null,
+  "captured_at": "2026-01-02T05:49:40.025900+00:00",
+  "exploration": {
+    "proposal_id": "6f1bf902-bd63-4181-9a70-77959bd8a115",
+    "draft_proposal": {
+      "proposal_id": "6f1bf902-bd63-4181-9a70-77959bd8a115",
+      "claims": [
+        {
+          "claim_text": "Claim derived from: Prove commutativity and consider generalizations...",
+          "suggested_trust_class": "ADV",
+          "rationale": "Template partitioner - user must edit and promote"
+        }
+      ]
+    },
+    "note": "proposal_id is exploration-only and MUST NOT appear in attestation"
+  },
+  "authority": {
+    "committed_partition_id": "8a279846b794ddbdb89febca3dbb08b0b2955172d50c3e8670dec829c71e6746",
+    "commit_response": {
+      "committed_partition_id": "8a279846b794ddbdb89febca3dbb08b0b2955172d50c3e8670dec829c71e6746",
+      "u_t": "7155fbebd167a5d009a0bb4521949c41afef2ab1e5e91672b0087f002f004055",
+      "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+      "h_t": "d63610327986602379c8d39451f8f5f7d2b5b9ed62922e9cca8a8a37ce64fd68",
+      "claim_count": 2
+    }
+  },
+  "verification": {
+    "response": {
+      "outcome": "ABSTAINED",
+      "committed_partition_id": "8a279846b794ddbdb89febca3dbb08b0b2955172d50c3e8670dec829c71e6746",
+      "attestation": {
+        "u_t": "7155fbebd167a5d009a0bb4521949c41afef2ab1e5e91672b0087f002f004055",
+        "r_t": "aff32060851764730810df6b6c1077f44cd6dffddcf631417eedc912841779a3",
+        "h_t": "353dcbb6060d59fc2c67ed4dda60f588bdbd6be08f35846b5e82ca8196a4a7cf",
+        "authority_claim_count": 1,
+        "total_claim_count": 2
+      },
+      "authority_basis": {
+        "fv_count": 0,
+        "mv_count": 1,
+        "pa_count": 0,
+        "adv_count": 1,
+        "adv_excluded": true,
+        "mechanically_verified": false,
+        "authority_bearing_accepted": true,
+        "explanation": "v0 demo has no mechanical verifier. 0 FV and 1 MV claims are authority-bearing but verification is not yet implemented.",
+        "trust_class_breakdown": {
+          "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
+          "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+          "PA": "Procedurally Attested - user attestation, not mechanically verified",
+          "ADV": "Advisory - exploration only, excluded from authority stream"
+        }
+      }
+    }
+  },
+  "attestation": {
+    "u_t": "7155fbebd167a5d009a0bb4521949c41afef2ab1e5e91672b0087f002f004055",
+    "r_t": "aff32060851764730810df6b6c1077f44cd6dffddcf631417eedc912841779a3",
+    "h_t": "353dcbb6060d59fc2c67ed4dda60f588bdbd6be08f35846b5e82ca8196a4a7cf"
+  },
+  "authority_basis": {
+    "fv_count": 0,
+    "mv_count": 1,
+    "pa_count": 0,
+    "adv_count": 1,
+    "adv_excluded": true,
+    "mechanically_verified": false,
+    "authority_bearing_accepted": true,
+    "explanation": "v0 demo has no mechanical verifier. 0 FV and 1 MV claims are authority-bearing but verification is not yet implemented.",
+    "trust_class_breakdown": {
+      "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
+      "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+      "PA": "Procedurally Attested - user attestation, not mechanically verified",
+      "ADV": "Advisory - exploration only, excluded from authority stream"
+    }
+  },
+  "analysis": {
+    "authority_claim_count": 1,
+    "total_claim_count": 2,
+    "adv_excluded_from_rt": true,
+    "outcome_explanation": "v0 demo has no mechanical verifier. 0 FV and 1 MV claims are authority-bearing but verification is not yet implemented."
+  }
+}

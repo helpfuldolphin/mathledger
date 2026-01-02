@@ -1,0 +1,16 @@
+{
+  "case_name": "pa_only",
+  "description": "PA only - user attestation, authority-bearing but no mechanical proof",
+  "task_text": "Attest that requirement REQ-001 is satisfied",
+  "claims": [
+    {
+      "claim_text": "Requirement REQ-001 is satisfied by implementation in module X",
+      "trust_class": "PA",
+      "rationale": "User attestation based on manual review"
+    }
+  ],
+  "actor_id": "demo_harness",
+  "seed": 42,
+  "expected_authority_count": 1,
+  "expected_adv_excluded": true
+}

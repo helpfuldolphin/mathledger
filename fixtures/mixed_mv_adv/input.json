@@ -1,0 +1,21 @@
+{
+  "case_name": "mixed_mv_adv",
+  "description": "Mixed MV + ADV - ADV must never enter R_t",
+  "task_text": "Prove commutativity and consider generalizations",
+  "claims": [
+    {
+      "claim_text": "forall a b : Nat, a + b = b + a",
+      "trust_class": "MV",
+      "rationale": "Commutativity - mechanically checkable"
+    },
+    {
+      "claim_text": "This likely generalizes to arbitrary rings",
+      "trust_class": "ADV",
+      "rationale": "Speculation about generalization"
+    }
+  ],
+  "actor_id": "demo_harness",
+  "seed": 42,
+  "expected_authority_count": 1,
+  "expected_adv_excluded": true
+}

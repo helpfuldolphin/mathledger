@@ -1,0 +1,85 @@
+{
+  "success": true,
+  "error": null,
+  "captured_at": "2026-01-02T05:49:40.025900+00:00",
+  "exploration": {
+    "proposal_id": "3a896c5a-98f5-434f-aded-49304139d649",
+    "draft_proposal": {
+      "proposal_id": "3a896c5a-98f5-434f-aded-49304139d649",
+      "claims": [
+        {
+          "claim_text": "Claim derived from: Prove that addition is commutative for natural numbers...",
+          "suggested_trust_class": "ADV",
+          "rationale": "Template partitioner - user must edit and promote"
+        }
+      ]
+    },
+    "note": "proposal_id is exploration-only and MUST NOT appear in attestation"
+  },
+  "authority": {
+    "committed_partition_id": "50d1cbe861cbc5ec0bd7b43d118f6fbb6df3779f0c8a10050147e6cf4ed9457b",
+    "commit_response": {
+      "committed_partition_id": "50d1cbe861cbc5ec0bd7b43d118f6fbb6df3779f0c8a10050147e6cf4ed9457b",
+      "u_t": "84c576326a835d25074e3bb69fbbfd413c754325fb18ceb035cec968590ec8f6",
+      "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+      "h_t": "c26242c7c3bae01fdec796a4a3b1c7189f43ea35904fc5fd65a7ec0aed02e694",
+      "claim_count": 1
+    }
+  },
+  "verification": {
+    "response": {
+      "outcome": "ABSTAINED",
+      "committed_partition_id": "50d1cbe861cbc5ec0bd7b43d118f6fbb6df3779f0c8a10050147e6cf4ed9457b",
+      "attestation": {
+        "u_t": "84c576326a835d25074e3bb69fbbfd413c754325fb18ceb035cec968590ec8f6",
+        "r_t": "987b42a92357f403298ed25d6b25f49d68174ed939b3791e8690171a43ed84e8",
+        "h_t": "2a425d636b00901ec9b8cd42542db260cfbb29820787a7e2324d4d4800ae6283",
+        "authority_claim_count": 1,
+        "total_claim_count": 1
+      },
+      "authority_basis": {
+        "fv_count": 0,
+        "mv_count": 1,
+        "pa_count": 0,
+        "adv_count": 0,
+        "adv_excluded": false,
+        "mechanically_verified": false,
+        "authority_bearing_accepted": true,
+        "explanation": "v0 demo has no mechanical verifier. 0 FV and 1 MV claims are authority-bearing but verification is not yet implemented.",
+        "trust_class_breakdown": {
+          "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
+          "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+          "PA": "Procedurally Attested - user attestation, not mechanically verified",
+          "ADV": "Advisory - exploration only, excluded from authority stream"
+        }
+      }
+    }
+  },
+  "attestation": {
+    "u_t": "84c576326a835d25074e3bb69fbbfd413c754325fb18ceb035cec968590ec8f6",
+    "r_t": "987b42a92357f403298ed25d6b25f49d68174ed939b3791e8690171a43ed84e8",
+    "h_t": "2a425d636b00901ec9b8cd42542db260cfbb29820787a7e2324d4d4800ae6283"
+  },
+  "authority_basis": {
+    "fv_count": 0,
+    "mv_count": 1,
+    "pa_count": 0,
+    "adv_count": 0,
+    "adv_excluded": false,
+    "mechanically_verified": false,
+    "authority_bearing_accepted": true,
+    "explanation": "v0 demo has no mechanical verifier. 0 FV and 1 MV claims are authority-bearing but verification is not yet implemented.",
+    "trust_class_breakdown": {
+      "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
+      "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+      "PA": "Procedurally Attested - user attestation, not mechanically verified",
+      "ADV": "Advisory - exploration only, excluded from authority stream"
+    }
+  },
+  "analysis": {
+    "authority_claim_count": 1,
+    "total_claim_count": 1,
+    "adv_excluded_from_rt": true,
+    "outcome_explanation": "v0 demo has no mechanical verifier. 0 FV and 1 MV claims are authority-bearing but verification is not yet implemented."
+  }
+}

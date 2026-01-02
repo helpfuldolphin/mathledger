@@ -1,0 +1,85 @@
+{
+  "success": true,
+  "error": null,
+  "captured_at": "2026-01-02T05:49:40.042044+00:00",
+  "exploration": {
+    "proposal_id": "23b07db3-8c77-46f5-9d8b-59d8d3b9ae57",
+    "draft_proposal": {
+      "proposal_id": "23b07db3-8c77-46f5-9d8b-59d8d3b9ae57",
+      "claims": [
+        {
+          "claim_text": "Claim derived from: Speculate about Navier-Stokes...",
+          "suggested_trust_class": "ADV",
+          "rationale": "Template partitioner - user must edit and promote"
+        }
+      ]
+    },
+    "note": "proposal_id is exploration-only and MUST NOT appear in attestation"
+  },
+  "authority": {
+    "committed_partition_id": "73c0836370a201649d08e397bb91e9f45ea92e58603a7b9b5ca5137aeb9f0e1c",
+    "commit_response": {
+      "committed_partition_id": "73c0836370a201649d08e397bb91e9f45ea92e58603a7b9b5ca5137aeb9f0e1c",
+      "u_t": "fda1b6ca3e379844352a94115b5fc30539277ffe54dae80f014121662a04e8bb",
+      "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+      "h_t": "3f0077cf853ce8051ce03bef60917036d1360719473800dcbcdb75239fe5961c",
+      "claim_count": 2
+    }
+  },
+  "verification": {
+    "response": {
+      "outcome": "ABSTAINED",
+      "committed_partition_id": "73c0836370a201649d08e397bb91e9f45ea92e58603a7b9b5ca5137aeb9f0e1c",
+      "attestation": {
+        "u_t": "fda1b6ca3e379844352a94115b5fc30539277ffe54dae80f014121662a04e8bb",
+        "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+        "h_t": "3f0077cf853ce8051ce03bef60917036d1360719473800dcbcdb75239fe5961c",
+        "authority_claim_count": 0,
+        "total_claim_count": 2
+      },
+      "authority_basis": {
+        "fv_count": 0,
+        "mv_count": 0,
+        "pa_count": 0,
+        "adv_count": 2,
+        "adv_excluded": true,
+        "mechanically_verified": false,
+        "authority_bearing_accepted": false,
+        "explanation": "No authority-bearing claims. Nothing entered the reasoning stream.",
+        "trust_class_breakdown": {
+          "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
+          "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+          "PA": "Procedurally Attested - user attestation, not mechanically verified",
+          "ADV": "Advisory - exploration only, excluded from authority stream"
+        }
+      }
+    }
+  },
+  "attestation": {
+    "u_t": "fda1b6ca3e379844352a94115b5fc30539277ffe54dae80f014121662a04e8bb",
+    "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+    "h_t": "3f0077cf853ce8051ce03bef60917036d1360719473800dcbcdb75239fe5961c"
+  },
+  "authority_basis": {
+    "fv_count": 0,
+    "mv_count": 0,
+    "pa_count": 0,
+    "adv_count": 2,
+    "adv_excluded": true,
+    "mechanically_verified": false,
+    "authority_bearing_accepted": false,
+    "explanation": "No authority-bearing claims. Nothing entered the reasoning stream.",
+    "trust_class_breakdown": {
+      "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
+      "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+      "PA": "Procedurally Attested - user attestation, not mechanically verified",
+      "ADV": "Advisory - exploration only, excluded from authority stream"
+    }
+  },
+  "analysis": {
+    "authority_claim_count": 0,
+    "total_claim_count": 2,
+    "adv_excluded_from_rt": true,
+    "outcome_explanation": "No authority-bearing claims. Nothing entered the reasoning stream."
+  }
+}

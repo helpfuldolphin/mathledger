@@ -1,0 +1,85 @@
+{
+  "success": true,
+  "error": null,
+  "captured_at": "2026-01-02T05:49:40.042044+00:00",
+  "exploration": {
+    "proposal_id": "e70ffeeb-f88b-4bb2-a742-7c5adca1e136",
+    "draft_proposal": {
+      "proposal_id": "e70ffeeb-f88b-4bb2-a742-7c5adca1e136",
+      "claims": [
+        {
+          "claim_text": "Claim derived from: Attest that requirement REQ-001 is satisfied...",
+          "suggested_trust_class": "ADV",
+          "rationale": "Template partitioner - user must edit and promote"
+        }
+      ]
+    },
+    "note": "proposal_id is exploration-only and MUST NOT appear in attestation"
+  },
+  "authority": {
+    "committed_partition_id": "2056cfa691fe5c541a1dd3b206df865277c678829627c6fee13b85957d4f0452",
+    "commit_response": {
+      "committed_partition_id": "2056cfa691fe5c541a1dd3b206df865277c678829627c6fee13b85957d4f0452",
+      "u_t": "165b2b39608c4e1eae25206e7c671c1a852bc6af5b880427427e456e7af26a7b",
+      "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+      "h_t": "bf04e672d396eb5f85ba3a5d888f265c49d2a56ec09e43d613e0870db7dd98fa",
+      "claim_count": 1
+    }
+  },
+  "verification": {
+    "response": {
+      "outcome": "ABSTAINED",
+      "committed_partition_id": "2056cfa691fe5c541a1dd3b206df865277c678829627c6fee13b85957d4f0452",
+      "attestation": {
+        "u_t": "3e922bd849ca7ff00109c4bb457f5b9688c020c3625372371c0ed1c8014dda82",
+        "r_t": "1ccb6a26641fa913f633a000d00bb3db9b39fddedd0ab67758845483f4afdbbc",
+        "h_t": "6f54e1c10aa72fceeca68de19a5ffd7f700dde81cabebf9db34e91b7166c5cb8",
+        "authority_claim_count": 1,
+        "total_claim_count": 1
+      },
+      "authority_basis": {
+        "fv_count": 0,
+        "mv_count": 0,
+        "pa_count": 1,
+        "adv_count": 0,
+        "adv_excluded": false,
+        "mechanically_verified": false,
+        "authority_bearing_accepted": true,
+        "explanation": "1 PA claim(s) accepted via user attestation. PA claims are authority-bearing but not mechanically verified.",
+        "trust_class_breakdown": {
+          "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
+          "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+          "PA": "Procedurally Attested - user attestation, not mechanically verified",
+          "ADV": "Advisory - exploration only, excluded from authority stream"
+        }
+      }
+    }
+  },
+  "attestation": {
+    "u_t": "3e922bd849ca7ff00109c4bb457f5b9688c020c3625372371c0ed1c8014dda82",
+    "r_t": "1ccb6a26641fa913f633a000d00bb3db9b39fddedd0ab67758845483f4afdbbc",
+    "h_t": "6f54e1c10aa72fceeca68de19a5ffd7f700dde81cabebf9db34e91b7166c5cb8"
+  },
+  "authority_basis": {
+    "fv_count": 0,
+    "mv_count": 0,
+    "pa_count": 1,
+    "adv_count": 0,
+    "adv_excluded": false,
+    "mechanically_verified": false,
+    "authority_bearing_accepted": true,
+    "explanation": "1 PA claim(s) accepted via user attestation. PA claims are authority-bearing but not mechanically verified.",
+    "trust_class_breakdown": {
+      "FV": "Formally Verified - would require machine-checkable proof (v0: not implemented)",
+      "MV": "Mechanically Validated - would require automated checks (v0: not implemented)",
+      "PA": "Procedurally Attested - user attestation, not mechanically verified",
+      "ADV": "Advisory - exploration only, excluded from authority stream"
+    }
+  },
+  "analysis": {
+    "authority_claim_count": 1,
+    "total_claim_count": 1,
+    "adv_excluded_from_rt": true,
+    "outcome_explanation": "1 PA claim(s) accepted via user attestation. PA claims are authority-bearing but not mechanically verified."
+  }
+}
