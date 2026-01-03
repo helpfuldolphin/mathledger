@@ -11,24 +11,69 @@ v0.2 Changes:
 
 Run: uv run python demo/app.py
 Open: http://localhost:8000
+
+Docker: docker build -t mathledger-demo . && docker run -p 8000:8000 mathledger-demo
+Mounted: BASE_PATH=/demo docker run -p 8000:8000 -e BASE_PATH=/demo mathledger-demo
 """
 
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, PlainTextResponse
+import os
+from datetime import datetime, timezone
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, PlainTextResponse, JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from pathlib import Path
 import uvicorn
 
 from backend.api.uvil import router as uvil_router
 
+# ---------------------------------------------------------------------------
+# VERSION PINNING (v0.2.0-demo-lock)
+# ---------------------------------------------------------------------------
+
 DEMO_VERSION = "0.2.0"
+DEMO_TAG = "v0.2.0-demo-lock"
+DEMO_COMMIT = "27a94c8a58139cb10349f6418336c618f528cbab"
+
+# ---------------------------------------------------------------------------
+# BASE_PATH Configuration (for reverse proxy mounting)
+# ---------------------------------------------------------------------------
+
+BASE_PATH = os.environ.get("BASE_PATH", "").rstrip("/")
+if BASE_PATH and not BASE_PATH.startswith("/"):
+    BASE_PATH = "/" + BASE_PATH
+
+# ---------------------------------------------------------------------------
+# Version Header Middleware
+# ---------------------------------------------------------------------------
+
+
+class VersionHeaderMiddleware(BaseHTTPMiddleware):
+    """Add version headers to all responses."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-MathLedger-Version"] = f"v{DEMO_VERSION}"
+        response.headers["X-MathLedger-Commit"] = DEMO_COMMIT
+        response.headers["X-MathLedger-Base-Path"] = BASE_PATH or "/"
+        return response
+
+
+# ---------------------------------------------------------------------------
+# FastAPI Application
+# ---------------------------------------------------------------------------
 
 app = FastAPI(
     title="MathLedger Demo",
     description="UVIL v0 + Trust Classes v0: Epistemic Governance Demo",
     version=DEMO_VERSION,
+    root_path=BASE_PATH,
 )
 
-# Mount UVIL API
+# Add version header middleware
+app.add_middleware(VersionHeaderMiddleware)
+
+# Mount UVIL API (respects root_path)
 app.include_router(uvil_router)
 
 # Predefined scenarios (mirrors fixtures from harness)
@@ -98,8 +143,17 @@ UI_COPY = {
     "OUTCOME_ABSTAINED": "No verifier could confirm or refute this claim. ABSTAINED means no validator exists for this claim type in v0.",
 }
 
-# HTML Frontend with split panels and self-explanation
-HTML_CONTENT = """
+# ---------------------------------------------------------------------------
+# HTML Frontend Generator (BASE_PATH-aware)
+# ---------------------------------------------------------------------------
+
+
+def get_html_content() -> str:
+    """Generate HTML content with BASE_PATH-aware URLs."""
+    # Compute API base for JavaScript
+    api_base = BASE_PATH if BASE_PATH else ""
+
+    return """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -578,6 +632,12 @@ HTML_CONTENT = """
 <body>
     <div class="container">
         <div class="main-content">
+            <!-- Version Banner -->
+            <div style="background:#1a1a1a; color:#fff; padding:0.5rem 1rem; margin-bottom:1rem; font-size:0.75rem; font-family:monospace; display:flex; justify-content:space-between; align-items:center;">
+                <span>GOVERNANCE DEMO (not capability)</span>
+                <span>v""" + DEMO_VERSION + """ | """ + DEMO_TAG + """ | """ + DEMO_COMMIT[:12] + """</span>
+            </div>
+
             <h1>MathLedger Demo <span class="version-badge">v""" + DEMO_VERSION + """</span></h1>
 
             <!-- Integration Point 1: Framing Box with expandable detail -->
@@ -807,7 +867,7 @@ HTML_CONTENT = """
             <div id="status-display" class="status"></div>
 
             <div class="footer">
-                v""" + DEMO_VERSION + """ Demo | Governance substrate only | MV arithmetic validator only | <a href="/docs/V0_LOCK.md">Scope Lock</a>
+                v""" + DEMO_VERSION + """ (""" + DEMO_TAG + """) | Governance substrate only | MV arithmetic validator only | <a href=\"""" + api_base + """/docs/view/V0_LOCK.md">Scope Lock</a>
             </div>
         </div>
 
@@ -816,23 +876,23 @@ HTML_CONTENT = """
             <h3>Documentation</h3>
             <ul>
                 <li>
-                    <a href="/docs/view/HOW_THE_DEMO_EXPLAINS_ITSELF.md" target="_blank">How the Demo Explains Itself</a>
+                    <a href=\"""" + api_base + """/docs/view/HOW_THE_DEMO_EXPLAINS_ITSELF.md" target="_blank">How the Demo Explains Itself</a>
                     <div class="doc-desc">UI behavior and outcomes explained</div>
                 </li>
                 <li>
-                    <a href="/docs/view/HOW_TO_APPROACH_THIS_DEMO.md" target="_blank">How to Approach This Demo</a>
+                    <a href=\"""" + api_base + """/docs/view/HOW_TO_APPROACH_THIS_DEMO.md" target="_blank">How to Approach This Demo</a>
                     <div class="doc-desc">Framing and expectations</div>
                 </li>
                 <li>
-                    <a href="/docs/view/V0_LOCK.md" target="_blank">v0 Scope Lock</a>
+                    <a href=\"""" + api_base + """/docs/view/V0_LOCK.md" target="_blank">v0 Scope Lock</a>
                     <div class="doc-desc">What is and isn't in scope</div>
                 </li>
                 <li>
-                    <a href="/docs/view/V0_SYSTEM_BOUNDARY_MEMO.md" target="_blank">System Boundary Memo</a>
+                    <a href=\"""" + api_base + """/docs/view/V0_SYSTEM_BOUNDARY_MEMO.md" target="_blank">System Boundary Memo</a>
                     <div class="doc-desc">Formal claims and non-claims</div>
                 </li>
                 <li>
-                    <a href="/docs/view/invariants_status.md" target="_blank">Invariants Status</a>
+                    <a href=\"""" + api_base + """/docs/view/invariants_status.md" target="_blank">Invariants Status</a>
                     <div class="doc-desc">Tier A/B/C classification</div>
                 </li>
             </ul>
@@ -855,6 +915,9 @@ HTML_CONTENT = """
     </div>
 
     <script>
+        // API base path for reverse proxy support
+        const API_BASE = '""" + api_base + """';
+
         const SCENARIOS = """ + str(SCENARIOS).replace("'", '"') + """;
 
         // Integration Point 9: Governance error templates
@@ -944,7 +1007,7 @@ HTML_CONTENT = """
             setStatus('Generating proposal...');
 
             try {
-                const response = await fetch('/uvil/propose_partition', {
+                const response = await fetch(`${API_BASE}/uvil/propose_partition`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ problem_statement: scenario.task_text })
@@ -979,7 +1042,7 @@ HTML_CONTENT = """
             setStatus('Generating proposal...');
 
             try {
-                const response = await fetch('/uvil/propose_partition', {
+                const response = await fetch(`${API_BASE}/uvil/propose_partition`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ problem_statement: input })
@@ -1046,7 +1109,7 @@ HTML_CONTENT = """
             setStatus('Committing...');
 
             try {
-                const response = await fetch('/uvil/commit_uvil', {
+                const response = await fetch(`${API_BASE}/uvil/commit_uvil`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1117,7 +1180,7 @@ HTML_CONTENT = """
             setStatus('Running verification...');
 
             try {
-                const response = await fetch('/uvil/run_verification', {
+                const response = await fetch(`${API_BASE}/uvil/run_verification`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ committed_partition_id: currentCommittedId })
@@ -1227,7 +1290,7 @@ HTML_CONTENT = """
             btn.textContent = 'Downloading...';
 
             try {
-                const response = await fetch(`/uvil/evidence_pack/${currentCommittedId}`);
+                const response = await fetch(`${API_BASE}/uvil/evidence_pack/${currentCommittedId}`);
                 if (!response.ok) {
                     const err = await response.json();
                     const errorCode = err.error_code || '';
@@ -1279,13 +1342,13 @@ HTML_CONTENT = """
             try {
                 // First get the evidence pack if we don't have it
                 if (!currentEvidencePack || currentEvidencePack.committed_partition_snapshot.committed_partition_id !== currentCommittedId) {
-                    const packResponse = await fetch(`/uvil/evidence_pack/${currentCommittedId}`);
+                    const packResponse = await fetch(`${API_BASE}/uvil/evidence_pack/${currentCommittedId}`);
                     if (!packResponse.ok) throw new Error('Failed to fetch evidence pack');
                     currentEvidencePack = await packResponse.json();
                 }
 
                 // Now replay verify
-                const response = await fetch('/uvil/replay_verify', {
+                const response = await fetch(`${API_BASE}/uvil/replay_verify`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1386,7 +1449,7 @@ HTML_CONTENT = """
 
                 try {
                     // Propose
-                    const proposeRes = await fetch('/uvil/propose_partition', {
+                    const proposeRes = await fetch(`${API_BASE}/uvil/propose_partition`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ problem_statement: step.task })
@@ -1394,7 +1457,7 @@ HTML_CONTENT = """
                     const proposeData = await proposeRes.json();
 
                     // Commit
-                    const commitRes = await fetch('/uvil/commit_uvil', {
+                    const commitRes = await fetch(`${API_BASE}/uvil/commit_uvil`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1410,7 +1473,7 @@ HTML_CONTENT = """
                     const commitData = await commitRes.json();
 
                     // Verify
-                    const verifyRes = await fetch('/uvil/run_verification', {
+                    const verifyRes = await fetch(`${API_BASE}/uvil/run_verification`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ committed_partition_id: commitData.committed_partition_id })
@@ -1463,13 +1526,25 @@ HTML_CONTENT = """
 @app.get("/", response_class=HTMLResponse)
 async def root():
     """Serve the demo frontend."""
-    return HTML_CONTENT
+    return get_html_content()
 
 
 @app.get("/health")
 async def health():
-    """Health check endpoint."""
-    return {"status": "ok", "version": DEMO_VERSION}
+    """Health check endpoint with version info."""
+    return {
+        "status": "ok",
+        "version": DEMO_VERSION,
+        "tag": DEMO_TAG,
+        "commit": DEMO_COMMIT,
+        "base_path": BASE_PATH or "/",
+    }
+
+
+@app.get("/healthz")
+async def healthz():
+    """Kubernetes-style health check endpoint."""
+    return PlainTextResponse("ok", status_code=200)
 
 
 @app.get("/scenarios")
@@ -1558,7 +1633,7 @@ async def view_doc(doc_name: str):
         </style>
     </head>
     <body>
-        <a href="/" class="back-link">← Back to Demo</a>
+        <a href="{BASE_PATH or '/'}" class="back-link">← Back to Demo</a>
         <pre style="background:#fff; border:1px solid #ddd; white-space:pre-wrap;">{content}</pre>
     </body>
     </html>
