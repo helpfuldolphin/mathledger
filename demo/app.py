@@ -856,6 +856,7 @@ def get_html_content() -> str:
                             <div class="evidence-pack-actions">
                                 <button id="btn-download-evidence" onclick="downloadEvidencePack()">Download Evidence Pack</button>
                                 <button id="btn-replay-verify" class="secondary" onclick="replayVerify()">Replay & Verify</button>
+                                <a href="/v0.2.0/evidence-pack/verify/" target="_blank" class="secondary" style="display:inline-block; padding:0.6rem 1.2rem; background:#fff; color:#1565c0; border:1px solid #1565c0; text-decoration:none; font-size:0.85rem;">Open Auditor Tool</a>
                             </div>
                             <div id="replay-result-display" class="hidden"></div>
                         </div>
@@ -1548,15 +1549,49 @@ async def root():
     return get_html_content()
 
 
+def get_releases_json_version() -> dict:
+    """Load version info from releases.json for deployment verification."""
+    releases_path = Path(__file__).parent.parent / "releases" / "releases.json"
+    try:
+        import json
+        with open(releases_path, encoding="utf-8") as f:
+            data = json.load(f)
+        current = data.get("current_version", "unknown")
+        version_data = data.get("versions", {}).get(current, {})
+        return {
+            "releases_json_version": current,
+            "releases_json_commit": version_data.get("commit", "unknown"),
+            "releases_json_tag": version_data.get("tag", "unknown"),
+        }
+    except Exception:
+        return {
+            "releases_json_version": "error",
+            "releases_json_commit": "error",
+            "releases_json_tag": "error",
+        }
+
+
 @app.get("/health")
 async def health():
-    """Health check endpoint with version info."""
+    """Health check endpoint with version info.
+
+    Includes build metadata for deployment verification:
+    - version/tag/commit: Hardcoded in this file (what's running)
+    - releases_json_*: From releases.json (canonical source)
+
+    If these don't match, deployment is out of sync.
+    """
+    releases_info = get_releases_json_version()
     return {
         "status": "ok",
         "version": DEMO_VERSION,
         "tag": DEMO_TAG,
         "commit": DEMO_COMMIT,
         "base_path": BASE_PATH or "/",
+        # Build metadata for deployment verification
+        "build_commit": DEMO_COMMIT,
+        "build_tag": DEMO_TAG,
+        **releases_info,
     }
 
 
