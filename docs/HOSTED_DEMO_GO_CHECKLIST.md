@@ -1,96 +1,91 @@
 # Hosted Demo GO Checklist
 
-**Purpose**: 60-second daily verification that the hosted demo infrastructure is correct.
+**Purpose**: Verification that hosted demo infrastructure matches releases.json.
 
-**Version**: 0.2.1
+**Current Version**: Read from `releases/releases.json` (`current_version` field)
 **Last Updated**: 2026-01-03
 
 ---
 
-## Quick GO/NO-GO (run all 5)
+## CRITICAL: Operator Deployment Flow
 
-```powershell
-# 1. Pages (archive) must remain untouched
-curl.exe -sI https://mathledger.ai/v0.2.1/ | findstr /I "cache-control"
-# Expected: cache-control: public, max-age=31536000, immutable
+After updating `releases/releases.json` with a new version:
 
-# 2. Worker routing must be live
-curl.exe -sI https://mathledger.ai/demo/healthz | findstr /I "X-Proxied-By"
-# Expected: X-Proxied-By: mathledger-demo-proxy
-
-# 3. Demo version pinning must be correct
-curl.exe -s https://mathledger.ai/demo/health | python -c "import sys,json; d=json.load(sys.stdin); print(f'version={d.get(\"version\")} tag={d.get(\"tag\")}')"
-# Expected: version=0.2.1 tag=v0.2.1-cohesion
-
-# 4. Release pin validation (anti-drift)
-curl.exe -s https://mathledger.ai/demo/health | python -c "import sys,json; d=json.load(sys.stdin); print('STALE' if d.get('release_pin',{}).get('is_stale') else 'OK')"
-# Expected: OK
-
-# 5. Evidence-pack verifier must be present (static auditor tool)
-curl.exe -s -o NUL -w "%{http_code}" https://mathledger.ai/v0.2.1/evidence-pack/verify/
-# Expected: 200
+```
+1. Update releases/releases.json "current_version"
+2. Deploy static site:     wrangler pages deploy site/
+3. Rebuild & deploy demo:  docker build -t mathledger-demo . && fly deploy
+4. Verify match:           uv run python tools/check_hosted_demo_matches_release.py
+5. Run hostile audit:      powershell tools/hostile_audit.ps1 v0.2.2
+                           (replace v0.2.2 with current version)
+6. ONLY PROCEED IF BOTH PASS
 ```
 
----
-
-## Expected Results Table
-
-| Check | Command | Expected | GO if |
-|-------|---------|----------|-------|
-| Pages immutable | `findstr cache-control` | `immutable` | Header contains "immutable" |
-| Worker routing | `findstr X-Proxied-By` | `mathledger-demo-proxy` | Header present |
-| Version pinned | `/demo/health` | `version=0.2.1` | Matches exactly |
-| Tag pinned | `/demo/health` | `tag=v0.2.1-cohesion` | Matches exactly |
-| Release pin | `/demo/health` | `is_stale=false` | Not stale |
-| Verifier page | `%{http_code}` | `200` | Status 200 |
+**After Pages deploy, you MUST fly deploy; then rerun hostile_audit.ps1 until PASS.**
 
 ---
 
-## One-Liner (PowerShell)
+## Quick GO/NO-GO (run all checks)
 
 ```powershell
-# All-in-one GO check using anti-drift tool
+# 1. One-liner anti-drift check (MUST PASS)
 uv run python tools/check_hosted_demo_matches_release.py
 # Exit code 0 = GO, Exit code 1 = NO-GO (deploy required), Exit code 3 = container rebuild
-```
 
-## Manual PowerShell Check
+# 2. Hostile audit (MUST PASS)
+powershell tools/hostile_audit.ps1 v0.2.2
+# ALL checks must pass
 
-```powershell
-# Manual version check
-$health = curl.exe -s https://mathledger.ai/demo/health | ConvertFrom-Json
-if ($health.version -eq "0.2.1" -and $health.release_pin.is_stale -eq $false) {
-    Write-Host "GO - Version and release pin valid" -ForegroundColor Green
-} else {
-    Write-Host "NO-GO - Mismatch detected" -ForegroundColor Red
-    Write-Host "  Version: $($health.version)"
-    Write-Host "  Stale: $($health.release_pin.is_stale)"
-}
+# 3. Manual /healthz header check
+curl.exe -sI https://mathledger.ai/demo/healthz
+# Expected headers:
+#   X-MathLedger-Version: v0.2.2
+#   X-MathLedger-Tag: v0.2.2-link-integrity
+#   X-MathLedger-Commit: 27a94c8a58139cb10349f6418336c618f528cbab
+#   X-MathLedger-Stale-Deploy: false
 ```
 
 ---
 
-## Failure Modes
+## Expected Values (from releases.json)
 
-### Pages returns wrong cache-control
-- **Cause**: Cloudflare Pages misconfigured or redeployed without immutable headers
-- **Fix**: Check `_headers` file in Pages deployment
+The demo must report values matching `releases/releases.json`:
 
-### X-Proxied-By missing
-- **Cause**: Cloudflare Worker not deployed or route not matching `/demo/*`
-- **Fix**: Verify Worker is published and route is `mathledger.ai/demo/*`
+| Field | Source | How to Check |
+|-------|--------|--------------|
+| version | `current_version` (without leading v) | `/demo/health` JSON `version` field |
+| tag | `versions[current_version].tag` | `/demo/health` JSON `tag` field |
+| commit | `versions[current_version].commit` | `/demo/health` JSON `commit` field |
 
-### Version mismatch
-- **Cause**: Fly app redeployed with wrong version, or wrong app targeted
-- **Fix**: Verify `fly status -a mathledger-demo-v0-2-0-helpfuldolphin` shows correct deployment
+**Dynamic**: Values are read from releases.json at demo startup. Update releases.json and redeploy to change.
 
-### Verifier returns 404
-- **Cause**: Pages missing `/v0.2.1/evidence-pack/verify/` directory
-- **Fix**: Redeploy Pages with `site/v0.2.1/evidence-pack/verify/index.html`
+---
+
+## Failure Modes and Fixes
+
+### Version mismatch (most common)
+- **Symptom**: `hostile_audit.ps1` fails "Version match"
+- **Cause**: Demo container has old releases.json baked in
+- **Fix**:
+  ```bash
+  docker build --no-cache -t mathledger-demo .
+  fly deploy -a mathledger-demo-v0-2-0-helpfuldolphin
+  ```
 
 ### Release pin stale
-- **Cause**: Container's releases.json doesn't match running code
-- **Fix**: Rebuild Docker with --no-cache and redeploy
+- **Symptom**: `/demo/health` shows `release_pin.is_stale: true`
+- **Cause**: Container's releases.json differs from code expectations
+- **Fix**: Same as above - rebuild with `--no-cache`
+
+### X-Proxied-By missing
+- **Symptom**: `/demo/healthz` missing `X-Proxied-By` header
+- **Cause**: Cloudflare Worker not deployed or route broken
+- **Fix**: Verify Worker at `mathledger.ai/demo/*` route
+
+### Verifier returns 404
+- **Symptom**: `/v0.2.2/evidence-pack/verify/` returns 404
+- **Cause**: Pages missing the verifier directory
+- **Fix**: Rebuild static site and redeploy Pages
 
 ---
 
@@ -100,7 +95,7 @@ if ($health.version -eq "0.2.1" -and $health.release_pin.is_stale -eq $false) {
                                     ┌─────────────────────────┐
                                     │   Cloudflare Pages      │
                                     │   (immutable archive)   │
-    /v0.2.1/*  ──────────────────► │   mathledger.ai/v0.2.1/ │
+    /v0.2.2/*  ──────────────────► │   mathledger.ai/v0.2.2/ │
                                     └─────────────────────────┘
 
     Browser ─────┐
@@ -109,26 +104,43 @@ if ($health.version -eq "0.2.1" -and $health.release_pin.is_stale -eq $false) {
     ┌────────────────────────┐      ┌─────────────────────────┐
     │   Cloudflare Worker    │      │      Fly.io App         │
     │   (rewrites /demo/*)   │ ───► │   ROOT MOUNT (/)        │
-    │   X-Proxied-By header  │      │   v0.2.1-cohesion       │
+    │   X-Proxied-By header  │      │   reads releases.json   │
     └────────────────────────┘      └─────────────────────────┘
          /demo/*  ──────────────────► /*  (prefix stripped)
 ```
 
+**Key insight**: The Fly.io app reads `releases/releases.json` at startup. Rebuilding the Docker image with updated releases.json automatically updates the reported version.
+
 ---
 
-## Contract
+## Contract (Dynamic from releases.json)
 
-| Component | Authoritative Value |
-|-----------|---------------------|
+| Component | Source |
+|-----------|--------|
 | Fly App | `mathledger-demo-v0-2-0-helpfuldolphin` |
-| Version | `0.2.1` |
-| Tag | `v0.2.1-cohesion` |
-| Commit | `27a94c8a58139cb10349f6418336c618f528cbab` |
+| Version | `releases.json current_version` |
+| Tag | `releases.json versions[current].tag` |
+| Commit | `releases.json versions[current].commit` |
 | Worker Header | `X-Proxied-By: mathledger-demo-proxy` |
-| Pages Cache | `immutable` |
-| Release Pin | `is_stale: false` |
+| Health Headers | `X-MathLedger-Version`, `X-MathLedger-Tag`, `X-MathLedger-Commit` |
+
+---
+
+## Pre-Deployment Checklist
+
+Before deploying a new version:
+
+- [ ] `releases/releases.json` updated with new version entry
+- [ ] `current_version` field points to new version
+- [ ] New version has correct `tag`, `commit`, `date_locked`
+- [ ] Static site built: `uv run python scripts/build_static_site.py`
+- [ ] Pages deployed: `wrangler pages deploy site/`
+- [ ] Docker rebuilt: `docker build --no-cache -t mathledger-demo .`
+- [ ] Fly deployed: `fly deploy -a mathledger-demo-v0-2-0-helpfuldolphin`
+- [ ] Anti-drift check passes: `uv run python tools/check_hosted_demo_matches_release.py`
+- [ ] Hostile audit passes: `powershell tools/hostile_audit.ps1 <version>`
 
 ---
 
 **Author**: Claude A
-**Ritual**: Run `uv run python tools/check_hosted_demo_matches_release.py` before any demo or external review
+**Ritual**: Run `uv run python tools/check_hosted_demo_matches_release.py` AND `hostile_audit.ps1` before any demo or external review

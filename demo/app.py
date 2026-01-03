@@ -28,12 +28,41 @@ import uvicorn
 from backend.api.uvil import router as uvil_router
 
 # ---------------------------------------------------------------------------
-# VERSION PINNING (v0.2.1-cohesion)
+# VERSION PINNING (from releases.json - single source of truth)
 # ---------------------------------------------------------------------------
 
-DEMO_VERSION = "0.2.1"
-DEMO_TAG = "v0.2.1-cohesion"
-DEMO_COMMIT = "27a94c8a58139cb10349f6418336c618f528cbab"  # Base commit from v0.2.0
+def _load_version_from_releases() -> tuple[str, str, str]:
+    """
+    Load version info from releases.json at startup.
+
+    This ensures the demo always reports the correct version from the
+    canonical source (releases.json), eliminating version drift.
+
+    Returns: (version, tag, commit)
+    """
+    import json
+    releases_path = Path(__file__).parent.parent / "releases" / "releases.json"
+    try:
+        with open(releases_path, encoding="utf-8") as f:
+            data = json.load(f)
+        current = data.get("current_version", "v0.2.2")
+        version_data = data.get("versions", {}).get(current, {})
+
+        # Strip leading 'v' from version for consistency (v0.2.2 -> 0.2.2)
+        version = current.lstrip("v")
+        tag = version_data.get("tag", f"{current}-unknown")
+        commit = version_data.get("commit", "unknown")
+
+        return version, tag, commit
+    except Exception as e:
+        # Fallback if releases.json is missing or malformed
+        # This should never happen in a proper deployment
+        print(f"WARNING: Failed to load releases.json: {e}")
+        return "0.2.2", "v0.2.2-link-integrity", "unknown"
+
+
+# Load version at module startup from releases.json
+DEMO_VERSION, DEMO_TAG, DEMO_COMMIT = _load_version_from_releases()
 
 # Repository URL (single source of truth)
 REPO_URL = "https://github.com/helpfuldolphin/mathledger"
@@ -1942,14 +1971,23 @@ async def health():
 async def healthz():
     """Kubernetes-style health check endpoint.
 
-    Always returns 200 (container is running), but includes
-    X-MathLedger-Stale-Deploy header if version mismatch detected.
+    Always returns 200 (container is running), but includes version headers
+    for hostile auditor verification:
+    - X-MathLedger-Version: vX.Y.Z
+    - X-MathLedger-Commit: full commit hash
+    - X-MathLedger-Tag: version tag
+    - X-MathLedger-Stale-Deploy: true/false
     """
     is_stale = _RELEASE_PIN_STATUS["is_stale"]
     return PlainTextResponse(
         "ok",
         status_code=200,
-        headers={"X-MathLedger-Stale-Deploy": str(is_stale).lower()}
+        headers={
+            "X-MathLedger-Version": f"v{DEMO_VERSION}",
+            "X-MathLedger-Commit": DEMO_COMMIT,
+            "X-MathLedger-Tag": DEMO_TAG,
+            "X-MathLedger-Stale-Deploy": str(is_stale).lower(),
+        }
     )
 
 

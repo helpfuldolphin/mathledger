@@ -1,17 +1,19 @@
-# MathLedger Demo v0.2.1
-# Governance substrate demo - version-pinned
+# MathLedger Demo
+# Governance substrate demo - version read from releases/releases.json at runtime
 #
 # Build:   docker build -t mathledger-demo .
 # Run:     docker run -p 8000:8000 mathledger-demo
 # Mounted: docker run -p 8000:8000 -e BASE_PATH=/demo mathledger-demo
+#
+# IMPORTANT: Version is determined by releases/releases.json "current_version" field.
+# The demo reads this at startup, so rebuilding the image with updated releases.json
+# will automatically update the reported version.
 
 FROM python:3.11-slim
 
-# Version pinning - match demo/app.py
-LABEL version="0.2.1"
-LABEL tag="v0.2.1-cohesion"
-LABEL commit="27a94c8a58139cb10349f6418336c618f528cbab"
+# Version is dynamic from releases.json - no hardcoded LABELs needed
 LABEL description="MathLedger Governance Demo - UVIL v0 + Trust Classes"
+LABEL maintainer="helpfuldolphin"
 
 # Install uv for dependency management
 RUN pip install --no-cache-dir uv
