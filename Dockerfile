@@ -1,4 +1,4 @@
-# MathLedger Demo v0.2.0
+# MathLedger Demo v0.2.1
 # Governance substrate demo - version-pinned
 #
 # Build:   docker build -t mathledger-demo .
@@ -8,8 +8,8 @@
 FROM python:3.11-slim
 
 # Version pinning - match demo/app.py
-LABEL version="0.2.0"
-LABEL tag="v0.2.0-demo-lock"
+LABEL version="0.2.1"
+LABEL tag="v0.2.1-cohesion"
 LABEL commit="27a94c8a58139cb10349f6418336c618f528cbab"
 LABEL description="MathLedger Governance Demo - UVIL v0 + Trust Classes"
 

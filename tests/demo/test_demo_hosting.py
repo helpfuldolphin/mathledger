@@ -42,18 +42,18 @@ class TestVersionConstants:
         """Version must be semver format."""
         assert re.match(r"^\d+\.\d+\.\d+$", DEMO_VERSION)
 
-    def test_demo_version_is_0_2_0(self):
-        """Version must be 0.2.0 (pinned)."""
-        assert DEMO_VERSION == "0.2.0"
+    def test_demo_version_is_0_2_1(self):
+        """Version must be 0.2.1 (pinned)."""
+        assert DEMO_VERSION == "0.2.1"
 
     def test_demo_tag_format(self):
         """Tag must start with 'v' and include version."""
         assert DEMO_TAG.startswith("v")
-        assert "0.2.0" in DEMO_TAG
+        assert "0.2.1" in DEMO_TAG
 
-    def test_demo_tag_is_v0_2_0_demo_lock(self):
-        """Tag must be v0.2.0-demo-lock (pinned)."""
-        assert DEMO_TAG == "v0.2.0-demo-lock"
+    def test_demo_tag_is_v0_2_1_cohesion(self):
+        """Tag must be v0.2.1-cohesion (pinned)."""
+        assert DEMO_TAG == "v0.2.1-cohesion"
 
     def test_demo_commit_format(self):
         """Commit must be 40-char hex string."""
@@ -376,14 +376,14 @@ class TestDockerfile:
         from pathlib import Path
         dockerfile = Path(__file__).parent.parent.parent / "Dockerfile"
         content = dockerfile.read_text()
-        assert 'LABEL version="0.2.0"' in content
+        assert 'LABEL version="0.2.1"' in content
 
     def test_dockerfile_contains_tag_label(self):
         """Dockerfile contains tag label."""
         from pathlib import Path
         dockerfile = Path(__file__).parent.parent.parent / "Dockerfile"
         content = dockerfile.read_text()
-        assert 'LABEL tag="v0.2.0-demo-lock"' in content
+        assert 'LABEL tag="v0.2.1-cohesion"' in content
 
     def test_dockerfile_contains_commit_label(self):
         """Dockerfile contains commit label."""
@@ -452,3 +452,160 @@ class TestFlyToml:
         assert '/demo/healthz' not in content, (
             "fly.toml must NOT have /demo/* paths. ROOT MOUNT serves at /."
         )
+
+
+# ---------------------------------------------------------------------------
+# Tests: v0.2.1 UI Changes (Cohesion)
+# ---------------------------------------------------------------------------
+
+
+class TestV021UIChanges:
+    """Verify v0.2.1 UI cohesion changes are present."""
+
+    def test_boundary_demo_button_renamed(self):
+        """Button must say 'Run Boundary Demo' not 'Run 90-Second Proof'."""
+        html = get_html_content()
+        # Old text must NOT be present
+        assert "Run 90-Second Proof" not in html, (
+            "Button still says 'Run 90-Second Proof' - must be renamed"
+        )
+        # New text must be present
+        assert "Run Boundary Demo" in html
+
+    def test_archive_link_present(self):
+        """Header must contain link to v0.2.0 archive."""
+        html = get_html_content()
+        assert 'href="/v0.2.0/"' in html
+        assert "View v0.2.0 Archive" in html
+
+    def test_what_gets_rejected_section_present(self):
+        """What Gets Rejected section must be present."""
+        html = get_html_content()
+        assert "What Gets Rejected" in html
+        assert "Double Commit Attempt" in html
+        assert "Trust-Class Monotonicity Violation" in html
+        assert "Silent Authority Violation" in html
+
+    def test_trust_class_tooltips_present(self):
+        """Trust class tooltips must be visible with ADV exclusion note."""
+        html = get_html_content()
+        assert "EXCLUDED FROM R_t" in html
+        assert "Trust Classes" in html
+
+
+# ---------------------------------------------------------------------------
+# Tests: Rejection Demo Endpoints (v0.2.1)
+# ---------------------------------------------------------------------------
+
+
+class TestRejectionEndpoints:
+    """Verify rejection demo endpoints return expected error codes."""
+
+    def test_double_commit_returns_error_code(self, client):
+        """Double commit attempt returns DOUBLE_COMMIT error code."""
+        # First proposal
+        response = client.post(
+            "/uvil/propose_partition",
+            json={"problem_statement": "test"}
+        )
+        proposal_id = response.json()["proposal_id"]
+
+        # First commit (should succeed)
+        client.post(
+            "/uvil/commit_uvil",
+            json={
+                "proposal_id": proposal_id,
+                "edited_claims": [
+                    {"claim_text": "1 + 1 = 2", "trust_class": "MV", "rationale": "test"}
+                ],
+                "user_fingerprint": "test"
+            }
+        )
+
+        # Second commit (should fail)
+        response = client.post(
+            "/uvil/commit_uvil",
+            json={
+                "proposal_id": proposal_id,
+                "edited_claims": [
+                    {"claim_text": "2 + 2 = 4", "trust_class": "MV", "rationale": "test"}
+                ],
+                "user_fingerprint": "test"
+            }
+        )
+        assert response.status_code == 409
+        data = response.json()
+        assert data["detail"]["error_code"] == "DOUBLE_COMMIT"
+
+    def test_trust_class_change_returns_error_code(self, client):
+        """Trust class change attempt returns TRUST_CLASS_MONOTONICITY_VIOLATION."""
+        # Propose and commit
+        response = client.post(
+            "/uvil/propose_partition",
+            json={"problem_statement": "monotonicity test"}
+        )
+        proposal_id = response.json()["proposal_id"]
+
+        response = client.post(
+            "/uvil/commit_uvil",
+            json={
+                "proposal_id": proposal_id,
+                "edited_claims": [
+                    {"claim_text": "3 + 3 = 6", "trust_class": "MV", "rationale": "test"}
+                ],
+                "user_fingerprint": "test"
+            }
+        )
+        committed_id = response.json()["committed_partition_id"]
+
+        # Try to change trust class
+        response = client.post(
+            "/uvil/change_trust_class",
+            json={
+                "committed_partition_id": committed_id,
+                "claim_index": 0,
+                "new_trust_class": "ADV"
+            }
+        )
+        assert response.status_code == 422
+        data = response.json()
+        assert data["detail"]["error_code"] == "TRUST_CLASS_MONOTONICITY_VIOLATION"
+
+    def test_silent_authority_violation_returns_error_code(self, client):
+        """Tampered H_t returns SILENT_AUTHORITY_VIOLATION."""
+        # Propose, commit, and verify
+        response = client.post(
+            "/uvil/propose_partition",
+            json={"problem_statement": "authority test"}
+        )
+        proposal_id = response.json()["proposal_id"]
+
+        response = client.post(
+            "/uvil/commit_uvil",
+            json={
+                "proposal_id": proposal_id,
+                "edited_claims": [
+                    {"claim_text": "4 + 4 = 8", "trust_class": "MV", "rationale": "test"}
+                ],
+                "user_fingerprint": "test"
+            }
+        )
+        committed_id = response.json()["committed_partition_id"]
+
+        # Run verification first
+        client.post(
+            "/uvil/run_verification",
+            json={"committed_partition_id": committed_id}
+        )
+
+        # Try to verify with tampered H_t
+        response = client.post(
+            "/uvil/verify_attestation",
+            json={
+                "committed_partition_id": committed_id,
+                "claimed_h_t": "0" * 64
+            }
+        )
+        assert response.status_code == 422
+        data = response.json()
+        assert data["detail"]["error_code"] == "SILENT_AUTHORITY_VIOLATION"

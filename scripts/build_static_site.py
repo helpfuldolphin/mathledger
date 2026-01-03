@@ -36,6 +36,9 @@ REPO_ROOT = Path(__file__).parent.parent
 SITE_DIR = REPO_ROOT / "site"
 RELEASES_FILE = REPO_ROOT / "releases" / "releases.json"
 
+# Repository URL (single source of truth)
+REPO_URL = "https://github.com/mathledger/mathledger"
+
 
 class BuildError(Exception):
     """Raised when build verification fails."""
@@ -450,38 +453,34 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
     demo_url = config.get("demo_url")
     hosted_demo = config.get("hosted_demo", False)
 
+    # Initialize demo_banner (only shown for current version with hosted_demo)
+    demo_banner = ""
+
     # Hosted demo is available at /demo/ for the CURRENT version only
     if is_current and hosted_demo:
-        # Current version with hosted demo: show prominent hosted demo link
-        demo_section = f"""
-        <div class="info-box demo-available">
-            <strong>Interactive Demo</strong> <span class="mode-indicator mode-hosted">HOSTED</span><br>
-            <p>The interactive demo for this version is hosted and ready to use.</p>
-            <a href="/demo/" class="demo-button">Open Hosted Demo</a>
-            <p style="margin-top: 1rem; font-size: 0.85rem; color: #666;">
-                The hosted demo runs the same code as this archived version ({config['tag']}).
+        # Current version with hosted demo: prominent banner ABOVE THE FOLD
+        demo_banner = f"""
+        <div class="demo-banner" style="background: #e8f5e9; border: 2px solid #2e7d32; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0 0 0.75rem 0; color: #1b5e20;">Hosted Interactive Demo</h2>
+            <p style="margin: 0 0 1rem 0;">Interactive demo is hosted; archive remains immutable.</p>
+            <a href="/demo/" class="demo-button" style="font-size: 1.1rem; padding: 0.85rem 2rem;">Open Interactive Demo</a>
+            <p style="margin: 1rem 0 0 0; font-size: 0.85rem; color: #555;">
+                New to MathLedger? Start with the <a href="docs/for-auditors/">5-minute auditor checklist</a>.
             </p>
-            <details style="margin-top: 1rem;">
-                <summary style="cursor: pointer; color: #666;">Run locally instead</summary>
+        </div>
+        """
+        demo_section = f"""
+        <div class="info-box" style="border-left: 4px solid #2e7d32;">
+            <strong>Local Execution</strong>
+            <details style="margin-top: 0.5rem;">
+                <summary style="cursor: pointer; color: #666;">Run locally instead of using hosted demo</summary>
                 <div style="margin-top: 0.5rem;">
-                    <code>git clone https://github.com/your-org/mathledger</code><br>
+                    <code>git clone {REPO_URL}</code><br>
                     <code>git checkout {config['tag']}</code><br>
                     <code>uv run python demo/app.py</code><br>
                     <code>Open http://localhost:8000</code>
                 </div>
             </details>
-        </div>
-
-        <div class="info-box" style="border-left: 4px solid #1565c0; margin-top: 1rem;">
-            <strong>Post-Deploy Smoke Check</strong>
-            <p style="font-size: 0.85rem; margin: 0.5rem 0;">
-                After deployment, verify the hosted demo is working:
-            </p>
-            <ol style="font-size: 0.85rem; margin: 0.5rem 0 0 1.5rem; padding: 0;">
-                <li>Visit <a href="/demo/healthz">/demo/healthz</a> → should return <code>ok</code></li>
-                <li>Run the "Same Claim 90-second proof" → all 4 steps should complete without ERROR</li>
-                <li>Download evidence pack and verify with <a href="/{version}/evidence-pack/verify/">the auditor tool</a></li>
-            </ol>
         </div>
         """
     elif demo_url:
@@ -514,22 +513,30 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
     tier_b_items = "".join(f"<li>{item}</li>" for item in inv.get("tier_b_list", []))
     tier_c_items = "".join(f"<li>{item}</li>" for item in inv.get("tier_c_list", []))
 
+    # Check if for-auditors doc exists
+    has_for_auditors = any(d.get("slug") == "for-auditors" for d in config.get("docs", []))
+    for_auditors_row = """<tr><td><a href="docs/for-auditors/">For Auditors</a></td><td>5-minute verification checklist</td></tr>""" if has_for_auditors else ""
+
     content = f"""
+        {demo_banner}
+
         <p>This is the archive for MathLedger version <code>{version}</code>.
         All artifacts below are static, verifiable, and immutable.</p>
 
         <h2>Archive Contents</h2>
         <table>
             <tr><th>Artifact</th><th>Description</th></tr>
+            {for_auditors_row}
             <tr><td><a href="docs/scope-lock/">Scope Lock</a></td><td>What this version does and does not demonstrate</td></tr>
             <tr><td><a href="docs/explanation/">Explanation</a></td><td>How the demo explains its own behavior</td></tr>
             <tr><td><a href="docs/invariants/">Invariants</a></td><td>Tier A/B/C enforcement status</td></tr>
+            <tr><td><a href="docs/hostile-rehearsal/">Hostile Rehearsal</a></td><td>Answers to skeptical questions</td></tr>
             <tr><td><a href="fixtures/">Fixtures</a></td><td>Regression test cases with golden outputs</td></tr>
             <tr><td><a href="evidence-pack/">Evidence Pack</a></td><td>Replay verification artifacts</td></tr>
             <tr><td><a href="manifest.json">Manifest</a></td><td>Version metadata + file checksums</td></tr>
         </table>
 
-        <h2>Interactive Demo</h2>
+        <h2>Local Execution</h2>
         {demo_section}
 
         <h2>Invariant Details</h2>
@@ -1202,7 +1209,7 @@ def verify_build(releases: dict) -> bool:
             else:
                 errors.append(f"{version}: verify/index.html missing")
 
-    # 6. Check CURRENT version has /demo/ link
+    # 6. Check CURRENT version has /demo/ link and hosted demo banner
     current_version = releases.get("current_version")
     if current_version:
         current_landing = SITE_DIR / current_version / "index.html"
@@ -1212,8 +1219,23 @@ def verify_build(releases: dict) -> bool:
                 print(f"[OK] {current_version}: /demo/ link present in landing page")
             else:
                 errors.append(f"{current_version}: /demo/ link MISSING from landing page (required for current version)")
+            # Check for hosted demo banner
+            if "Hosted Interactive Demo" in landing_content:
+                print(f"[OK] {current_version}: Hosted Interactive Demo banner present")
+            else:
+                errors.append(f"{current_version}: Hosted Interactive Demo banner MISSING")
         else:
             errors.append(f"{current_version}: index.html missing")
+
+        # Check for-auditors page exists (if configured)
+        current_config = releases.get("versions", {}).get(current_version, {})
+        has_for_auditors = any(d.get("slug") == "for-auditors" for d in current_config.get("docs", []))
+        if has_for_auditors:
+            for_auditors_path = SITE_DIR / current_version / "docs" / "for-auditors" / "index.html"
+            if for_auditors_path.exists():
+                print(f"[OK] {current_version}: for-auditors page exists")
+            else:
+                errors.append(f"{current_version}: for-auditors page MISSING (configured but not built)")
 
     # 7. Check runbook has /demo routing documentation
     runbook_path = REPO_ROOT / "docs" / "CLOUDFLARE_DEPLOYMENT_RUNBOOK.md"

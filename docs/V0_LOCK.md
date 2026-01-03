@@ -248,3 +248,71 @@ uv run pytest tests/governance/test_abstention_preservation.py -v
 ### Breaking Changes
 
 None. v0.2.0 is fully backward compatible with v0.1.0 demo cases.
+
+---
+
+## Release Notes: v0.2.1
+
+**Tag**: `v0.2.1-cohesion`
+**Date Locked**: 2026-01-03
+
+### Purpose
+
+v0.2.1 is a **cohesion release** that addresses credibility hazards identified in external review. It improves UI terminology, adds rejection visibility, and enhances trust class documentation. **No new capabilities** are added.
+
+### What Changed
+
+1. **Terminology fix**: "Run 90-Second Proof" → "Run Boundary Demo (≈15s)"
+   - "Proof" was misleading; v0 has no prover
+   - New label matches Scope Lock vocabulary
+
+2. **Archive link**: Header now links to /v0.2.0/ archive
+   - Explicit connection between live demo and immutable record
+
+3. **Rejection visibility**: New "What Gets Rejected" section
+   - Three live rejection demos with structured error JSON
+   - DOUBLE_COMMIT, TRUST_CLASS_MONOTONICITY_VIOLATION, SILENT_AUTHORITY_VIOLATION
+
+4. **Trust class tooltips**: Enhanced sidebar with explicit ADV exclusion note
+   - "EXCLUDED FROM R_t" prominently displayed
+   - Color-coded trust class definitions
+
+5. **Repository URL**: Placeholder "your-org/mathledger" → canonical URL
+
+### New Endpoints
+
+| Endpoint | Purpose | Expected Error |
+|----------|---------|----------------|
+| `/uvil/change_trust_class` | Demonstrates immutability | `TRUST_CLASS_MONOTONICITY_VIOLATION` |
+| `/uvil/verify_attestation` | Demonstrates authority gate | `SILENT_AUTHORITY_VIOLATION` |
+
+### Tests Added
+
+| Test | Purpose |
+|------|---------|
+| `test_boundary_demo_button_renamed` | Button text no longer says "Proof" |
+| `test_archive_link_present` | Header contains v0.2.0 archive link |
+| `test_what_gets_rejected_section_present` | Rejection demos visible |
+| `test_trust_class_tooltips_present` | ADV exclusion note visible |
+| `test_double_commit_returns_error_code` | DOUBLE_COMMIT error code |
+| `test_trust_class_change_returns_error_code` | TRUST_CLASS_MONOTONICITY_VIOLATION |
+| `test_silent_authority_violation_returns_error_code` | SILENT_AUTHORITY_VIOLATION |
+
+### Invariants Unchanged
+
+v0.2.1 adds no new invariants. All existing Tier A/B/C invariants remain enforced.
+
+### How to Verify
+
+```bash
+# Run v0.2.1 specific tests
+uv run pytest tests/demo/test_demo_hosting.py -v -k "V021 or Rejection"
+
+# Verify rejection demos work
+uv run python demo/app.py
+# Open http://localhost:8000, expand "What Gets Rejected", click each button
+```
+
+### Breaking Changes
+
+None. v0.2.1 is fully backward compatible with v0.2.0.

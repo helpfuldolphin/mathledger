@@ -1,0 +1,110 @@
+# For Auditors: 5-Minute Verification Checklist
+
+This page provides a quick verification path for external auditors evaluating MathLedger's governance claims.
+
+## 5-Minute Verification Checklist
+
+Complete these steps to verify the system's core claims:
+
+### Step 1: Open the Hosted Demo (30 seconds)
+
+1. Navigate to [/demo/](/demo/)
+2. Confirm the demo loads without errors
+3. Verify the version banner shows `v0.2.1-cohesion`
+
+### Step 2: Run the Boundary Demo (90 seconds)
+
+1. In the demo, click **"Boundary Demo: Same Claim, Different Authority"**
+2. Observe the 4-step sequence:
+   - Step 1: Claim "2+2=4" as **MV** (Mechanically Verified) → VERIFIED
+   - Step 2: Same claim "2+2=4" as **PA** (Professional Authority) → ABSTAINED
+   - Step 3: Same claim "2+2=4" as **ADV** (Advisory) → ABSTAINED
+   - Step 4: Claim "2+2=5" as **MV** → REFUTED
+3. **Key insight:** Same mathematical truth, different outcomes based on trust class declaration
+
+### Step 3: Download Evidence Pack (30 seconds)
+
+1. After running the boundary demo, click **"Download Evidence Pack"**
+2. Save the JSON file locally
+3. Note: This file contains cryptographic commitments to all demo operations
+
+### Step 4: Verify with Auditor Tool (60 seconds)
+
+1. Open the [Evidence Pack Verifier](/v0.2.1/evidence-pack/verify/)
+2. Upload the evidence pack JSON you downloaded
+3. Click **"Verify"**
+4. Confirm status shows **PASS**
+5. Observe the hash verification: U_t, R_t, and H_t all match
+
+### Step 5: Tamper Test (60 seconds)
+
+1. Open the downloaded evidence pack in a text editor
+2. Change any character in the `reasoning_artifacts` section
+3. Re-upload to the verifier
+4. Click **"Verify"**
+5. Confirm status shows **FAIL** with hash mismatch
+
+**If all 5 steps complete as described, the core verification loop is functioning correctly.**
+
+---
+
+## What This Version Claims
+
+This version (v0.2.1) demonstrates:
+
+- **Deterministic canonicalization** of reasoning artifacts (RFC 8785-style)
+- **Cryptographic binding** via H_t = SHA256(R_t || U_t)
+- **Trust class separation** where ADV claims are excluded from R_t
+- **Replay verification** using the same code paths as live execution
+- **Self-auditing capability** via the evidence pack verifier
+
+See [Invariants Status](invariants/) for the complete Tier A/B/C breakdown.
+
+---
+
+## What This Version Does NOT Claim
+
+**Explicit non-claims:**
+
+1. **No formal verification** — FV (Formally Verified) claims always return ABSTAINED. There is no Lean/Z3/Coq integration.
+
+2. **No multi-model consensus** — Only one partitioner template is active. The "multi-model arena" is not operational.
+
+3. **No learning loop** — RFL (Reinforcement from Ledger) is not active. The system does not learn from past decisions.
+
+4. **No production hardening** — This is a demonstration, not a production system. Do not use for real financial or legal decisions.
+
+5. **No guaranteed uptime** — The hosted demo may be unavailable. Local execution is always possible.
+
+---
+
+## Key Documentation Links
+
+| Document | Description |
+|----------|-------------|
+| [Scope Lock](scope-lock/) | What this version does and does not demonstrate |
+| [Invariants](invariants/) | Tier A/B/C enforcement status with explicit counts |
+| [Hostile Demo Rehearsal](hostile-rehearsal/) | Pre-prepared answers to skeptical questions |
+| [How the Demo Explains Itself](explanation/) | UI self-explanation integration points |
+
+---
+
+## Local Verification (Alternative Path)
+
+If the hosted demo is unavailable, verify locally:
+
+```bash
+git clone https://github.com/mathledger/mathledger
+cd mathledger
+git checkout v0.2.1-cohesion
+uv run python demo/app.py
+# Open http://localhost:8000
+```
+
+The local demo produces identical evidence packs that can be verified with the same auditor tool.
+
+---
+
+## Questions?
+
+For technical questions about this verification process, see the [Hostile Demo Rehearsal](hostile-rehearsal/) document which addresses common skeptical questions with prepared answers.

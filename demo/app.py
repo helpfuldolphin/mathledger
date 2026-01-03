@@ -28,12 +28,15 @@ import uvicorn
 from backend.api.uvil import router as uvil_router
 
 # ---------------------------------------------------------------------------
-# VERSION PINNING (v0.2.0-demo-lock)
+# VERSION PINNING (v0.2.1-cohesion)
 # ---------------------------------------------------------------------------
 
-DEMO_VERSION = "0.2.0"
-DEMO_TAG = "v0.2.0-demo-lock"
-DEMO_COMMIT = "27a94c8a58139cb10349f6418336c618f528cbab"
+DEMO_VERSION = "0.2.1"
+DEMO_TAG = "v0.2.1-cohesion"
+DEMO_COMMIT = "27a94c8a58139cb10349f6418336c618f528cbab"  # Base commit from v0.2.0
+
+# Repository URL (single source of truth)
+REPO_URL = "https://github.com/mathledger/mathledger"
 
 # ---------------------------------------------------------------------------
 # BASE_PATH Configuration (for reverse proxy mounting)
@@ -557,6 +560,64 @@ def get_html_content() -> str:
         .boundary-breakdown ul { margin: 0.5rem 0 0 1rem; padding: 0; }
         .boundary-breakdown li { margin: 0.25rem 0; }
 
+        /* What Gets Rejected Section */
+        .rejection-demo {
+            background: #fff;
+            border: 1px solid #f44336;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .rejection-demo summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #c62828;
+            font-size: 0.95rem;
+        }
+        .rejection-demo-content {
+            margin-top: 1rem;
+        }
+        .rejection-demo-content p {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .rejection-buttons {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .rejection-buttons button {
+            background: #fff;
+            color: #c62828;
+            border: 1px solid #c62828;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .rejection-buttons button:hover {
+            background: #ffebee;
+        }
+        .rejection-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .rejection-result {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+        .rejection-result .error-code {
+            font-weight: 700;
+            color: #b71c1c;
+        }
+
         /* Evidence Pack */
         .evidence-pack-section {
             margin-top: 1.5rem;
@@ -639,7 +700,10 @@ def get_html_content() -> str:
             <!-- Version Banner -->
             <div style="background:#1a1a1a; color:#fff; padding:0.5rem 1rem; margin-bottom:1rem; font-size:0.75rem; font-family:monospace; display:flex; justify-content:space-between; align-items:center;">
                 <span>GOVERNANCE DEMO (not capability)</span>
-                <span>v""" + DEMO_VERSION + """ | """ + DEMO_TAG + """ | """ + DEMO_COMMIT[:12] + """</span>
+                <span>
+                    <a href="/v0.2.0/" style="color:#90caf9; text-decoration:none; margin-right:1rem;">View v0.2.0 Archive</a>
+                    v""" + DEMO_VERSION + """ | """ + DEMO_TAG + """ | """ + DEMO_COMMIT[:12] + """
+                </span>
             </div>
 
             <h1>MathLedger Demo <span class="version-badge">v""" + DEMO_VERSION + """</span></h1>
@@ -659,7 +723,7 @@ def get_html_content() -> str:
             <div class="boundary-demo" id="boundary-demo-section">
                 <div class="boundary-header">
                     <span class="boundary-title">Same Claim, Different Authority</span>
-                    <button id="btn-boundary-demo" onclick="runBoundaryDemo()">Run 90-Second Proof</button>
+                    <button id="btn-boundary-demo" onclick="runBoundaryDemo()">Run Boundary Demo (≈15s)</button>
                 </div>
                 <div id="boundary-results" class="boundary-results hidden">
                     <div class="boundary-step" id="step-1">
@@ -708,6 +772,21 @@ def get_html_content() -> str:
                     </div>
                 </div>
             </div>
+
+            <!-- What Gets Rejected - Collapsible -->
+            <details class="rejection-demo">
+                <summary>What Gets Rejected (3 live tests)</summary>
+                <div class="rejection-demo-content">
+                    <p>These buttons demonstrate governance violations that the system rejects with structured errors.
+                       Each is a live API call — not mocked.</p>
+                    <div class="rejection-buttons">
+                        <button id="btn-double-commit" onclick="testDoubleCommit()">Double Commit Attempt</button>
+                        <button id="btn-monotonicity" onclick="testMonotonicity()">Trust-Class Monotonicity Violation</button>
+                        <button id="btn-silent-authority" onclick="testSilentAuthority()">Silent Authority Violation</button>
+                    </div>
+                    <div id="rejection-result" class="rejection-result hidden"></div>
+                </div>
+            </details>
 
             <!-- Scenario selector -->
             <div class="scenario-bar">
@@ -901,19 +980,23 @@ def get_html_content() -> str:
                     <div class="doc-desc">Tier A/B/C classification</div>
                 </li>
             </ul>
-            <h3 style="margin-top:1.5rem;">Quick Reference</h3>
-            <ul>
-                <li style="font-size:0.8rem; color:#666;">
-                    <strong>FV</strong>: Formal proof (ABSTAINED in v0)
+            <h3 style="margin-top:1.5rem;">Trust Classes</h3>
+            <ul class="trust-class-tooltips">
+                <li style="font-size:0.8rem; color:#666; margin-bottom:0.5rem;" title="Formally Verified: Requires machine-checkable proof. Not implemented in v0 — returns ABSTAINED.">
+                    <strong style="color:#1565c0;">FV</strong>: Formal proof<br>
+                    <span style="font-size:0.7rem; color:#999;">→ ABSTAINED in v0 (no prover)</span>
                 </li>
-                <li style="font-size:0.8rem; color:#666;">
-                    <strong>MV</strong>: Mechanical validation (arithmetic only)
+                <li style="font-size:0.8rem; color:#666; margin-bottom:0.5rem;" title="Mechanically Validated: Checked by arithmetic validator. Only handles 'a op b = c' patterns.">
+                    <strong style="color:#2e7d32;">MV</strong>: Mechanical validation<br>
+                    <span style="font-size:0.7rem; color:#999;">→ Arithmetic only in v0</span>
                 </li>
-                <li style="font-size:0.8rem; color:#666;">
-                    <strong>PA</strong>: User attestation (ABSTAINED)
+                <li style="font-size:0.8rem; color:#666; margin-bottom:0.5rem;" title="Procedurally Attested: User attests correctness. Authority-bearing but not mechanically verified.">
+                    <strong style="color:#f57c00;">PA</strong>: User attestation<br>
+                    <span style="font-size:0.7rem; color:#999;">→ ABSTAINED (no verifier)</span>
                 </li>
-                <li style="font-size:0.8rem; color:#666;">
-                    <strong>ADV</strong>: Advisory (excluded from R_t)
+                <li style="font-size:0.8rem; color:#c62828; margin-bottom:0.5rem;" title="Advisory: Exploration-only claims. EXCLUDED FROM R_t. Cannot influence authority attestation.">
+                    <strong style="color:#c62828;">ADV</strong>: Advisory<br>
+                    <span style="font-size:0.7rem; color:#c62828; font-weight:600;">→ EXCLUDED FROM R_t</span>
                 </li>
             </ul>
         </div>
@@ -935,6 +1018,10 @@ def get_html_content() -> str:
                 if (!link.href.startsWith(window.location.origin + API_BASE)) {
                     link.href = API_BASE + '/docs/view/V0_LOCK.md';
                 }
+            });
+            // Fix archive link
+            document.querySelectorAll('a[href^="/v0.2.0/"]').forEach(function(link) {
+                link.href = API_BASE + link.getAttribute('href');
             });
         });
 
@@ -1535,7 +1622,186 @@ def get_html_content() -> str:
             document.getElementById('boundary-conclusion').classList.add('visible');
 
             btn.disabled = false;
-            btn.textContent = 'Run Again';
+            btn.textContent = 'Run Again (≈15s)';
+        }
+
+        // =====================================================================
+        // REJECTION DEMOS - What Gets Rejected
+        // =====================================================================
+
+        function showRejectionResult(data) {
+            const el = document.getElementById('rejection-result');
+            el.classList.remove('hidden');
+            if (data.error_code) {
+                el.innerHTML = `<span class="error-code">ERROR: ${data.error_code}</span>\\n${JSON.stringify(data, null, 2)}`;
+            } else {
+                el.textContent = JSON.stringify(data, null, 2);
+            }
+        }
+
+        // Test 1: Double Commit Attempt
+        async function testDoubleCommit() {
+            const btn = document.getElementById('btn-double-commit');
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+
+            try {
+                // First: propose
+                const proposeRes = await fetch(`${API_BASE}/uvil/propose_partition`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ problem_statement: 'Double commit test' })
+                });
+                const proposeData = await proposeRes.json();
+
+                // First commit (should succeed)
+                const firstCommit = await fetch(`${API_BASE}/uvil/commit_uvil`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        proposal_id: proposeData.proposal_id,
+                        edited_claims: [{ claim_text: '1 + 1 = 2', trust_class: 'MV', rationale: 'test' }],
+                        user_fingerprint: 'rejection_test'
+                    })
+                });
+                await firstCommit.json();
+
+                // Second commit with SAME proposal_id (should fail)
+                const secondCommit = await fetch(`${API_BASE}/uvil/commit_uvil`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        proposal_id: proposeData.proposal_id,
+                        edited_claims: [{ claim_text: '2 + 2 = 4', trust_class: 'MV', rationale: 'test' }],
+                        user_fingerprint: 'rejection_test'
+                    })
+                });
+
+                const result = await secondCommit.json();
+                if (!secondCommit.ok) {
+                    showRejectionResult(result);
+                } else {
+                    showRejectionResult({ unexpected: 'Commit succeeded when it should have failed', data: result });
+                }
+
+            } catch (e) {
+                showRejectionResult({ error: e.message });
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Double Commit Attempt';
+        }
+
+        // Test 2: Trust-Class Monotonicity Violation
+        async function testMonotonicity() {
+            const btn = document.getElementById('btn-monotonicity');
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+
+            try {
+                // Propose
+                const proposeRes = await fetch(`${API_BASE}/uvil/propose_partition`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ problem_statement: 'Monotonicity test' })
+                });
+                const proposeData = await proposeRes.json();
+
+                // Commit with MV
+                const commitRes = await fetch(`${API_BASE}/uvil/commit_uvil`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        proposal_id: proposeData.proposal_id,
+                        edited_claims: [{ claim_text: '5 + 5 = 10', trust_class: 'MV', rationale: 'test' }],
+                        user_fingerprint: 'rejection_test'
+                    })
+                });
+                const commitData = await commitRes.json();
+
+                // Try to change trust class (should fail with TRUST_CLASS_MONOTONICITY_VIOLATION)
+                const changeRes = await fetch(`${API_BASE}/uvil/change_trust_class`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        committed_partition_id: commitData.committed_partition_id,
+                        claim_index: 0,
+                        new_trust_class: 'ADV'
+                    })
+                });
+
+                const result = await changeRes.json();
+                if (!changeRes.ok) {
+                    showRejectionResult(result);
+                } else {
+                    showRejectionResult({ unexpected: 'Change succeeded when it should have failed', data: result });
+                }
+
+            } catch (e) {
+                showRejectionResult({ error: e.message });
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Trust-Class Monotonicity Violation';
+        }
+
+        // Test 3: Silent Authority Violation (evidence pack with tampered hash)
+        async function testSilentAuthority() {
+            const btn = document.getElementById('btn-silent-authority');
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+
+            try {
+                // Propose
+                const proposeRes = await fetch(`${API_BASE}/uvil/propose_partition`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ problem_statement: 'Silent authority test' })
+                });
+                const proposeData = await proposeRes.json();
+
+                // Commit
+                const commitRes = await fetch(`${API_BASE}/uvil/commit_uvil`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        proposal_id: proposeData.proposal_id,
+                        edited_claims: [{ claim_text: '7 + 7 = 14', trust_class: 'MV', rationale: 'test' }],
+                        user_fingerprint: 'rejection_test'
+                    })
+                });
+                const commitData = await commitRes.json();
+
+                // Run verification
+                await fetch(`${API_BASE}/uvil/run_verification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ committed_partition_id: commitData.committed_partition_id })
+                });
+
+                // Try to verify with tampered hash (should fail with SILENT_AUTHORITY_VIOLATION)
+                const tamperedRes = await fetch(`${API_BASE}/uvil/verify_attestation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        committed_partition_id: commitData.committed_partition_id,
+                        claimed_h_t: '0000000000000000000000000000000000000000000000000000000000000000'
+                    })
+                });
+
+                const result = await tamperedRes.json();
+                if (!tamperedRes.ok) {
+                    showRejectionResult(result);
+                } else {
+                    showRejectionResult({ unexpected: 'Verification succeeded with tampered hash', data: result });
+                }
+
+            } catch (e) {
+                showRejectionResult({ error: e.message });
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Silent Authority Violation';
         }
     </script>
 </body>
