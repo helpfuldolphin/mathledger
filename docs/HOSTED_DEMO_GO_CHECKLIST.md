@@ -61,6 +61,43 @@ The demo must report values matching `releases/releases.json`:
 
 ---
 
+## Hostile Audit Semantics (CURRENT vs SUPERSEDED)
+
+The `tools/hostile_audit.ps1` script automatically detects whether you're auditing the **CURRENT** version or a **SUPERSEDED** version by reading the `manifest.json` status field.
+
+### CURRENT Version Auditing
+
+When auditing the version marked `"status": "current"` in releases.json:
+
+| Check | Severity | Behavior |
+|-------|----------|----------|
+| Check 15 (Demo version match) | **CRITICAL** | Must pass - demo MUST report this version |
+| Check 16 (Superseded disclaimer) | SKIP | N/A - current version doesn't need disclaimer |
+
+**Example**: `.\tools\hostile_audit.ps1 -Version v0.2.2` (if v0.2.2 is current)
+
+### SUPERSEDED Version Auditing
+
+When auditing any version with `"status": "superseded-by-*"`:
+
+| Check | Severity | Behavior |
+|-------|----------|----------|
+| Check 15 (Demo version match) | SKIP | N/A - /demo/ only runs CURRENT |
+| Check 16 (Superseded disclaimer) | **HIGH** | Must pass - page must state demo runs CURRENT |
+
+**Example**: `.\tools\hostile_audit.ps1 -Version v0.2.1` (if v0.2.1 is superseded)
+
+### Why This Matters
+
+The `/demo/` endpoint is a **single live instance** serving only the CURRENT version. Superseded versions are immutable archives with no hosted demo. The audit script enforces this architecture:
+
+- **CURRENT versions** must have demo coherence (Check 15 CRITICAL)
+- **SUPERSEDED versions** must clearly state that `/demo/` runs CURRENT (Check 16 HIGH)
+
+This prevents auditor confusion about which version the demo represents.
+
+---
+
 ## Failure Modes and Fixes
 
 ### Version mismatch (most common)
