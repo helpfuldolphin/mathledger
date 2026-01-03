@@ -5,6 +5,7 @@ Verifies:
 1. "machine-checkable proof" is never used in v0.x docs without Lean/Phase II context
 2. VERIFIED definition does not overclaim formal proof semantics
 3. MV validator coverage limitations are documented
+4. Site-rendered HTML docs also have proper terminology scoping
 
 This prevents terminology drift that could mislead auditors about v0 capabilities.
 
@@ -20,6 +21,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 DOCS_DIR = REPO_ROOT / "docs"
+SITE_DIR = REPO_ROOT / "site"
 
 # Directories to exclude from terminology checks (external content we don't control)
 EXCLUDED_DIRS = [
@@ -282,3 +284,126 @@ class TestSystemBoundaryMemoTerminology:
         assert "terminology" in content.lower(), (
             "V0_SYSTEM_BOUNDARY_MEMO.md should have a terminology note"
         )
+
+
+# ---------------------------------------------------------------------------
+# Tests: Site-Rendered HTML Docs
+# ---------------------------------------------------------------------------
+
+# Directories within site to exclude (external audits, fixtures, etc.)
+SITE_EXCLUDED_PATTERNS = [
+    "external_audits",  # External auditor observations rendered to HTML
+    "fixtures",         # Test fixtures, not docs
+    "field-manual",     # FM is source of truth
+    "fm.tex",           # FM source
+    "fm.pdf",           # FM compiled
+]
+
+# Pattern to find VERIFIED = machine-checkable proof in HTML (the BAD pattern)
+VERIFIED_MCP_PATTERN = re.compile(
+    r"VERIFIED.*machine-checkable\s+proof",
+    re.IGNORECASE | re.DOTALL
+)
+
+
+def get_site_docs_to_check() -> list[Path]:
+    """
+    Get site-rendered HTML files to check for terminology issues.
+
+    Only checks v0.2.3+ docs (the current version) for explanation pages.
+    Excludes external_audits, fixtures, and field-manual.
+    """
+    if not SITE_DIR.exists():
+        return []
+
+    docs = []
+    for html_file in SITE_DIR.rglob("*.html"):
+        # Check if file matches excluded patterns
+        relative = str(html_file.relative_to(SITE_DIR))
+        if any(excl in relative for excl in SITE_EXCLUDED_PATTERNS):
+            continue
+        # Only check explanation and doc pages (not all HTML)
+        if "explanation" in relative or "docs" in relative:
+            docs.append(html_file)
+    return docs
+
+
+class TestSiteRenderedDocs:
+    """Verify site-rendered HTML docs have correct terminology."""
+
+    def test_site_explanation_no_bad_verified_definition(self):
+        """
+        Site explanation pages must NOT define VERIFIED as 'machine-checkable proof'
+        without FV/Lean scoping.
+        """
+        violations = []
+
+        for html_path in get_site_docs_to_check():
+            # Skip non-explanation pages
+            if "explanation" not in str(html_path):
+                continue
+
+            try:
+                content = html_path.read_text(encoding="utf-8")
+            except Exception:
+                continue
+
+            # Check for bad pattern: VERIFIED = machine-checkable proof
+            match = VERIFIED_MCP_PATTERN.search(content)
+            if match:
+                # Check if properly scoped (FV context)
+                context_start = max(0, match.start() - 200)
+                context_end = min(len(content), match.end() + 200)
+                context = content[context_start:context_end]
+
+                # If FV or Lean/Z3/Phase II is not nearby, it's a violation
+                has_scoping = any(
+                    pattern.search(context) for pattern in SCOPING_PATTERNS
+                )
+
+                if not has_scoping:
+                    violations.append({
+                        "file": str(html_path),
+                        "match": match.group()[:100],
+                    })
+
+        if violations:
+            msg_parts = [
+                "Site HTML has unscoped 'VERIFIED = machine-checkable proof':",
+                ""
+            ]
+            for v in violations:
+                msg_parts.append(f"  {v['file']}")
+                msg_parts.append(f"    Match: {v['match']}...")
+                msg_parts.append("")
+
+            pytest.fail("\n".join(msg_parts))
+
+    def test_site_v023_explanation_uses_mv_validator(self):
+        """
+        The v0.2.3 explanation page should define VERIFIED in terms of
+        MV arithmetic validator, not machine-checkable proof.
+        """
+        v023_explanation = SITE_DIR / "v0.2.3" / "docs" / "explanation" / "index.html"
+        if not v023_explanation.exists():
+            pytest.skip(f"v0.2.3 explanation not found: {v023_explanation}")
+
+        content = v023_explanation.read_text(encoding="utf-8")
+
+        # Should mention MV validator or arithmetic validator
+        assert re.search(r"MV.*validator|arithmetic.*validator", content, re.IGNORECASE), (
+            "v0.2.3 explanation should define VERIFIED using MV/arithmetic validator"
+        )
+
+        # Should mention limited coverage or "not a formal proof"
+        assert "limited" in content.lower() or "not a formal proof" in content.lower(), (
+            "v0.2.3 explanation should mention limited coverage or 'not a formal proof'"
+        )
+
+    def test_site_has_at_least_one_explanation_page(self):
+        """Sanity check: at least one explanation page exists in site."""
+        if not SITE_DIR.exists():
+            pytest.skip("Site directory not found")
+
+        explanation_pages = list(SITE_DIR.rglob("**/explanation/index.html"))
+        assert len(explanation_pages) > 0, "No explanation pages found in site"

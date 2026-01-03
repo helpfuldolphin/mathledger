@@ -60,6 +60,15 @@ This stopping is correctness, not caution. A system that produces confident outp
 
 Claims in the demo have trust classes. Three of them (FV, MV, PA) are authority-bearing and can enter the reasoning attestation. One of them (ADV) cannot.
 
+### Trust Class Reference (matches UI)
+
+| Class | UI Description | v0 Behavior |
+|-------|---------------|-------------|
+| **FV** | Formal proof | ABSTAINED (no prover; Lean/Z3 is Phase II) |
+| **MV** | Mechanical validation | VERIFIED/REFUTED/ABSTAINED (arithmetic only) |
+| **PA** | User attestation | ABSTAINED (authority noted, not mechanically verified) |
+| **ADV** | Advisory | EXCLUDED FROM R_t (exploration only) |
+
 ADV stands for Advisory. It means: this is a suggestion, not a claim.
 
 The system is allowed to produce ADV content. It can speculate. It can offer best guesses. It can generate plausible-sounding statements. All of this is permitted in the exploration phase.

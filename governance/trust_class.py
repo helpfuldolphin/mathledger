@@ -4,8 +4,8 @@ Trust Class Definitions for UVIL v0.
 Subordinate to fm.tex sec:trust-classes.
 
 Trust Classes:
-- FV: Formally Verified - machine-checkable proof
-- MV: Mechanically Validated - automated checks passed
+- FV: Formally Verified - machine-checkable proof (Lean/Z3, Phase II; returns ABSTAINED in v0)
+- MV: Mechanically Validated - arithmetic validator (limited coverage: a op b = c for integers)
 - PA: Procedurally Attested - user-attested for v0 (human asserts correctness)
 - ADV: Advisory - non-authoritative, exploration only
 
