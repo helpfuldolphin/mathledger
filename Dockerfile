@@ -33,6 +33,7 @@ COPY attestation/ ./attestation/
 COPY substrate/ ./substrate/
 COPY normalization/ ./normalization/
 COPY docs/ ./docs/
+COPY releases/ ./releases/
 
 # Environment configuration
 ENV PYTHONPATH=/app

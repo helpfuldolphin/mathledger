@@ -20,7 +20,10 @@ from demo.app import (
     DEMO_TAG,
     DEMO_COMMIT,
     BASE_PATH,
+    REPO_URL,
     get_html_content,
+    _validate_release_pin,
+    _RELEASE_PIN_STATUS,
 )
 
 
@@ -609,3 +612,164 @@ class TestRejectionEndpoints:
         assert response.status_code == 422
         data = response.json()
         assert data["detail"]["error_code"] == "SILENT_AUTHORITY_VIOLATION"
+
+
+# ---------------------------------------------------------------------------
+# Tests: Release Pin Validation (Stale Deploy Detection)
+# ---------------------------------------------------------------------------
+
+
+class TestReleasePinValidation:
+    """Verify release pin validation detects stale deploys."""
+
+    def test_validate_release_pin_function_exists(self):
+        """_validate_release_pin function exists."""
+        assert callable(_validate_release_pin)
+
+    def test_release_pin_status_has_required_keys(self):
+        """_RELEASE_PIN_STATUS has required keys."""
+        assert "is_stale" in _RELEASE_PIN_STATUS
+        assert "expected" in _RELEASE_PIN_STATUS
+        assert "actual" in _RELEASE_PIN_STATUS
+        assert "mismatch_fields" in _RELEASE_PIN_STATUS
+
+    def test_release_pin_is_not_stale_when_versions_match(self):
+        """
+        When running version matches releases.json current_version,
+        is_stale should be False.
+
+        This test validates the CURRENT deploy is correctly pinned.
+        """
+        # The current demo version should match releases.json
+        assert _RELEASE_PIN_STATUS["is_stale"] is False, (
+            f"Release pin mismatch detected!\n"
+            f"Expected: {_RELEASE_PIN_STATUS['expected']}\n"
+            f"Actual: {_RELEASE_PIN_STATUS['actual']}\n"
+            f"Mismatch fields: {_RELEASE_PIN_STATUS['mismatch_fields']}\n"
+            f"This means demo/app.py version constants don't match releases/releases.json"
+        )
+
+    def test_health_endpoint_includes_release_pin(self, client):
+        """Health endpoint includes release_pin object."""
+        response = client.get("/health")
+        data = response.json()
+        assert "release_pin" in data
+        assert "is_stale" in data["release_pin"]
+
+    def test_health_status_ok_when_not_stale(self, client):
+        """Health endpoint returns status=ok when release pin is valid."""
+        response = client.get("/health")
+        data = response.json()
+        # Should be "ok" when versions match
+        assert data["status"] == "ok", (
+            f"Expected status='ok', got '{data['status']}'. "
+            f"Release pin: {data.get('release_pin')}"
+        )
+
+    def test_healthz_includes_stale_deploy_header(self, client):
+        """Healthz endpoint includes X-MathLedger-Stale-Deploy header."""
+        response = client.get("/healthz")
+        assert "X-MathLedger-Stale-Deploy" in response.headers
+        # Should be "false" when versions match
+        assert response.headers["X-MathLedger-Stale-Deploy"] == "false"
+
+    def test_release_pin_expected_matches_releases_json(self):
+        """Release pin expected values come from releases.json."""
+        import json
+        from pathlib import Path
+
+        releases_path = Path(__file__).parent.parent.parent / "releases" / "releases.json"
+        releases_data = json.loads(releases_path.read_text())
+
+        current_version = releases_data["current_version"]
+        version_data = releases_data["versions"][current_version]
+
+        expected = _RELEASE_PIN_STATUS["expected"]
+        assert expected["version"] == current_version.lstrip("v")
+        assert expected["tag"] == version_data["tag"]
+        assert expected["commit"] == version_data["commit"]
+
+
+# ---------------------------------------------------------------------------
+# Tests: Repository URL (Non-Placeholder)
+# ---------------------------------------------------------------------------
+
+
+class TestRepositoryURL:
+    """Verify repository URL is correctly set (not placeholder)."""
+
+    def test_repo_url_is_not_placeholder(self):
+        """REPO_URL must not contain placeholder text."""
+        assert "your-org" not in REPO_URL, (
+            f"REPO_URL contains placeholder: {REPO_URL}"
+        )
+        assert "placeholder" not in REPO_URL.lower()
+
+    def test_repo_url_is_helpfuldolphin(self):
+        """REPO_URL must be https://github.com/helpfuldolphin/mathledger."""
+        assert REPO_URL == "https://github.com/helpfuldolphin/mathledger", (
+            f"Expected REPO_URL to be helpfuldolphin/mathledger, got: {REPO_URL}"
+        )
+
+    def test_repo_url_in_html_is_not_placeholder(self):
+        """HTML content must not contain placeholder repo URLs."""
+        html = get_html_content()
+        assert "your-org/mathledger" not in html, (
+            "HTML contains placeholder repo URL 'your-org/mathledger'"
+        )
+
+    def test_dockerfile_has_correct_repo_url(self):
+        """Dockerfile clone instruction uses correct repo URL."""
+        from pathlib import Path
+        dockerfile = Path(__file__).parent.parent.parent / "Dockerfile"
+        if dockerfile.exists():
+            content = dockerfile.read_text()
+            # If clone instruction exists, should not be placeholder
+            if "git clone" in content:
+                assert "your-org" not in content
+
+
+# ---------------------------------------------------------------------------
+# Tests: Dockerfile includes releases/
+# ---------------------------------------------------------------------------
+
+
+class TestDockerfileReleases:
+    """Verify Dockerfile includes releases/ for release pin validation."""
+
+    def test_dockerfile_copies_releases_dir(self):
+        """Dockerfile must COPY releases/ for release pin validation."""
+        from pathlib import Path
+        dockerfile = Path(__file__).parent.parent.parent / "Dockerfile"
+        content = dockerfile.read_text()
+        assert "COPY releases/" in content, (
+            "Dockerfile must include 'COPY releases/ ./releases/' "
+            "for release pin validation to work in container"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Tests: Boundary Demo Button Label (v0.2.2+)
+# ---------------------------------------------------------------------------
+
+
+class TestBoundaryDemoLabel:
+    """Verify boundary demo button has correct label and clarification."""
+
+    def test_button_label_not_proof(self):
+        """Button must NOT say 'proof' anywhere."""
+        html = get_html_content()
+        # Case-insensitive check for "proof" in button context
+        assert "Run 90-Second Proof" not in html
+        assert ">proof<" not in html.lower()
+
+    def test_button_label_is_boundary_demo(self):
+        """Button must say 'Run Boundary Demo'."""
+        html = get_html_content()
+        assert "Run Boundary Demo" in html
+
+    def test_boundary_demo_has_clarification_note(self):
+        """Boundary demo section has 'not a proof' clarification."""
+        html = get_html_content()
+        assert "This is not a proof" in html
+        assert "authority-routing demonstration" in html

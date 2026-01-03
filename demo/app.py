@@ -36,7 +36,71 @@ DEMO_TAG = "v0.2.1-cohesion"
 DEMO_COMMIT = "27a94c8a58139cb10349f6418336c618f528cbab"  # Base commit from v0.2.0
 
 # Repository URL (single source of truth)
-REPO_URL = "https://github.com/mathledger/mathledger"
+REPO_URL = "https://github.com/helpfuldolphin/mathledger"
+
+
+# ---------------------------------------------------------------------------
+# RELEASE PIN VALIDATION
+# ---------------------------------------------------------------------------
+
+def _load_releases_json() -> dict:
+    """Load releases.json for version validation."""
+    releases_path = Path(__file__).parent.parent / "releases" / "releases.json"
+    try:
+        import json
+        with open(releases_path, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _validate_release_pin() -> dict:
+    """
+    Compare running version against releases.json current_version.
+
+    Returns dict with:
+      - is_stale: bool
+      - expected: dict with version/tag/commit from releases.json
+      - actual: dict with version/tag/commit from hardcoded constants
+      - mismatch_fields: list of fields that don't match
+    """
+    releases = _load_releases_json()
+    current_version = releases.get("current_version", "unknown")
+    version_data = releases.get("versions", {}).get(current_version, {})
+
+    # Expected values from releases.json
+    expected = {
+        "version": current_version.lstrip("v"),  # "v0.2.1" -> "0.2.1"
+        "tag": version_data.get("tag", "unknown"),
+        "commit": version_data.get("commit", "unknown"),
+    }
+
+    # Actual values from hardcoded constants
+    actual = {
+        "version": DEMO_VERSION,
+        "tag": DEMO_TAG,
+        "commit": DEMO_COMMIT,
+    }
+
+    # Check for mismatches
+    mismatch_fields = []
+    if expected["version"] != actual["version"]:
+        mismatch_fields.append("version")
+    if expected["tag"] != actual["tag"]:
+        mismatch_fields.append("tag")
+    if expected["commit"] != actual["commit"]:
+        mismatch_fields.append("commit")
+
+    return {
+        "is_stale": len(mismatch_fields) > 0,
+        "expected": expected,
+        "actual": actual,
+        "mismatch_fields": mismatch_fields,
+    }
+
+
+# Compute release pin status at module load (startup)
+_RELEASE_PIN_STATUS = _validate_release_pin()
 
 # ---------------------------------------------------------------------------
 # BASE_PATH Configuration (for reverse proxy mounting)
@@ -722,8 +786,11 @@ def get_html_content() -> str:
             <!-- Boundary Demo with Integration Point 7: expandable breakdown -->
             <div class="boundary-demo" id="boundary-demo-section">
                 <div class="boundary-header">
-                    <span class="boundary-title">Same Claim, Different Authority</span>
-                    <button id="btn-boundary-demo" onclick="runBoundaryDemo()">Run Boundary Demo (≈15s)</button>
+                    <div>
+                        <span class="boundary-title">Same Claim, Different Authority</span>
+                        <div style="font-size:0.75rem; color:#888; margin-top:0.25rem;">This is not a proof. It is an authority-routing demonstration.</div>
+                    </div>
+                    <button id="btn-boundary-demo" onclick="runBoundaryDemo()">Run Boundary Demo (≈8s)</button>
                 </div>
                 <div id="boundary-results" class="boundary-results hidden">
                     <div class="boundary-step" id="step-1">
@@ -1622,7 +1689,7 @@ def get_html_content() -> str:
             document.getElementById('boundary-conclusion').classList.add('visible');
 
             btn.disabled = false;
-            btn.textContent = 'Run Again (≈15s)';
+            btn.textContent = 'Run Again (≈8s)';
         }
 
         // =====================================================================
@@ -1839,17 +1906,25 @@ def get_releases_json_version() -> dict:
 
 @app.get("/health")
 async def health():
-    """Health check endpoint with version info.
+    """Health check endpoint with version info and release pin validation.
 
     Includes build metadata for deployment verification:
     - version/tag/commit: Hardcoded in this file (what's running)
     - releases_json_*: From releases.json (canonical source)
+    - release_pin: Validation result comparing running vs. expected
 
-    If these don't match, deployment is out of sync.
+    If is_stale=true, status becomes "FAIL_STALE_DEPLOY".
     """
     releases_info = get_releases_json_version()
+
+    # Determine status based on release pin
+    if _RELEASE_PIN_STATUS["is_stale"]:
+        status = "FAIL_STALE_DEPLOY"
+    else:
+        status = "ok"
+
     return {
-        "status": "ok",
+        "status": status,
         "version": DEMO_VERSION,
         "tag": DEMO_TAG,
         "commit": DEMO_COMMIT,
@@ -1858,13 +1933,24 @@ async def health():
         "build_commit": DEMO_COMMIT,
         "build_tag": DEMO_TAG,
         **releases_info,
+        # Release pin validation result
+        "release_pin": _RELEASE_PIN_STATUS,
     }
 
 
 @app.get("/healthz")
 async def healthz():
-    """Kubernetes-style health check endpoint."""
-    return PlainTextResponse("ok", status_code=200)
+    """Kubernetes-style health check endpoint.
+
+    Always returns 200 (container is running), but includes
+    X-MathLedger-Stale-Deploy header if version mismatch detected.
+    """
+    is_stale = _RELEASE_PIN_STATUS["is_stale"]
+    return PlainTextResponse(
+        "ok",
+        status_code=200,
+        headers={"X-MathLedger-Stale-Deploy": str(is_stale).lower()}
+    )
 
 
 @app.get("/scenarios")

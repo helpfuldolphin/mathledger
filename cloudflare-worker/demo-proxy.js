@@ -112,7 +112,7 @@ export default {
             forwardedTo: proxyUrl.toString(),
           },
           instructions: {
-            clone: "git clone https://github.com/mathledger/mathledger",
+            clone: "git clone https://github.com/helpfuldolphin/mathledger",
             checkout: "git checkout v0.2.0-demo-lock",
             run: "uv run python demo/app.py",
             open: "http://localhost:8000"
