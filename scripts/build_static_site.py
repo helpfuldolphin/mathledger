@@ -37,7 +37,7 @@ SITE_DIR = REPO_ROOT / "site"
 RELEASES_FILE = REPO_ROOT / "releases" / "releases.json"
 
 # Repository URL (single source of truth)
-REPO_URL = "https://github.com/mathledger/mathledger"
+REPO_URL = "https://github.com/helpfuldolphin/mathledger"
 
 
 class BuildError(Exception):
@@ -336,25 +336,23 @@ def render_markdown_to_html(md_content: str) -> str:
 
 
 def build_version_banner(config: dict, version: str) -> str:
-    """Build the version banner HTML that appears on every page."""
-    status = config["status"]
-    if status == "current":
-        status_label = "CURRENT"
-        status_color = "#2e7d32"
-    elif status.startswith("superseded"):
-        status_label = status.upper().replace("-", " ")
-        status_color = "#f57c00"
-    elif status == "internal":
-        status_label = "INTERNAL"
-        status_color = "#9e9e9e"
-    else:
-        status_label = status.upper()
-        status_color = "#757575"
+    """Build the version banner HTML that appears on every page.
+
+    IMPORTANT: Version pages show LOCKED status, not CURRENT/SUPERSEDED.
+    The /versions/ page is the only authority on current vs superseded.
+    This prevents stale status labels on individual version pages.
+    """
+    # All version pages show LOCKED - /versions/ is the authority on status
+    status_label = "LOCKED"
+    status_color = "#1565c0"  # Blue for locked/archived
+
+    # Add note about where to check current status
+    status_note = f'<a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a>'
 
     return f"""
     <div class="version-banner" style="--status-color: {status_color};">
         <div class="title">MathLedger — Version {version}</div>
-        <div><span class="status">Status: {status_label}</span></div>
+        <div><span class="status">Status: {status_label}</span>{status_note}</div>
         <div class="meta">
             Tag: <code>{config['tag']}</code> |
             Commit: <code>{config['commit'][:12]}</code> |
@@ -447,6 +445,46 @@ def build_page(
 """
 
 
+def build_release_delta_box(config: dict, version: str) -> str:
+    """Build a Release Delta box showing what changed in this version.
+
+    Reads from releases.json fields:
+    - delta.changed: List of things that changed
+    - delta.unchanged: List of things that did not change
+    - delta.still_not_enforced: List of things still not enforced
+
+    Returns empty string if no delta fields are present.
+    """
+    delta = config.get("delta", {})
+    if not delta:
+        return ""
+
+    changed = delta.get("changed", [])
+    unchanged = delta.get("unchanged", [])
+    still_not = delta.get("still_not_enforced", [])
+
+    if not changed and not unchanged and not still_not:
+        return ""
+
+    sections = []
+    if changed:
+        items = "".join(f"<li>{item}</li>" for item in changed)
+        sections.append(f'<div style="margin-bottom: 0.75rem;"><strong style="color: #2e7d32;">Changed:</strong><ul style="margin: 0.25rem 0 0 1.5rem; font-size: 0.85rem;">{items}</ul></div>')
+    if unchanged:
+        items = "".join(f"<li>{item}</li>" for item in unchanged)
+        sections.append(f'<div style="margin-bottom: 0.75rem;"><strong style="color: #666;">Did not change:</strong><ul style="margin: 0.25rem 0 0 1.5rem; font-size: 0.85rem; color: #666;">{items}</ul></div>')
+    if still_not:
+        items = "".join(f"<li>{item}</li>" for item in still_not)
+        sections.append(f'<div><strong style="color: #c62828;">Still not enforced:</strong><ul style="margin: 0.25rem 0 0 1.5rem; font-size: 0.85rem; color: #c62828;">{items}</ul></div>')
+
+    return f"""
+    <div class="release-delta" style="background: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem;">
+        <h3 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #333;">Release Delta: {version}</h3>
+        {"".join(sections)}
+    </div>
+    """
+
+
 def build_version_landing(config: dict, version: str, build_time: str) -> str:
     """Build the version landing page that distinguishes archive from demo."""
     is_current = config.get("status") == "current"
@@ -457,15 +495,87 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
     demo_banner = ""
 
     # Hosted demo is available at /demo/ for the CURRENT version only
+    # Superseded versions (even if they have demo_url) must show the LOCAL ONLY disclaimer
+    is_superseded = config.get("status", "").startswith("superseded")
+
     if is_current and hosted_demo:
-        # Current version with hosted demo: prominent banner ABOVE THE FOLD
+        # Current version with hosted demo: "Two Artifacts" explainer ABOVE THE FOLD
         demo_banner = f"""
-        <div class="demo-banner" style="background: #e8f5e9; border: 2px solid #2e7d32; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-            <h2 style="margin: 0 0 0.75rem 0; color: #1b5e20;">Hosted Interactive Demo</h2>
-            <p style="margin: 0 0 1rem 0;">Interactive demo is hosted; archive remains immutable.</p>
-            <a href="/demo/" class="demo-button" style="font-size: 1.1rem; padding: 0.85rem 2rem;">Open Interactive Demo</a>
-            <p style="margin: 1rem 0 0 0; font-size: 0.85rem; color: #555;">
-                New to MathLedger? Start with the <a href="docs/for-auditors/">5-minute auditor checklist</a>.
+        <div class="two-artifacts" style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0 0 1rem 0; font-size: 1.2rem; color: #333;">This Site Provides Two Artifacts</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 1rem;">
+                    <strong style="color: #1565c0;">📁 Archive</strong> (this page)
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #555;">
+                        Immutable evidence and documentation. Static, versioned, cryptographically checksummed.
+                    </p>
+                </div>
+                <div style="background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 1rem;">
+                    <strong style="color: #2e7d32;">⚡ Demo</strong> (hosted at /demo/)
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #555;">
+                        Interactive execution of the same version. Produces evidence packs verifiable against this archive.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Version coherence bridge -->
+            <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #444; font-style: italic;">
+                This archive is immutable. The hosted demo at <a href="/demo/">/demo/</a> is the live instantiation of this same version.
+            </p>
+            <div id="demo-sync-status" style="display: none; background: #ffebee; border: 1px solid #c62828; border-radius: 4px; padding: 0.5rem 1rem; margin-bottom: 1rem;">
+                <strong style="color: #c62828;">⚠ DEMO OUT OF SYNC</strong> —
+                <span id="sync-reason">do not use for audit</span>
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="/demo/" class="demo-button" style="background: #2e7d32; color: #fff; padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: 500;">Open Hosted Demo</a>
+                <a href="/{version}/evidence-pack/verify/" class="demo-button" style="background: #1565c0; color: #fff; padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: 500;">Open Auditor Tool</a>
+            </div>
+
+            <!-- Demo sync check script -->
+            <script>
+            (function() {{
+                const expectedVersion = "{version}";
+                fetch('/demo/healthz')
+                    .then(r => r.json())
+                    .then(data => {{
+                        const demoVersion = data.version || data.tag || '';
+                        if (!demoVersion.includes(expectedVersion.replace('v', ''))) {{
+                            document.getElementById('demo-sync-status').style.display = 'block';
+                            document.getElementById('sync-reason').textContent =
+                                'demo reports ' + demoVersion + ', archive is ' + expectedVersion;
+                        }}
+                    }})
+                    .catch(() => {{
+                        // Demo might return plain text "ok" - that's fine, don't show error
+                    }});
+            }})();
+            </script>
+        </div>
+
+        <div class="auditor-flow" style="background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #e65100;">For Auditors: 3-Step Verification</h3>
+            <ol style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                <li style="margin-bottom: 0.5rem;"><strong>Run the boundary demo</strong> — <a href="/demo/">Open demo</a>, click "Run Boundary Demo", observe VERIFIED/REFUTED/ABSTAINED outcomes</li>
+                <li style="margin-bottom: 0.5rem;"><strong>Download evidence pack</strong> — Click "Download Evidence Pack" after demo completes</li>
+                <li><strong>Verify in auditor tool</strong> — <a href="/{version}/evidence-pack/verify/">Open verifier</a>, upload pack, confirm PASS (or tamper and observe FAIL)</li>
+            </ol>
+            <p style="margin: 0.75rem 0 0 0; font-size: 0.85rem;">
+                Full checklist: <a href="/{version}/docs/for-auditors/">5-minute auditor verification</a>
+            </p>
+        </div>
+
+        <div class="ready-to-verify" id="ready-to-verify" style="background: #e3f2fd; border: 1px solid #1976d2; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #0d47a1;">Ready-to-Verify: Example Evidence Packs (no demo required)</h3>
+            <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #555;">
+                Download pre-built examples to test the auditor tool without running the demo:
+            </p>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <a href="/{version}/evidence-pack/examples.json" download="examples.json" style="background: #fff; border: 1px solid #1976d2; color: #1976d2; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">📥 Download Examples (PASS + FAIL)</a>
+                <a href="/{version}/evidence-pack/verify/" style="background: #1976d2; color: #fff; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">Open Auditor Tool</a>
+            </div>
+            <p style="margin: 0.75rem 0 0 0; font-size: 0.85rem; color: #666;">
+                The examples.json file contains both valid (PASS) and tampered (FAIL) packs for testing.
             </p>
         </div>
         """
@@ -483,8 +593,8 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
             </details>
         </div>
         """
-    elif demo_url:
-        # Explicit demo_url override (future use)
+    elif demo_url and not is_superseded:
+        # Explicit demo_url override (future use, for non-superseded versions)
         demo_section = f"""
         <div class="info-box">
             <strong>Interactive Demo</strong><br>
@@ -493,17 +603,20 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
         """
     else:
         # Superseded version: local only, but mention current demo exists
+        # IMPORTANT: The disclaimer text must match what hostile_audit.ps1 checks for
         demo_section = f"""
         <div class="info-box local-only">
             <strong>Interactive Demo</strong> <span class="mode-indicator mode-local">LOCAL ONLY</span><br>
             This archived version's demo requires local Python execution.<br><br>
             <strong>To run locally:</strong><br>
-            <code>git clone https://github.com/your-org/mathledger</code><br>
+            <code>git clone {REPO_URL}</code><br>
             <code>git checkout {config['tag']}</code><br>
             <code>uv run python demo/app.py</code><br>
             <code>Open http://localhost:8000</code>
-            <p style="margin-top: 1rem; font-size: 0.85rem; color: #666;">
-                The <a href="/demo/">hosted demo</a> runs the current version, not this archived version.
+            <p id="superseded-disclaimer" style="margin-top: 1rem; padding: 0.75rem; background: #fff3e0; border-left: 3px solid #f57c00; font-size: 0.9rem; color: #333;">
+                <strong>Note:</strong> The hosted demo at <a href="/demo/">/demo/</a> runs the CURRENT version
+                (see <a href="/versions/">/versions/</a> for status).
+                This archived version is not available as a hosted demo.
             </p>
         </div>
         """
@@ -513,9 +626,12 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
     tier_b_items = "".join(f"<li>{item}</li>" for item in inv.get("tier_b_list", []))
     tier_c_items = "".join(f"<li>{item}</li>" for item in inv.get("tier_c_list", []))
 
-    # Check if for-auditors doc exists
-    has_for_auditors = any(d.get("slug") == "for-auditors" for d in config.get("docs", []))
-    for_auditors_row = """<tr><td><a href="docs/for-auditors/">For Auditors</a></td><td>5-minute verification checklist</td></tr>""" if has_for_auditors else ""
+    # Check if for-auditors doc exists (docs are tuples: (source, slug, title))
+    has_for_auditors = any(d[1] == "for-auditors" for d in config.get("docs", []))
+    for_auditors_row = f"""<tr><td><a href="/{version}/docs/for-auditors/">For Auditors</a></td><td>5-minute verification checklist</td></tr>""" if has_for_auditors else ""
+
+    # Build Release Delta box from releases.json fields
+    release_delta = build_release_delta_box(config, version)
 
     content = f"""
         {demo_banner}
@@ -523,17 +639,19 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
         <p>This is the archive for MathLedger version <code>{version}</code>.
         All artifacts below are static, verifiable, and immutable.</p>
 
+        {release_delta}
+
         <h2>Archive Contents</h2>
         <table>
             <tr><th>Artifact</th><th>Description</th></tr>
             {for_auditors_row}
-            <tr><td><a href="docs/scope-lock/">Scope Lock</a></td><td>What this version does and does not demonstrate</td></tr>
-            <tr><td><a href="docs/explanation/">Explanation</a></td><td>How the demo explains its own behavior</td></tr>
-            <tr><td><a href="docs/invariants/">Invariants</a></td><td>Tier A/B/C enforcement status</td></tr>
-            <tr><td><a href="docs/hostile-rehearsal/">Hostile Rehearsal</a></td><td>Answers to skeptical questions</td></tr>
-            <tr><td><a href="fixtures/">Fixtures</a></td><td>Regression test cases with golden outputs</td></tr>
-            <tr><td><a href="evidence-pack/">Evidence Pack</a></td><td>Replay verification artifacts</td></tr>
-            <tr><td><a href="manifest.json">Manifest</a></td><td>Version metadata + file checksums</td></tr>
+            <tr><td><a href="/{version}/docs/scope-lock/">Scope Lock</a></td><td>What this version does and does not demonstrate</td></tr>
+            <tr><td><a href="/{version}/docs/explanation/">Explanation</a></td><td>How the demo explains its own behavior</td></tr>
+            <tr><td><a href="/{version}/docs/invariants/">Invariants</a></td><td>Tier A/B/C enforcement status</td></tr>
+            <tr><td><a href="/{version}/docs/hostile-rehearsal/">Hostile Rehearsal</a></td><td>Answers to skeptical questions</td></tr>
+            <tr><td><a href="/{version}/fixtures/">Fixtures</a></td><td>Regression test cases with golden outputs</td></tr>
+            <tr><td><a href="/{version}/evidence-pack/">Evidence Pack</a></td><td>Replay verification artifacts</td></tr>
+            <tr><td><a href="/{version}/manifest.json">Manifest</a></td><td>Version metadata + file checksums</td></tr>
         </table>
 
         <h2>Local Execution</h2>
@@ -616,6 +734,17 @@ def build_evidence_pack_page(config: dict, version: str, files: list, build_time
         <p>The evidence pack enables independent replay verification.
         An auditor can recompute attestation hashes without running the demo.</p>
 
+        <div style="background: #e3f2fd; border: 1px solid #1976d2; border-radius: 8px; padding: 1.25rem; margin: 1.5rem 0;">
+            <h3 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #0d47a1;">Verification Tools</h3>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <a href="/{version}/evidence-pack/verify/" style="background: #1976d2; color: #fff; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-size: 0.9rem; font-weight: 500;">Open Auditor Tool</a>
+                <a href="/{version}/evidence-pack/examples.json" download="examples.json" style="background: #fff; border: 1px solid #1976d2; color: #1976d2; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">📥 Download Example Packs</a>
+            </div>
+            <p style="margin: 0.75rem 0 0 0; font-size: 0.85rem; color: #666;">
+                The auditor tool verifies evidence packs in-browser (no server). Example packs include PASS and FAIL cases.
+            </p>
+        </div>
+
         <h2>Files</h2>
         <ul>{file_links}</ul>
 
@@ -650,7 +779,7 @@ print('PASS' if result['verified'] else 'FAIL')
             <li>PASS = hashes match; FAIL = tampering detected</li>
         </ol>
 
-        <p>See <a href="../docs/explanation/">How the Demo Explains Itself</a> for full details.</p>
+        <p>See <a href="/{version}/docs/explanation/">How the Demo Explains Itself</a> for full details.</p>
     """
 
     return build_page(
@@ -709,7 +838,7 @@ async function verify(){const R=document.getElementById('res'),D=document.getEle
 <div class="container">
 <div class="banner">
 <div style="font-weight:600">MathLedger - {version}</div>
-<div><span class="status">CURRENT</span></div>
+<div><span class="status">LOCKED</span> <a href="/versions/" style="font-size:0.8rem;color:#666">(see /versions/)</a></div>
 <div style="font-size:0.8rem;color:#555;margin-top:0.5rem">Tag: <code>{tag}</code> | Commit: <code>{commit}</code></div>
 </div>
 <nav class="nav"><a href="/{version}/">Archive</a> <a href="/{version}/evidence-pack/">Evidence</a> <strong>Verifier</strong> | <a href="/versions/">All</a></nav>
@@ -918,10 +1047,10 @@ def build_version(releases: dict, version: str, build_time: str) -> dict:
     # Copy evidence pack
     evidence_files = []
     golden_src = REPO_ROOT / "fixtures" / "golden_evidence_pack"
-    if golden_src.exists():
-        evidence_dest = version_dir / "evidence-pack"
-        evidence_dest.mkdir(parents=True, exist_ok=True)
+    evidence_dest = version_dir / "evidence-pack"
+    evidence_dest.mkdir(parents=True, exist_ok=True)
 
+    if golden_src.exists():
         for f in golden_src.glob("*.json"):
             shutil.copy(f, evidence_dest / f.name)
             evidence_files.append(f.name)
@@ -929,6 +1058,13 @@ def build_version(releases: dict, version: str, build_time: str) -> dict:
         evidence_html = build_evidence_pack_page(config, version, evidence_files, build_time)
         (evidence_dest / "index.html").write_text(evidence_html, encoding="utf-8")
         print(f"  Copied evidence pack ({len(evidence_files)} files)")
+
+    # Copy example packs (PASS/FAIL examples for auditors)
+    examples_src = REPO_ROOT / "releases" / f"evidence_pack_examples.{version}.json"
+    if examples_src.exists():
+        shutil.copy(examples_src, evidence_dest / "examples.json")
+        examples_sha256 = sha256_file(examples_src)
+        print(f"  Copied examples.json (sha256: {examples_sha256[:16]}...)")
 
     # Generate verifier page with self-test
     verify_dir = version_dir / "evidence-pack" / "verify"
@@ -1209,21 +1345,36 @@ def verify_build(releases: dict) -> bool:
             else:
                 errors.append(f"{version}: verify/index.html missing")
 
-    # 6. Check CURRENT version has /demo/ link and hosted demo banner
+    # 6. Check CURRENT version has required above-the-fold elements
     current_version = releases.get("current_version")
     if current_version:
         current_landing = SITE_DIR / current_version / "index.html"
         if current_landing.exists():
-            landing_content = current_landing.read_text()
+            landing_content = current_landing.read_text(encoding="utf-8")
+
+            # Check for /demo/ link
             if 'href="/demo/"' in landing_content:
                 print(f"[OK] {current_version}: /demo/ link present in landing page")
             else:
-                errors.append(f"{current_version}: /demo/ link MISSING from landing page (required for current version)")
-            # Check for hosted demo banner
-            if "Hosted Interactive Demo" in landing_content:
-                print(f"[OK] {current_version}: Hosted Interactive Demo banner present")
+                errors.append(f"{current_version}: /demo/ link MISSING from landing page (required)")
+
+            # Check for Two Artifacts explainer
+            if "Two Artifacts" in landing_content:
+                print(f"[OK] {current_version}: Two Artifacts explainer present")
             else:
-                errors.append(f"{current_version}: Hosted Interactive Demo banner MISSING")
+                errors.append(f"{current_version}: Two Artifacts explainer MISSING")
+
+            # Check for Open Auditor Tool button
+            if 'evidence-pack/verify/' in landing_content and "Open Auditor Tool" in landing_content:
+                print(f"[OK] {current_version}: Open Auditor Tool link present")
+            else:
+                errors.append(f"{current_version}: Open Auditor Tool link MISSING")
+
+            # Check for 3-step auditor flow
+            if "3-Step Verification" in landing_content:
+                print(f"[OK] {current_version}: 3-Step Verification flow present")
+            else:
+                errors.append(f"{current_version}: 3-Step Verification flow MISSING")
         else:
             errors.append(f"{current_version}: index.html missing")
 
@@ -1234,6 +1385,26 @@ def verify_build(releases: dict) -> bool:
             for_auditors_path = SITE_DIR / current_version / "docs" / "for-auditors" / "index.html"
             if for_auditors_path.exists():
                 print(f"[OK] {current_version}: for-auditors page exists")
+
+                # Check that auditor links resolve correctly
+                auditor_content = for_auditors_path.read_text(encoding="utf-8")
+                expected_links = [
+                    ("../scope-lock/", "Scope Lock"),
+                    ("../invariants/", "Invariants"),
+                    ("../hostile-rehearsal/", "Hostile Demo Rehearsal"),
+                    ("../explanation/", "How the Demo Explains Itself"),
+                ]
+                for link_path, link_name in expected_links:
+                    # Check link is in the rendered HTML
+                    if f'href="{link_path}"' in auditor_content:
+                        # Verify target exists
+                        target_path = SITE_DIR / current_version / "docs" / link_path.replace("../", "") / "index.html"
+                        if target_path.exists():
+                            print(f"[OK] {current_version}: auditor link '{link_name}' resolves to {target_path.relative_to(SITE_DIR)}")
+                        else:
+                            errors.append(f"{current_version}: auditor link '{link_name}' target MISSING: {target_path.relative_to(SITE_DIR)}")
+                    else:
+                        errors.append(f"{current_version}: auditor link '{link_name}' uses wrong path (expected {link_path})")
             else:
                 errors.append(f"{current_version}: for-auditors page MISSING (configured but not built)")
 
@@ -1258,6 +1429,139 @@ def verify_build(releases: dict) -> bool:
             errors.append("Runbook: X-Proxied-By header verification MISSING")
     else:
         errors.append("Runbook: docs/CLOUDFLARE_DEPLOYMENT_RUNBOOK.md not found")
+
+    # 8. Check for placeholder repo URLs (MUST NOT appear in output)
+    placeholder_found = False
+    for html_file in SITE_DIR.rglob("*.html"):
+        content = html_file.read_text(encoding="utf-8")
+        if "your-org/mathledger" in content:
+            errors.append(f"Placeholder URL 'your-org/mathledger' found in {html_file.relative_to(SITE_DIR)}")
+            placeholder_found = True
+    if not placeholder_found:
+        print("[OK] No placeholder repo URLs (your-org/mathledger) in site output")
+
+    # 9. Check version coherence bridge text present (current version only)
+    if current_version:
+        current_landing = SITE_DIR / current_version / "index.html"
+        if current_landing.exists():
+            landing_content = current_landing.read_text(encoding="utf-8")
+            if "This archive is immutable" in landing_content and "live instantiation" in landing_content:
+                print(f"[OK] {current_version}: Version coherence bridge text present")
+            else:
+                errors.append(f"{current_version}: Version coherence bridge text MISSING")
+            if "demo-sync-status" in landing_content:
+                print(f"[OK] {current_version}: Demo sync check script present")
+            else:
+                errors.append(f"{current_version}: Demo sync check script MISSING")
+
+    # 10. Check Ready-to-Verify section present (current version only)
+    if current_version:
+        current_landing = SITE_DIR / current_version / "index.html"
+        if current_landing.exists():
+            landing_content = current_landing.read_text(encoding="utf-8")
+            if "Ready-to-Verify" in landing_content and "examples.json" in landing_content:
+                print(f"[OK] {current_version}: Ready-to-Verify section present")
+            else:
+                errors.append(f"{current_version}: Ready-to-Verify section MISSING")
+
+    # 11. Check external_audits listed in releases.json are linked from for-auditors
+    if current_version:
+        current_config = releases.get("versions", {}).get(current_version, {})
+        external_audit_docs = [
+            d for d in current_config.get("docs", [])
+            if isinstance(d, dict) and "external_audits" in d.get("slug", "")
+        ]
+        if external_audit_docs:
+            for_auditors_path = SITE_DIR / current_version / "docs" / "for-auditors" / "index.html"
+            if for_auditors_path.exists():
+                auditor_content = for_auditors_path.read_text(encoding="utf-8")
+                if "External Audits" in auditor_content and "external_audits" in auditor_content:
+                    print(f"[OK] {current_version}: External Audits section linked from for-auditors")
+                    # Check that configured audit pages are actually rendered
+                    for audit_doc in external_audit_docs:
+                        audit_slug = audit_doc["slug"]
+                        audit_page = SITE_DIR / current_version / "docs" / audit_slug / "index.html"
+                        if audit_page.exists():
+                            print(f"[OK] {current_version}: external audit '{audit_slug}' rendered")
+                        else:
+                            errors.append(f"{current_version}: external audit '{audit_slug}' NOT rendered")
+                else:
+                    errors.append(f"{current_version}: external_audits configured but NOT linked from for-auditors page")
+
+    # 12. Check archive table links are version-pinned (absolute paths)
+    for version in releases.get("versions", {}):
+        landing = SITE_DIR / version / "index.html"
+        if landing.exists():
+            content = landing.read_text(encoding="utf-8")
+            # These relative patterns should NOT appear in archive table
+            relative_patterns = [
+                ('href="docs/', "Archive table has relative docs/ link"),
+                ('href="fixtures/"', "Archive table has relative fixtures/ link"),
+                ('href="evidence-pack/"', "Archive table has relative evidence-pack/ link (not verify/)"),
+                ('href="manifest.json"', "Archive table has relative manifest.json link"),
+            ]
+            has_relative = False
+            for pattern, msg in relative_patterns:
+                # Skip if it's a version-pinned link (starts with /{version}/)
+                if pattern in content and f'href="/{version}/' not in content.replace(pattern, "CHECK"):
+                    # Double-check: only flag if NOT preceded by version path
+                    import re
+                    # Look for the pattern NOT preceded by /{version}
+                    unversioned = re.findall(rf'(?<!/{version}){re.escape(pattern)}', content)
+                    if unversioned:
+                        errors.append(f"{version}: {msg}")
+                        has_relative = True
+            if not has_relative:
+                print(f"[OK] {version}: archive table uses version-pinned (absolute) paths")
+
+    # 13. Check evidence-pack page has verifier link
+    for version in releases.get("versions", {}):
+        evidence_page = SITE_DIR / version / "evidence-pack" / "index.html"
+        if evidence_page.exists():
+            content = evidence_page.read_text(encoding="utf-8")
+            if f"/{version}/evidence-pack/verify/" in content or "verify/" in content:
+                print(f"[OK] {version}: evidence-pack page links to verifier")
+            else:
+                errors.append(f"{version}: evidence-pack page MISSING verifier link")
+
+    # 14. Check for-auditors page has version-pinned verifier link
+    for version in releases.get("versions", {}):
+        for_auditors = SITE_DIR / version / "docs" / "for-auditors" / "index.html"
+        if for_auditors.exists():
+            content = for_auditors.read_text(encoding="utf-8")
+            if "evidence-pack/verify/" in content:
+                print(f"[OK] {version}: for-auditors page has verifier link")
+            else:
+                errors.append(f"{version}: for-auditors page MISSING verifier link")
+
+    # 15. Check NO version page shows "Status: CURRENT" (only /versions/ is authority)
+    for version, config in releases.get("versions", {}).items():
+        landing = SITE_DIR / version / "index.html"
+        if landing.exists():
+            content = landing.read_text(encoding="utf-8")
+            if "Status: CURRENT" in content:
+                errors.append(f"{version}: page shows 'Status: CURRENT' (should show LOCKED)")
+            elif "Status: LOCKED" in content:
+                print(f"[OK] {version}: page shows LOCKED status (not CURRENT)")
+            else:
+                errors.append(f"{version}: page missing status indicator")
+
+    # 16. Check superseded versions have the required disclaimer
+    # The disclaimer must state that /demo/ runs the CURRENT version
+    # This matches what hostile_audit.ps1 Check 16 verifies
+    for version, config in releases.get("versions", {}).items():
+        status = config.get("status", "")
+        if status.startswith("superseded"):
+            landing = SITE_DIR / version / "index.html"
+            if landing.exists():
+                content = landing.read_text(encoding="utf-8")
+                # Check for the disclaimer pattern (matches hostile_audit.ps1 regex)
+                if "hosted demo" in content.lower() and "runs" in content.lower() and "current version" in content.lower():
+                    print(f"[OK] {version}: superseded disclaimer present")
+                else:
+                    errors.append(f"{version}: SUPERSEDED but missing disclaimer about /demo/ running CURRENT version")
+            else:
+                errors.append(f"{version}: superseded version landing page missing")
 
     print("=" * 60)
     if errors:

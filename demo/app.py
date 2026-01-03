@@ -794,7 +794,8 @@ def get_html_content() -> str:
             <div style="background:#1a1a1a; color:#fff; padding:0.5rem 1rem; margin-bottom:1rem; font-size:0.75rem; font-family:monospace; display:flex; justify-content:space-between; align-items:center;">
                 <span>GOVERNANCE DEMO (not capability)</span>
                 <span>
-                    <a href="/v0.2.0/" style="color:#90caf9; text-decoration:none; margin-right:1rem;">View v0.2.0 Archive</a>
+                    <a href="/v""" + DEMO_VERSION + """/" style="color:#90caf9; text-decoration:none; margin-right:1rem;">View v""" + DEMO_VERSION + """ Archive</a>
+                    <span class="live-indicator" style="background:#4caf50; color:#fff; padding:0.1rem 0.4rem; font-size:0.65rem; margin-right:0.5rem;">LIVE</span>
                     v""" + DEMO_VERSION + """ | """ + DEMO_TAG + """ | """ + DEMO_COMMIT[:12] + """
                 </span>
             </div>
@@ -1031,7 +1032,7 @@ def get_html_content() -> str:
                             <div class="evidence-pack-actions">
                                 <button id="btn-download-evidence" onclick="downloadEvidencePack()">Download Evidence Pack</button>
                                 <button id="btn-replay-verify" class="secondary" onclick="replayVerify()">Replay & Verify</button>
-                                <a href="/v0.2.0/evidence-pack/verify/" target="_blank" class="secondary" style="display:inline-block; padding:0.6rem 1.2rem; background:#fff; color:#1565c0; border:1px solid #1565c0; text-decoration:none; font-size:0.85rem;">Open Auditor Tool</a>
+                                <a href="/v""" + DEMO_VERSION + """/evidence-pack/verify/" target="_blank" class="secondary" style="display:inline-block; padding:0.6rem 1.2rem; background:#fff; color:#1565c0; border:1px solid #1565c0; text-decoration:none; font-size:0.85rem;">Open Auditor Tool</a>
                             </div>
                             <div id="replay-result-display" class="hidden"></div>
                         </div>
@@ -1115,8 +1116,9 @@ def get_html_content() -> str:
                     link.href = API_BASE + '/docs/view/V0_LOCK.md';
                 }
             });
-            // Fix archive link
-            document.querySelectorAll('a[href^="/v0.2.0/"]').forEach(function(link) {
+            // Fix archive links (dynamic version from server)
+            var archiveVersion = 'v""" + DEMO_VERSION + """';
+            document.querySelectorAll('a[href^="/' + archiveVersion + '/"]').forEach(function(link) {
                 link.href = API_BASE + link.getAttribute('href');
             });
         });

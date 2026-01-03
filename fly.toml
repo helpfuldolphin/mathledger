@@ -8,7 +8,7 @@
 # Scale:
 #   fly scale count 1  # single instance (demo scope)
 
-app = "mathledger-demo"
+app = "mathledger-demo-v0-2-0-helpfuldolphin"
 primary_region = "iad"
 
 [build]

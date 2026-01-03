@@ -16,7 +16,7 @@ If asked "what can this do?", redirect to "what does this *refuse* to do?"
 
 ---
 
-## 9 Hostile Questions
+## 10 Hostile Questions
 
 ### Q1: "Why does everything say ABSTAINED? Is this broken?"
 
@@ -248,6 +248,52 @@ The trust class determines *which validator runs*. The validator determines the 
 
 ---
 
+### Q10: "Prove this isn't just security theater with fancy hashes."
+
+**(a) What they're really testing:**
+Whether the hashes are decorative or functional. This is the "show me or shut up" question.
+
+**(b) UI click-path:**
+1. Run any MV verified scenario (e.g., mv_arithmetic_verified)
+2. After verification, scroll to "Audit Verification" section
+3. Click "Download Evidence Pack" → saves JSON file
+4. Click "Replay & Verify" → shows PASS
+5. Open the downloaded JSON, change one character in `reasoning_artifacts[0].claim_id`
+6. Use curl to POST the tampered pack to `/uvil/replay_verify`
+7. Observe: FAIL with diff showing which hash diverged
+
+**(c) Answer (1-2 sentences):**
+"Download the evidence pack. Tamper with any field. Run replay verification. It fails and shows you exactly which hash diverged. That's not theater—that's tamper detection."
+
+**(d) What NOT to say:**
+- "Trust the hashes" (show them, don't assert them)
+- "The cryptography is sound" (irrelevant—the demo is about structure)
+- "We use SHA256" (implementation detail, not the point)
+
+**(e) On-screen evidence:**
+```bash
+# Download evidence pack
+curl http://localhost:8000/uvil/evidence_pack/<committed_id> > pack.json
+
+# Tamper with it (change one character)
+# Then replay:
+curl -X POST http://localhost:8000/uvil/replay_verify \
+  -H "Content-Type: application/json" \
+  -d @pack.json
+# → {"result": "FAIL", "diff": {...}}
+```
+
+**(f) Key insight:**
+The evidence pack is self-contained. No external API calls. No network access. Anyone with the pack can:
+1. Recompute U_t from uvil_events
+2. Recompute R_t from reasoning_artifacts
+3. Recompute H_t = SHA256(R_t || U_t)
+4. Compare to recorded values
+
+If all match: PASS. If any differ: FAIL with diff. There is no way to tamper without detection. This is the audit instrument.
+
+---
+
 ## 10-Minute Live Run Script
 
 **Setup** (before demo):
@@ -320,11 +366,12 @@ uv run python demo/app.py
 | What's the point? | Boundary enforcement works even without verification |
 | ADV excluded? | Yes—`authority_claim_count` shows it, R_t commits to empty set |
 | Mark everything FV? | Allowed, but `mechanically_verified: false` without FV verifier |
-| Security theater? | Hashes are content-derived, deterministic, replayable |
+| Security theater? | Download, tamper, replay → FAIL. That's tamper detection, not theater. |
 | PA proves what? | Human attestation recorded, not truth confirmed |
 | Draft vs Committed? | Random ID (exploration) vs content-derived ID (authority) |
 | Double commit? | 409 Conflict—immutability enforced |
 | Why THIS verifies? | MV + parseable arithmetic → validator runs → VERIFIED/REFUTED |
+| Prove it's not theater? | Evidence pack + replay verify: tamper → FAIL with diff |
 
 ---
 
@@ -333,9 +380,11 @@ uv run python demo/app.py
 1. Browser: `http://localhost:8000`
 2. Terminal 1: demo server running
 3. Terminal 2: ready for `uv run python tools/run_demo_cases.py`
-4. Code reference: `backend/api/uvil.py` (for Q7, Q8 if pressed)
-5. Code reference: `governance/mv_validator.py` (for Q9 if pressed)
-6. Fixtures: `fixtures/mv_arithmetic_verified/output.json` (for Q9 comparison)
+4. Terminal 3: ready for curl commands (Q10 evidence pack tamper test)
+5. Code reference: `backend/api/uvil.py` (for Q7, Q8, Q10 if pressed)
+6. Code reference: `governance/mv_validator.py` (for Q9 if pressed)
+7. Fixtures: `fixtures/mv_arithmetic_verified/output.json` (for Q9 comparison)
+8. Downloaded evidence pack JSON (for Q10 tamper demo)
 
 ---
 

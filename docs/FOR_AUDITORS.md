@@ -30,7 +30,7 @@ Complete these steps to verify the system's core claims:
 
 ### Step 4: Verify with Auditor Tool (60 seconds)
 
-1. Open the [Evidence Pack Verifier](/v0.2.1/evidence-pack/verify/)
+1. Open the [Evidence Pack Verifier](../../evidence-pack/verify/)
 2. Upload the evidence pack JSON you downloaded
 3. Click **"Verify"**
 4. Confirm status shows **PASS**
@@ -90,7 +90,7 @@ This version (v0.2.1) demonstrates:
 - **Replay verification** using the same code paths as live execution
 - **Self-auditing capability** via the evidence pack verifier
 
-See [Invariants Status](invariants/) for the complete Tier A/B/C breakdown.
+See [Invariants Status](../invariants/) for the complete Tier A/B/C breakdown.
 
 ---
 
@@ -114,10 +114,10 @@ See [Invariants Status](invariants/) for the complete Tier A/B/C breakdown.
 
 | Document | Description |
 |----------|-------------|
-| [Scope Lock](scope-lock/) | What this version does and does not demonstrate |
-| [Invariants](invariants/) | Tier A/B/C enforcement status with explicit counts |
-| [Hostile Demo Rehearsal](hostile-rehearsal/) | Pre-prepared answers to skeptical questions |
-| [How the Demo Explains Itself](explanation/) | UI self-explanation integration points |
+| [Scope Lock](../scope-lock/) | What this version does and does not demonstrate |
+| [Invariants](../invariants/) | Tier A/B/C enforcement status with explicit counts |
+| [Hostile Demo Rehearsal](../hostile-rehearsal/) | Pre-prepared answers to skeptical questions |
+| [How the Demo Explains Itself](../explanation/) | UI self-explanation integration points |
 
 ---
 
@@ -137,6 +137,19 @@ The local demo produces identical evidence packs that can be verified with the s
 
 ---
 
+## External Audits
+
+Independent audits of this project are listed below.
+
+| Date | Auditor Role | Version Audited | Report |
+|------|--------------|-----------------|--------|
+| 2026-01-03 | External safety lead (no prior context) | v0.2.1 archive, v0.2.0 demo | [Cold-Start Audit Report](../external_audits/manus_site_audit_2026-01-03/) |
+| 2026-01-03 | Hostile link integrity auditor | v0.2.1 site | [Link Integrity Audit](../external_audits/manus_link_integrity_audit_2026-01-03/) |
+
+**Disclaimer:** These are independent audits. Findings may have been addressed in later versions. Audits do not constitute endorsements.
+
+---
+
 ## Questions?
 
-For technical questions about this verification process, see the [Hostile Demo Rehearsal](hostile-rehearsal/) document which addresses common skeptical questions with prepared answers.
+For technical questions about this verification process, see the [Hostile Demo Rehearsal](../hostile-rehearsal/) document which addresses common skeptical questions with prepared answers.
