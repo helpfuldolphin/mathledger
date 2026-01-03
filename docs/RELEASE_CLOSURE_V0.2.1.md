@@ -113,6 +113,29 @@ Any changes required will be released as v0.2.2 or later.
 
 ---
 
+## Known Interface Failures Addressed in v0.2.2 (Planned)
+
+The following interface-layer failures were identified by hostile audit (`manus_link_integrity_audit_2026-01-03.md`) after v0.2.1 closure. These are **documentation/navigation/metadata bugs**, not cryptographic or semantic failures.
+
+| ID | Failure | Classification | v0.2.2 Fix |
+|----|---------|----------------|------------|
+| A | Demo shows different version than archive claims | ARCH + DOC | Document shared demo architecture; add LIVE badge |
+| B | Auditor checklist steps 3-5 impossible to complete | DOC + NAV | Rewrite checklist; add verifier links to demo |
+| C | Footer shows content commit, manifest shows build commit | BUILD + DOC | Document dual-commit semantics; update footer format |
+| D | Repository URL is placeholder, not real | DOC | Replace all `your-org` with `helpfuldolphin/mathledger` |
+| E | v0.2.0 archive shows "CURRENT" but is superseded | BUILD + ARCH | Remove status field from archives; use "Locked:" only |
+
+**What v0.2.2 does NOT change:**
+- Hashing contracts (`compute_composite_root`, `compute_ui_root`, `compute_reasoning_root`)
+- Evidence pack format or schema
+- Verifier semantics
+- Test vectors or golden hashes
+- Any Tier A invariant
+
+See: `docs/V0.2.2_SCOPE.md` for formal scope constraints.
+
+---
+
 ## Verification
 
 To verify this closure:
