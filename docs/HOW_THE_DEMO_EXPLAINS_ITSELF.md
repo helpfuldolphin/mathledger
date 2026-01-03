@@ -22,11 +22,33 @@ Exploration is intentionally unconstrained because suggestions are not claims. A
 
 The demo produces three possible outcomes: `VERIFIED`, `REFUTED`, or `ABSTAINED`.
 
-`VERIFIED` means the system found a machine-checkable proof that the claim holds.
+`VERIFIED` means the claim was validated by the MV arithmetic validator. This is a limited-coverage procedural check, not a formal proof. See "Validator Coverage" below.
 
-`REFUTED` means the system found a machine-checkable proof that the claim does not hold.
+`REFUTED` means the claim was checked by the MV arithmetic validator and found to be false. Again, this is a procedural check with limited coverage.
 
 `ABSTAINED` means the system did not find either. This is not a failure. This is the correct output when the system cannot establish the claim.
+
+### Validator Coverage (MV Arithmetic Validator)
+
+The MV validator in v0 has **limited coverage**:
+
+| Covered | Not Covered |
+|---------|-------------|
+| Integer arithmetic: `a op b = c` where op is +, -, *, / | Floating-point precision |
+| Single equality assertions | Chained expressions (a + b + c) |
+| Deterministic evaluation | Overflow behavior (uses Python semantics) |
+| | Division by zero (returns ABSTAINED) |
+| | Symbolic reasoning |
+| | Any non-arithmetic claims |
+
+**What this means:**
+- `2 + 2 = 4` → VERIFIED (covered)
+- `2 + 2 = 5` → REFUTED (covered)
+- `sqrt(2) is irrational` → ABSTAINED (not covered: not arithmetic equality)
+- `1e308 + 1e308 = inf` → ABSTAINED (not covered: float precision)
+- `10 / 0 = undefined` → ABSTAINED (not covered: division by zero)
+
+Claims outside validator coverage yield ABSTAINED, not VERIFIED or REFUTED.
 
 The system does not guess. It does not approximate. It does not hedge. When it cannot verify or refute, it stops and says so.
 
