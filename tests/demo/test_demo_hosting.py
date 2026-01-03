@@ -92,6 +92,21 @@ class TestVersionHeaders:
         # Default is "/" or empty
         assert response.headers["X-MathLedger-Base-Path"] in ["/", ""]
 
+    def test_base_path_header_pinned_to_root(self, client):
+        """
+        ROOT MOUNT ARCHITECTURE: X-MathLedger-Base-Path MUST be "/" (pinned).
+
+        The Fly app serves at root. Cloudflare Worker rewrites /demo/* -> /*.
+        If this test fails, the architecture contract is broken.
+        """
+        response = client.get("/health")
+        base_path = response.headers.get("X-MathLedger-Base-Path", "")
+        # Must be "/" or "" (both mean root mount)
+        assert base_path in ["/", ""], (
+            f"BASE_PATH drift detected! Expected '/' or '', got '{base_path}'. "
+            f"ROOT MOUNT architecture requires app to serve at root."
+        )
+
     def test_root_has_cache_control_header(self, client):
         """Root endpoint includes Cache-Control: no-store header."""
         response = client.get("/")
@@ -275,3 +290,56 @@ class TestDockerfile:
         content = dockerfile.read_text()
         assert "HEALTHCHECK" in content
         assert "/healthz" in content
+
+
+# ---------------------------------------------------------------------------
+# Tests: fly.toml Configuration (ROOT MOUNT Architecture)
+# ---------------------------------------------------------------------------
+
+
+class TestFlyToml:
+    """Verify fly.toml has correct ROOT MOUNT configuration."""
+
+    def test_flytoml_exists(self):
+        """fly.toml exists."""
+        from pathlib import Path
+        flytoml = Path(__file__).parent.parent.parent / "fly.toml"
+        assert flytoml.exists()
+
+    def test_flytoml_app_name(self):
+        """fly.toml has authoritative app name."""
+        from pathlib import Path
+        flytoml = Path(__file__).parent.parent.parent / "fly.toml"
+        content = flytoml.read_text()
+        # Authoritative app name for v0.2.0
+        assert 'app = "mathledger-demo-v0-2-0-helpfuldolphin"' in content, (
+            "fly.toml app name mismatch. "
+            "Authoritative name: mathledger-demo-v0-2-0-helpfuldolphin"
+        )
+
+    def test_flytoml_base_path_empty(self):
+        """
+        fly.toml BASE_PATH MUST be empty (ROOT MOUNT architecture).
+
+        If this test fails, the architecture contract is broken.
+        """
+        from pathlib import Path
+        flytoml = Path(__file__).parent.parent.parent / "fly.toml"
+        content = flytoml.read_text()
+        # BASE_PATH must be empty for ROOT MOUNT
+        assert 'BASE_PATH = ""' in content, (
+            "fly.toml BASE_PATH must be empty for ROOT MOUNT architecture. "
+            "Cloudflare Worker handles /demo/* -> /* rewriting."
+        )
+
+    def test_flytoml_healthcheck_at_root(self):
+        """fly.toml health checks must be at root paths (not /demo/*)."""
+        from pathlib import Path
+        flytoml = Path(__file__).parent.parent.parent / "fly.toml"
+        content = flytoml.read_text()
+        # Health check paths must NOT include /demo
+        assert 'path = "/healthz"' in content
+        assert 'path = "/health"' in content
+        assert '/demo/healthz' not in content, (
+            "fly.toml must NOT have /demo/* paths. ROOT MOUNT serves at /."
+        )

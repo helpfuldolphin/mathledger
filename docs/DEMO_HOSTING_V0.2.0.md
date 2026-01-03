@@ -8,281 +8,231 @@
 
 ---
 
-## DEMO_ORIGIN
+## Architecture: ROOT MOUNT (Option B)
 
-**Hosted Origin URL**: `https://mathledger-demo.fly.dev`
+**IMPORTANT**: The demo app serves at ROOT (`/`), NOT at `/demo`.
 
-For reverse proxy mounting at `/demo/`:
+Cloudflare Worker MUST rewrite `/demo/*` → `/*` before forwarding to origin.
+
 ```
-DEMO_ORIGIN=https://mathledger-demo.fly.dev
+┌─────────────┐     /demo/healthz     ┌──────────────────┐     /healthz     ┌─────────────────┐
+│   Browser   │ ──────────────────► │ Cloudflare Worker │ ──────────────► │   Fly.io App    │
+└─────────────┘                       └──────────────────┘                  └─────────────────┘
+                                       strips /demo prefix                  serves at /
 ```
-
-When reverse-proxied at `/demo/`:
-- UI loads at: `/demo/`
-- Health check: `/demo/healthz` → 200 `ok`
-- Health JSON: `/demo/health` → 200 JSON with version info
 
 ---
 
-## Overview
+## DEMO_ORIGIN (Canonical)
 
-The demo is a FastAPI application that serves:
-- Interactive governance demo (HTML/JS frontend)
-- UVIL API endpoints (`/uvil/*`)
-- Documentation viewer (`/docs/view/*`)
-- Health endpoints (`/health`, `/healthz`)
+```
+DEMO_ORIGIN=https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev
+```
+
+**Fly App Name**: `mathledger-demo-v0-2-0-helpfuldolphin`
+
+| Endpoint at Origin | Response |
+|--------------------|----------|
+| `/` | 200 HTML (UI) |
+| `/healthz` | 200 `ok` |
+| `/health` | 200 JSON |
+| `/demo/healthz` | **404** (app does NOT serve /demo/*) |
 
 ---
 
-## Quick Start
+## X-MathLedger-Base-Path Header
 
-### Local Development
+The header is **pinned to "/"** because the app serves at root.
 
-```bash
-# Run directly
-uv run python demo/app.py
+| Header | Pinned Value |
+|--------|--------------|
+| `X-MathLedger-Version` | `v0.2.0` |
+| `X-MathLedger-Commit` | `27a94c8a58139cb10349f6418336c618f528cbab` |
+| `X-MathLedger-Base-Path` | `/` (always, never `/demo`) |
+| `Cache-Control` | `no-store, no-cache, must-revalidate` |
 
-# Open http://localhost:8000
+---
+
+## Cloudflare Worker Requirements
+
+The Cloudflare Worker at `mathledger.ai` MUST:
+
+1. Match requests to `/demo/*`
+2. Strip the `/demo` prefix before forwarding to origin
+3. Forward to `https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev`
+
+**Example Worker Logic**:
+```javascript
+// Cloudflare Worker
+export default {
+  async fetch(request) {
+    const url = new URL(request.url);
+
+    if (url.pathname.startsWith('/demo')) {
+      // Strip /demo prefix
+      const originPath = url.pathname.replace(/^\/demo/, '') || '/';
+      const originUrl = `https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev${originPath}${url.search}`;
+      return fetch(originUrl, request);
+    }
+
+    // ... other routes
+  }
+}
 ```
 
-### Docker (Recommended)
+---
 
-```bash
-# Build and run
-docker build -t mathledger-demo .
-docker run -p 8000:8000 mathledger-demo
+## PowerShell Verification Commands
 
-# With docker-compose
-docker-compose up --build
+### Verify Origin Directly (curl.exe)
+
+```powershell
+# Health check at origin root
+curl.exe -s "https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev/healthz"
+# Expected: ok
+
+# Health JSON at origin root
+curl.exe -s "https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev/health"
+# Expected: {"status":"ok","version":"0.2.0","tag":"v0.2.0-demo-lock",...}
+
+# Verify headers
+curl.exe -I "https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev/health"
+# Expected headers:
+#   X-MathLedger-Version: v0.2.0
+#   X-MathLedger-Commit: 27a94c8a58139cb10349f6418336c618f528cbab
+#   X-MathLedger-Base-Path: /
+#   Cache-Control: no-store, no-cache, must-revalidate
+
+# Confirm /demo/* returns 404 at origin (this is CORRECT behavior)
+curl.exe -s -o nul -w "%{http_code}" "https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev/demo/healthz"
+# Expected: 404
 ```
 
-### Mounted at Sub-Path
+### Verify via Cloudflare (after Worker deployed)
 
-For reverse proxy mounting at `/demo`:
+```powershell
+# After Cloudflare Worker is configured to rewrite /demo/* -> /*
+curl.exe -s "https://mathledger.ai/demo/healthz"
+# Expected: ok
 
-```bash
-docker run -p 8000:8000 -e BASE_PATH=/demo mathledger-demo
+curl.exe -s "https://mathledger.ai/demo/health"
+# Expected: {"status":"ok","version":"0.2.0",...}
+
+curl.exe -I "https://mathledger.ai/demo/health"
+# Headers should still show X-MathLedger-Base-Path: / (from origin)
+```
+
+### PowerShell Native Commands
+
+```powershell
+# Verify origin health
+$r = Invoke-WebRequest -Uri "https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev/health" -UseBasicParsing
+$r.Headers["X-MathLedger-Version"]     # v0.2.0
+$r.Headers["X-MathLedger-Commit"]      # 27a94c8a58139cb10349f6418336c618f528cbab
+$r.Headers["X-MathLedger-Base-Path"]   # /  (ALWAYS "/", never "/demo")
+$r.Headers["Cache-Control"]            # no-store, no-cache, must-revalidate
+
+# Verify healthz
+(Invoke-WebRequest -Uri "https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev/healthz" -UseBasicParsing).Content
+# ok
 ```
 
 ---
 
 ## Fly.io Deployment
 
-### First-Time Setup
+### fly.toml Configuration
 
-```bash
-# Install flyctl
-curl -L https://fly.io/install.sh | sh
+```toml
+app = "mathledger-demo-v0-2-0-helpfuldolphin"
+primary_region = "iad"
 
-# Login
-fly auth login
+[env]
+  BASE_PATH = ""          # MUST be empty (root mount)
+  PYTHONUNBUFFERED = "1"
+```
 
-# Launch (creates app, doesn't deploy)
-fly launch --copy-config --no-deploy
+### Deploy Commands
+
+```powershell
+# Check current app status
+fly status -a mathledger-demo-v0-2-0-helpfuldolphin
+
+# List all apps
+fly apps list
 
 # Deploy
 fly deploy
-```
-
-### Subsequent Deploys
-
-```bash
-fly deploy
-```
-
-### Useful Commands
-
-```bash
-# Check status
-fly status
 
 # View logs
-fly logs
-
-# SSH into container
-fly ssh console
-
-# Scale
-fly scale count 1
-
-# Destroy
-fly apps destroy mathledger-demo
+fly logs -a mathledger-demo-v0-2-0-helpfuldolphin
 ```
 
 ---
 
-## PowerShell Deployment & Verification
+## Local Development
 
-### Deploy to Fly.io (PowerShell)
+```bash
+# Run at root (default)
+uv run python demo/app.py
+# Access: http://localhost:8000/
 
-```powershell
-# First-time setup
-fly auth login
-fly launch --copy-config --no-deploy
-fly deploy
-
-# Subsequent deploys
-fly deploy
-
-# Check status
-fly status
+# Docker
+docker build -t mathledger-demo .
+docker run -p 8000:8000 mathledger-demo
+# Access: http://localhost:8000/
 ```
 
-### Verify Headers (PowerShell)
-
-```powershell
-# Direct deployment (no BASE_PATH)
-$response = Invoke-WebRequest -Uri "https://mathledger-demo.fly.dev/health" -UseBasicParsing
-$response.Headers["X-MathLedger-Version"]     # Expected: v0.2.0
-$response.Headers["X-MathLedger-Commit"]      # Expected: 27a94c8a58139cb10349f6418336c618f528cbab
-$response.Headers["X-MathLedger-Base-Path"]   # Expected: /
-$response.Headers["Cache-Control"]            # Expected: no-store, no-cache, must-revalidate
-
-# Verify all headers at once
-$headers = @("X-MathLedger-Version", "X-MathLedger-Commit", "X-MathLedger-Base-Path", "Cache-Control")
-$headers | ForEach-Object { "$_`: $($response.Headers[$_])" }
-
-# Verify healthz endpoint
-(Invoke-WebRequest -Uri "https://mathledger-demo.fly.dev/healthz" -UseBasicParsing).Content
-# Expected: ok
-```
-
-### Verify When Proxied at /demo/ (PowerShell)
-
-```powershell
-# After configuring reverse proxy to mount at /demo/
-$baseUrl = "https://your-domain.com/demo"
-
-# Test UI loads
-(Invoke-WebRequest -Uri "$baseUrl/" -UseBasicParsing).StatusCode  # Expected: 200
-
-# Test healthz
-(Invoke-WebRequest -Uri "$baseUrl/healthz" -UseBasicParsing).Content  # Expected: ok
-
-# Test health with version info
-$health = Invoke-RestMethod -Uri "$baseUrl/health"
-$health.version     # Expected: 0.2.0
-$health.tag         # Expected: v0.2.0-demo-lock
-$health.base_path   # Expected: /demo
-```
-
----
-
-## Version Headers
-
-All responses include version and cache headers:
-
-| Header | Value |
-|--------|-------|
-| `X-MathLedger-Version` | `v0.2.0` |
-| `X-MathLedger-Commit` | `27a94c8a58139cb10349f6418336c618f528cbab` |
-| `X-MathLedger-Base-Path` | `/` or `/demo` |
-| `Cache-Control` | `no-store, no-cache, must-revalidate` |
-| `Pragma` | `no-cache` |
+**Note**: For local development with `/demo` prefix, use a reverse proxy (nginx) that strips the prefix, OR set `BASE_PATH=/demo` for testing. Production Fly deployment always uses root mount.
 
 ---
 
 ## Health Endpoints
 
-| Endpoint | Purpose | Response |
-|----------|---------|----------|
-| `/healthz` | K8s liveness | `ok` (plain text, 200) |
-| `/health` | Detailed health | `{"status":"ok","version":"0.2.0",...}` |
+| Origin Path | Response |
+|-------------|----------|
+| `/healthz` | `ok` (plain text, 200) |
+| `/health` | `{"status":"ok","version":"0.2.0","tag":"v0.2.0-demo-lock","commit":"27a94c8a...","base_path":"/"}` |
 
 ---
 
-## BASE_PATH Configuration
+## Why Root Mount?
 
-The `BASE_PATH` environment variable allows mounting the demo behind a reverse proxy at a sub-path.
-
-| Deployment | BASE_PATH | Access URL |
-|------------|-----------|------------|
-| Direct | `` (empty) | `http://localhost:8000/` |
-| Mounted | `/demo` | `https://mathledger.ai/demo/` |
-
-### NGINX Example
-
-```nginx
-location /demo/ {
-    proxy_pass http://localhost:8000/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-```
+1. **Simpler deployment**: App doesn't need to know about `/demo` prefix
+2. **Cleaner separation**: Cloudflare handles routing, Fly handles serving
+3. **Flexible**: Can mount at any path by changing Worker, not app
+4. **Already deployed**: Current Fly app works this way
 
 ---
 
-## Security Notes
+## Smoke Checklist
 
-1. **No secrets**: Demo has no database, no auth, no secrets
-2. **Stateless**: All state is in-memory per session
-3. **No persistence**: Restarting clears all data
-4. **No PII**: No user data collected
-
----
-
-## Monitoring
-
-### Fly.io Metrics
-
-```bash
-fly dashboard
-```
-
-### Health Check
-
-```bash
-curl -s https://mathledger-demo.fly.dev/health | jq .
-```
-
-Expected:
-```json
-{
-  "status": "ok",
-  "version": "0.2.0",
-  "tag": "v0.2.0-demo-lock",
-  "commit": "27a94c8a58139cb10349f6418336c618f528cbab",
-  "base_path": "/"
-}
-```
-
----
-
-## Troubleshooting
-
-### Container won't start
-
-1. Check logs: `fly logs` or `docker logs <container>`
-2. Verify Python dependencies installed
-3. Check `PYTHONPATH=/app` is set
-
-### API calls fail with 404
-
-1. Check `BASE_PATH` is set correctly
-2. Verify reverse proxy configuration
-3. Check browser console for actual request URLs
-
-### Version mismatch
-
-1. Compare header `X-MathLedger-Version` with expected
-2. Rebuild container: `docker build --no-cache`
-3. Redeploy: `fly deploy`
+| Check | Command | Expected |
+|-------|---------|----------|
+| Fly app exists | `fly apps list` | Shows `mathledger-demo-v0-2-0-helpfuldolphin` |
+| Fly status | `fly status -a mathledger-demo-v0-2-0-helpfuldolphin` | Running |
+| Origin healthz | `curl.exe https://...fly.dev/healthz` | `ok` |
+| Origin health | `curl.exe https://...fly.dev/health` | JSON with version |
+| Version header | `curl.exe -I .../health` | `X-MathLedger-Version: v0.2.0` |
+| Commit header | `curl.exe -I .../health` | `X-MathLedger-Commit: 27a94c8a...` |
+| Base-Path header | `curl.exe -I .../health` | `X-MathLedger-Base-Path: /` |
+| /demo/* at origin | `curl.exe .../demo/healthz` | **404** (correct!) |
+| CF Worker /demo/healthz | `curl.exe https://mathledger.ai/demo/healthz` | `ok` (after Worker) |
 
 ---
 
 ## Contract
 
-This hosting configuration is version-locked to v0.2.0-demo-lock:
-- Docker labels include version, tag, commit
-- Health endpoint reports version
-- All responses include version headers
-- UI shows version banner
+- **Fly app**: `mathledger-demo-v0-2-0-helpfuldolphin`
+- **Origin URL**: `https://mathledger-demo-v0-2-0-helpfuldolphin.fly.dev`
+- **BASE_PATH**: `""` (empty, root mount)
+- **X-MathLedger-Base-Path**: Always `/`
+- **Cloudflare**: MUST rewrite `/demo/*` → `/*`
 
-Any version drift indicates deployment misconfiguration.
+Any deviation indicates misconfiguration.
 
 ---
 
 **Author**: Claude A
 **Date**: 2026-01-03
+**Architecture**: ROOT MOUNT (Option B)
