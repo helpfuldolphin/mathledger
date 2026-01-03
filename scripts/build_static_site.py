@@ -255,6 +255,19 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def replace_template_variables(content: str, version: str, config: dict) -> str:
+    """Replace template variables like {{CURRENT_VERSION}} in content."""
+    replacements = {
+        "{{CURRENT_VERSION}}": version,
+        "{{CURRENT_TAG}}": config.get("tag", ""),
+        "{{CURRENT_COMMIT}}": config.get("commit", "")[:12],
+        "{{CURRENT_COMMIT_FULL}}": config.get("commit", ""),
+    }
+    for var, value in replacements.items():
+        content = content.replace(var, value)
+    return content
+
+
 def render_markdown_to_html(md_content: str) -> str:
     """Convert markdown to HTML (basic regex-based, no dependencies)."""
     html = md_content
@@ -389,6 +402,7 @@ def build_nav(version: str, current_section: str = "") -> str:
         ("docs/scope-lock/", "Scope"),
         ("docs/explanation/", "Explanation"),
         ("docs/invariants/", "Invariants"),
+        ("docs/field-manual/", "Field Manual"),
         ("fixtures/", "Fixtures"),
         ("evidence-pack/", "Evidence"),
     ]
@@ -519,8 +533,11 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
             </div>
 
             <!-- Version coherence bridge -->
-            <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #444; font-style: italic;">
+            <p style="margin: 0 0 0.75rem 0; font-size: 0.9rem; color: #444; font-style: italic;">
                 This archive is immutable. The hosted demo at <a href="/demo/">/demo/</a> is the live instantiation of this same version.
+            </p>
+            <p style="margin: 0 0 1rem 0; font-size: 0.85rem; color: #666;">
+                <a href="/{version}/docs/field-manual/">Field Manual</a> (fm.tex/pdf): obligation ledger used to drive version promotions.
             </p>
             <div id="demo-sync-status" style="display: none; background: #ffebee; border: 1px solid #c62828; border-radius: 4px; padding: 0.5rem 1rem; margin-bottom: 1rem;">
                 <strong style="color: #c62828;">⚠ DEMO OUT OF SYNC</strong> —
@@ -793,27 +810,27 @@ print('PASS' if result['verified'] else 'FAIL')
     )
 
 
-def build_verifier_page(config: dict, version: str, has_vectors: bool) -> str:
-    """Build the evidence pack verifier page with optional self-test."""
+def build_verifier_page(config: dict, version: str, has_examples: bool) -> str:
+    """Build the evidence pack verifier page with self-test using examples.json."""
     tag = config["tag"]
     commit = config["commit"][:12]
 
-    selftest_section = ""
-    selftest_js = ""
-    if has_vectors:
-        selftest_section = '''
-<div class="vbox">
-<h2>Self-Test (Built-in Vectors)</h2>
-<p>Run verification against canonical test vectors.</p>
-<button class="btn-p" id="selftest-btn" onclick="runSelfTest()">Run self-test (built-in vectors)</button>
-<div id="selftest-status" style="margin:0.5rem 0;font-weight:600;display:none"></div>
-<table id="selftest-table" style="display:none">
-<thead><tr><th>Name</th><th>Expected</th><th>Actual</th><th>Result</th><th>Reason</th></tr></thead>
+    # Self-test section is ALWAYS shown above the fold with prominent button
+    # Uses examples.json which contains both valid and tampered packs
+    selftest_section = f'''
+<div class="vbox selftest-hero" style="background:#e3f2fd;border-left:4px solid #1976d2;">
+<h2 style="margin-top:0;">Run Self-Test Vectors</h2>
+<p>Click the button below to run all built-in test vectors. Expected results: valid packs PASS, tampered packs FAIL.</p>
+<button class="btn-p btn-large" id="selftest-btn" onclick="runSelfTest()" style="font-size:1.1rem;padding:0.75rem 1.5rem;">Run self-test vectors</button>
+<div id="selftest-status" style="margin:0.75rem 0;font-weight:600;font-size:1.1rem;display:none"></div>
+<table id="selftest-table" style="display:none;margin-top:1rem;">
+<thead><tr><th>Name</th><th>Expected</th><th>Actual</th><th>Pass/Fail</th><th>Reason</th></tr></thead>
 <tbody id="selftest-body"></tbody>
 </table>
 </div>'''
-        selftest_js = '''
-async function runSelfTest(){const btn=document.getElementById("selftest-btn");const status=document.getElementById("selftest-status");const table=document.getElementById("selftest-table");const tbody=document.getElementById("selftest-body");btn.disabled=true;status.style.display="block";status.textContent="Loading...";status.className="";tbody.innerHTML="";table.style.display="none";try{const resp=await fetch("vectors.json");if(!resp.ok)throw new Error("vectors.json not found");const vectors=await resp.json();status.textContent="Running tests...";const results=[];for(const tc of(vectors.valid_packs||[])){const r=await testPack(tc.pack,tc.expected_result,tc.expected_failure_reason);results.push({name:tc.name,expected:tc.expected_result,actual:r.actual,pass:r.pass,reason:r.reason});}for(const tc of(vectors.invalid_packs||[])){const r=await testPack(tc.pack,tc.expected_result,tc.expected_failure_reason);results.push({name:tc.name,expected:tc.expected_result,actual:r.actual,pass:r.pass,reason:r.reason});}let allPass=true;for(const r of results){const tr=document.createElement("tr");tr.className=r.pass?"row-pass":"row-fail";const cls=r.pass?"match":"mismatch";const txt=r.pass?"PASS":"FAIL";tr.innerHTML="<td>"+esc(r.name)+"</td><td>"+esc(r.expected)+"</td><td>"+esc(r.actual)+"</td><td class=\\""+cls+"\\">"+txt+"</td><td>"+esc(r.reason||"-")+"</td>";tbody.appendChild(tr);if(!r.pass)allPass=false;}table.style.display="table";status.className=allPass?"match":"mismatch";status.textContent=allPass?"SELF-TEST PASSED ("+results.length+")":"SELF-TEST FAILED";}catch(e){status.className="mismatch";status.textContent="Error: "+e.message;}btn.disabled=false;}
+
+    selftest_js = '''
+async function runSelfTest(){const btn=document.getElementById("selftest-btn");const status=document.getElementById("selftest-status");const table=document.getElementById("selftest-table");const tbody=document.getElementById("selftest-body");btn.disabled=true;status.style.display="block";status.textContent="Loading examples.json...";status.className="";tbody.innerHTML="";table.style.display="none";try{const resp=await fetch("../examples.json");if(!resp.ok)throw new Error("examples.json not found at ../examples.json");const data=await resp.json();status.textContent="Running tests...";const results=[];const examples=data.examples||{};for(const[name,ex]of Object.entries(examples)){const pack=ex.pack;const expected=ex.expected_verdict||ex.expected_result||"PASS";const reason=ex.expected_reason||null;const r=await testPack(pack,expected,reason);results.push({name:name,expected:expected,actual:r.actual,pass:r.pass,reason:r.reason});}let allPass=true;for(const r of results){const tr=document.createElement("tr");tr.className=r.pass?"row-pass":"row-fail";const cls=r.pass?"match":"mismatch";const txt=r.pass?"PASS":"FAIL";tr.innerHTML="<td>"+esc(r.name)+"</td><td>"+esc(r.expected)+"</td><td>"+esc(r.actual)+"</td><td class=\\""+cls+"\\">"+txt+"</td><td>"+esc(r.reason||"-")+"</td>";tbody.appendChild(tr);if(!r.pass)allPass=false;}table.style.display="table";status.className=allPass?"match":"mismatch";status.textContent=allPass?"SELF-TEST PASSED ("+results.length+" vectors)":"SELF-TEST FAILED";}catch(e){status.className="mismatch";status.textContent="Error: "+e.message;}btn.disabled=false;}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 async function testPack(pack,expectedResult,expectedReason){try{const uvil=pack.uvil_events||[];const arts=pack.reasoning_artifacts||[];const declaredU=pack.u_t||"";const declaredR=pack.r_t||"";const declaredH=pack.h_t||"";for(const a of arts){if(!("validation_outcome"in a))return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="missing_required_field",reason:"missing_required_field"};}const computedU=await sha(can(uvil));const computedR=await sha(can(arts));const computedH=await sha(computedR+computedU);if(computedU!==declaredU)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="u_t_mismatch",reason:"u_t_mismatch"};if(computedR!==declaredR)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="r_t_mismatch",reason:"r_t_mismatch"};if(computedH!==declaredH)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="h_t_mismatch",reason:"h_t_mismatch"};return{actual:"PASS",pass:expectedResult==="PASS",reason:null};}catch(e){return{actual:"FAIL",pass:expectedResult==="FAIL",reason:e.message};}}'''
 
@@ -824,7 +841,7 @@ async function sha(s){const d=new TextEncoder().encode(s);const h=await crypto.s
 document.getElementById('fi').onchange=e=>{if(e.target.files[0]){const r=new FileReader();r.onload=x=>document.getElementById('inp').value=x.target.result;r.readAsText(e.target.files[0]);}};
 async function verify(){const R=document.getElementById('res'),D=document.getElementById('det');try{const v=document.getElementById('inp').value.trim();if(!v){R.className='result pending';R.innerHTML='<strong>Status:</strong> No input';D.style.display='none';return;}const p=JSON.parse(v);const uvil=p.uvil_events||[];const arts=p.reasoning_artifacts||[];const eu=p.u_t||'';const er=p.r_t||'';const eh=p.h_t||'';const cu=await sha(can(uvil));const cr=await sha(can(arts));const ch=await sha(cr+cu);document.getElementById('eu').textContent=eu||'-';document.getElementById('cu').textContent=cu;document.getElementById('er').textContent=er||'-';document.getElementById('cr').textContent=cr;document.getElementById('eh').textContent=eh||'-';document.getElementById('ch').textContent=ch;const uok=!eu||cu===eu,rok=!er||cr===er,hok=!eh||ch===eh;document.getElementById('cu').className=uok?'match':'mismatch';document.getElementById('cr').className=rok?'match':'mismatch';document.getElementById('ch').className=hok?'match':'mismatch';D.style.display='block';if(!eu&&!er&&!eh){R.className='result pending';R.innerHTML='<strong>Status:</strong> COMPUTED';}else if(uok&&rok&&hok){R.className='result pass';R.innerHTML='<strong>Status:</strong> PASS';}else{R.className='result fail';R.innerHTML='<strong>Status:</strong> FAIL';}}catch(e){R.className='result fail';R.innerHTML='<strong>Status:</strong> '+e.message;D.style.display='none';}}'''
 
-    vectors_link = '<a href="vectors.json">Test Vectors</a>' if has_vectors else ''
+    examples_link = '<a href="../examples.json">Test Vectors (examples.json)</a>'
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -861,7 +878,7 @@ async function verify(){const R=document.getElementById('res'),D=document.getEle
 <div class="row"><label>R_t:</label> Exp: <code id="er"></code> Got: <code id="cr"></code></div>
 <div class="row"><label>H_t:</label> Exp: <code id="eh"></code> Got: <code id="ch"></code></div>
 </div>
-<footer>MathLedger {version} Verifier | {vectors_link}</footer>
+<footer>MathLedger {version} Verifier | {examples_link}</footer>
 </div>
 <script>
 {core_js}
@@ -942,6 +959,15 @@ def build_versions_index(versions: list[dict], build_time: str) -> str:
         Superseded versions remain fully navigable.
         Prior versions are never modified; only their status label changes.</p>
 
+        <div class="status-ambiguity-note" style="background: #fff3e0; border: 1px solid #ffb74d; border-radius: 6px; padding: 1rem; margin: 1.5rem 0;">
+            <strong style="color: #e65100;">Note on Pre-v0.2.2 Archives:</strong>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                Pre-v0.2.2 archives may display "Status: CURRENT" because status was embedded at build time.
+                <strong>This page (/versions/) is the canonical source of current/superseded status.</strong>
+                Individual version pages now show "LOCKED" status to avoid confusion.
+            </p>
+        </div>
+
         <footer>
             Site built at <code>{build_time}</code><br>
             This is an epistemic archive, not a product site.
@@ -995,6 +1021,8 @@ def build_version(releases: dict, version: str, build_time: str) -> dict:
         dest_dir.mkdir(parents=True, exist_ok=True)
 
         md_content = src.read_text(encoding="utf-8")
+        # Replace template variables before rendering
+        md_content = replace_template_variables(md_content, version, config)
         html_content = render_markdown_to_html(md_content)
 
         full_html = build_page(
@@ -1009,6 +1037,41 @@ def build_version(releases: dict, version: str, build_time: str) -> dict:
 
         (dest_dir / "index.html").write_text(full_html, encoding="utf-8")
         print(f"  Rendered {md_path} -> docs/{slug}/index.html")
+
+    # Copy Field Manual (fm.pdf, fm.tex, and render README.md)
+    fm_src = REPO_ROOT / "docs" / "PAPERS" / "field_manual"
+    if fm_src.exists():
+        fm_dest = version_dir / "docs" / "field-manual"
+        fm_dest.mkdir(parents=True, exist_ok=True)
+
+        # Copy fm.pdf and fm.tex
+        fm_files_copied = []
+        for fm_file in ["fm.pdf", "fm.tex"]:
+            src_file = fm_src / fm_file
+            if src_file.exists():
+                shutil.copy(src_file, fm_dest / fm_file)
+                fm_files_copied.append(fm_file)
+
+        # Render README.md as index.html
+        fm_readme = fm_src / "README.md"
+        if fm_readme.exists():
+            fm_md = fm_readme.read_text(encoding="utf-8")
+            fm_md = replace_template_variables(fm_md, version, config)
+            fm_html = render_markdown_to_html(fm_md)
+            fm_full = build_page(
+                title="Field Manual",
+                content=fm_html,
+                config=config,
+                version=version,
+                current_section="docs/field-manual",
+                mode="archive",
+                build_time=build_time,
+            )
+            (fm_dest / "index.html").write_text(fm_full, encoding="utf-8")
+            fm_files_copied.append("index.html")
+
+        if fm_files_copied:
+            print(f"  Copied Field Manual ({', '.join(fm_files_copied)})")
 
     # Copy fixtures
     fixture_data = []
@@ -1061,12 +1124,13 @@ def build_version(releases: dict, version: str, build_time: str) -> dict:
 
     # Copy example packs (PASS/FAIL examples for auditors)
     examples_src = REPO_ROOT / "releases" / f"evidence_pack_examples.{version}.json"
-    if examples_src.exists():
+    has_examples = examples_src.exists()
+    if has_examples:
         shutil.copy(examples_src, evidence_dest / "examples.json")
         examples_sha256 = sha256_file(examples_src)
         print(f"  Copied examples.json (sha256: {examples_sha256[:16]}...)")
 
-    # Generate verifier page with self-test
+    # Generate verifier page with self-test (uses examples.json)
     verify_dir = version_dir / "evidence-pack" / "verify"
     verify_dir.mkdir(parents=True, exist_ok=True)
     vectors_file = REPO_ROOT / "releases" / f"evidence_pack_verifier_vectors.{version}.json"
@@ -1076,9 +1140,9 @@ def build_version(releases: dict, version: str, build_time: str) -> dict:
         shutil.copy(vectors_file, verify_dir / "vectors.json")
         vectors_sha256 = sha256_file(vectors_file)
         print(f"  Copied vectors.json (sha256: {vectors_sha256[:16]}...)")
-    verifier_html = build_verifier_page(config, version, has_vectors)
+    verifier_html = build_verifier_page(config, version, has_examples)
     (verify_dir / "index.html").write_text(verifier_html, encoding="utf-8")
-    print(f"  Generated verify/index.html (self-test: {has_vectors})")
+    print(f"  Generated verify/index.html (self-test: {has_examples})")
 
     # Generate manifest.json with file checksums
     all_files = collect_file_checksums(version_dir, version_dir)
@@ -1562,6 +1626,101 @@ def verify_build(releases: dict) -> bool:
                     errors.append(f"{version}: SUPERSEDED but missing disclaimer about /demo/ running CURRENT version")
             else:
                 errors.append(f"{version}: superseded version landing page missing")
+
+    # 17. Check examples.json has no stale version references
+    # Current version's examples.json must have pack_version matching current, not old versions
+    current_version = releases.get("current_version")
+    if current_version:
+        examples_file = SITE_DIR / current_version / "evidence-pack" / "examples.json"
+        if examples_file.exists():
+            examples_content = examples_file.read_text(encoding="utf-8")
+            stale_patterns = [
+                ('/v0.2.1/', "stale URL path /v0.2.1/"),
+                ('"pack_version": "v0.2.1"', "stale pack_version v0.2.1"),
+                ('"pack_version":"v0.2.1"', "stale pack_version v0.2.1 (no space)"),
+            ]
+            has_stale = False
+            for pattern, desc in stale_patterns:
+                if pattern in examples_content:
+                    errors.append(f"{current_version}: examples.json contains {desc}")
+                    has_stale = True
+            if not has_stale:
+                print(f"[OK] {current_version}: examples.json has no stale version references")
+        else:
+            # Not an error if examples.json doesn't exist, but note it
+            print(f"[--] {current_version}: examples.json not present (optional)")
+
+    # 18. Check verify page has "Run self-test" button
+    for version in releases.get("versions", {}):
+        verifier_path = SITE_DIR / version / "evidence-pack" / "verify" / "index.html"
+        if verifier_path.exists():
+            verifier_content = verifier_path.read_text(encoding="utf-8")
+            if "Run self-test" in verifier_content:
+                print(f"[OK] {version}: verify page has 'Run self-test' button")
+            else:
+                errors.append(f"{version}: verify page MISSING 'Run self-test' button")
+
+    # 19. Check /versions/ has status ambiguity note
+    versions_page = SITE_DIR / "versions" / "index.html"
+    if versions_page.exists():
+        versions_content = versions_page.read_text(encoding="utf-8")
+        if "Pre-v0.2.2 archives" in versions_content and "canonical source" in versions_content.lower():
+            print("[OK] /versions/: status ambiguity note present")
+        else:
+            errors.append("/versions/: MISSING status ambiguity note about pre-v0.2.2 archives")
+    else:
+        errors.append("/versions/index.html: page missing")
+
+    # 20. Check Field Manual exists for each version (index.html, fm.pdf, fm.tex)
+    for version in releases.get("versions", {}):
+        fm_dir = SITE_DIR / version / "docs" / "field-manual"
+        fm_index = fm_dir / "index.html"
+        fm_pdf = fm_dir / "fm.pdf"
+        fm_tex = fm_dir / "fm.tex"
+
+        if fm_index.exists():
+            print(f"[OK] {version}: docs/field-manual/index.html exists")
+        else:
+            errors.append(f"{version}: docs/field-manual/index.html MISSING")
+
+        if fm_pdf.exists():
+            print(f"[OK] {version}: docs/field-manual/fm.pdf exists")
+        else:
+            errors.append(f"{version}: docs/field-manual/fm.pdf MISSING")
+
+        if fm_tex.exists():
+            print(f"[OK] {version}: docs/field-manual/fm.tex exists")
+        else:
+            errors.append(f"{version}: docs/field-manual/fm.tex MISSING")
+
+        # Check fm.pdf and fm.tex are in manifest with sha256
+        manifest_file = SITE_DIR / version / "manifest.json"
+        if manifest_file.exists():
+            manifest = json.loads(manifest_file.read_text())
+            files = manifest.get("files", [])
+            fm_files_in_manifest = {
+                f["path"]: f for f in files
+                if f["path"].startswith("docs/field-manual/")
+            }
+            for expected in ["docs/field-manual/fm.pdf", "docs/field-manual/fm.tex", "docs/field-manual/index.html"]:
+                if expected in fm_files_in_manifest:
+                    if "sha256" in fm_files_in_manifest[expected]:
+                        print(f"[OK] {version}: {expected} in manifest with sha256")
+                    else:
+                        errors.append(f"{version}: {expected} in manifest but missing sha256")
+                else:
+                    errors.append(f"{version}: {expected} NOT in manifest.json")
+
+    # 21. Check landing page links to Field Manual (current version only)
+    current_version = releases.get("current_version")
+    if current_version:
+        landing = SITE_DIR / current_version / "index.html"
+        if landing.exists():
+            content = landing.read_text(encoding="utf-8")
+            if f"/{current_version}/docs/field-manual/" in content:
+                print(f"[OK] {current_version}: landing page links to Field Manual")
+            else:
+                errors.append(f"{current_version}: landing page MISSING link to Field Manual")
 
     print("=" * 60)
     if errors:

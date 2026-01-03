@@ -10,7 +10,7 @@ Complete these steps to verify the system's core claims:
 
 1. Navigate to [/demo/](/demo/)
 2. Confirm the demo loads without errors
-3. Verify the version banner shows `v0.2.1-cohesion`
+3. Verify the version banner shows `{{CURRENT_TAG}}`
 
 ### Step 2: Run the Boundary Demo (90 seconds)
 
@@ -30,7 +30,7 @@ Complete these steps to verify the system's core claims:
 
 ### Step 4: Verify with Auditor Tool (60 seconds)
 
-1. Open the [Evidence Pack Verifier](../../evidence-pack/verify/)
+1. Open the [Evidence Pack Verifier](/{{CURRENT_VERSION}}/evidence-pack/verify/)
 2. Upload the evidence pack JSON you downloaded
 3. Click **"Verify"**
 4. Confirm status shows **PASS**
@@ -54,7 +54,7 @@ If the demo is unavailable or you want to verify without running it, use these p
 
 ### Download Examples
 
-The file `releases/evidence_pack_examples.v0.2.1.json` contains:
+The file [`/{{CURRENT_VERSION}}/evidence-pack/examples.json`](/{{CURRENT_VERSION}}/evidence-pack/examples.json) contains:
 
 | Example | Expected Result | Purpose |
 |---------|-----------------|---------|
@@ -64,12 +64,14 @@ The file `releases/evidence_pack_examples.v0.2.1.json` contains:
 
 ### Verification Steps
 
-1. Open [releases/evidence_pack_examples.v0.2.1.json](https://github.com/helpfuldolphin/mathledger/blob/main/releases/evidence_pack_examples.v0.2.1.json)
+1. Download [`examples.json`](/{{CURRENT_VERSION}}/evidence-pack/examples.json)
 2. Copy the content of `examples.valid_boundary_demo.pack` to a new file
-3. Open the [Evidence Pack Verifier](/v0.2.1/evidence-pack/verify/)
+3. Open the [Evidence Pack Verifier](/{{CURRENT_VERSION}}/evidence-pack/verify/)
 4. Upload the pack JSON
 5. Click **Verify** and observe **PASS**
 6. Repeat with `tampered_ht_mismatch.pack` and observe **FAIL**
+
+**Or use the verifier's built-in self-test:** Click "Run self-test vectors" on the verifier page to see all examples tested automatically.
 
 ### Why This Matters
 
@@ -82,7 +84,7 @@ These examples prove:
 
 ## What This Version Claims
 
-This version (v0.2.1) demonstrates:
+This version ({{CURRENT_VERSION}}) demonstrates:
 
 - **Deterministic canonicalization** of reasoning artifacts (RFC 8785-style)
 - **Cryptographic binding** via H_t = SHA256(R_t || U_t)
@@ -116,8 +118,25 @@ See [Invariants Status](../invariants/) for the complete Tier A/B/C breakdown.
 |----------|-------------|
 | [Scope Lock](../scope-lock/) | What this version does and does not demonstrate |
 | [Invariants](../invariants/) | Tier A/B/C enforcement status with explicit counts |
+| [Field Manual](../field-manual/) | Obligation ledger driving version promotions |
 | [Hostile Demo Rehearsal](../hostile-rehearsal/) | Pre-prepared answers to skeptical questions |
 | [How the Demo Explains Itself](../explanation/) | UI self-explanation integration points |
+
+---
+
+## Field Manual (Why It Exists)
+
+The [Field Manual](../field-manual/) (fm.tex/pdf) is an internal constraint artifact, not marketing documentation.
+
+**It is not rewritten yet; it is used to surface obligations and gaps.**
+
+How auditors should use it:
+- **Cross-reference claims** — If a feature is claimed, check FM for caveats
+- **Look for "TODO" and "OBLIGATION"** — Explicit acknowledgments of gaps
+- **Compare versions** — FM changes show what was addressed between releases
+- **Trust gaps over features** — The gaps we document are more honest than features we claim
+
+Download: [fm.pdf](../field-manual/fm.pdf) | [fm.tex](../field-manual/fm.tex)
 
 ---
 
@@ -128,7 +147,7 @@ If the hosted demo is unavailable, verify locally:
 ```bash
 git clone https://github.com/helpfuldolphin/mathledger
 cd mathledger
-git checkout v0.2.1-cohesion
+git checkout {{CURRENT_TAG}}
 uv run python demo/app.py
 # Open http://localhost:8000
 ```
@@ -145,6 +164,7 @@ Independent audits of this project are listed below.
 |------|--------------|-----------------|--------|
 | 2026-01-03 | External safety lead (no prior context) | v0.2.1 archive, v0.2.0 demo | [Cold-Start Audit Report](../external_audits/manus_site_audit_2026-01-03/) |
 | 2026-01-03 | Hostile link integrity auditor | v0.2.1 site | [Link Integrity Audit](../external_audits/manus_link_integrity_audit_2026-01-03/) |
+| 2026-01-03 | Hostile acquisition auditor | v0.2.2 site | [Hostile Audit v0.2.2](../external_audits/manus_hostile_audit_v0.2.2_2026-01-03/) |
 
 **Disclaimer:** These are independent audits. Findings may have been addressed in later versions. Audits do not constitute endorsements.
 
