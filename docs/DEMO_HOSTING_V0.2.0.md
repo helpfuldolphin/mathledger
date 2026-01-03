@@ -221,6 +221,53 @@ docker run -p 8000:8000 mathledger-demo
 
 ---
 
+## Common Failure Modes
+
+### 1. Boundary Demo Shows ERROR for All Steps
+
+**Symptom**: `/demo/healthz` works, but "Run 90-Second Proof" shows ERROR.
+
+**Cause**: Frontend JS is calling `/uvil/*` instead of `/demo/uvil/*`.
+
+**Root Cause**: API_BASE is not being set dynamically from `window.location.pathname`.
+
+**Fix**: The JavaScript must use:
+```javascript
+const API_BASE = window.location.pathname.startsWith('/demo') ? '/demo' : '';
+```
+
+**Verification**:
+```javascript
+// In browser console at mathledger.ai/demo/:
+console.log(API_BASE);  // Should print "/demo"
+```
+
+### 2. Doc Links Go to 404
+
+**Symptom**: Clicking documentation links goes to Pages 404.
+
+**Cause**: Links point to `/docs/view/*` instead of `/demo/docs/view/*`.
+
+**Fix**: JavaScript must rewrite doc links on page load:
+```javascript
+document.querySelectorAll('a[href^="/docs/view/"]').forEach(link => {
+    link.href = API_BASE + link.getAttribute('href');
+});
+```
+
+### 3. Local Dev Breaks After Fix
+
+**Symptom**: Local dev at `localhost:8000` fails to load.
+
+**Cause**: API_BASE is incorrectly set to `/demo` in local dev.
+
+**Verification**: At `localhost:8000/`:
+```javascript
+console.log(API_BASE);  // Should print "" (empty string)
+```
+
+---
+
 ## Contract
 
 - **Fly app**: `mathledger-demo-v0-2-0-helpfuldolphin`
@@ -228,6 +275,7 @@ docker run -p 8000:8000 mathledger-demo
 - **BASE_PATH**: `""` (empty, root mount)
 - **X-MathLedger-Base-Path**: Always `/`
 - **Cloudflare**: MUST rewrite `/demo/*` → `/*`
+- **API_BASE**: Dynamically computed in JS from `window.location.pathname`
 
 Any deviation indicates misconfiguration.
 

@@ -871,32 +871,32 @@ def get_html_content() -> str:
             <div id="status-display" class="status"></div>
 
             <div class="footer">
-                v""" + DEMO_VERSION + """ (""" + DEMO_TAG + """) | Governance substrate only | MV arithmetic validator only | <a href=\"""" + api_base + """/docs/view/V0_LOCK.md">Scope Lock</a>
+                v""" + DEMO_VERSION + """ (""" + DEMO_TAG + """) | Governance substrate only | MV arithmetic validator only | <a href="/docs/view/V0_LOCK.md">Scope Lock</a>
             </div>
         </div>
 
-        <!-- Docs Sidebar -->
+        <!-- Docs Sidebar - links rewritten by JS to include API_BASE -->
         <div class="docs-sidebar">
             <h3>Documentation</h3>
             <ul>
                 <li>
-                    <a href=\"""" + api_base + """/docs/view/HOW_THE_DEMO_EXPLAINS_ITSELF.md" target="_blank">How the Demo Explains Itself</a>
+                    <a href="/docs/view/HOW_THE_DEMO_EXPLAINS_ITSELF.md" target="_blank">How the Demo Explains Itself</a>
                     <div class="doc-desc">UI behavior and outcomes explained</div>
                 </li>
                 <li>
-                    <a href=\"""" + api_base + """/docs/view/HOW_TO_APPROACH_THIS_DEMO.md" target="_blank">How to Approach This Demo</a>
+                    <a href="/docs/view/HOW_TO_APPROACH_THIS_DEMO.md" target="_blank">How to Approach This Demo</a>
                     <div class="doc-desc">Framing and expectations</div>
                 </li>
                 <li>
-                    <a href=\"""" + api_base + """/docs/view/V0_LOCK.md" target="_blank">v0 Scope Lock</a>
+                    <a href="/docs/view/V0_LOCK.md" target="_blank">v0 Scope Lock</a>
                     <div class="doc-desc">What is and isn't in scope</div>
                 </li>
                 <li>
-                    <a href=\"""" + api_base + """/docs/view/V0_SYSTEM_BOUNDARY_MEMO.md" target="_blank">System Boundary Memo</a>
+                    <a href="/docs/view/V0_SYSTEM_BOUNDARY_MEMO.md" target="_blank">System Boundary Memo</a>
                     <div class="doc-desc">Formal claims and non-claims</div>
                 </li>
                 <li>
-                    <a href=\"""" + api_base + """/docs/view/invariants_status.md" target="_blank">Invariants Status</a>
+                    <a href="/docs/view/invariants_status.md" target="_blank">Invariants Status</a>
                     <div class="doc-desc">Tier A/B/C classification</div>
                 </li>
             </ul>
@@ -919,8 +919,23 @@ def get_html_content() -> str:
     </div>
 
     <script>
-        // API base path for reverse proxy support
-        const API_BASE = '""" + api_base + """';
+        // Dynamic API base path detection for Cloudflare Worker routing
+        // When served at /demo/, API calls must go to /demo/uvil/*
+        // When served at / (local dev), API calls go to /uvil/*
+        const API_BASE = window.location.pathname.startsWith('/demo') ? '/demo' : '';
+
+        // Rewrite doc links on page load to match detected base path
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('a[href^="/docs/view/"]').forEach(function(link) {
+                link.href = API_BASE + link.getAttribute('href');
+            });
+            // Also fix the footer scope lock link
+            document.querySelectorAll('.footer a[href*="/docs/view/"]').forEach(function(link) {
+                if (!link.href.startsWith(window.location.origin + API_BASE)) {
+                    link.href = API_BASE + '/docs/view/V0_LOCK.md';
+                }
+            });
+        });
 
         const SCENARIOS = """ + str(SCENARIOS).replace("'", '"') + """;
 

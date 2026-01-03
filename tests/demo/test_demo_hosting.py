@@ -230,22 +230,131 @@ class TestAPIEndpoints:
 class TestBasePathInHTML:
     """Verify BASE_PATH is used correctly in HTML."""
 
-    def test_html_contains_api_base(self):
-        """HTML content defines API_BASE in JavaScript."""
+    def test_html_contains_dynamic_api_base(self):
+        """
+        HTML content defines API_BASE dynamically using window.location.pathname.
+
+        This is CRITICAL for Cloudflare Worker routing:
+        - When served at /demo/, API_BASE must be '/demo'
+        - When served at / (local dev), API_BASE must be ''
+        """
         html = get_html_content()
-        assert "const API_BASE = '" in html
+        # Must use dynamic detection, not server-side injection
+        assert "window.location.pathname.startsWith('/demo')" in html, (
+            "API_BASE must be computed dynamically from window.location.pathname. "
+            "Server-side injection breaks Cloudflare Worker routing."
+        )
+
+    def test_api_base_ternary_correct(self):
+        """API_BASE ternary produces /demo when path starts with /demo."""
+        html = get_html_content()
+        # The exact pattern we expect
+        expected = "const API_BASE = window.location.pathname.startsWith('/demo') ? '/demo' : '';"
+        assert expected in html, (
+            f"Expected API_BASE detection: {expected}"
+        )
 
     def test_fetch_calls_use_api_base(self):
-        """JavaScript fetch calls use API_BASE."""
+        """JavaScript fetch calls use API_BASE template literal."""
         html = get_html_content()
         # Should use template literal with API_BASE
         assert "${API_BASE}/uvil/" in html
 
-    def test_doc_links_use_base_path(self):
-        """Documentation links include base path."""
+    def test_doc_links_rewritten_by_js(self):
+        """Documentation links are rewritten by JavaScript on load."""
         html = get_html_content()
-        # Doc links should include the base path variable
-        assert "/docs/view/" in html
+        # Doc links should be plain /docs/view/* (JS rewrites them)
+        assert 'href="/docs/view/' in html
+        # JS rewriter should exist
+        assert "querySelectorAll('a[href^=\"/docs/view/\"]')" in html
+
+    def test_boundary_demo_uses_api_base(self):
+        """
+        Boundary demo fetch calls use API_BASE.
+
+        This is the specific failure mode: boundary demo shows ERROR
+        because fetch('/uvil/...') bypasses Cloudflare Worker.
+        """
+        html = get_html_content()
+        # All three boundary demo API calls must use API_BASE
+        assert "${API_BASE}/uvil/propose_partition" in html
+        assert "${API_BASE}/uvil/commit_uvil" in html
+        assert "${API_BASE}/uvil/run_verification" in html
+
+
+# ---------------------------------------------------------------------------
+# Tests: Server-side endpoint availability
+# ---------------------------------------------------------------------------
+
+
+class TestEndpointAvailability:
+    """Verify UVIL endpoints respond correctly."""
+
+    def test_propose_partition_endpoint(self, client):
+        """POST /uvil/propose_partition responds 200."""
+        response = client.post(
+            "/uvil/propose_partition",
+            json={"problem_statement": "test problem"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "proposal_id" in data
+
+    def test_commit_uvil_endpoint(self, client):
+        """POST /uvil/commit_uvil responds after propose."""
+        # First propose
+        propose_resp = client.post(
+            "/uvil/propose_partition",
+            json={"problem_statement": "test"}
+        )
+        proposal_id = propose_resp.json()["proposal_id"]
+
+        # Then commit
+        response = client.post(
+            "/uvil/commit_uvil",
+            json={
+                "proposal_id": proposal_id,
+                "edited_claims": [
+                    {"claim_text": "2 + 2 = 4", "trust_class": "MV", "rationale": "test"}
+                ],
+                "user_fingerprint": "test_user"
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "committed_partition_id" in data
+
+    def test_run_verification_endpoint(self, client):
+        """POST /uvil/run_verification responds after commit."""
+        # Propose
+        propose_resp = client.post(
+            "/uvil/propose_partition",
+            json={"problem_statement": "test"}
+        )
+        proposal_id = propose_resp.json()["proposal_id"]
+
+        # Commit
+        commit_resp = client.post(
+            "/uvil/commit_uvil",
+            json={
+                "proposal_id": proposal_id,
+                "edited_claims": [
+                    {"claim_text": "2 + 2 = 4", "trust_class": "MV", "rationale": "test"}
+                ],
+                "user_fingerprint": "test_user"
+            }
+        )
+        committed_id = commit_resp.json()["committed_partition_id"]
+
+        # Verify
+        response = client.post(
+            "/uvil/run_verification",
+            json={"committed_partition_id": committed_id}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "outcome" in data
+        assert data["outcome"] in ["VERIFIED", "REFUTED", "ABSTAINED"]
 
 
 # ---------------------------------------------------------------------------
