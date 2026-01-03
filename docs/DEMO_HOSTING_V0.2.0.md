@@ -8,6 +8,22 @@
 
 ---
 
+## DEMO_ORIGIN
+
+**Hosted Origin URL**: `https://mathledger-demo.fly.dev`
+
+For reverse proxy mounting at `/demo/`:
+```
+DEMO_ORIGIN=https://mathledger-demo.fly.dev
+```
+
+When reverse-proxied at `/demo/`:
+- UI loads at: `/demo/`
+- Health check: `/demo/healthz` → 200 `ok`
+- Health JSON: `/demo/health` → 200 JSON with version info
+
+---
+
 ## Overview
 
 The demo is a FastAPI application that serves:
@@ -95,15 +111,74 @@ fly apps destroy mathledger-demo
 
 ---
 
+## PowerShell Deployment & Verification
+
+### Deploy to Fly.io (PowerShell)
+
+```powershell
+# First-time setup
+fly auth login
+fly launch --copy-config --no-deploy
+fly deploy
+
+# Subsequent deploys
+fly deploy
+
+# Check status
+fly status
+```
+
+### Verify Headers (PowerShell)
+
+```powershell
+# Direct deployment (no BASE_PATH)
+$response = Invoke-WebRequest -Uri "https://mathledger-demo.fly.dev/health" -UseBasicParsing
+$response.Headers["X-MathLedger-Version"]     # Expected: v0.2.0
+$response.Headers["X-MathLedger-Commit"]      # Expected: 27a94c8a58139cb10349f6418336c618f528cbab
+$response.Headers["X-MathLedger-Base-Path"]   # Expected: /
+$response.Headers["Cache-Control"]            # Expected: no-store, no-cache, must-revalidate
+
+# Verify all headers at once
+$headers = @("X-MathLedger-Version", "X-MathLedger-Commit", "X-MathLedger-Base-Path", "Cache-Control")
+$headers | ForEach-Object { "$_`: $($response.Headers[$_])" }
+
+# Verify healthz endpoint
+(Invoke-WebRequest -Uri "https://mathledger-demo.fly.dev/healthz" -UseBasicParsing).Content
+# Expected: ok
+```
+
+### Verify When Proxied at /demo/ (PowerShell)
+
+```powershell
+# After configuring reverse proxy to mount at /demo/
+$baseUrl = "https://your-domain.com/demo"
+
+# Test UI loads
+(Invoke-WebRequest -Uri "$baseUrl/" -UseBasicParsing).StatusCode  # Expected: 200
+
+# Test healthz
+(Invoke-WebRequest -Uri "$baseUrl/healthz" -UseBasicParsing).Content  # Expected: ok
+
+# Test health with version info
+$health = Invoke-RestMethod -Uri "$baseUrl/health"
+$health.version     # Expected: 0.2.0
+$health.tag         # Expected: v0.2.0-demo-lock
+$health.base_path   # Expected: /demo
+```
+
+---
+
 ## Version Headers
 
-All responses include version headers:
+All responses include version and cache headers:
 
 | Header | Value |
 |--------|-------|
 | `X-MathLedger-Version` | `v0.2.0` |
 | `X-MathLedger-Commit` | `27a94c8a58139cb10349f6418336c618f528cbab` |
 | `X-MathLedger-Base-Path` | `/` or `/demo` |
+| `Cache-Control` | `no-store, no-cache, must-revalidate` |
+| `Pragma` | `no-cache` |
 
 ---
 

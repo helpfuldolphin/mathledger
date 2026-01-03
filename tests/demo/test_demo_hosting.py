@@ -92,6 +92,18 @@ class TestVersionHeaders:
         # Default is "/" or empty
         assert response.headers["X-MathLedger-Base-Path"] in ["/", ""]
 
+    def test_root_has_cache_control_header(self, client):
+        """Root endpoint includes Cache-Control: no-store header."""
+        response = client.get("/")
+        assert "Cache-Control" in response.headers
+        assert "no-store" in response.headers["Cache-Control"]
+
+    def test_health_has_cache_control_header(self, client):
+        """Health endpoint includes Cache-Control: no-store header."""
+        response = client.get("/health")
+        assert "Cache-Control" in response.headers
+        assert "no-store" in response.headers["Cache-Control"]
+
     def test_health_has_version_headers(self, client):
         """Health endpoint includes version headers."""
         response = client.get("/health")

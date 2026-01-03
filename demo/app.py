@@ -49,13 +49,17 @@ if BASE_PATH and not BASE_PATH.startswith("/"):
 
 
 class VersionHeaderMiddleware(BaseHTTPMiddleware):
-    """Add version headers to all responses."""
+    """Add version and cache headers to all responses."""
 
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
+        # Version headers
         response.headers["X-MathLedger-Version"] = f"v{DEMO_VERSION}"
         response.headers["X-MathLedger-Commit"] = DEMO_COMMIT
         response.headers["X-MathLedger-Base-Path"] = BASE_PATH or "/"
+        # Cache control - no caching for demo (state changes frequently)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
         return response
 
 
