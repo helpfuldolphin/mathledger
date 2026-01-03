@@ -48,6 +48,38 @@ Complete these steps to verify the system's core claims:
 
 ---
 
+## Ready-to-Verify Examples (No Demo Required)
+
+If the demo is unavailable or you want to verify without running it, use these pre-generated examples:
+
+### Download Examples
+
+The file `releases/evidence_pack_examples.v0.2.1.json` contains:
+
+| Example | Expected Result | Purpose |
+|---------|-----------------|---------|
+| `valid_boundary_demo` | PASS | Shows a correctly-formed evidence pack from a boundary demo |
+| `tampered_ht_mismatch` | FAIL (h_t mismatch) | Demonstrates detection of tampered H_t field |
+| `tampered_rt_mismatch` | FAIL (r_t mismatch) | Demonstrates detection of tampered reasoning artifacts |
+
+### Verification Steps
+
+1. Open [releases/evidence_pack_examples.v0.2.1.json](https://github.com/helpfuldolphin/mathledger/blob/main/releases/evidence_pack_examples.v0.2.1.json)
+2. Copy the content of `examples.valid_boundary_demo.pack` to a new file
+3. Open the [Evidence Pack Verifier](/v0.2.1/evidence-pack/verify/)
+4. Upload the pack JSON
+5. Click **Verify** and observe **PASS**
+6. Repeat with `tampered_ht_mismatch.pack` and observe **FAIL**
+
+### Why This Matters
+
+These examples prove:
+- The verification algorithm is deterministic (same input always produces same hash)
+- Tamper detection works (any modification is detected)
+- No demo required (auditors can verify offline using the same code)
+
+---
+
 ## What This Version Claims
 
 This version (v0.2.1) demonstrates:
@@ -94,7 +126,7 @@ See [Invariants Status](invariants/) for the complete Tier A/B/C breakdown.
 If the hosted demo is unavailable, verify locally:
 
 ```bash
-git clone https://github.com/mathledger/mathledger
+git clone https://github.com/helpfuldolphin/mathledger
 cd mathledger
 git checkout v0.2.1-cohesion
 uv run python demo/app.py
