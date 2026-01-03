@@ -1,0 +1,43 @@
+# MathLedger Demo v0.2.0
+# Governance substrate demo - version-pinned
+#
+# Usage:
+#   docker-compose up --build
+#   docker-compose up -d  # detached mode
+#
+# Access: http://localhost:8000
+
+version: "3.8"
+
+services:
+  demo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mathledger-demo
+    ports:
+      - "8000:8000"
+    environment:
+      - BASE_PATH=${BASE_PATH:-}
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    labels:
+      - "com.mathledger.version=0.2.0"
+      - "com.mathledger.tag=v0.2.0-demo-lock"
+      - "com.mathledger.commit=27a94c8a58139cb10349f6418336c618f528cbab"
+
+  # Example: Mount at /demo behind a reverse proxy
+  # demo-mounted:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - BASE_PATH=/demo
+  #   ports:
+  #     - "8001:8000"

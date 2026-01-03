@@ -1,0 +1,17 @@
+{
+  "case_name": "mv_only",
+  "description": "Pure MV claim - should commit and be authority-bearing",
+  "task_text": "Prove that addition is commutative for natural numbers",
+  "claims": [
+    {
+      "claim_text": "forall a b : Nat, a + b = b + a",
+      "trust_class": "MV",
+      "rationale": "Commutativity of addition - mechanically checkable"
+    }
+  ],
+  "actor_id": "demo_harness",
+  "seed": 42,
+  "expected_authority_count": 1,
+  "expected_adv_excluded": true,
+  "expected_outcome": null
+}
