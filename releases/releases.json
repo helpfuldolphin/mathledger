@@ -104,7 +104,9 @@
       "tag": "v0.2.1-cohesion",
       "commit": "27a94c8a58139cb10349f6418336c618f528cbab",
       "date_locked": "2026-01-03",
-      "status": "current",
+      "closure_date": "2026-01-03",
+      "status": "closed",
+      "external_audit_reviewed": true,
       "demo_url": "/demo/",
       "hosted_demo": true,
       "docs": [
@@ -112,7 +114,9 @@
         {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
         {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
         {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"},
-        {"source": "docs/FOR_AUDITORS.md", "slug": "for-auditors", "title": "For Auditors"}
+        {"source": "docs/FOR_AUDITORS.md", "slug": "for-auditors", "title": "For Auditors"},
+        {"source": "docs/external_audits/manus_site_audit_2026-01-03.md", "slug": "external_audits/manus_site_audit_2026-01-03", "title": "Cold-Start Audit (2026-01-03)"},
+        {"source": "docs/RELEASE_CLOSURE_V0.2.1.md", "slug": "release-closure-v021", "title": "Release Closure v0.2.1"}
       ],
       "fixtures_dir": "fixtures",
       "invariants": {

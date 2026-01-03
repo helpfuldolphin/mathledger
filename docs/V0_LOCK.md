@@ -277,7 +277,7 @@ v0.2.1 is a **cohesion release** that addresses credibility hazards identified i
    - "EXCLUDED FROM R_t" prominently displayed
    - Color-coded trust class definitions
 
-5. **Repository URL**: Placeholder "your-org/mathledger" → canonical URL
+5. **Repository URL**: Updated to https://github.com/helpfuldolphin/mathledger
 
 ### New Endpoints
 
@@ -316,3 +316,19 @@ uv run python demo/app.py
 ### Breaking Changes
 
 None. v0.2.1 is fully backward compatible with v0.2.0.
+
+### External Audit Status
+
+**External audit reviewed**: YES
+
+| Audit | Date | Scope | Closure |
+|-------|------|-------|---------|
+| Cold-Start Site Audit | 2026-01-03 | Full site + demo evaluation | [RELEASE_CLOSURE_V0.2.1.md](RELEASE_CLOSURE_V0.2.1.md) |
+
+**Summary**: 4 critical findings addressed in v0.2.1, 7 non-critical deferred to future versions. See closure document for full triage.
+
+### Closure Statement
+
+**v0.2.1 is CLOSED**. No further changes will be made to v0.2.1 artifacts. Any required changes will be released as v0.2.2 or later.
+
+Closure date: 2026-01-03
