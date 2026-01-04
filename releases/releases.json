@@ -513,7 +513,7 @@
     },
     "v0.2.5": {
       "tag": "v0.2.5-self-test-clarity",
-      "commit": "pending",
+      "commit": "20b5811e207ca5dcc2c266146f916b0b57fac3e9",
       "date_locked": "2026-01-04",
       "status": "current",
       "demo_url": "/demo/",
