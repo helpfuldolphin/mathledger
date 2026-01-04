@@ -27,7 +27,7 @@ VERIFIER_PAGES = [
 ]
 
 # Required global JS functions
-REQUIRED_FUNCTIONS = ["can", "sha", "verify", "runSelfTest", "testPack", "esc"]
+REQUIRED_FUNCTIONS = ["can", "shaWithDomain", "merkleRoot", "verify", "runSelfTest", "testPack", "esc"]
 
 # Pattern for invalid Unicode escape: \u not followed by exactly 4 hex digits
 # In source code, this appears as '\u' (not '\\u') before a non-hex char
@@ -36,7 +36,8 @@ INVALID_UNICODE_ESCAPE_PATTERN = re.compile(r"'\\u(?![0-9a-fA-F]{4})")
 # Pattern to detect function definitions
 FUNCTION_DEF_PATTERNS = {
     "can": re.compile(r"function\s+can\s*\("),
-    "sha": re.compile(r"(?:async\s+)?function\s+sha\s*\("),
+    "shaWithDomain": re.compile(r"(?:async\s+)?function\s+shaWithDomain\s*\("),
+    "merkleRoot": re.compile(r"(?:async\s+)?function\s+merkleRoot\s*\("),
     "verify": re.compile(r"(?:async\s+)?function\s+verify\s*\("),
     "runSelfTest": re.compile(r"(?:async\s+)?function\s+runSelfTest\s*\("),
     "testPack": re.compile(r"(?:async\s+)?function\s+testPack\s*\("),

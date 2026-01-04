@@ -15,7 +15,7 @@
 </div>
 <nav class="nav"><a href="/v0.2.3/">Archive</a> <a href="/v0.2.3/evidence-pack/">Evidence</a> <strong>Verifier</strong> | <a href="/versions/">All</a></nav>
 <h1>Evidence Pack Verifier</h1>
-<div class="info"><strong>Pure JS</strong> - Runs in browser, no server. Uses RFC 8785 canonicalization.</div>
+<div class="info"><strong>Pure JS</strong> - Runs in browser, no server. Uses RFC 8785 canonicalization + Merkle trees with domain separation.</div>
 
 <div class="vbox selftest-hero" style="background:#e3f2fd;border-left:4px solid #1976d2;">
 <h2 style="margin-top:0;">Run Self-Test Vectors</h2>
@@ -46,14 +46,230 @@
 <footer>MathLedger v0.2.3 Verifier | <a href="../examples.json">Test Vectors (examples.json)</a></footer>
 </div>
 <script>
-function can(o){if(o===null)return'null';if(typeof o==='boolean')return o?'true':'false';if(typeof o==='number')return Object.is(o,-0)?'0':String(o);if(typeof o==='string'){let r='"';for(let i=0;i<o.length;i++){const c=o.charCodeAt(i);if(c===8)r+='\b';else if(c===9)r+='\t';else if(c===10)r+='\n';else if(c===12)r+='\f';else if(c===13)r+='\r';else if(c===34)r+='\"';else if(c===92)r+='\\';else if(c<32)r+='\\u'+c.toString(16).padStart(4,'0');else r+=o[i];}return r+'"';}if(Array.isArray(o))return'['+o.map(can).join(',')+']';if(typeof o==='object'){const k=Object.keys(o).sort();return'{'+k.map(x=>can(x)+':'+can(o[x])).join(',')+'}';}throw Error('bad');}
-async function sha(s){const d=new TextEncoder().encode(s);const h=await crypto.subtle.digest('SHA-256',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
-document.getElementById('fi').onchange=e=>{if(e.target.files[0]){const r=new FileReader();r.onload=x=>document.getElementById('inp').value=x.target.result;r.readAsText(e.target.files[0]);}};
-async function verify(){const R=document.getElementById('res'),D=document.getElementById('det');try{const v=document.getElementById('inp').value.trim();if(!v){R.className='result pending';R.innerHTML='<strong>Status:</strong> No input';D.style.display='none';return;}const p=JSON.parse(v);const uvil=p.uvil_events||[];const arts=p.reasoning_artifacts||[];const eu=p.u_t||'';const er=p.r_t||'';const eh=p.h_t||'';const cu=await sha(can(uvil));const cr=await sha(can(arts));const ch=await sha(cr+cu);document.getElementById('eu').textContent=eu||'-';document.getElementById('cu').textContent=cu;document.getElementById('er').textContent=er||'-';document.getElementById('cr').textContent=cr;document.getElementById('eh').textContent=eh||'-';document.getElementById('ch').textContent=ch;const uok=!eu||cu===eu,rok=!er||cr===er,hok=!eh||ch===eh;document.getElementById('cu').className=uok?'match':'mismatch';document.getElementById('cr').className=rok?'match':'mismatch';document.getElementById('ch').className=hok?'match':'mismatch';D.style.display='block';if(!eu&&!er&&!eh){R.className='result pending';R.innerHTML='<strong>Status:</strong> COMPUTED';}else if(uok&&rok&&hok){R.className='result pass';R.innerHTML='<strong>Status:</strong> PASS';}else{R.className='result fail';R.innerHTML='<strong>Status:</strong> FAIL';}}catch(e){R.className='result fail';R.innerHTML='<strong>Status:</strong> '+e.message;D.style.display='none';}}
+// Domain separation prefixes (matching Python attestation/dual_root.py)
+const DOMAIN_UI_LEAF = new Uint8Array([0xA1, 0x75, 0x69, 0x2d, 0x6c, 0x65, 0x61, 0x66]); // "\xA1ui-leaf"
+const DOMAIN_REASONING_LEAF = new Uint8Array([0xA0, 0x72, 0x65, 0x61, 0x73, 0x6f, 0x6e, 0x69, 0x6e, 0x67, 0x2d, 0x6c, 0x65, 0x61, 0x66]); // "\xA0reasoning-leaf"
+const DOMAIN_LEAF = new Uint8Array([0x00]);
+const DOMAIN_NODE = new Uint8Array([0x01]);
 
-async function runSelfTest(){const btn=document.getElementById("selftest-btn");const status=document.getElementById("selftest-status");const table=document.getElementById("selftest-table");const tbody=document.getElementById("selftest-body");btn.disabled=true;status.style.display="block";status.textContent="Loading examples.json...";status.className="";tbody.innerHTML="";table.style.display="none";try{const resp=await fetch("../examples.json");if(!resp.ok)throw new Error("examples.json not found at ../examples.json");const data=await resp.json();status.textContent="Running tests...";const results=[];const examples=data.examples||{};for(const[name,ex]of Object.entries(examples)){const pack=ex.pack;const expected=ex.expected_verdict||ex.expected_result||"PASS";const reason=ex.expected_reason||null;const r=await testPack(pack,expected,reason);results.push({name:name,expected:expected,actual:r.actual,pass:r.pass,reason:r.reason});}let allPass=true;for(const r of results){const tr=document.createElement("tr");tr.className=r.pass?"row-pass":"row-fail";const cls=r.pass?"match":"mismatch";const txt=r.pass?"PASS":"FAIL";tr.innerHTML="<td>"+esc(r.name)+"</td><td>"+esc(r.expected)+"</td><td>"+esc(r.actual)+"</td><td class=\""+cls+"\">"+txt+"</td><td>"+esc(r.reason||"-")+"</td>";tbody.appendChild(tr);if(!r.pass)allPass=false;}table.style.display="table";status.className=allPass?"match":"mismatch";status.textContent=allPass?"SELF-TEST PASSED ("+results.length+" vectors)":"SELF-TEST FAILED";}catch(e){status.className="mismatch";status.textContent="Error: "+e.message;}btn.disabled=false;}
+// RFC 8785 JSON Canonicalization
+function can(o){
+  if(o===null)return'null';
+  if(typeof o==='boolean')return o?'true':'false';
+  if(typeof o==='number')return Object.is(o,-0)?'0':String(o);
+  if(typeof o==='string'){
+    let r='"';
+    for(let i=0;i<o.length;i++){
+      const c=o.charCodeAt(i);
+      if(c===8)r+='\\b';
+      else if(c===9)r+='\\t';
+      else if(c===10)r+='\\n';
+      else if(c===12)r+='\\f';
+      else if(c===13)r+='\\r';
+      else if(c===34)r+='\\"';
+      else if(c===92)r+='\\\\';
+      else if(c<32)r+='\\u'+c.toString(16).padStart(4,'0');
+      else r+=o[i];
+    }
+    return r+'"';
+  }
+  if(Array.isArray(o))return'['+o.map(can).join(',')+']';
+  if(typeof o==='object'){const k=Object.keys(o).sort();return'{'+k.map(x=>can(x)+':'+can(o[x])).join(',')+'}';}
+  throw Error('bad');
+}
+
+// SHA-256 with optional domain prefix
+async function shaWithDomain(data, domain) {
+  const enc = new TextEncoder();
+  const dataBytes = typeof data === 'string' ? enc.encode(data) : data;
+  const combined = new Uint8Array(domain.length + dataBytes.length);
+  combined.set(domain, 0);
+  combined.set(dataBytes, domain.length);
+  const h = await crypto.subtle.digest('SHA-256', combined);
+  return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// SHA-256 returning bytes (for Merkle tree internal nodes)
+async function shaBytesWithDomain(data, domain) {
+  const enc = new TextEncoder();
+  const dataBytes = typeof data === 'string' ? enc.encode(data) : data;
+  const combined = new Uint8Array(domain.length + dataBytes.length);
+  combined.set(domain, 0);
+  combined.set(dataBytes, domain.length);
+  const h = await crypto.subtle.digest('SHA-256', combined);
+  return new Uint8Array(h);
+}
+
+// Merkle root with domain separation (matching Python substrate/crypto/hashing.py)
+async function merkleRoot(leafHashes) {
+  if (leafHashes.length === 0) {
+    return await shaWithDomain('', DOMAIN_LEAF);
+  }
+
+  // Normalize and encode each leaf hash (they're already hex strings)
+  const enc = new TextEncoder();
+  const leaves = leafHashes.map(h => h.trim()).sort();
+
+  // Hash each leaf with DOMAIN_LEAF
+  let nodes = [];
+  for (const leaf of leaves) {
+    const hash = await shaBytesWithDomain(enc.encode(leaf), DOMAIN_LEAF);
+    nodes.push(hash);
+  }
+
+  // Build tree
+  while (nodes.length > 1) {
+    if (nodes.length % 2 === 1) {
+      nodes.push(nodes[nodes.length - 1]); // Duplicate last for odd count
+    }
+    const nextLevel = [];
+    for (let i = 0; i < nodes.length; i += 2) {
+      const combined = new Uint8Array(nodes[i].length + nodes[i + 1].length);
+      combined.set(nodes[i], 0);
+      combined.set(nodes[i + 1], nodes[i].length);
+      const hash = await shaBytesWithDomain(combined, DOMAIN_NODE);
+      nextLevel.push(hash);
+    }
+    nodes = nextLevel;
+  }
+
+  return Array.from(nodes[0]).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Compute U_t (UI Merkle root)
+async function computeUiRoot(uvilEvents) {
+  const leafHashes = [];
+  for (const event of uvilEvents) {
+    const canonical = can(event);
+    const hash = await shaWithDomain(canonical, DOMAIN_UI_LEAF);
+    leafHashes.push(hash);
+  }
+  return await merkleRoot(leafHashes);
+}
+
+// Compute R_t (Reasoning Merkle root)
+async function computeReasoningRoot(reasoningArtifacts) {
+  const leafHashes = [];
+  for (const artifact of reasoningArtifacts) {
+    const canonical = can(artifact);
+    const hash = await shaWithDomain(canonical, DOMAIN_REASONING_LEAF);
+    leafHashes.push(hash);
+  }
+  return await merkleRoot(leafHashes);
+}
+
+// Compute H_t = SHA256(R_t || U_t)
+async function computeCompositeRoot(r_t, u_t) {
+  const combined = r_t + u_t;
+  const enc = new TextEncoder();
+  const h = await crypto.subtle.digest('SHA-256', enc.encode(combined));
+  return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+document.getElementById('fi').onchange=e=>{if(e.target.files[0]){const r=new FileReader();r.onload=x=>document.getElementById('inp').value=x.target.result;r.readAsText(e.target.files[0]);}};
+
+async function verify(){
+  const R=document.getElementById('res'),D=document.getElementById('det');
+  try{
+    const v=document.getElementById('inp').value.trim();
+    if(!v){R.className='result pending';R.innerHTML='<strong>Status:</strong> No input';D.style.display='none';return;}
+    const p=JSON.parse(v);
+    const uvil=p.uvil_events||[];
+    const arts=p.reasoning_artifacts||[];
+    const eu=p.u_t||'';
+    const er=p.r_t||'';
+    const eh=p.h_t||'';
+
+    const cu=await computeUiRoot(uvil);
+    const cr=await computeReasoningRoot(arts);
+    const ch=await computeCompositeRoot(cr,cu);
+
+    document.getElementById('eu').textContent=eu||'-';
+    document.getElementById('cu').textContent=cu;
+    document.getElementById('er').textContent=er||'-';
+    document.getElementById('cr').textContent=cr;
+    document.getElementById('eh').textContent=eh||'-';
+    document.getElementById('ch').textContent=ch;
+
+    const uok=!eu||cu===eu,rok=!er||cr===er,hok=!eh||ch===eh;
+    document.getElementById('cu').className=uok?'match':'mismatch';
+    document.getElementById('cr').className=rok?'match':'mismatch';
+    document.getElementById('ch').className=hok?'match':'mismatch';
+    D.style.display='block';
+
+    if(!eu&&!er&&!eh){R.className='result pending';R.innerHTML='<strong>Status:</strong> COMPUTED';}
+    else if(uok&&rok&&hok){R.className='result pass';R.innerHTML='<strong>Status:</strong> PASS';}
+    else{R.className='result fail';R.innerHTML='<strong>Status:</strong> FAIL';}
+  }catch(e){R.className='result fail';R.innerHTML='<strong>Status:</strong> '+e.message;D.style.display='none';}
+}
+
+async function runSelfTest(){
+  const btn=document.getElementById("selftest-btn");
+  const status=document.getElementById("selftest-status");
+  const table=document.getElementById("selftest-table");
+  const tbody=document.getElementById("selftest-body");
+  btn.disabled=true;
+  status.style.display="block";
+  status.textContent="Loading examples.json...";
+  status.className="";
+  tbody.innerHTML="";
+  table.style.display="none";
+  try{
+    const resp=await fetch("../examples.json");
+    if(!resp.ok)throw new Error("examples.json not found at ../examples.json");
+    const data=await resp.json();
+    status.textContent="Running tests...";
+    const results=[];
+    const examples=data.examples||{};
+    for(const[name,ex]of Object.entries(examples)){
+      const pack=ex.pack;
+      const expected=ex.expected_verdict||ex.expected_result||"PASS";
+      const reason=ex.expected_reason||null;
+      const r=await testPack(pack,expected,reason);
+      results.push({name:name,expected:expected,actual:r.actual,pass:r.pass,reason:r.reason});
+    }
+    let allPass=true;
+    for(const r of results){
+      const tr=document.createElement("tr");
+      tr.className=r.pass?"row-pass":"row-fail";
+      const cls=r.pass?"match":"mismatch";
+      const txt=r.pass?"PASS":"FAIL";
+      tr.innerHTML="<td>"+esc(r.name)+"</td><td>"+esc(r.expected)+"</td><td>"+esc(r.actual)+"</td><td class=\""+cls+"\">"+txt+"</td><td>"+esc(r.reason||"-")+"</td>";
+      tbody.appendChild(tr);
+      if(!r.pass)allPass=false;
+    }
+    table.style.display="table";
+    status.className=allPass?"match":"mismatch";
+    status.textContent=allPass?"SELF-TEST PASSED ("+results.length+" vectors)":"SELF-TEST FAILED";
+  }catch(e){status.className="mismatch";status.textContent="Error: "+e.message;}
+  btn.disabled=false;
+}
+
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-async function testPack(pack,expectedResult,expectedReason){try{const uvil=pack.uvil_events||[];const arts=pack.reasoning_artifacts||[];const declaredU=pack.u_t||"";const declaredR=pack.r_t||"";const declaredH=pack.h_t||"";for(const a of arts){if(!("validation_outcome"in a))return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="missing_required_field",reason:"missing_required_field"};}const computedU=await sha(can(uvil));const computedR=await sha(can(arts));const computedH=await sha(computedR+computedU);if(computedU!==declaredU)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="u_t_mismatch",reason:"u_t_mismatch"};if(computedR!==declaredR)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="r_t_mismatch",reason:"r_t_mismatch"};if(computedH!==declaredH)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="h_t_mismatch",reason:"h_t_mismatch"};return{actual:"PASS",pass:expectedResult==="PASS",reason:null};}catch(e){return{actual:"FAIL",pass:expectedResult==="FAIL",reason:e.message};}}
+
+async function testPack(pack,expectedResult,expectedReason){
+  try{
+    const uvil=pack.uvil_events||[];
+    const arts=pack.reasoning_artifacts||[];
+    const declaredU=pack.u_t||"";
+    const declaredR=pack.r_t||"";
+    const declaredH=pack.h_t||"";
+
+    for(const a of arts){
+      if(!("validation_outcome"in a))
+        return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="missing_required_field",reason:"missing_required_field"};
+    }
+
+    const computedU=await computeUiRoot(uvil);
+    const computedR=await computeReasoningRoot(arts);
+    const computedH=await computeCompositeRoot(computedR,computedU);
+
+    if(computedU!==declaredU)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="u_t_mismatch",reason:"u_t_mismatch"};
+    if(computedR!==declaredR)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="r_t_mismatch",reason:"r_t_mismatch"};
+    if(computedH!==declaredH)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="h_t_mismatch",reason:"h_t_mismatch"};
+    return{actual:"PASS",pass:expectedResult==="PASS",reason:null};
+  }catch(e){return{actual:"FAIL",pass:expectedResult==="FAIL",reason:e.message};}
+}
 </script>
 </body>
 </html>
