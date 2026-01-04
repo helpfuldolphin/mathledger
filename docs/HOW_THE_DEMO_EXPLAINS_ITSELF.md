@@ -4,6 +4,155 @@ This document accompanies the front-facing demo. It explains what the demo enfor
 
 ---
 
+## How Claims Are Introduced, Tested, and Closed
+
+MathLedger evolves through discrete claim promotion cycles.
+
+This demo represents the current result of such a cycle.
+
+The system does not attempt to implement every idea in its design materials at once. Instead, it advances by introducing narrow claims, subjecting them to hostile review, and closing them only when contradictions are exhausted.
+
+This process is deliberate.
+
+### Two Kinds of Pressure
+
+MathLedger development operates under two fundamentally different forms of pressure:
+
+#### Phase II — Internal Constraint Pressure (Design Grief)
+
+The Field Manual (fm.tex / fm.pdf) is not a roadmap. It is a pressure map.
+
+It encodes mutually incompatible obligations:
+- invariants that demand different data structures,
+- governance rules that conflict with liveness,
+- auditability constraints that fight scalability,
+- formal verification assumptions that contradict learning dynamics.
+
+Phase II pressure does not come from implementation difficulty. It comes from collision.
+
+Pressure activates only when a specific obligation is selected for implementation. At that moment, incompatibilities must be confronted, tradeoffs acknowledged, and losses accepted.
+
+This is design grief.
+
+#### Phase I — External Adversarial Pressure (Truth Discovery)
+
+Once a claim is chosen, it is:
+- made executable,
+- published,
+- and subjected to hostile external review.
+
+Auditors are encouraged to:
+- break assumptions,
+- find contradictions,
+- and attempt replay or misuse.
+
+A claim survives Phase I only if hostile review can no longer produce blocking failures.
+
+This is truth discovery.
+
+### The Claim Promotion Cycle
+
+MathLedger does not progress linearly. It advances through claim promotion cycles, each with three stages:
+
+**A. Internal Design (Phase II)**
+- Select one obligation from the Field Manual
+- Confront incompatibilities
+- Decide what must be sacrificed
+- Produce a specific, narrow claim
+
+**B. External Hostility (Phase I)**
+- Publish the claim
+- Subject it to adversarial audit
+- Close contradictions or retreat
+
+**C. Closure**
+- The claim is either enforced, scoped, deferred, or abandoned
+- Regression guards are added
+- The system stabilizes
+
+Then the cycle repeats.
+
+This alternating structure is intentional. It prevents premature generalization and preserves epistemic honesty.
+
+### Promotion Readiness Checklist
+
+A change is not eligible to be treated as a promoted claim unless it passes this checklist. This prevents Phase II (ideas) from bleeding into Phase I (public claims) prematurely.
+
+**1) Claim definition is narrow and falsifiable**
+- The change corresponds to one concrete claim, stated in one sentence.
+- It is possible to say what it would mean for that claim to be false.
+
+**2) Claim is classified before implementation**
+
+The claim is labeled as one of:
+- **Enforced (Tier A)**: violation becomes mechanically unavoidable to detect
+- **Visible (Tier B)**: violation becomes replay-visible but not blocked
+- **Documented (Tier C)**: explicitly aspirational / deferred
+
+If it is Tier C, it must be presented as deferred—not implied.
+
+**3) No hidden scope expansion**
+
+The change does not silently introduce:
+- new trust semantics,
+- new cryptographic contracts,
+- new "correctness" implications,
+- or new threat model assumptions
+
+unless these are explicitly stated.
+
+**4) Closure artifacts exist**
+
+At least one of the following must exist before release:
+- a regression test that fails on reintroduction,
+- a build assertion that prevents drift,
+- or a hostile audit script check that would catch it.
+
+**5) Public audit path remains executable**
+- A cold evaluator can follow /docs/for-auditors/ without guessing URLs.
+- The verifier self-test remains runnable and interpretable.
+
+**6) Release discipline is satisfied**
+- The release is versioned, tagged, and pinned.
+- /versions/ and /demo/ reflect the same CURRENT version.
+- If anything is "out of sync," it must be visibly declared.
+
+If any checklist item fails, the correct outcome is:
+- defer the claim,
+- narrow the claim,
+- or refuse the change.
+
+This is how monotone credibility is maintained.
+
+### What This Means for Evaluators
+
+You may notice:
+- explicit ABSTAINED outcomes,
+- missing features,
+- conservative behavior,
+- or references to design materials not yet implemented.
+
+This is intentional.
+
+The system prefers refusal with explanation over unjustified output. Only claims that have survived hostile review are enforced.
+
+### What This Process Does NOT Claim
+
+This process:
+- does not claim the system is complete,
+- does not claim all obligations are compatible,
+- does not guarantee correctness beyond stated enforcement,
+- and does not rewrite history when mistakes are found.
+
+Instead:
+- every critique is preserved,
+- every fix is versioned,
+- and every closed claim remains inspectable.
+
+**In short:** MathLedger improves monotonically not by adding features, but by closing claims under pressure.
+
+---
+
 ## What the Demo Is Actually Doing
 
 The demo separates exploration from authority.
@@ -40,6 +189,8 @@ The MV validator in v0 has **limited coverage**:
 | | Division by zero (returns ABSTAINED) |
 | | Symbolic reasoning |
 | | Any non-arithmetic claims |
+
+For the complete formal specification, see [MV Validator Coverage](../mv-coverage/).
 
 **What this means:**
 - `2 + 2 = 4` → VERIFIED (covered)

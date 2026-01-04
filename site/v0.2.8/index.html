@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Version v0.2.8 Archive — MathLedger v0.2.8</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0.2.8</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0.2.8-mv-coverage-docs</code> |
+            Commit: <code>PENDING</code> |
+            Locked: 2026-01-04
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 10</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><strong>Archive</strong> <a href="/v0.2.8/docs/scope-lock/">Scope</a> <a href="/v0.2.8/docs/explanation/">Explanation</a> <a href="/v0.2.8/docs/invariants/">Invariants</a> <a href="/v0.2.8/docs/field-manual/">Field Manual</a> <a href="/v0.2.8/fixtures/">Fixtures</a> <a href="/v0.2.8/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>Version v0.2.8 Archive <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            
+        
+        <div class="two-artifacts" style="background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0 0 1rem 0; font-size: 1.2rem; color: #333;">This Site Provides Two Artifacts</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 1rem;">
+                    <strong style="color: #1565c0;">📁 Archive</strong> (this page)
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #555;">
+                        Immutable evidence and documentation. Static, versioned, cryptographically checksummed.
+                    </p>
+                </div>
+                <div style="background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 1rem;">
+                    <strong style="color: #2e7d32;">⚡ Demo</strong> (hosted at /demo/)
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: #555;">
+                        Interactive execution of the same version. Produces evidence packs verifiable against this archive.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Version coherence bridge -->
+            <p style="margin: 0 0 0.75rem 0; font-size: 0.9rem; color: #444; font-style: italic;">
+                This archive is immutable. The hosted demo at <a href="/demo/">/demo/</a> is the live instantiation of this same version.
+            </p>
+            <p style="margin: 0 0 1rem 0; font-size: 0.85rem; color: #666;">
+                <a href="/v0.2.8/docs/field-manual/">Field Manual</a> (fm.tex/pdf): obligation ledger used to drive version promotions.
+            </p>
+            <div id="demo-sync-status" style="display: none; background: #ffebee; border: 1px solid #c62828; border-radius: 4px; padding: 0.5rem 1rem; margin-bottom: 1rem;">
+                <strong style="color: #c62828;">⚠ DEMO OUT OF SYNC</strong> —
+                <span id="sync-reason">do not use for audit</span>
+            </div>
+
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <a href="/demo/" class="demo-button" style="background: #2e7d32; color: #fff; padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: 500;">Open Hosted Demo</a>
+                <a href="/v0.2.8/evidence-pack/verify/" class="demo-button" style="background: #1565c0; color: #fff; padding: 0.75rem 1.5rem; border-radius: 4px; text-decoration: none; font-weight: 500;">Open Auditor Tool</a>
+            </div>
+
+            <!-- Demo sync check script -->
+            <script>
+            (function() {
+                const expectedVersion = "v0.2.8";
+                fetch('/demo/healthz')
+                    .then(r => r.json())
+                    .then(data => {
+                        const demoVersion = data.version || data.tag || '';
+                        if (!demoVersion.includes(expectedVersion.replace('v', ''))) {
+                            document.getElementById('demo-sync-status').style.display = 'block';
+                            document.getElementById('sync-reason').textContent =
+                                'demo reports ' + demoVersion + ', archive is ' + expectedVersion;
+                        }
+                    })
+                    .catch(() => {
+                        // Demo might return plain text "ok" - that's fine, don't show error
+                    });
+            })();
+            </script>
+        </div>
+
+        <div class="auditor-flow" style="background: #fff3e0; border: 1px solid #ffb74d; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #e65100;">For Auditors: 3-Step Verification</h3>
+            <ol style="margin: 0; padding-left: 1.5rem; font-size: 0.9rem;">
+                <li style="margin-bottom: 0.5rem;"><strong>Run the boundary demo</strong> — <a href="/demo/">Open demo</a>, click "Run Boundary Demo", observe VERIFIED/REFUTED/ABSTAINED outcomes</li>
+                <li style="margin-bottom: 0.5rem;"><strong>Download evidence pack</strong> — Click "Download Evidence Pack" after demo completes</li>
+                <li><strong>Verify in auditor tool</strong> — <a href="/v0.2.8/evidence-pack/verify/">Open verifier</a>, upload pack, confirm PASS (or tamper and observe FAIL)</li>
+            </ol>
+            <p style="margin: 0.75rem 0 0 0; font-size: 0.85rem;">
+                Full checklist: <a href="/v0.2.8/docs/for-auditors/">5-minute auditor verification</a>
+            </p>
+        </div>
+
+        <div class="ready-to-verify" id="ready-to-verify" style="background: #e3f2fd; border: 1px solid #1976d2; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #0d47a1;">Ready-to-Verify: Example Evidence Packs (no demo required)</h3>
+            <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #555;">
+                Download pre-built examples to test the auditor tool without running the demo:
+            </p>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <a href="/v0.2.8/evidence-pack/examples.json" download="examples.json" style="background: #fff; border: 1px solid #1976d2; color: #1976d2; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">📥 Download Examples (PASS + FAIL)</a>
+                <a href="/v0.2.8/evidence-pack/verify/" style="background: #1976d2; color: #fff; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">Open Auditor Tool</a>
+            </div>
+            <p style="margin: 0.75rem 0 0 0; font-size: 0.85rem; color: #666;">
+                The examples.json file contains both valid (PASS) and tampered (FAIL) packs for testing.
+            </p>
+        </div>
+        
+
+        <p>This is the archive for MathLedger version <code>v0.2.8</code>.
+        All artifacts below are static, verifiable, and immutable.</p>
+
+        
+    <div class="release-delta" style="background: #fafafa; border: 1px solid #e0e0e0; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem;">
+        <h3 style="margin: 0 0 0.75rem 0; font-size: 1rem; color: #333;">Release Delta: v0.2.8</h3>
+        <div style="margin-bottom: 0.75rem;"><strong style="color: #666;">Did not change:</strong><ul style="margin: 0.25rem 0 0 1.5rem; font-size: 0.85rem; color: #666;"><li>Tier A/B/C invariant counts (10/1/3)</li><li>All cryptographic enforcement</li><li>Demo code and behavior</li><li>Verifier implementation</li></ul></div><div><strong style="color: #c62828;">Still not enforced:</strong><ul style="margin: 0.25rem 0 0 1.5rem; font-size: 0.85rem; color: #c62828;"><li>FV Mechanical Verification (no Lean/Z3)</li><li>Multi-Model Consensus (single partitioner)</li><li>RFL Integration (no learning loop)</li></ul></div>
+    </div>
+    
+
+        <h2>Archive Contents</h2>
+        <table>
+            <tr><th>Artifact</th><th>Description</th></tr>
+            <tr><td><a href="/v0.2.8/docs/for-auditors/">For Auditors</a></td><td>5-minute verification checklist</td></tr>
+            <tr><td><a href="/v0.2.8/docs/scope-lock/">Scope Lock</a></td><td>What this version does and does not demonstrate</td></tr>
+            <tr><td><a href="/v0.2.8/docs/explanation/">Explanation</a></td><td>How the demo explains its own behavior</td></tr>
+            <tr><td><a href="/v0.2.8/docs/invariants/">Invariants</a></td><td>Tier A/B/C enforcement status</td></tr>
+            <tr><td><a href="/v0.2.8/docs/hostile-rehearsal/">Hostile Rehearsal</a></td><td>Answers to skeptical questions</td></tr>
+            <tr><td><a href="/v0.2.8/fixtures/">Fixtures</a></td><td>Regression test cases with golden outputs</td></tr>
+            <tr><td><a href="/v0.2.8/evidence-pack/">Evidence Pack</a></td><td>Replay verification artifacts</td></tr>
+            <tr><td><a href="/v0.2.8/manifest.json">Manifest</a></td><td>Version metadata + file checksums</td></tr>
+        </table>
+
+        <h2>Local Execution</h2>
+        
+        <div class="info-box" style="border-left: 4px solid #2e7d32;">
+            <strong>Local Execution</strong>
+            <details style="margin-top: 0.5rem;">
+                <summary style="cursor: pointer; color: #666;">Run locally instead of using hosted demo</summary>
+                <div style="margin-top: 0.5rem;">
+                    <code>git clone https://github.com/helpfuldolphin/mathledger</code><br>
+                    <code>git checkout v0.2.8-mv-coverage-docs</code><br>
+                    <code>uv run python demo/app.py</code><br>
+                    <code>Open http://localhost:8000</code>
+                </div>
+            </details>
+        </div>
+        
+
+        <h2>Invariant Details</h2>
+        <h3 class="tier-a" style="color: #2e7d32;">Tier A: Cryptographically/Structurally Enforced (10)</h3>
+        <ul><li>Canonicalization Determinism (RFC 8785-style)</li><li>H_t = SHA256(R_t || U_t)</li><li>ADV Excluded from R_t</li><li>Content-Derived IDs</li><li>Replay Uses Same Code Paths</li><li>Double-Commit Returns 409</li><li>No Silent Authority</li><li>Trust-Class Monotonicity</li><li>Abstention Preservation</li><li>Audit Surface Version Field</li></ul>
+
+        <h3 class="tier-b" style="color: #f57c00;">Tier B: Logged, Not Hard-Gated (1)</h3>
+        <ul><li>MV Validator Correctness (edge cases)</li></ul>
+
+        <h3 class="tier-c" style="color: #757575;">Tier C: Documented, Not Enforced (3)</h3>
+        <ul><li>FV Mechanical Verification</li><li>Multi-Model Consensus</li><li>RFL Integration</li></ul>
+
+        <h2>Verification</h2>
+        <p>To verify this archive matches the source:</p>
+        <ol>
+            <li>Clone the repository</li>
+            <li>Checkout commit <code>PENDING</code></li>
+            <li>Run <code>uv run python scripts/build_static_site.py --version v0.2.8</code></li>
+            <li>Compare generated files to this archive</li>
+        </ol>
+        <p>File checksums are in <a href="manifest.json">manifest.json</a>.</p>
+    
+        </article>
+
+        <footer>
+            Site built from commit <code>PENDING</code> at <code>2026-01-04T17:39:54Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>
