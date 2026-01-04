@@ -407,7 +407,7 @@
     },
     "v0.2.4": {
       "tag": "v0.2.4-verifier-merkle-parity",
-      "commit": "22a58c420c2c5c083d3895f794d59ac6b521c2d7",
+      "commit": "f58ff661e9b163c7babaa23d0df49d6f956cb6f7",
       "date_locked": "2026-01-03",
       "status": "current",
       "demo_url": "/demo/",
