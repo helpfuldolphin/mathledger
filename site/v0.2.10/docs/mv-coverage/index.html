@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MV Validator Coverage — MathLedger v0.2.10</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0.2.10</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0.2.10-abstention-terminal</code> |
+            Commit: <code>TBD</code> |
+            Locked: 2026-01-04
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 11</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0.2.10/">Archive</a> <a href="/v0.2.10/docs/scope-lock/">Scope</a> <a href="/v0.2.10/docs/explanation/">Explanation</a> <a href="/v0.2.10/docs/invariants/">Invariants</a> <a href="/v0.2.10/docs/field-manual/">Field Manual</a> <a href="/v0.2.10/fixtures/">Fixtures</a> <a href="/v0.2.10/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>MV Validator Coverage <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>MV Validator Coverage Specification</h1>
+<strong>Version</strong>: v0.2.8
+<strong>Status</strong>: Formalization of existing behavior
+<strong>Audit Reference</strong>: <a href="external_audits/manus_epistemic_integrity_audit_2026-01-03_v0.2.2_response.md">manus_epistemic_integrity_audit_2026-01-03_v0.2.2_response.md</a> lines 65-67
+<hr>
+<h2>Purpose</h2>
+<p>This document formalizes the exact coverage boundary of the MV (Mechanical Validation) arithmetic validator. It closes a deferred audit commitment and provides auditors with a canonical reference for what the system does and does not verify.</p>
+<strong>This document describes existing behavior. No code changes accompany this specification.</strong>
+<hr>
+<h2>Coverage Summary</h2>
+<table><tr><th>Claim Pattern</th><th>Outcome</th><th>Example</th></tr>
+<tr><td>Valid arithmetic equality (true)</td><td>VERIFIED</td><td><code>2 + 2 = 4</code></td></tr>
+<tr><td>Valid arithmetic equality (false)</td><td>REFUTED</td><td><code>2 + 2 = 5</code></td></tr>
+<tr><td>Non-arithmetic claim</td><td>ABSTAINED</td><td><code>forall x, P(x)</code></td></tr>
+<tr><td>Division by zero</td><td>ABSTAINED</td><td><code>5 / 0 = 0</code></td></tr>
+<tr><td>Non-exact division</td><td>ABSTAINED</td><td><code>7 / 3 = 2</code></td></tr>
+<tr><td>Float literals</td><td>ABSTAINED</td><td><code>3.14 + 1 = 4.14</code></td></tr>
+<tr><td>Complex expressions</td><td>ABSTAINED</td><td><code>(2 + 3) * 4 = 20</code></td></tr></table>
+<hr>
+<h2>Exact Pattern</h2>
+<p>The validator accepts claims matching this regex:</p>
+<pre><code class="language-">^\s<em>(-?\d+)\s</em>([+\-<em>/])\s</em>(-?\d+)\s<em>=\s</em>(-?\d+)\s*$
+</code></pre>
+<strong>In plain language</strong>: <code>a op b = c</code> where:
+<ul><li><code>a</code>, <code>b</code>, <code>c</code> are integers (optionally negative, no decimal point)</li><li><code>op</code> is one of: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code></li><li>Whitespace is permitted around operands and operators</li></ul>
+<strong>Source</strong>: <a href="../governance/mv_validator.py"><code>governance/mv_validator.py:54-56</code></a>
+<hr>
+<h2>Outcome Definitions</h2>
+<h3>VERIFIED</h3>
+<p>Returned when:
+<ol><li>The claim matches the pattern</li><li>The operation <code>a op b</code> is defined (no division by zero, exact division)</li><li>The computed result equals <code>c</code></li></ol>
+<strong>Interpretation</strong>: The arithmetic equality is mechanically confirmed correct.</p>
+<h3>REFUTED</h3>
+<p>Returned when:
+<ol><li>The claim matches the pattern</li><li>The operation <code>a op b</code> is defined</li><li>The computed result does NOT equal <code>c</code></li></ol>
+<strong>Interpretation</strong>: The arithmetic equality is mechanically confirmed incorrect.</p>
+<h3>ABSTAINED</h3>
+<p>Returned when ANY of:
+<ol><li>The claim does not match the pattern</li><li>Division by zero is attempted (<code>b = 0</code> with <code>/</code> operator)</li><li>Division is non-exact (<code>a % b != 0</code> with <code>/</code> operator)</li></ol>
+<strong>Interpretation</strong>: The validator cannot make a determination. This is NOT a failure; it is the correct response when the claim is outside the validator's scope.</p>
+<hr>
+<h2>What Is Covered</h2>
+<table><tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Integer addition</td><td>Covered</td><td><code>a + b = c</code></td></tr>
+<tr><td>Integer subtraction</td><td>Covered</td><td><code>a - b = c</code></td></tr>
+<tr><td>Integer multiplication</td><td>Covered</td><td><code>a * b = c</code></td></tr>
+<tr><td>Exact integer division</td><td>Covered</td><td><code>a / b = c</code> where <code>a % b == 0</code></td></tr>
+<tr><td>Negative integers</td><td>Covered</td><td><code>-5 + 3 = -2</code></td></tr>
+<tr><td>Arbitrary precision</td><td>Covered</td><td>Python integers have no overflow</td></tr>
+<tr><td>Leading/trailing whitespace</td><td>Covered</td><td>Stripped before matching</td></tr>
+<tr><td>Whitespace around operators</td><td>Covered</td><td><code>2  +  2  =  4</code> matches</td></tr></table>
+<hr>
+<h2>What Is NOT Covered</h2>
+<table><tr><th>Feature</th><th>Status</th><th>Outcome</th><th>Rationale</th></tr>
+<tr><td>Float literals</td><td>Not covered</td><td>ABSTAINED</td><td>Pattern requires <code>\d+</code> (no decimal point)</td></tr>
+<tr><td>Scientific notation</td><td>Not covered</td><td>ABSTAINED</td><td>Pattern does not include <code>e</code> or <code>E</code></td></tr>
+<tr><td>Complex expressions</td><td>Not covered</td><td>ABSTAINED</td><td>Only binary <code>a op b = c</code> supported</td></tr>
+<tr><td>Parentheses</td><td>Not covered</td><td>ABSTAINED</td><td>Not in pattern</td></tr>
+<tr><td>Multiple operators</td><td>Not covered</td><td>ABSTAINED</td><td>Only single operator supported</td></tr>
+<tr><td>Division by zero</td><td>Not covered</td><td>ABSTAINED</td><td>Undefined operation</td></tr>
+<tr><td>Non-exact division</td><td>Not covered</td><td>ABSTAINED</td><td><code>7 / 3</code> has remainder</td></tr>
+<tr><td>Symbolic math</td><td>Not covered</td><td>ABSTAINED</td><td>No variable support</td></tr>
+<tr><td>Inequalities</td><td>Not covered</td><td>ABSTAINED</td><td>Only <code>=</code> supported</td></tr>
+<tr><td>Modulo operator</td><td>Not covered</td><td>ABSTAINED</td><td>Only <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code></td></tr></table>
+<hr>
+<h2>Overflow Behavior</h2>
+<strong>There is no overflow risk.</strong>
+<p>Python integers are arbitrary-precision. The expression <code>10<strong>1000 + 1 = 10</strong>1000 + 1</code> will be correctly evaluated as VERIFIED (assuming it matches the pattern, which it does not due to <code>**</code>).</p>
+<p>For claims that DO match the pattern, such as:
+<pre><code class="language-">999999999999999999999999999999 + 1 = 1000000000000000000000000000000
+</code></pre></p>
+<p>This will be correctly parsed and evaluated without overflow.</p>
+<hr>
+<h2>Determinism Guarantee</h2>
+<p>The validator is:
+<ul><li><strong>Pure</strong>: No side effects, no external calls, no randomness</li><li><strong>Deterministic</strong>: Same input always produces same output</li><li><strong>Bounded</strong>: O(n) time complexity where n is claim length</li></ul>
+This determinism is required for replay verification integrity.</p>
+<hr>
+<h2>Tier Classification</h2>
+<strong>MV Validator Correctness remains Tier B.</strong>
+<ul><li><strong>Tier B Definition</strong>: Logged and replay-visible. Violation is detectable but not prevented.</li><li><strong>What This Means</strong>: All validation outcomes are logged in reasoning artifacts with <code>validation_outcome</code> and <code>proof_payload</code> fields. An auditor can replay the evidence pack and see exactly what the validator returned.</li><li><strong>What This Does NOT Mean</strong>: Tier B does not claim that validator bugs are self-detecting. If the validator had a bug (hypothetically), the logged outcome would reflect the buggy behavior, not the correct behavior.</li></ul>
+The coverage gaps documented above (floats, complex expressions, etc.) are <strong>by design</strong>, not bugs. They return ABSTAINED, which is the correct outcome for out-of-scope claims.
+<hr>
+<h2>Audit Trail</h2>
+<p>This document closes a deferred commitment from the external audit response:</p>
+<blockquote><strong>Resolution</strong>: Deferred to v0.2.4. Create <code>docs/MV_VALIDATOR_COVERAGE.md</code> documenting:</blockquote>
+<blockquote>- Covered: <code>a op b = c</code> integer/decimal arithmetic</blockquote>
+<blockquote>- Not covered: overflow, float precision, complex expressions</blockquote>
+<strong>Source</strong>: <a href="external_audits/manus_epistemic_integrity_audit_2026-01-03_v0.2.2_response.md">manus_epistemic_integrity_audit_2026-01-03_v0.2.2_response.md</a> lines 65-67
+<p>This commitment was deferred past v0.2.4 and is now delivered in v0.2.8.</p>
+<hr>
+<h2>How Auditors Should Use This Document</h2>
+<ol><li><strong>Scope verification</strong>: Check that demo claims match the covered patterns before expecting VERIFIED/REFUTED</li><li><strong>ABSTAINED interpretation</strong>: Any claim outside the pattern table should return ABSTAINED</li><li><strong>Replay validation</strong>: Evidence packs contain the full <code>proof_payload</code> with parsed values for independent verification</li><li><strong>Coverage boundary testing</strong>: The demo deliberately shows ABSTAINED for out-of-scope claims (e.g., <code>sqrt(2) is irrational</code>)</li></ol>
+<hr>
+<h2>Related Documents</h2>
+<ul><li><a href="../governance/mv_validator.py"><code>governance/mv_validator.py</code></a> - Implementation</li><li><a href="invariants_status.md"><code>docs/invariants_status.md</code></a> - Tier classification</li><li><a href="HOW_THE_DEMO_EXPLAINS_ITSELF.md"><code>docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md</code></a> - Demo coverage examples</li><li><a href="THREAT_MODEL_V0.2.1.md"><code>docs/THREAT_MODEL_V0.2.1.md</code></a> - Validator bugs as Tier B threat</li></ul>
+        </article>
+
+        <footer>
+            Site built from commit <code>TBD899ebeb8a774d3a83f5314314d49</code> at <code>2026-01-04T19:02:25Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

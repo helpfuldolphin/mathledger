@@ -1,0 +1,27 @@
+{
+  "case_name": "underdetermined_navier_stokes",
+  "description": "Underdetermined prompt - partition defaults to ADV, demonstrates stopping",
+  "task_text": "Prove existence and smoothness of Navier-Stokes solutions in 3D",
+  "claims": [
+    {
+      "claim_text": "Existence of weak solutions follows from energy estimates",
+      "trust_class": "ADV",
+      "rationale": "Standard but unverified claim"
+    },
+    {
+      "claim_text": "Smoothness in 3D remains open (Millennium Prize problem)",
+      "trust_class": "ADV",
+      "rationale": "This is an open problem - cannot be verified"
+    },
+    {
+      "claim_text": "Partial regularity results exist (Caffarelli-Kohn-Nirenberg)",
+      "trust_class": "ADV",
+      "rationale": "Reference to literature, not mechanically checked"
+    }
+  ],
+  "actor_id": "demo_harness",
+  "seed": 42,
+  "expected_authority_count": 0,
+  "expected_adv_excluded": true,
+  "expected_outcome": "ABSTAINED"
+}

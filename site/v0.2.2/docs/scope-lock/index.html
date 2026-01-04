@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scope Lock — MathLedger v0.2.2</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0.2.2</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0.2.2-link-integrity</code> |
+            Commit: <code>27a94c8a5813</code> |
+            Locked: 2026-01-03
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 10</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0.2.2/">Archive</a> <strong>Scope</strong> <a href="/v0.2.2/docs/explanation/">Explanation</a> <a href="/v0.2.2/docs/invariants/">Invariants</a> <a href="/v0.2.2/docs/field-manual/">Field Manual</a> <a href="/v0.2.2/fixtures/">Fixtures</a> <a href="/v0.2.2/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>Scope Lock <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>V0 Scope Lock</h1>
+<p>This document defines the scope of MathLedger Demo v0. It exists to prevent drift.</p>
+<hr>
+<h2>What v0 Demonstrates</h2>
+<p>v0 is a governance demo. It demonstrates:</p>
+<ol><li><strong>UVIL (User-Verified Input Loop)</strong>: Human binding mechanism for authority</li><li><strong>Trust Classes</strong>: FV, MV, PA (authority-bearing) vs ADV (exploration-only)</li><li><strong>Dual Attestation Roots</strong>: U_t (UI), R_t (reasoning), H_t (composite)</li><li><strong>Determinism</strong>: Same inputs produce same outputs, replayable</li><li><strong>Exploration/Authority Boundary</strong>: DraftProposal never enters hash-committed paths</li></ol>
+<hr>
+<h2>What v0 Does NOT Demonstrate</h2>
+<p>v0 explicitly excludes:</p>
+<ul><li><strong>RFL learning loop</strong>: No curriculum, no policy, no uplift</li><li><strong>Multi-model arena</strong>: Single template partitioner, no LiteLLM, no model competition</li><li><strong>Agent tools</strong>: No code execution, no sandbox, no E2B</li><li><strong>Real verifier</strong>: No Lean, no Z3, no mechanical proof checking</li><li><strong>Production auth</strong>: No user accounts, no API keys, no rate limiting</li><li><strong>Persistence</strong>: In-memory only, restart-loss accepted</li><li><strong>Long-running agents</strong>: Synchronous request/response only</li></ul>
+<hr>
+<h2>What v0 IS</h2>
+<p>v0 is a <strong>governance substrate demo</strong>, not a capability demo.</p>
+<p>It shows:
+<ul><li>The boundary between exploration and authority is real (enforced in code)</li><li>The boundary is testable (fixtures + harness)</li><li>The boundary is replayable (determinism + content-derived IDs)</li><li>The system stops when it cannot verify (ABSTAINED is correct behavior)</li></ul>
+It does not show:
+<ul><li>That the system is intelligent</li><li>That the system is aligned</li><li>That the system is safe</li><li>That formal verification works (v0 has no formal verifier; Lean/Z3 is Phase II)</li></ul>
+<hr></p>
+<h2>Terminology Constraints</h2>
+<p>v0 uses these outcome values:</p>
+<table><tr><th>Outcome</th><th>Meaning in v0</th></tr>
+<tr><td>VERIFIED</td><td>MV claim parsed AND arithmetic confirmed (e.g., "2 + 2 = 4")</td></tr>
+<tr><td>REFUTED</td><td>MV claim parsed AND arithmetic failed (e.g., "2 + 2 = 5")</td></tr>
+<tr><td>ABSTAINED</td><td>Cannot mechanically verify (PA, FV, unparseable MV, ADV-only)</td></tr></table>
+v0 uses "authority-bearing" to mean "accepted into reasoning stream (R_t)":
+<ul><li>FV, MV, PA: authority-bearing (enter R_t)</li><li>ADV: exploration-only (excluded from R_t)</li></ul>
+v0 does NOT claim that authority-bearing means "verified":
+<ul><li>PA is authority-bearing because a human attests, not because the system verified</li><li>FV claims return ABSTAINED (no formal verifier in v0)</li><li>MV claims may return VERIFIED/REFUTED (via arithmetic validator, limited coverage)</li></ul>
+<strong>Glossary note</strong>: "verifier" in v0 means MV arithmetic validator; formal verifier means Lean/Z3 (Phase II).
+<hr>
+<h2>Allowed Iterations</h2>
+<p>Within v0 scope, you may iterate on:</p>
+<ul><li>Template partitioner logic</li><li>UI copy and explanation text</li><li>Trust class selection UX</li><li>Fixture set for regression testing</li><li>Determinism tests and golden hashes</li></ul>
+<hr>
+<h2>Forbidden Iterations</h2>
+<p>Do not add to v0:</p>
+<ul><li>Model selection or switching</li><li>Tool execution or sandboxing</li><li>External API calls in demo flow</li><li>Persistence beyond session</li><li>Claims of formal verification when no formal verifier exists</li><li>Claims of safety, alignment, or intelligence</li></ul>
+<hr>
+<h2>Lock Statement</h2>
+<p>v0 is complete when:</p>
+<ol><li>The demo runs locally with a single command</li><li>The harness passes all 5 cases</li><li>The UI clearly shows exploration vs authority streams</li><li>The UI shows VERIFIED only for MV arithmetic claims that pass validation (v0 has no formal verifier)</li><li>The fixtures are stable (golden hashes do not drift)</li></ol>
+v0 is not complete when:
+<ol><li>Features are added beyond the scope above</li><li>Outcomes are mislabeled (e.g., PA shown as "VERIFIED")</li><li>The exploration/authority boundary is blurred</li></ol>
+<hr>
+<h2>Date Locked</h2>
+<p>2026-01-02</p>
+<p>This scope is frozen. Changes require explicit scope unlock with rationale.</p>
+<hr>
+<h2>Release Notes: v0-demo-lock</h2>
+<strong>Tag</strong>: <code>v0-demo-lock</code>
+<strong>Commit</strong>: <code>ab8f51ab389aed7b3412cb987fc70d0d4f2bbe0b</code>
+<strong>Date</strong>: 2026-01-02
+<h3>Key Deliverables</h3>
+<table><tr><th>Artifact</th><th>Path</th><th>Purpose</th></tr>
+<tr><td>Demo entrypoint</td><td><code>demo/app.py</code></td><td>Single-command runnable: <code>uv run python demo/app.py</code></td></tr>
+<tr><td>API endpoints</td><td><code>backend/api/uvil.py</code></td><td><code>/propose_partition</code>, <code>/commit_uvil</code>, <code>/run_verification</code>, <code>/evidence_pack</code>, <code>/replay_verify</code></td></tr>
+<tr><td>Governance models</td><td><code>governance/uvil.py</code></td><td>DraftProposal, CommittedPartitionSnapshot, attestation</td></tr>
+<tr><td>Trust classes</td><td><code>governance/trust_class.py</code></td><td>FV, MV, PA, ADV enum + authority-bearing check</td></tr>
+<tr><td>MV validator</td><td><code>governance/mv_validator.py</code></td><td>Arithmetic equality validator for MV claims</td></tr>
+<tr><td>Regression harness</td><td><code>tools/run_demo_cases.py</code></td><td>9 demo cases + evidence pack tests</td></tr>
+<tr><td>Fixtures</td><td><code>fixtures/<case>/</code></td><td>9 cases including mv_arithmetic_verified, same_claim_as_pa</td></tr></table>
+<h3>Invariants Verified</h3>
+<ol><li><strong>T1</strong>: proposal_id never appears in hash-committed payloads</li><li><strong>T2</strong>: ADV claims excluded from R_t computation</li><li><strong>T3</strong>: H_t = SHA256(R_t || U_t) deterministic</li><li><strong>T4</strong>: Double-commit of proposal_id returns 409 Conflict</li><li><strong>T5</strong>: /run_verification rejects raw proposal_id</li><li><strong>T6</strong>: Outcomes are VERIFIED/REFUTED only via MV arithmetic validator; else ABSTAINED</li><li><strong>T7</strong>: PA claims show "authority-bearing but not mechanically verified"</li><li><strong>T8</strong>: UI clearly separates Exploration Stream from Authority Stream</li></ol>
+<h3>Evidence Pack Invariants</h3>
+<ol><li><strong>T9</strong>: Evidence pack contains ONLY minimum for replay: uvil_events, reasoning_artifacts, u_t, r_t, h_t</li><li><strong>T10</strong>: Replay verification uses SAME code paths as live (compute_ui_root, compute_reasoning_root, compute_composite_root)</li><li><strong>T11</strong>: No external API calls required for replay verification</li><li><strong>T12</strong>: Tampered evidence pack correctly returns FAIL with diff</li></ol>
+<h3>Critical Fix</h3>
+<ul><li><strong>PA terminology hazard</strong>: PA claims no longer return <code>VERIFIED</code>. PA, FV, and ADV claims return <code>ABSTAINED</code> with explicit <code>authority_basis</code> explanation. MV arithmetic claims may return <code>VERIFIED</code> or <code>REFUTED</code> via the limited-coverage arithmetic validator.</li></ul>
+<h3>How to Verify</h3>
+<pre><code class="language-bash"># Start demo
+uv run python demo/app.py
+<h1>Run regression harness (in another terminal)</h1>
+uv run python tools/run_demo_cases.py
+<h1>Expected: 9/9 cases succeed</h1>
+<h1>Run evidence pack tests</h1>
+uv run python tools/run_demo_cases.py --evidence-pack-tests
+<h1>Expected: All evidence pack tests PASS</h1>
+<h1>Run UI self-explanation tests</h1>
+uv run python tools/run_demo_cases.py --ui-tests
+<h1>Expected: UI Self-Explanation Tests: ALL PASSED</h1>
+</code></pre>
+<hr>
+<h2>Release Notes: v0.2.0</h2>
+<strong>Tag</strong>: <code>v0.2.0-demo-lock</code>
+<strong>Commit</strong>: <code>27a94c8a58139cb10349f6418336c618f528cbab</code>
+<strong>Date Locked</strong>: 2026-01-02
+<h3>Tier Counts (from docs/invariants_status.md)</h3>
+<table><tr><th>Tier</th><th>Count</th><th>Description</th></tr>
+<tr><td>A</td><td>9</td><td>Cryptographically or structurally enforced</td></tr>
+<tr><td>B</td><td>1</td><td>Logged and replay-visible</td></tr>
+<tr><td>C</td><td>3</td><td>Documented but not enforced in v0</td></tr></table>
+<h3>What Changed</h3>
+<p>This release adds UI self-explanation to the demo. The demo now explains itself in real-time.</p>
+<h3>New Artifacts</h3>
+<table><tr><th>Artifact</th><th>Path</th><th>Purpose</th></tr>
+<tr><td>UI_COPY dictionary</td><td><code>demo/app.py:83</code></td><td>Canonical self-explanation strings</td></tr>
+<tr><td>/ui_copy endpoint</td><td><code>demo/app.py</code></td><td>Returns canonical copy for regression</td></tr>
+<tr><td>Copy drift test</td><td><code>tests/governance/test_ui_copy_drift.py</code></td><td>Prevents semantic drift</td></tr>
+<tr><td>UI regression</td><td><code>tools/run_demo_cases.py --ui-tests</code></td><td>Runtime verification</td></tr>
+<tr><td>Docs sidebar</td><td>Demo UI</td><td>Links to 5 key documentation files</td></tr>
+<tr><td>Abstention preservation</td><td><code>governance/uvil.py</code></td><td>Tier A gate on R_t</td></tr></table>
+<h3>UI Integration Points (9 total)</h3>
+<ol><li>Framing box with expandable "What does justified mean?"</li><li>Trust class tooltips and note</li><li>Transition note on commit</li><li>Outcome-specific explanations (ABSTAINED, VERIFIED, REFUTED)</li><li>Evidence pack expandable explanation</li><li>Hash label tooltips (U_t, R_t, H_t)</li><li>Boundary demo expandable breakdown</li><li>ADV exclusion badge tooltips</li><li>Governance error templates</li></ol>
+<h3>Invariants Added</h3>
+<ol><li><strong>T13</strong>: UI_COPY dictionary contains all required self-explanation keys</li><li><strong>T14</strong>: No capability claims ("safe", "aligned", "intelligent") in UI copy</li><li><strong>T15</strong>: ABSTAINED explanation mentions "first-class outcome"</li><li><strong>T16</strong>: Abstention preservation gate enforced on all R_t entries</li></ol>
+<h3>How to Verify</h3>
+<pre><code class="language-bash"># Run copy drift tests (offline, no server needed)
+uv run pytest tests/governance/test_ui_copy_drift.py -v
+<h1>Run UI self-explanation tests (requires server)</h1>
+uv run python demo/app.py  # In one terminal
+uv run python tools/run_demo_cases.py --ui-tests  # In another
+<h1>Verify abstention preservation</h1>
+uv run pytest tests/governance/test_abstention_preservation.py -v
+</code></pre>
+<h3>Breaking Changes</h3>
+<p>None. v0.2.0 is fully backward compatible with v0.1.0 demo cases.</p>
+<hr>
+<h2>Release Notes: v0.2.1</h2>
+<strong>Tag</strong>: <code>v0.2.1-cohesion</code>
+<strong>Date Locked</strong>: 2026-01-03
+<h3>Purpose</h3>
+<p>v0.2.1 is a <strong>cohesion release</strong> that addresses credibility hazards identified in external review. It improves UI terminology, adds rejection visibility, and enhances trust class documentation. <strong>No new capabilities</strong> are added.</p>
+<h3>What Changed</h3>
+<ol><li><strong>Terminology fix</strong>: "Run 90-Second Proof" → "Run Boundary Demo (≈15s)"</li></ol>   - "Proof" was misleading; v0 has no prover
+   - New label matches Scope Lock vocabulary
+<ol><li><strong>Archive link</strong>: Header now links to /v0.2.0/ archive</li></ol>   - Explicit connection between live demo and immutable record
+<ol><li><strong>Rejection visibility</strong>: New "What Gets Rejected" section</li></ol>   - Three live rejection demos with structured error JSON
+   - DOUBLE_COMMIT, TRUST_CLASS_MONOTONICITY_VIOLATION, SILENT_AUTHORITY_VIOLATION
+<ol><li><strong>Trust class tooltips</strong>: Enhanced sidebar with explicit ADV exclusion note</li></ol>   - "EXCLUDED FROM R_t" prominently displayed
+   - Color-coded trust class definitions
+<ol><li><strong>Repository URL</strong>: Updated to https://github.com/helpfuldolphin/mathledger</li></ol>
+<h3>New Endpoints</h3>
+<table><tr><th>Endpoint</th><th>Purpose</th><th>Expected Error</th></tr>
+<tr><td><code>/uvil/change_trust_class</code></td><td>Demonstrates immutability</td><td><code>TRUST_CLASS_MONOTONICITY_VIOLATION</code></td></tr>
+<tr><td><code>/uvil/verify_attestation</code></td><td>Demonstrates authority gate</td><td><code>SILENT_AUTHORITY_VIOLATION</code></td></tr></table>
+<h3>Tests Added</h3>
+<table><tr><th>Test</th><th>Purpose</th></tr>
+<tr><td><code>test_boundary_demo_button_renamed</code></td><td>Button text no longer says "Proof"</td></tr>
+<tr><td><code>test_archive_link_present</code></td><td>Header contains v0.2.0 archive link</td></tr>
+<tr><td><code>test_what_gets_rejected_section_present</code></td><td>Rejection demos visible</td></tr>
+<tr><td><code>test_trust_class_tooltips_present</code></td><td>ADV exclusion note visible</td></tr>
+<tr><td><code>test_double_commit_returns_error_code</code></td><td>DOUBLE_COMMIT error code</td></tr>
+<tr><td><code>test_trust_class_change_returns_error_code</code></td><td>TRUST_CLASS_MONOTONICITY_VIOLATION</td></tr>
+<tr><td><code>test_silent_authority_violation_returns_error_code</code></td><td>SILENT_AUTHORITY_VIOLATION</td></tr></table>
+<h3>Invariants Unchanged</h3>
+<p>v0.2.1 adds no new invariants. All existing Tier A/B/C invariants remain enforced.</p>
+<h3>How to Verify</h3>
+<pre><code class="language-bash"># Run v0.2.1 specific tests
+uv run pytest tests/demo/test_demo_hosting.py -v -k "V021 or Rejection"
+<h1>Verify rejection demos work</h1>
+uv run python demo/app.py
+<h1>Open http://localhost:8000, expand "What Gets Rejected", click each button</h1>
+</code></pre>
+<h3>Breaking Changes</h3>
+<p>None. v0.2.1 is fully backward compatible with v0.2.0.</p>
+<h3>External Audit Status</h3>
+<strong>External audit reviewed</strong>: YES
+<table><tr><th>Audit</th><th>Date</th><th>Scope</th><th>Closure</th></tr>
+<tr><td>Cold-Start Site Audit</td><td>2026-01-03</td><td>Full site + demo evaluation</td><td><a href="RELEASE_CLOSURE_V0.2.1.md">RELEASE_CLOSURE_V0.2.1.md</a></td></tr></table>
+<strong>Summary</strong>: 4 critical findings addressed in v0.2.1, 7 non-critical deferred to future versions. See closure document for full triage.
+<h3>Closure Statement</h3>
+<strong>v0.2.1 is CLOSED</strong>. No further changes will be made to v0.2.1 artifacts. Any required changes will be released as v0.2.2 or later.
+<p>Closure date: 2026-01-03</p>
+        </article>
+
+        <footer>
+            Site built from commit <code>27a94c8a58139cb10349f6418336c618f528cbab</code> at <code>2026-01-04T05:29:48Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

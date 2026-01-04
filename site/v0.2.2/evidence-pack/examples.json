@@ -1,0 +1,220 @@
+{
+  "schema_version": "v1",
+  "description": "Evidence pack examples for auditor verification. Upload each pack to /v0.2.2/evidence-pack/verify/ to see PASS/FAIL.",
+  "generated_at": "2026-01-03T21:50:00.000000Z",
+  "generated_by": "scripts/generate_evidence_pack_examples.py",
+  "_note": "Examples copied from v0.2.1; hash contract unchanged. Packs use same Merkle structure.",
+  "usage_instructions": {
+    "step_1": "Download one of the example packs below",
+    "step_2": "Open https://mathledger.ai/v0.2.2/evidence-pack/verify/",
+    "step_3": "Upload the pack JSON",
+    "step_4": "Click 'Verify' and observe PASS or FAIL",
+    "note": "The tampered packs demonstrate tamper detection - they should FAIL"
+  },
+  "examples": {
+    "valid_boundary_demo": {
+      "expected_verdict": "PASS",
+      "pack": {
+        "schema_version": "v1",
+        "pack_version": "v0.2.1",
+        "name": "valid_boundary_demo",
+        "description": "Valid evidence pack from boundary demo (2+2=4 with different trust classes)",
+        "uvil_events": [
+          {
+            "event_id": "boundary_demo_evt_001",
+            "event_type": "COMMIT",
+            "committed_partition_id": "boundary_demo_part_001",
+            "user_fingerprint": "auditor_test_user",
+            "epoch": 1,
+            "timestamp_iso": "2026-01-03T12:00:00Z"
+          },
+          {
+            "event_id": "boundary_demo_evt_002",
+            "event_type": "VERIFICATION_COMPLETE",
+            "committed_partition_id": "boundary_demo_part_001",
+            "user_fingerprint": "auditor_test_user",
+            "epoch": 1,
+            "timestamp_iso": "2026-01-03T12:00:01Z"
+          }
+        ],
+        "reasoning_artifacts": [
+          {
+            "artifact_id": "boundary_demo_art_001",
+            "claim_id": "claim_mv_verified",
+            "trust_class": "MV",
+            "validation_outcome": "VERIFIED",
+            "claim_text": "2 + 2 = 4",
+            "proof_payload": {
+              "validator": "arithmetic_v1",
+              "parsed_expression": {
+                "left": 4,
+                "right": 4,
+                "operator": "+"
+              },
+              "verification_time_ms": 1
+            }
+          },
+          {
+            "artifact_id": "boundary_demo_art_002",
+            "claim_id": "claim_pa_abstained",
+            "trust_class": "PA",
+            "validation_outcome": "ABSTAINED",
+            "claim_text": "2 + 2 = 4",
+            "proof_payload": {
+              "abstention_reason": "PA claims authority-bearing but not mechanically verified in v0"
+            }
+          },
+          {
+            "artifact_id": "boundary_demo_art_003",
+            "claim_id": "claim_mv_refuted",
+            "trust_class": "MV",
+            "validation_outcome": "REFUTED",
+            "claim_text": "3 * 3 = 8",
+            "proof_payload": {
+              "validator": "arithmetic_v1",
+              "parsed_expression": {
+                "left": 9,
+                "right": 8,
+                "operator": "*"
+              },
+              "refutation_reason": "9 != 8"
+            }
+          }
+        ],
+        "u_t": "0d1b61da395bb759b4558e1329e9ea561450e66d66421f88b540f7e828c0cd2d",
+        "r_t": "fc252c380d1af2afaa4f17a52a8692156f2edcd6336ee4a3278a23a10eda4899",
+        "h_t": "fc326bbaad3518e4de63a3d81f68dc2030ff47bdb80532081e4b0c0c2a8f2fd4",
+        "generated_at": "2026-01-03T19:35:55.453960Z",
+        "generated_by": "scripts/generate_evidence_pack_examples.py",
+        "expected_result": {
+          "verdict": "PASS",
+          "reason": "All hashes match",
+          "details": "u_t, r_t, and h_t all recompute correctly"
+        }
+      }
+    },
+    "tampered_ht_mismatch": {
+      "expected_verdict": "FAIL",
+      "expected_reason": "h_t mismatch",
+      "pack": {
+        "schema_version": "v1",
+        "pack_version": "v0.2.1",
+        "name": "tampered_ht_mismatch",
+        "description": "Tampered evidence pack: h_t field directly modified to zeros. Expected result: FAIL with h_t mismatch. This demonstrates tamper detection.",
+        "uvil_events": [
+          {
+            "event_id": "boundary_demo_evt_001",
+            "event_type": "COMMIT",
+            "committed_partition_id": "boundary_demo_part_001",
+            "user_fingerprint": "auditor_test_user",
+            "epoch": 1,
+            "timestamp_iso": "2026-01-03T12:00:00Z"
+          },
+          {
+            "event_id": "boundary_demo_evt_002",
+            "event_type": "VERIFICATION_COMPLETE",
+            "committed_partition_id": "boundary_demo_part_001",
+            "user_fingerprint": "auditor_test_user",
+            "epoch": 1,
+            "timestamp_iso": "2026-01-03T12:00:01Z"
+          }
+        ],
+        "reasoning_artifacts": [
+          {
+            "artifact_id": "boundary_demo_art_001",
+            "claim_id": "claim_mv_verified",
+            "trust_class": "MV",
+            "validation_outcome": "VERIFIED",
+            "claim_text": "2 + 2 = 4",
+            "proof_payload": {
+              "validator": "arithmetic_v1",
+              "parsed_expression": {
+                "left": 4,
+                "right": 4,
+                "operator": "+"
+              },
+              "verification_time_ms": 1
+            }
+          },
+          {
+            "artifact_id": "boundary_demo_art_002",
+            "claim_id": "claim_pa_abstained",
+            "trust_class": "PA",
+            "validation_outcome": "ABSTAINED",
+            "claim_text": "2 + 2 = 4",
+            "proof_payload": {
+              "abstention_reason": "PA claims authority-bearing but not mechanically verified in v0"
+            }
+          },
+          {
+            "artifact_id": "boundary_demo_art_003",
+            "claim_id": "claim_mv_refuted",
+            "trust_class": "MV",
+            "validation_outcome": "REFUTED",
+            "claim_text": "3 * 3 = 8",
+            "proof_payload": {
+              "validator": "arithmetic_v1",
+              "parsed_expression": {
+                "left": 9,
+                "right": 8,
+                "operator": "*"
+              },
+              "refutation_reason": "9 != 8"
+            }
+          }
+        ],
+        "u_t": "0d1b61da395bb759b4558e1329e9ea561450e66d66421f88b540f7e828c0cd2d",
+        "r_t": "fc252c380d1af2afaa4f17a52a8692156f2edcd6336ee4a3278a23a10eda4899",
+        "h_t": "0000000000000000000000000000000000000000000000000000000000000000",
+        "generated_at": "2026-01-03T19:35:55.453960Z",
+        "generated_by": "scripts/generate_evidence_pack_examples.py",
+        "expected_result": {
+          "verdict": "FAIL",
+          "reason": "h_t mismatch",
+          "details": "Recorded h_t does not match computed SHA256(r_t || u_t)"
+        }
+      }
+    },
+    "tampered_rt_mismatch": {
+      "expected_verdict": "FAIL",
+      "expected_reason": "r_t mismatch",
+      "pack": {
+        "schema_version": "v1",
+        "pack_version": "v0.2.1",
+        "name": "tampered_rt_mismatch",
+        "description": "Tampered evidence pack: reasoning_artifacts modified after r_t was recorded. The pack claims REFUTED for '2+2=5' but r_t was computed from original data showing VERIFIED for '2+2=4'. Expected result: FAIL with r_t mismatch.",
+        "uvil_events": [
+          {
+            "event_id": "tamper_test_evt_001",
+            "event_type": "COMMIT",
+            "committed_partition_id": "tamper_test_part_001",
+            "user_fingerprint": "auditor_test",
+            "epoch": 1
+          }
+        ],
+        "reasoning_artifacts": [
+          {
+            "artifact_id": "original_art_001",
+            "claim_id": "claim_original",
+            "trust_class": "MV",
+            "validation_outcome": "REFUTED",
+            "claim_text": "2 + 2 = 5",
+            "proof_payload": {
+              "validator": "arithmetic_v1"
+            }
+          }
+        ],
+        "u_t": "d8d58424e5ec425ce30a8af52246e5fd6cf2b1e8a8f0b41061760682dd6e8771",
+        "r_t": "fd6f5a2563bcc7f820bcc124f4eebc2873d61d6ef2d7d0f3a087424f23d901e0",
+        "h_t": "4f2e719fc4870e94fd45a23e3ee88359c40f766ea7f4f2987d8423d69d38bd48",
+        "expected_result": {
+          "verdict": "FAIL",
+          "reason": "r_t mismatch",
+          "details": "Recorded r_t does not match recomputed Merkle root of reasoning_artifacts"
+        },
+        "generated_at": "2026-01-03T19:35:55.453960Z",
+        "generated_by": "scripts/generate_evidence_pack_examples.py"
+      }
+    }
+  }
+}

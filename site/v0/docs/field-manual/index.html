@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Manual — MathLedger v0</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0-demo-lock</code> |
+            Commit: <code>ab8f51ab389a</code> |
+            Locked: 2026-01-02
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 9</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active in v0</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0/">Archive</a> <a href="/v0/docs/scope-lock/">Scope</a> <a href="/v0/docs/explanation/">Explanation</a> <a href="/v0/docs/invariants/">Invariants</a> <strong>Field Manual</strong> <a href="/v0/fixtures/">Fixtures</a> <a href="/v0/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>Field Manual <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>Field Manual</h1>
+<strong>Status:</strong> Working constraint artifact (not marketing documentation)
+<p>The Field Manual (fm.tex/fm.pdf) is an internal document that tracks obligations, gaps, and the reasoning behind version promotions. It is published here for transparency, not as polished documentation.</p>
+<h2>Why It Exists</h2>
+<p>The Field Manual serves as an <strong>obligation ledger</strong>:</p>
+<ol><li><strong>Surfaces gaps</strong> — Documents what the system cannot yet do</li><li><strong>Drives promotions</strong> — Version upgrades require addressing FM obligations</li><li><strong>Prevents drift</strong> — Written commitments constrain future behavior</li><li><strong>Auditor artifact</strong> — External reviewers can verify claims against FM entries</li></ol>
+<h2>What It Is NOT</h2>
+<ul><li>Not a user guide</li><li>Not marketing material</li><li>Not rewritten for readability</li><li>Not guaranteed to be current (check version date)</li></ul>
+<h2>Downloads</h2>
+<ul><li><a href="fm.pdf">fm.pdf</a> — Compiled Field Manual (PDF)</li><li><a href="fm.tex">fm.tex</a> — LaTeX source</li></ul>
+<h2>How Auditors Should Use This</h2>
+<ol><li><strong>Cross-reference claims</strong> — If a feature is claimed, check FM for caveats</li><li><strong>Look for "TODO" and "OBLIGATION"</strong> — These are explicit acknowledgments of gaps</li><li><strong>Compare versions</strong> — FM changes between versions show what was addressed</li><li><strong>Trust gaps over features</strong> — The gaps we document are more honest than features we claim</li></ol>
+<h2>Relationship to Other Docs</h2>
+<table><tr><th>Document</th><th>Purpose</th></tr>
+<tr><td>Scope Lock</td><td>What this version does/doesn't demonstrate</td></tr>
+<tr><td>Invariants</td><td>Tier A/B/C enforcement status</td></tr>
+<tr><td>Field Manual</td><td>Obligation ledger driving version promotions</td></tr>
+<tr><td>Hostile Rehearsal</td><td>Prepared answers to skeptical questions</td></tr></table>
+The Field Manual is the "why we promoted" document; other docs are "what we claim now."
+        </article>
+
+        <footer>
+            Site built from commit <code>ab8f51ab389aed7b3412cb987fc70d0d4f2bbe0b</code> at <code>2026-01-04T05:29:48Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

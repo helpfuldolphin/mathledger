@@ -1,0 +1,222 @@
+{
+  "$schema": "evidence_pack_verifier_vectors.schema.json",
+  "metadata": {
+    "version": "v0.2.0",
+    "generated_at": "2026-01-02T00:00:00Z",
+    "generated_by": "scripts/generate_verifier_vectors.py",
+    "spec": "docs/EVIDENCE_PACK_VERIFIER_SPEC.md",
+    "content_hash": "f0ab1ad3815138ce93865e1abdedd90e86745cb1d3f8739463fa4f4860298d35",
+    "description": "Canonical test vectors for Evidence Pack Verifier. Uses SAME functions as replay_verify."
+  },
+  "valid_packs": [
+    {
+      "name": "valid_minimal",
+      "description": "Minimal valid pack: one uvil_event, one reasoning_artifact with VERIFIED outcome.",
+      "expected_result": "PASS",
+      "expected_failure_reason": null,
+      "pack": {
+        "schema_version": "v1",
+        "uvil_events": [
+          {
+            "event_id": "evt_verifier_001",
+            "event_type": "COMMIT",
+            "committed_partition_id": "partition_verifier_001",
+            "user_fingerprint": "verifier_test_user",
+            "epoch": 1
+          }
+        ],
+        "reasoning_artifacts": [
+          {
+            "artifact_id": "art_verifier_001",
+            "claim_id": "claim_verifier_001",
+            "trust_class": "MV",
+            "validation_outcome": "VERIFIED",
+            "proof_payload": {
+              "validator": "arithmetic_v1",
+              "claim_text": "3 + 5 = 8",
+              "computed_value": 8
+            }
+          }
+        ],
+        "u_t": "27124b6da67d869f577514843ae27bd1a10942cb43c7fe1b55af678c7093a4dc",
+        "r_t": "50201dd46b547ab0b4cc8cbce10e830915c83d9718376bbd0786cd314ea5a801",
+        "h_t": "4501e28a2368f373ac837ce485f2c5720d2cbd3493a72a4283d2f463c8254d7b"
+      }
+    },
+    {
+      "name": "valid_multiple",
+      "description": "Valid pack with multiple events (COMMIT, PROMOTE) and multiple artifacts (MV+PA).",
+      "expected_result": "PASS",
+      "expected_failure_reason": null,
+      "pack": {
+        "schema_version": "v1",
+        "uvil_events": [
+          {
+            "event_id": "evt_multi_001",
+            "event_type": "COMMIT",
+            "committed_partition_id": "partition_multi",
+            "user_fingerprint": "user_alpha",
+            "epoch": 1
+          },
+          {
+            "event_id": "evt_multi_002",
+            "event_type": "PROMOTE",
+            "committed_partition_id": "partition_multi",
+            "user_fingerprint": "user_alpha",
+            "epoch": 2
+          }
+        ],
+        "reasoning_artifacts": [
+          {
+            "artifact_id": "art_multi_001",
+            "claim_id": "claim_multi_001",
+            "trust_class": "MV",
+            "validation_outcome": "VERIFIED",
+            "proof_payload": {
+              "claim_text": "10 - 3 = 7"
+            }
+          },
+          {
+            "artifact_id": "art_multi_002",
+            "claim_id": "claim_multi_002",
+            "trust_class": "PA",
+            "validation_outcome": "ABSTAINED",
+            "proof_payload": {
+              "claim_text": "Project deadline is Q2"
+            }
+          }
+        ],
+        "u_t": "0daca47478ce94fe6c5dafc55b3cfcd3b7ef4064a1c7e248de851686df9062b7",
+        "r_t": "3f00d919d2e34c00d14325c1f66f2e92582278ef3aeaca89e0b2afa8c0c70d62",
+        "h_t": "9ae28f3967ec28e3d39ebc29d49ef1f7d0a3207f339285d04afc0929fa5b417b"
+      }
+    }
+  ],
+  "invalid_packs": [
+    {
+      "name": "invalid_tampered_ht",
+      "description": "h_t field directly modified to zeros. u_t and r_t are correct.",
+      "expected_result": "FAIL",
+      "expected_failure_reason": "h_t_mismatch",
+      "pack": {
+        "schema_version": "v1",
+        "uvil_events": [
+          {
+            "event_id": "evt_verifier_001",
+            "event_type": "COMMIT",
+            "committed_partition_id": "partition_verifier_001",
+            "user_fingerprint": "verifier_test_user",
+            "epoch": 1
+          }
+        ],
+        "reasoning_artifacts": [
+          {
+            "artifact_id": "art_verifier_001",
+            "claim_id": "claim_verifier_001",
+            "trust_class": "MV",
+            "validation_outcome": "VERIFIED",
+            "proof_payload": {
+              "validator": "arithmetic_v1",
+              "claim_text": "3 + 5 = 8",
+              "computed_value": 8
+            }
+          }
+        ],
+        "u_t": "27124b6da67d869f577514843ae27bd1a10942cb43c7fe1b55af678c7093a4dc",
+        "r_t": "50201dd46b547ab0b4cc8cbce10e830915c83d9718376bbd0786cd314ea5a801",
+        "h_t": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "name": "invalid_tampered_reasoning_leaf",
+      "description": "reasoning_artifacts modified after r_t was recorded. artifact_id and claim_text changed.",
+      "expected_result": "FAIL",
+      "expected_failure_reason": "r_t_mismatch",
+      "pack": {
+        "schema_version": "v1",
+        "uvil_events": [
+          {
+            "event_id": "evt_verifier_001",
+            "event_type": "COMMIT",
+            "committed_partition_id": "partition_verifier_001",
+            "user_fingerprint": "verifier_test_user",
+            "epoch": 1
+          }
+        ],
+        "reasoning_artifacts": [
+          {
+            "artifact_id": "art_TAMPERED",
+            "claim_id": "claim_verifier_001",
+            "trust_class": "MV",
+            "validation_outcome": "REFUTED",
+            "proof_payload": {
+              "validator": "arithmetic_v1",
+              "claim_text": "3 + 5 = 9",
+              "computed_value": 8
+            }
+          }
+        ],
+        "u_t": "27124b6da67d869f577514843ae27bd1a10942cb43c7fe1b55af678c7093a4dc",
+        "r_t": "50201dd46b547ab0b4cc8cbce10e830915c83d9718376bbd0786cd314ea5a801",
+        "h_t": "4501e28a2368f373ac837ce485f2c5720d2cbd3493a72a4283d2f463c8254d7b"
+      }
+    },
+    {
+      "name": "invalid_missing_validation_outcome",
+      "description": "reasoning_artifacts[0] is missing required field 'validation_outcome'.",
+      "expected_result": "FAIL",
+      "expected_failure_reason": "missing_required_field",
+      "pack": {
+        "schema_version": "v1",
+        "uvil_events": [
+          {
+            "event_id": "evt_verifier_001",
+            "event_type": "COMMIT",
+            "committed_partition_id": "partition_verifier_001",
+            "user_fingerprint": "verifier_test_user",
+            "epoch": 1
+          }
+        ],
+        "reasoning_artifacts": [
+          {
+            "artifact_id": "art_incomplete_001",
+            "claim_id": "claim_incomplete_001",
+            "trust_class": "MV",
+            "proof_payload": {
+              "claim_text": "2 + 2 = 4"
+            }
+          }
+        ],
+        "u_t": "27124b6da67d869f577514843ae27bd1a10942cb43c7fe1b55af678c7093a4dc",
+        "r_t": "80149f6cfba7bc09efc6b6f17a33d433e90c012686f1736b90f27ec51c8be6e1",
+        "h_t": "b65d3b6e26e65382c98dc1183499f71e4765951b5e1cc4db5475cbec99efe71e"
+      }
+    }
+  ],
+  "canonicalization_tests": [
+    {
+      "name": "canon_key_ordering",
+      "description": "Keys must be sorted lexicographically: alpha < beta < zebra",
+      "input": {
+        "zebra": 1,
+        "alpha": 2,
+        "beta": 3
+      },
+      "expected_canonical": "{\"alpha\":2,\"beta\":3,\"zebra\":1}",
+      "verification_note": "Output should be: {\"alpha\":2,\"beta\":3,\"zebra\":1}"
+    },
+    {
+      "name": "canon_nested_ordering",
+      "description": "Nested objects also have keys sorted. No whitespace.",
+      "input": {
+        "outer": {
+          "z_inner": 1,
+          "a_inner": 2
+        },
+        "level1": true
+      },
+      "expected_canonical": "{\"level1\":true,\"outer\":{\"a_inner\":2,\"z_inner\":1}}",
+      "verification_note": "Inner keys also sorted: a_inner < z_inner"
+    }
+  ]
+}

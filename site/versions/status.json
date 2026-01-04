@@ -1,7 +1,7 @@
 {
-  "current_version": "v0.2.7",
-  "current_tag": "v0.2.7-verifier-parity",
-  "current_commit": "5d01b4b1446ee323b10ff43c79a9b49589d68061",
+  "current_version": "v0.2.10",
+  "current_tag": "v0.2.10-demo-reliability",
+  "current_commit": "TBD",
   "versions": [
     "v0",
     "v0.2.0",
@@ -11,7 +11,10 @@
     "v0.2.4",
     "v0.2.5",
     "v0.2.6",
-    "v0.2.7"
+    "v0.2.7",
+    "v0.2.8",
+    "v0.2.9",
+    "v0.2.10"
   ],
   "superseded": [
     "v0",
@@ -21,7 +24,10 @@
     "v0.2.3",
     "v0.2.4",
     "v0.2.5",
-    "v0.2.6"
+    "v0.2.6",
+    "v0.2.7",
+    "v0.2.8",
+    "v0.2.9"
   ],
-  "generated_at": "2026-01-04T05:00:00Z"
+  "generated_at": "2026-01-04T22:50:00Z"
 }
