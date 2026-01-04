@@ -1,7 +1,7 @@
 {
   "schema_version": "v1",
   "description": "Evidence pack examples for auditor verification. Upload each pack to /v0.2.6/evidence-pack/verify/ to see PASS/FAIL.",
-  "generated_at": "2026-01-04T03:54:55.886997Z",
+  "generated_at": "2026-01-04T02:52:03.912911Z",
   "generated_by": "scripts/generate_evidence_pack_examples.py",
   "usage_instructions": {
     "step_1": "Download one of the example packs below",
@@ -94,7 +94,7 @@
     },
     "tampered_ht_mismatch": {
       "expected_verdict": "FAIL",
-      "expected_reason": "h_t_mismatch",
+      "expected_reason": "h_t mismatch",
       "pack": {
         "schema_version": "v1",
         "pack_version": "v0.2.6",
@@ -169,14 +169,14 @@
         "generated_by": "scripts/generate_evidence_pack_examples.py",
         "expected_result": {
           "verdict": "FAIL",
-          "reason": "h_t_mismatch",
+          "reason": "h_t mismatch",
           "details": "Recorded h_t does not match computed SHA256(r_t || u_t)"
         }
       }
     },
     "tampered_rt_mismatch": {
       "expected_verdict": "FAIL",
-      "expected_reason": "r_t_mismatch",
+      "expected_reason": "r_t mismatch",
       "pack": {
         "schema_version": "v1",
         "pack_version": "v0.2.6",
@@ -208,7 +208,7 @@
         "h_t": "4f2e719fc4870e94fd45a23e3ee88359c40f766ea7f4f2987d8423d69d38bd48",
         "expected_result": {
           "verdict": "FAIL",
-          "reason": "r_t_mismatch",
+          "reason": "r_t mismatch",
           "details": "Recorded r_t does not match recomputed Merkle root of reasoning_artifacts"
         },
         "generated_at": "2026-01-04T01:41:16.686289Z",
