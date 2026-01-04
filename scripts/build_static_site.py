@@ -1926,9 +1926,13 @@ def verify_build(releases: dict) -> bool:
         if verifier_html.exists():
             html_content = verifier_html.read_text(encoding="utf-8")
             missing_funcs = []
-            for func in ["function verify(", "function runSelfTest(", "function can(", "function sha("]:
+            # Check core functions - sha can be either sha() or shaWithDomain() for compatibility
+            for func in ["function verify(", "function runSelfTest(", "function can("]:
                 if func not in html_content:
                     missing_funcs.append(func.replace("function ", "").replace("(", ""))
+            # Check for sha function - can be sha() or shaWithDomain() depending on version
+            if "function sha(" not in html_content and "function shaWithDomain(" not in html_content:
+                missing_funcs.append("sha/shaWithDomain")
             if missing_funcs:
                 errors.append(f"{version}: verifier missing functions: {missing_funcs}")
             else:
@@ -1963,6 +1967,28 @@ def verify_build(releases: dict) -> bool:
                 os.unlink(tmp_path)
         if gate_passed:
             print(f"[OK] {current_version}: verifier gate PASSED (syntax valid + self-test text present)")
+
+    # 30. Verify examples.json hashes match using Node.js (external script avoids escaping issues)
+    examples_path = SITE_DIR / current_version / "evidence-pack" / "examples.json"
+    verify_script = Path(__file__).parent / "verify_examples_hash.js"
+    if examples_path.exists() and verify_script.exists():
+        try:
+            result = subprocess.run(
+                ['node', str(verify_script), str(examples_path)],
+                capture_output=True, text=True, timeout=10
+            )
+            if result.returncode == 0:
+                print(f"[OK] {current_version}: examples.json hashes verified by Node.js")
+            else:
+                errors.append(f"{current_version}: examples.json hash verification FAILED: {result.stdout.strip()}")
+        except FileNotFoundError:
+            print(f"[--] {current_version}: Node.js not available, skipping examples hash verification")
+        except Exception as e:
+            print(f"[--] {current_version}: examples hash verification skipped: {e}")
+    elif examples_path.exists():
+        print(f"[--] {current_version}: verify_examples_hash.js not found, skipping hash verification")
+    else:
+        print(f"[--] {current_version}: examples.json not present, skipping hash verification")
 
     print("=" * 60)
     if errors:

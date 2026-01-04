@@ -1,0 +1,22 @@
+{
+  "case_name": "adv_only",
+  "description": "ADV only - must be blocked from authority stream, R_t empty",
+  "task_text": "Speculate about Navier-Stokes",
+  "claims": [
+    {
+      "claim_text": "The Navier-Stokes equations probably have smooth solutions",
+      "trust_class": "ADV",
+      "rationale": "Pure speculation - no proof"
+    },
+    {
+      "claim_text": "Turbulence might be related to strange attractors",
+      "trust_class": "ADV",
+      "rationale": "Another guess"
+    }
+  ],
+  "actor_id": "demo_harness",
+  "seed": 42,
+  "expected_authority_count": 0,
+  "expected_adv_excluded": true,
+  "expected_outcome": null
+}

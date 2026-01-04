@@ -1,0 +1,96 @@
+{
+  "success": true,
+  "error": null,
+  "captured_at": "2026-01-02T06:22:21.411825+00:00",
+  "exploration": {
+    "proposal_id": "ea2377cf-c73c-4800-abc8-167ba753dac9",
+    "draft_proposal": {
+      "proposal_id": "ea2377cf-c73c-4800-abc8-167ba753dac9",
+      "claims": [
+        {
+          "claim_text": "Claim derived from: Prove commutativity and consider generalizations...",
+          "suggested_trust_class": "ADV",
+          "rationale": "Template partitioner - user must edit and promote"
+        }
+      ]
+    },
+    "note": "proposal_id is exploration-only and MUST NOT appear in attestation"
+  },
+  "authority": {
+    "committed_partition_id": "8a279846b794ddbdb89febca3dbb08b0b2955172d50c3e8670dec829c71e6746",
+    "commit_response": {
+      "committed_partition_id": "8a279846b794ddbdb89febca3dbb08b0b2955172d50c3e8670dec829c71e6746",
+      "u_t": "d85a0d6d31b73951118def2d2e4acf84eb03968e5904570f92a6cbfbadcb06f9",
+      "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+      "h_t": "bd2de56ab373384ce392c6f888eec3a1448c463052a6e19115aed5823cec7bad",
+      "claim_count": 2
+    }
+  },
+  "verification": {
+    "response": {
+      "outcome": "ABSTAINED",
+      "committed_partition_id": "8a279846b794ddbdb89febca3dbb08b0b2955172d50c3e8670dec829c71e6746",
+      "attestation": {
+        "u_t": "d85a0d6d31b73951118def2d2e4acf84eb03968e5904570f92a6cbfbadcb06f9",
+        "r_t": "478da68500e2af40711ee09c2945121f7c9ba0ce1dbbc7b31a6f53f0f1a1c1d5",
+        "h_t": "0151a97dc46b0abf20286d7f1a4f73e435e536944acc34b4a850a6027a318f1e",
+        "authority_claim_count": 1,
+        "total_claim_count": 2
+      },
+      "authority_basis": {
+        "fv_count": 0,
+        "mv_count": 1,
+        "pa_count": 0,
+        "adv_count": 1,
+        "adv_excluded": true,
+        "mechanically_verified": false,
+        "authority_bearing_accepted": true,
+        "explanation": "1 MV claim(s) could not be parsed by arithmetic validator.",
+        "mv_validation": {
+          "verified": 0,
+          "refuted": 0,
+          "abstained": 1
+        },
+        "trust_class_breakdown": {
+          "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+          "MV": "Mechanically Validated - checked by arithmetic validator",
+          "PA": "Procedurally Attested - user attestation, not mechanically verified",
+          "ADV": "Advisory - exploration only, excluded from authority stream"
+        }
+      }
+    }
+  },
+  "attestation": {
+    "u_t": "d85a0d6d31b73951118def2d2e4acf84eb03968e5904570f92a6cbfbadcb06f9",
+    "r_t": "478da68500e2af40711ee09c2945121f7c9ba0ce1dbbc7b31a6f53f0f1a1c1d5",
+    "h_t": "0151a97dc46b0abf20286d7f1a4f73e435e536944acc34b4a850a6027a318f1e"
+  },
+  "authority_basis": {
+    "fv_count": 0,
+    "mv_count": 1,
+    "pa_count": 0,
+    "adv_count": 1,
+    "adv_excluded": true,
+    "mechanically_verified": false,
+    "authority_bearing_accepted": true,
+    "explanation": "1 MV claim(s) could not be parsed by arithmetic validator.",
+    "mv_validation": {
+      "verified": 0,
+      "refuted": 0,
+      "abstained": 1
+    },
+    "trust_class_breakdown": {
+      "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+      "MV": "Mechanically Validated - checked by arithmetic validator",
+      "PA": "Procedurally Attested - user attestation, not mechanically verified",
+      "ADV": "Advisory - exploration only, excluded from authority stream"
+    }
+  },
+  "outcome": "ABSTAINED",
+  "analysis": {
+    "authority_claim_count": 1,
+    "total_claim_count": 2,
+    "adv_excluded_from_rt": true,
+    "outcome_explanation": "1 MV claim(s) could not be parsed by arithmetic validator."
+  }
+}
