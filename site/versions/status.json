@@ -1,0 +1,8 @@
+{
+  "current_version": "v0.2.5",
+  "current_tag": "v0.2.5-self-test-semantics",
+  "current_commit": "1cf55991f2e24cf12dde1d2983cecce49eaf5247",
+  "versions": ["v0", "v0.2.0", "v0.2.1", "v0.2.2", "v0.2.3", "v0.2.4", "v0.2.5"],
+  "superseded": ["v0", "v0.2.0", "v0.2.1", "v0.2.2", "v0.2.3", "v0.2.4"],
+  "generated_at": "2026-01-04T02:30:00Z"
+}

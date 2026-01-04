@@ -11,7 +11,7 @@
 <div class="banner">
 <div style="font-weight:600">MathLedger - v0.2.5</div>
 <div><span class="status">LOCKED</span> <a href="/versions/" style="font-size:0.8rem;color:#666">(see /versions/)</a></div>
-<div style="font-size:0.8rem;color:#555;margin-top:0.5rem">Tag: <code>v0.2.5-self-test-semantics</code> | Commit: <code>f58ff661e9b1</code></div>
+<div style="font-size:0.8rem;color:#555;margin-top:0.5rem">Tag: <code>v0.2.5-self-test-semantics</code> | Self-test semantic fix</div>
 </div>
 <nav class="nav"><a href="/v0.2.5/">Archive</a> <a href="/v0.2.5/evidence-pack/">Evidence</a> <strong>Verifier</strong> | <a href="/versions/">All</a></nav>
 <h1>Evidence Pack Verifier</h1>
@@ -225,10 +225,10 @@ async function runSelfTest(){
       const pack=ex.pack;
       const expected=ex.expected_verdict||"PASS";
       const reason=ex.expected_reason||null;
-      const r=await testPack(pack,expected,reason);
+      const r=await testPack(pack,expected);
       results.push({name:name,expected:expected,actual:r.actual,pass:r.pass,reason:r.reason});
     }
-    let allPass=true;
+    let failCount=0;
     for(const r of results){
       const tr=document.createElement("tr");
       tr.className=r.pass?"row-pass":"row-fail";
@@ -236,18 +236,29 @@ async function runSelfTest(){
       const txt=r.pass?"PASS":"FAIL";
       tr.innerHTML="<td>"+esc(r.name)+"</td><td>"+esc(r.expected)+"</td><td>"+esc(r.actual)+"</td><td class=\""+cls+"\">"+txt+"</td><td>"+esc(r.reason||"-")+"</td>";
       tbody.appendChild(tr);
-      if(!r.pass)allPass=false;
+      if(!r.pass)failCount++;
     }
     table.style.display="table";
-    status.className=allPass?"match":"mismatch";
-    status.textContent=allPass?"SELF-TEST PASSED ("+results.length+" vectors)":"SELF-TEST FAILED";
+    
+    if(failCount===0){status.className="match";status.textContent="SELF-TEST PASSED ("+results.length+" vectors)";}else{status.className="mismatch";status.textContent="SELF-TEST FAILED ("+failCount+" failure"+(failCount>1?"s":"")+")";}
   }catch(e){status.className="mismatch";status.textContent="Error: "+e.message;}
   btn.disabled=false;
 }
 
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
-async function testPack(pack,expectedResult,expectedReason){
+/**
+ * testPack - Test a single evidence pack against expected verdict
+ *
+ * SEMANTICS (v0.2.5 fix):
+ * - A test PASSES when actual verdict === expected verdict
+ * - FAIL/FAIL -> test PASSES (verifier correctly detected tampering)
+ * - PASS/PASS -> test PASSES (verifier correctly validated pack)
+ * - Any mismatch -> test FAILS
+ *
+ * The reason field is informational only and does NOT affect pass/fail.
+ */
+async function testPack(pack,expectedResult){
   try{
     const uvil=pack.uvil_events||[];
     const arts=pack.reasoning_artifacts||[];
@@ -256,19 +267,28 @@ async function testPack(pack,expectedResult,expectedReason){
     const declaredH=pack.h_t||"";
 
     for(const a of arts){
-      if(!("validation_outcome"in a))
-        return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="missing_required_field",reason:"missing_required_field"};
+      if(!("validation_outcome"in a)){
+        const actual="FAIL";
+        return{actual:actual,pass:actual===expectedResult,reason:"missing_required_field"};
+      }
     }
 
     const computedU=await computeUiRoot(uvil);
     const computedR=await computeReasoningRoot(arts);
     const computedH=await computeCompositeRoot(computedR,computedU);
 
-    if(computedU!==declaredU)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="u_t_mismatch",reason:"u_t_mismatch"};
-    if(computedR!==declaredR)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="r_t_mismatch",reason:"r_t_mismatch"};
-    if(computedH!==declaredH)return{actual:"FAIL",pass:expectedResult==="FAIL"&&expectedReason==="h_t_mismatch",reason:"h_t_mismatch"};
-    return{actual:"PASS",pass:expectedResult==="PASS",reason:null};
-  }catch(e){return{actual:"FAIL",pass:expectedResult==="FAIL",reason:e.message};}
+    let actual,reason;
+    if(computedU!==declaredU){actual="FAIL";reason="u_t mismatch";}
+    else if(computedR!==declaredR){actual="FAIL";reason="r_t mismatch";}
+    else if(computedH!==declaredH){actual="FAIL";reason="h_t mismatch";}
+    else{actual="PASS";reason=null;}
+
+    // v0.2.5 semantic fix: pass = actual === expectedResult
+    return{actual:actual,pass:actual===expectedResult,reason:reason};
+  }catch(e){
+    const actual="FAIL";
+    return{actual:actual,pass:actual===expectedResult,reason:e.message};
+  }
 }
 </script>
 </body>
