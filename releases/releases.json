@@ -406,8 +406,8 @@
       }
     },
     "v0.2.4": {
-      "tag": "v0.2.4-verifier-syntax-fix",
-      "commit": "9bfca919d07da1a09450cdc954c288d7179d1797",
+      "tag": "v0.2.4-verifier-merkle-parity",
+      "commit": "22a58c420c2c5c083d3895f794d59ac6b521c2d7",
       "date_locked": "2026-01-03",
       "status": "current",
       "demo_url": "/demo/",
@@ -488,17 +488,21 @@
       },
       "delta": {
         "changed": [
-          "Verifier JS Unicode escape fixed (double-backslash-u)",
-          "Fixture directories have index.html pages",
-          "FOR_AUDITORS uses version-self-healing templates",
-          "Build assertion: Node.js syntax check on verifier JS",
-          "Build assertion: all fixture directories have index.html"
+          "JS verifier now uses Merkle tree with domain separation (Python parity)",
+          "Added domain constants: DOMAIN_UI_LEAF, DOMAIN_REASONING_LEAF, DOMAIN_LEAF, DOMAIN_NODE",
+          "Added merkleRoot(), computeUiRoot(), computeReasoningRoot() functions",
+          "examples.json regenerated with correct Merkle-based hashes",
+          "Added golden alignment test: test_verifier_golden_alignment.py (11 tests)",
+          "Added Python replay regression test: test_evidence_pack_python_replay.py (8 tests)"
         ],
         "unchanged": [
           "Tier A/B/C invariant counts (10/1/3)",
-          "Cryptographic enforcement (H_t, R_t, U_t)",
-          "Demo functionality and verification flow",
-          "Hash contract (hashes computed identically)"
+          "Python attestation code (attestation/dual_root.py)",
+          "Demo functionality and verification flow"
+        ],
+        "fixed": [
+          "valid_boundary_demo self-test now returns PASS (was FAIL due to u_t_mismatch)",
+          "JS verifier computes identical U_t/R_t/H_t as Python replay_verify"
         ],
         "still_not_enforced": [
           "FV Mechanical Verification (no Lean/Z3)",
