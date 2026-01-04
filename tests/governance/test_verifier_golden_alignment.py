@@ -25,7 +25,7 @@ from attestation.dual_root import (
 
 
 REPO_ROOT = Path(__file__).parent.parent.parent
-EXAMPLES_FILE = REPO_ROOT / "releases" / "evidence_pack_examples.v0.2.3.json"
+EXAMPLES_FILE = REPO_ROOT / "releases" / "evidence_pack_examples.v0.2.4.json"
 
 
 class TestGoldenAlignment:
