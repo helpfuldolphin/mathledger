@@ -35,6 +35,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).parent.parent
 SITE_DIR = REPO_ROOT / "site"
 RELEASES_FILE = REPO_ROOT / "releases" / "releases.json"
+FROZEN_DIR = REPO_ROOT / "releases" / "frozen"
 
 # Repository URL (single source of truth)
 REPO_URL = "https://github.com/helpfuldolphin/mathledger"
@@ -105,6 +106,182 @@ def get_version_config(releases: dict, version: str) -> dict:
             ]
 
     return config
+
+
+# ============================================================================
+# FROZEN VERSION SYSTEM
+# 
+# Frozen versions are immutable-by-construction. Once frozen, a version's
+# site/v{X}/ directory will never be regenerated from templates - instead
+# it is verified against the frozen manifest.
+#
+# Freeze manifests are stored in releases/frozen/{version}.json and contain:
+# - frozen_at: ISO timestamp when frozen
+# - frozen_by_commit: git commit at freeze time
+# - content_hash: SHA256 of all file hashes concatenated (quick comparison)
+# - files: {relative_path: sha256} for all files in version directory
+# ============================================================================
+
+
+def get_current_commit() -> str:
+    """Get current git commit hash."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=REPO_ROOT,
+        )
+        return result.stdout.strip() if result.returncode == 0 else "unknown"
+    except Exception:
+        return "unknown"
+
+
+def is_version_frozen(version: str) -> bool:
+    """Check if a version has a freeze manifest."""
+    freeze_file = FROZEN_DIR / f"{version}.json"
+    return freeze_file.exists()
+
+
+def load_freeze_manifest(version: str) -> dict | None:
+    """Load freeze manifest for a version. Returns None if not frozen."""
+    freeze_file = FROZEN_DIR / f"{version}.json"
+    if not freeze_file.exists():
+        return None
+    with open(freeze_file, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def compute_version_hashes(version_dir: Path) -> dict[str, str]:
+    """Compute SHA256 hashes for all files in a version directory.
+    
+    Returns dict of {relative_path: sha256}.
+    """
+    hashes = {}
+    for path in sorted(version_dir.rglob("*")):
+        if path.is_file():
+            rel_path = str(path.relative_to(version_dir)).replace("\\", "/")
+            h = hashlib.sha256()
+            with open(path, "rb") as f:
+                for chunk in iter(lambda: f.read(8192), b""):
+                    h.update(chunk)
+            hashes[rel_path] = h.hexdigest()
+    return hashes
+
+
+def compute_content_hash(file_hashes: dict[str, str]) -> str:
+    """Compute a single hash from all file hashes (for quick comparison)."""
+    # Sort by path and concatenate all hashes
+    combined = "".join(file_hashes[k] for k in sorted(file_hashes.keys()))
+    return hashlib.sha256(combined.encode()).hexdigest()
+
+
+def freeze_version(version: str) -> dict:
+    """Create freeze manifest for a built version.
+    
+    Returns the freeze manifest dict.
+    Raises BuildError if version directory doesn't exist.
+    """
+    version_dir = SITE_DIR / version
+    if not version_dir.exists():
+        raise BuildError(f"Cannot freeze {version}: directory does not exist. Build first.")
+    
+    # Ensure frozen directory exists
+    FROZEN_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Compute hashes
+    file_hashes = compute_version_hashes(version_dir)
+    content_hash = compute_content_hash(file_hashes)
+    
+    # Create manifest
+    manifest = {
+        "version": version,
+        "frozen_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "frozen_by_commit": get_current_commit(),
+        "content_hash": content_hash,
+        "file_count": len(file_hashes),
+        "files": file_hashes,
+    }
+    
+    # Write manifest
+    freeze_file = FROZEN_DIR / f"{version}.json"
+    with open(freeze_file, "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
+    
+    print(f"  FROZEN {version}: {len(file_hashes)} files, hash={content_hash[:16]}...")
+    return manifest
+
+
+def verify_frozen_version(version: str) -> tuple[bool, list[str]]:
+    """Verify a frozen version's files match the freeze manifest.
+    
+    Returns (success, errors) where errors is a list of mismatch descriptions.
+    """
+    freeze_manifest = load_freeze_manifest(version)
+    if freeze_manifest is None:
+        return False, [f"{version} is not frozen"]
+    
+    version_dir = SITE_DIR / version
+    if not version_dir.exists():
+        return False, [f"{version} directory does not exist"]
+    
+    errors = []
+    current_hashes = compute_version_hashes(version_dir)
+    expected_hashes = freeze_manifest["files"]
+    
+    # Check for missing files
+    for path in expected_hashes:
+        if path not in current_hashes:
+            errors.append(f"MISSING: {path}")
+    
+    # Check for extra files
+    for path in current_hashes:
+        if path not in expected_hashes:
+            errors.append(f"EXTRA: {path}")
+    
+    # Check for modified files
+    for path in expected_hashes:
+        if path in current_hashes and current_hashes[path] != expected_hashes[path]:
+            errors.append(f"MODIFIED: {path}")
+    
+    return len(errors) == 0, errors
+
+
+def check_immutability(releases: dict) -> bool:
+    """Verify all frozen versions are immutable. Returns True if all pass."""
+    print(chr(10) + "=" * 60)
+    print("IMMUTABILITY CHECK: Verifying frozen versions")
+    print("=" * 60)
+    
+    all_pass = True
+    frozen_count = 0
+    
+    for version in releases["versions"]:
+        if is_version_frozen(version):
+            frozen_count += 1
+            success, errors = verify_frozen_version(version)
+            if success:
+                manifest = load_freeze_manifest(version)
+                print(f"[OK] {version}: {manifest['file_count']} files match frozen state")
+            else:
+                print(f"[FAIL] {version}: IMMUTABILITY VIOLATED")
+                for error in errors[:5]:  # Show first 5 errors
+                    print(f"       {error}")
+                if len(errors) > 5:
+                    print(f"       ... and {len(errors) - 5} more errors")
+                all_pass = False
+        else:
+            print(f"[SKIP] {version}: not frozen")
+    
+    print()
+    if frozen_count == 0:
+        print("No frozen versions found.")
+    elif all_pass:
+        print(f"All {frozen_count} frozen versions are immutable.")
+    else:
+        print("IMMUTABILITY VIOLATION DETECTED. See errors above.")
+    
+    return all_pass
 
 
 # CSS styles (shared across all pages)
@@ -1038,16 +1215,46 @@ def collect_file_checksums(directory: Path, base_path: Path) -> list[dict]:
     return files
 
 
-def build_version(releases: dict, version: str, build_time: str) -> dict:
-    """Build static site for a specific version. Returns manifest data."""
+def build_version(releases: dict, version: str, build_time: str, skip_frozen: bool = True) -> dict:
+    """Build static site for a specific version. Returns manifest data.
+    
+    If skip_frozen=True (default), frozen versions are verified but not regenerated.
+    """
     config = get_version_config(releases, version)
+    version_dir = SITE_DIR / version
+
+    # Check frozen status
+    if is_version_frozen(version):
+        freeze_manifest = load_freeze_manifest(version)
+        if version_dir.exists():
+            if skip_frozen:
+                # Verify frozen version matches
+                success, errors = verify_frozen_version(version)
+                if success:
+                    print(f"FROZEN {version}: verified {freeze_manifest['file_count']} files (skipping rebuild)")
+                    # Return existing manifest
+                    manifest_file = version_dir / "manifest.json"
+                    if manifest_file.exists():
+                        return json.loads(manifest_file.read_text(encoding="utf-8"))
+                    return freeze_manifest
+                else:
+                    raise BuildError(
+                        f"FROZEN {version}: IMMUTABILITY VIOLATION!" +
+                        f"  The version directory has been modified after freezing." +
+                        f"  Errors: {errors[:3]}..." +
+                        f"  To fix: restore from git or delete site/{version}/ and rebuild from archive."
+                    )
+            else:
+                print(f"Warning: Rebuilding frozen version {version} (--no-skip-frozen)")
+        else:
+            # Frozen but directory missing - this is allowed, we'll rebuild and verify
+            print(f"FROZEN {version}: directory missing, will rebuild and verify")
 
     print(f"Building {version}...")
     print(f"  Tag: {config['tag']}")
     print(f"  Commit: {config['commit']}")
     print(f"  Status: {config['status']}")
 
-    version_dir = SITE_DIR / version
     version_dir.mkdir(parents=True, exist_ok=True)
 
     # Build version landing page
@@ -1221,6 +1428,19 @@ def build_version(releases: dict, version: str, build_time: str) -> dict:
         json.dumps(manifest, indent=2), encoding="utf-8"
     )
     print(f"  Generated manifest.json ({len(all_files)} files)")
+
+    # Post-build: verify against freeze manifest if version was frozen
+    if is_version_frozen(version):
+        success, errors = verify_frozen_version(version)
+        if success:
+            print(f"  FREEZE VERIFIED: rebuilt output matches frozen manifest")
+        else:
+            raise BuildError(
+                f"FREEZE MISMATCH: rebuilt {version} does not match frozen manifest!" +
+                f"  This means templates or source files have changed since freeze." +
+                f"  Errors: {errors[:5]}" +
+                f"  To fix: either update freeze manifest or restore old templates."
+            )
 
     return manifest
 
@@ -2069,10 +2289,61 @@ def main():
         action="store_true",
         help="Skip verification after build",
     )
+    # Freezing options for immutable versions
+    parser.add_argument(
+        "--freeze",
+        metavar="VERSION",
+        help="Freeze a specific version (creates immutable manifest)",
+    )
+    parser.add_argument(
+        "--freeze-all",
+        action="store_true",
+        help="Freeze all built versions",
+    )
+    parser.add_argument(
+        "--check-immutability",
+        action="store_true",
+        help="Verify all frozen versions match their manifests",
+    )
+    parser.add_argument(
+        "--no-skip-frozen",
+        action="store_true",
+        help="Rebuild frozen versions instead of skipping (with verification)",
+    )
     args = parser.parse_args()
 
     # Load canonical release metadata
     releases = load_releases()
+
+    # Check-immutability mode
+    if args.check_immutability:
+        success = check_immutability(releases)
+        sys.exit(0 if success else 1)
+
+    # Freeze-only mode
+    if args.freeze:
+        if args.freeze not in releases["versions"]:
+            print(f"ERROR: Unknown version: {args.freeze}")
+            sys.exit(1)
+        freeze_version(args.freeze)
+        sys.exit(0)
+
+    # Freeze-all mode
+    if args.freeze_all:
+        print("Freezing all built versions...")
+        frozen_count = 0
+        for v in releases["versions"]:
+            version_dir = SITE_DIR / v
+            if version_dir.exists():
+                if not is_version_frozen(v):
+                    freeze_version(v)
+                    frozen_count += 1
+                else:
+                    print(f"  {v}: already frozen")
+            else:
+                print(f"  {v}: not built, skipping")
+        print(f"Frozen {frozen_count} versions.")
+        sys.exit(0)
 
     # Verify-only mode
     if args.verify:
@@ -2084,19 +2355,25 @@ def main():
 
     # Build mode
     if args.clean and SITE_DIR.exists():
+        # Warn about frozen versions being cleaned
+        frozen_versions = [v for v in releases["versions"] if is_version_frozen(v)]
+        if frozen_versions:
+            print(f"Warning: Cleaning will remove frozen version directories: {frozen_versions}")
+            print("         Frozen manifests in releases/frozen/ are preserved.")
         shutil.rmtree(SITE_DIR)
         print(f"Cleaned {SITE_DIR}")
 
     SITE_DIR.mkdir(parents=True, exist_ok=True)
 
     build_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    skip_frozen = not args.no_skip_frozen
 
     if args.all:
         for v in releases["versions"]:
-            build_version(releases, v, build_time)
+            build_version(releases, v, build_time, skip_frozen=skip_frozen)
     else:
         version = args.version or releases["current_version"]
-        build_version(releases, version, build_time)
+        build_version(releases, version, build_time, skip_frozen=skip_frozen)
 
     build_root_files(releases, build_time)
 
