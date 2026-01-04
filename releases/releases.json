@@ -735,7 +735,7 @@
     },
     "v0.2.7": {
       "tag": "v0.2.7-verifier-parity",
-      "commit": "TO_BE_SET_AFTER_TAG",
+      "commit": "5d01b4b1446ee323b10ff43c79a9b49589d68061",
       "date_locked": "2026-01-04",
       "status": "current",
       "demo_url": "/demo/",

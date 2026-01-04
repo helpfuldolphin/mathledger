@@ -1,7 +1,7 @@
 {
   "current_version": "v0.2.7",
   "current_tag": "v0.2.7-verifier-parity",
-  "current_commit": "TO_BE_SET_AFTER_TAG",
+  "current_commit": "5d01b4b1446ee323b10ff43c79a9b49589d68061",
   "versions": [
     "v0",
     "v0.2.0",
