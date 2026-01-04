@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Integrity Audit (2026-01-03) — MathLedger v0.2.6</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0.2.6</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0.2.6-verifier-correctness</code> |
+            Commit: <code>PLACEHOLDER</code> |
+            Locked: 2026-01-04
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 10</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0.2.6/">Archive</a> <a href="/v0.2.6/docs/scope-lock/">Scope</a> <a href="/v0.2.6/docs/explanation/">Explanation</a> <a href="/v0.2.6/docs/invariants/">Invariants</a> <a href="/v0.2.6/docs/field-manual/">Field Manual</a> <a href="/v0.2.6/fixtures/">Fixtures</a> <a href="/v0.2.6/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>Link Integrity Audit (2026-01-03) <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <p>\# HOSTILE EXTERNAL AUDIT: MathLedger Link Integrity</p>
+<p>\<em>\</em>Auditor Role:\<em>\</em> Hostile external auditor</p>
+<p>\<em>\</em>Goal:\<em>\</em> Break epistemic integrity by finding broken, misleading, or inconsistent links</p>
+<p>\<em>\</em>Date:\<em>\</em> 2026-01-03</p>
+<p>\<em>\</em>Assumption:\<em>\</em> This will be reviewed by an acquisition committee</p>
+<hr>
+<p>\## HOMEPAGE ANALYSIS (https://mathledger.ai)</p>
+<p>\<em>\</em>Redirect Behavior:\<em>\</em></p>
+<p>\- Requested: <code>https://mathledger.ai</code></p>
+<p>\- Actual: <code>https://mathledger.ai/v0.2.1/</code></p>
+<p>\- \<em>\</em>ISSUE:\<em>\</em> Silent redirect to versioned path. No indication that bare domain redirects to v0.2.1. An auditor expecting a version-neutral landing page gets dumped into a specific version without warning.</p>
+<p>\<em>\</em>Visible Links on Homepage (v0.2.1):\<em>\</em></p>
+<p>\### Header Navigation</p>
+<p>1\. Scope → <code>/v0.2.1/docs/scope-lock/</code></p>
+<p>2\. Explanation → <code>/v0.2.1/docs/explanation/</code></p>
+<p>3\. Invariants → <code>/v0.2.1/docs/invariants/</code></p>
+<p>4\. Fixtures → <code>/v0.2.1/fixtures/</code></p>
+<p>5\. Evidence → <code>/v0.2.1/evidence-pack/</code></p>
+<p>6\. All Versions → <code>/versions/</code></p>
+<p>\### Body Links</p>
+<p>7\. "Open Interactive Demo" → <code>/demo/</code></p>
+<p>8\. "5-minute auditor checklist" → <code>docs/for-auditors/</code> (RELATIVE PATH - RED FLAG)</p>
+<p>\### Archive Contents Table</p>
+<p>9\. For Auditors → (not directly linked, just text in table)</p>
+<p>10\. Scope Lock → (duplicate of header)</p>
+<p>11\. Explanation → (duplicate of header)</p>
+<p>12\. Invariants → (duplicate of header)</p>
+<p>13\. Hostile Rehearsal → (mentioned in table, no visible link)</p>
+<p>14\. Fixtures → (duplicate of header)</p>
+<p>15\. Evidence Pack → (duplicate of header)</p>
+<p>16\. Manifest → <code>manifest.json</code> (mentioned, need to test)</p>
+<p>\### Footer</p>
+<p>17\. "Site built from commit 27a94c8a58139cb10349f6418336c618f528cbab" - no link to repo</p>
+<hr>
+<p>\## LINK TESTING: v0.2.1 HOMEPAGE</p>
+<p>\### TEST 1: "5-minute auditor checklist" link</p>
+<p>\<em>\</em>Expected URL:\<em>\</em> <code>/v0.2.1/docs/for-auditors/</code> (absolute path)</p>
+<p>\<em>\</em>Actual URL:\<em>\</em> <code>https://mathledger.ai/v0.2.1/docs/for-auditors/</code></p>
+<p>\<em>\</em>Status:\<em>\</em> ✅ 200 OK</p>
+<p>\<em>\</em>Severity:\<em>\</em> MINOR</p>
+<p>\<em>\</em>Issue:\<em>\</em> The link on homepage was <code>docs/for-auditors/</code> (relative path), which worked due to browser resolution, but is inconsistent with other links that use absolute paths starting with <code>/v0.2.1/</code>. This creates ambiguity about whether the path is version-locked or not.</p>
+<p>\<em>\</em>Audit Impact:\<em>\</em> MINOR - Link works but path inconsistency suggests sloppy implementation.</p>
+<hr>
+<p>\### CRITICAL FINDING: For Auditors Page Claims vs Reality</p>
+<p>The "For Auditors" page provides a "5-Minute Verification Checklist" with the following steps:</p>
+<p>\<em>\</em>Step 1:\<em>\</em> Navigate to <code>/demo/</code> and verify version banner shows <code>v0.2.1-cohesion</code></p>
+<p>\<em>\</em>PROBLEM:\<em>\</em> We already know from previous audit that <code>/demo/health</code> reports version <code>0.2.0</code> with tag <code>v0.2.0-demo-lock</code>, NOT <code>v0.2.1-cohesion</code>. This instruction will FAIL for any auditor following it.</p>
+<p>\<em>\</em>Step 3:\<em>\</em> "After running the boundary demo, click 'Download Evidence Pack'"</p>
+<p>\<em>\</em>PROBLEM:\<em>\</em> We already verified that the boundary demo does NOT generate downloadable evidence packs. This instruction is IMPOSSIBLE to follow.</p>
+<p>\<em>\</em>Step 4:\<em>\</em> "Open the Evidence Pack Verifier" and "Upload the evidence pack JSON you downloaded"</p>
+<p>\<em>\</em>PROBLEM:\<em>\</em> No "Evidence Pack Verifier" tool was found in previous audit. Where is this tool? No link provided.</p>
+<p>\<em>\</em>Step 5:\<em>\</em> "Tamper Test" - modify evidence pack and re-upload</p>
+<p>\<em>\</em>PROBLEM:\<em>\</em> Cannot complete because Steps 3 and 4 are already impossible.</p>
+<p>\<em>\</em>SEVERITY:\<em>\</em> \<em>\</em>BLOCKING\<em>\</em></p>
+<p>\<em>\</em>Audit Impact:\<em>\</em> The primary auditor entry point provides instructions that CANNOT BE COMPLETED. This is either:</p>
+<p>1\. Documentation for a future version that doesn't exist yet</p>
+<p>2\. Documentation that was never tested against the live system</p>
+<p>3\. Intentional misdirection</p>
+<p>Any acquisition committee following these instructions will conclude the system is non-functional or fraudulent.</p>
+<hr>
+<p>\## NEW LINKS DISCOVERED ON FOR-AUDITORS PAGE</p>
+<p>Testing additional links found on this page:</p>
+<p>\### TEST 2: /demo/ link</p>
+<p>\<em>\</em>Expected:\<em>\</em> Demo showing version <code>v0.2.1-cohesion</code> (per auditor checklist Step 1)</p>
+<p>\<em>\</em>Actual:\<em>\</em> Demo shows <code>v0.2.0 | v0.2.0-demo-lock | 27a94c8a5813</code></p>
+<p>\<em>\</em>Status:\<em>\</em> ✅ 200 OK (page loads)</p>
+<p>\<em>\</em>Severity:\<em>\</em> \<em>\</em>BLOCKING\<em>\</em></p>
+<p>\<em>\</em>CRITICAL FAILURE:\<em>\</em> The "For Auditors" page explicitly instructs auditors to:</p>
+<blockquote>"Verify the version banner shows v0.2.1-cohesion"</blockquote>
+<p>\<em>\</em>Reality:\<em>\</em> The version banner shows <code>v0.2.0-demo-lock</code></p>
+<p>\<em>\</em>This is a BLOCKING audit failure.\<em>\</em> The first verification step in the auditor checklist FAILS. An auditor following the official instructions will immediately conclude:</p>
+<p>1\. The documentation is wrong</p>
+<p>2\. The demo is outdated</p>
+<p>3\. The system lacks version control discipline</p>
+<p>4\. The "immutable archive" claim is undermined</p>
+<p>\<em>\</em>Violates:\<em>\</em> Immutability expectations - the archive claims to be v0.2.1 but links to v0.2.0 demo</p>
+<p>\<em>\</em>Creates:\<em>\</em> Audit ambiguity - which version is actually being audited?</p>
+<p>\<em>\</em>Acceptable if documented?\<em>\</em> NO - this is explicitly documented INCORRECTLY in the auditor checklist</p>
+<hr>
+<p>\## DEMO PAGE LINK TESTING</p>
+<p>New links discovered on demo page:</p>
+<p>\### TEST 3: "Scope Lock" link from demo</p>
+<p>\<em>\</em>URL:\<em>\</em> <code>/demo/docs/view/V0\_LOCK.md</code></p>
+<p>\<em>\</em>Actual:\<em>\</em> <code>https://mathledger.ai/demo/docs/view/V0\_LOCK.md</code></p>
+<p>\<em>\</em>Status:\<em>\</em> ✅ 200 OK</p>
+<p>\<em>\</em>Severity:\<em>\</em> MAJOR</p>
+<p>\<em>\</em>CRITICAL FINDING: Version Confusion Deepens\<em>\</em></p>
+<p>This document is titled "V0 Scope Lock" and describes "MathLedger Demo v0". It contains release notes for:</p>
+<p>1\. \<em>\</em>v0-demo-lock\<em>\</em> (commit: ab8f51ab389aed7b3412cb987fc70d0d4f2bbe0b, date: 2026-01-02)</p>
+<p>2\. \<em>\</em>v0.2.0-demo-lock\<em>\</em> (commit: 27a94c8a58139cb10349f6418336c618f528cbab, date: 2026-01-02)</p>
+<p>\<em>\</em>Problems:\<em>\</em></p>
+<p>1\. \<em>\</em>The demo shows v0.2.0\<em>\</em> but this document describes both "v0" and "v0.2.0" as if they're the same thing</p>
+<p>2\. \<em>\</em>The archive claims v0.2.1\<em>\</em> (commit: 27a94c8a5813) but the demo runs v0.2.0 (commit: 27a94c8a5813 - SAME SHORT HASH)</p>
+<p>3\. \<em>\</em>The full commit hash in v0.2.0 release notes\<em>\</em> is 27a94c8a58139cb10349f6418336c618f528cbab, which matches the archive's full hash</p>
+<p>4\. \<em>\</em>This means v0.2.0 and v0.2.1 are built from THE SAME COMMIT\<em>\</em> but tagged differently</p>
+<p>\<em>\</em>Audit Impact:\<em>\</em></p>
+<p>This is either:</p>
+<p>\- A tagging/deployment error where v0.2.1 archive was built but demo wasn't updated</p>
+<p>\- Intentional version forking from the same codebase</p>
+<p>\- Evidence of poor version control discipline</p>
+<p>\<em>\</em>Violates:\<em>\</em> Immutability expectations - same commit, different version tags</p>
+<p>\<em>\</em>Creates:\<em>\</em> SEVERE audit ambiguity - which version is actually being audited?</p>
+<p>\<em>\</em>Acceptable if documented?\<em>\</em> NO - the auditor checklist explicitly claims the demo shows v0.2.1-cohesion</p>
+<hr>
+<p>\## ARCHIVE CONTENTS TABLE LINKS (v0.2.1)</p>
+<p>All links use RELATIVE paths (no leading <code>/v0.2.1/</code>):</p>
+<p>1\. For Auditors → <code>docs/for-auditors/</code></p>
+<p>2\. Scope Lock → <code>docs/scope-lock/</code></p>
+<p>3\. Explanation → <code>docs/explanation/</code></p>
+<p>4\. Invariants → <code>docs/invariants/</code></p>
+<p>5\. Hostile Rehearsal → <code>docs/hostile-rehearsal/</code></p>
+<p>6\. Fixtures → <code>fixtures/</code></p>
+<p>7\. Evidence Pack → <code>evidence-pack/</code></p>
+<p>8\. Manifest → <code>manifest.json</code></p>
+<p>\<em>\</em>Note:\<em>\</em> These relative paths are inconsistent with the header navigation which uses absolute paths like <code>/v0.2.1/docs/scope-lock/</code>. Testing each now.</p>
+<hr>
+<p>\### TEST 4: "Hostile Rehearsal" link</p>
+<p>\<em>\</em>URL:\<em>\</em> <code>docs/hostile-rehearsal/</code></p>
+<p>\<em>\</em>Actual:\<em>\</em> <code>https://mathledger.ai/v0.2.1/docs/hostile-rehearsal/</code></p>
+<p>\<em>\</em>Status:\<em>\</em> ✅ 200 OK</p>
+<p>\<em>\</em>Severity:\<em>\</em> OK</p>
+<p>\<em>\</em>Content:\<em>\</em> Comprehensive Q\&A document for defending the demo under adversarial questioning. Well-structured with 10 hostile questions and prepared answers.</p>
+<p>\<em>\</em>Observation:\<em>\</em> This document is labeled "Version: v0.1 (MV arithmetic validator added)" but appears in the v0.2.1 archive. This suggests the document was created for v0.1 and hasn't been updated for v0.2.1, or the version label refers to the content version, not the archive version.</p>
+<p>\<em>\</em>Minor Issue:\<em>\</em> Document version labeling could create confusion about which version it applies to.</p>
+<hr>
+<p>\### TEST 5: manifest.json</p>
+<p>\<em>\</em>URL:\<em>\</em> <code>manifest.json</code> (relative)</p>
+<p>\<em>\</em>Actual:\<em>\</em> <code>https://mathledger.ai/v0.2.1/manifest.json</code></p>
+<p>\<em>\</em>Status:\<em>\</em> ✅ 200 OK</p>
+<p>\<em>\</em>Severity:\<em>\</em> MAJOR</p>
+<p>\<em>\</em>CRITICAL DISCOVERY: Build Commit Mismatch\<em>\</em></p>
+<p>The manifest.json reveals a THIRD commit hash:</p>
+<pre><code class="language-json">
+{
+<p>&nbsp; "version": "v0.2.1",</p>
+<p>&nbsp; "tag": "v0.2.1-cohesion",</p>
+<p>&nbsp; "commit": "27a94c8a58139cb10349f6418336c618f528cbab",</p>
+<p>&nbsp; "build\_commit": "cd2507d5f14ebf8ede0d4ebdba4f466799e18b5e",</p>
+<p>&nbsp; "build\_time": "2026-01-03T19:46:25Z"</p>
+<p>}</p>
+</code></pre>
+<p>\<em>\</em>Analysis:\<em>\</em></p>
+<p>1\. \<em>\</em>Content commit:\<em>\</em> 27a94c8a58139cb10349f6418336c618f528cbab (what the archive documents)</p>
+<p>2\. \<em>\</em>Build commit:\<em>\</em> cd2507d5f14ebf8ede0d4ebdba4f466799e18b5e (what built the static site)</p>
+<p>3\. \<em>\</em>Build time:\<em>\</em> 2026-01-03T19:46:25Z</p>
+<p>\<em>\</em>But the homepage footer says:\<em>\</em></p>
+<blockquote>"Site built from commit 27a94c8a58139cb10349f6418336c618f528cbab at 2026-01-03T18:55:59Z"</blockquote>
+<p>\<em>\</em>CONTRADICTIONS:\<em>\</em></p>
+<p>1\. \<em>\</em>Build commit mismatch:\<em>\</em> Footer claims site built from 27a94c8a5813, manifest says cd2507d5</p>
+<p>2\. \<em>\</em>Build time mismatch:\<em>\</em> Footer says 18:55:59Z, manifest says 19:46:25Z (51 minutes later)</p>
+<p>3\. \<em>\</em>This means the site was rebuilt AFTER the initial build\<em>\</em>, but the footer wasn't updated</p>
+<p>\<em>\</em>Audit Impact:\<em>\</em></p>
+<p>This destroys the "immutable archive" claim. The manifest proves the site was rebuilt at 19:46:25Z from commit cd2507d5, but the footer still shows the OLD build info (18:55:59Z, commit 27a94c8a5813). This is either:</p>
+<p>1\. A deployment error where the manifest was updated but the footer wasn't</p>
+<p>2\. Evidence that the "immutable" archive has been modified</p>
+<p>3\. A fundamental misunderstanding of what "immutable" means</p>
+<p>\<em>\</em>Violates:\<em>\</em> Immutability expectations - the archive has been rebuilt but claims to be immutable</p>
+<p>\<em>\</em>Creates:\<em>\</em> SEVERE audit ambiguity - which commit actually generated this archive?</p>
+<p>\<em>\</em>Acceptable if documented?\<em>\</em> NO - this directly contradicts the "immutable once published" claim</p>
+<p>\<em>\</em>Severity:\<em>\</em> \<em>\</em>BLOCKING\<em>\</em> - The core epistemic claim (immutability) is violated by the manifest itself</p>
+<hr>
+<p>\### ADDITIONAL FINDINGS FROM MANIFEST</p>
+<p>\<em>\</em>Evidence Pack Verifier Tool Found:\<em>\</em></p>
+<p>The manifest lists:</p>
+<pre><code class="language-">
+"evidence-pack/verify/index.html"
+</code></pre>
+<p>This is the "Evidence Pack Verifier" mentioned in the auditor checklist but never linked from the main pages. Testing this path now.</p>
+<hr>
+<p>\### TEST 6: Evidence Pack Verifier (Hidden Tool)</p>
+<p>\<em>\</em>URL:\<em>\</em> <code>/v0.2.1/evidence-pack/verify/</code></p>
+<p>\<em>\</em>Status:\<em>\</em> ✅ 200 OK</p>
+<p>\<em>\</em>Severity:\<em>\</em> \<em>\</em>MAJOR\<em>\</em></p>
+<p>\<em>\</em>CRITICAL FINDING: Tool Exists But Is Hidden\<em>\</em></p>
+<p>The "Evidence Pack Verifier" mentioned in the auditor checklist Step 4 DOES exist at:</p>
+<code>https://mathledger.ai/v0.2.1/evidence-pack/verify/</code>
+<p>\<em>\</em>Problems:\<em>\</em></p>
+<p>1\. \<em>\</em>NOT LINKED from any main page\<em>\</em> - not on homepage, not on evidence pack page, not on for-auditors page</p>
+<p>2\. \<em>\</em>Only discoverable via manifest.json\<em>\</em> - an auditor following the official checklist would have no way to find this tool</p>
+<p>3\. \<em>\</em>The auditor checklist says:\<em>\</em> "Open the Evidence Pack Verifier" but provides NO LINK</p>
+<p>4\. \<em>\</em>This makes Step 4 and Step 5 of the auditor checklist IMPOSSIBLE\<em>\</em> for a cold auditor</p>
+<p>\<em>\</em>Audit Impact:\<em>\</em></p>
+<p>The auditor checklist provides a 5-step verification process, but Steps 4 and 5 (verify evidence pack, tamper test) are \<em>\</em>blocked by missing navigation\<em>\</em>. An auditor would need to:</p>
+<p>1\. Guess the URL structure, OR</p>
+<p>2\. Read the manifest.json and discover the path, OR</p>
+<p>3\. Give up and conclude the tool doesn't exist</p>
+<p>\<em>\</em>This is a BLOCKING usability failure.\<em>\</em> The tool exists and appears functional, but is completely hidden from the documented audit path.</p>
+<p>\<em>\</em>Violates:\<em>\</em> Audit accessibility - tool exists but is undiscoverable</p>
+<p>\<em>\</em>Creates:\<em>\</em> BLOCKING audit ambiguity - auditors cannot complete the official checklist</p>
+<p>\<em>\</em>Acceptable if documented?\<em>\</em> NO - the checklist explicitly instructs auditors to use this tool but doesn't link to it</p>
+<p>\<em>\</em>Recommendation:\<em>\</em> Add a prominent link to <code>/v0.2.1/evidence-pack/verify/</code> from:</p>
+<p>1\. The for-auditors page (Step 4)</p>
+<p>2\. The evidence-pack page</p>
+<p>3\. The homepage archive contents table</p>
+<hr>
+<p>\### TEST 7: /versions/ page</p>
+<p>\<em>\</em>URL:\<em>\</em> <code>/versions/</code></p>
+<p>\<em>\</em>Status:\<em>\</em> ✅ 200 OK</p>
+<p>\<em>\</em>Severity:\<em>\</em> OK</p>
+<p>\<em>\</em>Versions Identified:\<em>\</em></p>
+<table><tr><th>Version</th><th>Status</th><th>Locked</th><th>Commit (short)</th><th>Link</th></tr></table>
+|---------|--------|--------|----------------|------|
+<table><tr><th>v0</th><th>SUPERSEDED BY V0.2.1</th><th>2026-01-02</th><th>ab8f51a</th><th>/v0/</th></tr></table>
+<table><tr><th>v0.2.0</th><th>SUPERSEDED BY V0.2.1</th><th>2026-01-02</th><th>27a94c8</th><th>/v0.2.0/ + /demo/</th></tr></table>
+<table><tr><th>v0.2.1</th><th>CURRENT</th><th>2026-01-03</th><th>27a94c8</th><th>/v0.2.1/ + /demo/</th></tr></table>
+<p>\<em>\</em>Key Observations:\<em>\</em></p>
+<p>1\. \<em>\</em>v0.2.0 and v0.2.1 share the same commit\<em>\</em> (27a94c8) - confirms earlier finding</p>
+<p>2\. \<em>\</em>Both v0.2.0 and v0.2.1 link to the SAME /demo/\<em>\</em> - this explains why demo shows v0.2.0</p>
+<p>3\. \<em>\</em>Footer build time matches manifest:\<em>\</em> "Site built at 2026-01-03T19:46:25Z" (matches manifest, NOT homepage footer)</p>
+<p>\<em>\</em>CRITICAL FINDING: Demo Sharing\<em>\</em></p>
+<p>The versions table shows:</p>
+<p>\- v0.2.0 | Demo</p>
+<p>\- v0.2.1 | Demo</p>
+<p>Both link to <code>/demo/</code>, which means \<em>\</em>there is only ONE demo instance\<em>\</em> serving both versions. This explains why:</p>
+<p>\- The v0.2.1 archive links to a demo that reports v0.2.0</p>
+<p>\- The auditor checklist fails (expects v0.2.1-cohesion, gets v0.2.0-demo-lock)</p>
+<p>\<em>\</em>This is architectural, not a deployment error.\<em>\</em> The demo is intentionally shared between versions.</p>
+<p>\<em>\</em>Audit Impact:\<em>\</em></p>
+<p>This design choice violates the "immutable version snapshot" claim. If v0.2.1 is supposed to be a "complete, immutable snapshot," it should have its own demo instance showing v0.2.1, not share a demo with v0.2.0.</p>
+<p>\<em>\</em>Acceptable if documented?\<em>\</em> MAYBE - but it's not documented, and it directly contradicts the auditor checklist which expects version-specific demos.</p>
+<hr>
+<p>\## CROSS-VERSION LINK TESTING</p>
+<p>Now testing links across versions to check for broken cross-references.</p>
+<p>\### TEST 8: v0 archive</p>
+<p>\<em>\</em>URL:\<em>\</em> <code>/v0/</code></p>
+<p>\<em>\</em>Status:\<em>\</em> ✅ 200 OK</p>
+<p>\<em>\</em>Severity:\<em>\</em> MINOR</p>
+<p>\<em>\</em>Version Info:\<em>\</em></p>
+<p>\- Status: SUPERSEDED BY V0.2.0 (but versions page says "SUPERSEDED BY V0.2.1")</p>
+<p>\- Tag: v0-demo-lock</p>
+<p>\- Commit: ab8f51ab389a</p>
+<p>\- Locked: 2026-01-02</p>
+<p>\- Tier A: 9 (not 10 like v0.2.1)</p>
+<p>\<em>\</em>INCONSISTENCY FOUND:\<em>\</em></p>
+<p>The v0 archive header says:</p>
+<blockquote>"Status: SUPERSEDED BY V0.2.0"</blockquote>
+<p>But the /versions/ page says:</p>
+<blockquote>"v0: SUPERSEDED BY V0.2.1"</blockquote>
+<p>\<em>\</em>Which is it?\<em>\</em> Was v0 superseded by v0.2.0 or v0.2.1? This is sloppy version management.</p>
+<p>\<em>\</em>Demo Availability:\<em>\</em></p>
+<p>v0 has NO hosted demo - only local execution instructions. This is consistent and honest (unlike v0.2.0/v0.2.1 which share a demo).</p>
+<p>\<em>\</em>Archive Contents:\<em>\</em></p>
+<p>v0 has NO "For Auditors" page and NO "Hostile Rehearsal" page. These were added in later versions.</p>
+<hr>
+<p>\## RAPID LINK TESTING: v0 ARCHIVE</p>
+<p>Testing all links in v0 archive systematically:</p>
+<p>\### TEST 9: v0.2.0 archive</p>
+<p>\<em>\</em>URL:\<em>\</em> <code>/v0.2.0/</code></p>
+<p>\<em>\</em>Status:\<em>\</em> ✅ 200 OK</p>
+<p>\<em>\</em>Severity:\<em>\</em> \<em>\</em>BLOCKING\<em>\</em></p>
+<p>\<em>\</em>CATASTROPHIC FINDING: v0.2.0 Claims to be CURRENT\<em>\</em></p>
+<p>The v0.2.0 archive header shows:</p>
+<blockquote>"Status: CURRENT"</blockquote>
+<p>But the /versions/ page says:</p>
+<blockquote>"v0.2.0: SUPERSEDED BY V0.2.1"</blockquote>
+<p>\<em>\</em>This is a BLOCKING integrity failure.\<em>\</em> The system has TWO versions simultaneously claiming to be CURRENT:</p>
+<p>1\. v0.2.0 (on its own page)</p>
+<p>2\. v0.2.1 (on its own page AND on /versions/)</p>
+<p>\<em>\</em>Audit Impact:\<em>\</em></p>
+<p>An auditor navigating directly to <code>/v0.2.0/</code> would see "Status: CURRENT" and believe they're auditing the current version. This is FALSE. The version was superseded on 2026-01-03, but the archive page wasn't updated.</p>
+<p>\<em>\</em>This directly violates the "immutable archive" claim.\<em>\</em> If the archive is immutable, the status label should have been "CURRENT" when locked on 2026-01-02, and should remain "CURRENT" forever. But the /versions/ page shows it as "SUPERSEDED," which means EITHER:</p>
+<p>1\. The archive WAS modified (status changed from CURRENT to SUPERSEDED), OR</p>
+<p>2\. The archive was NEVER updated (still shows old status)</p>
+<p>Either way, the immutability claim is broken.</p>
+<p>\<em>\</em>Violates:\<em>\</em> Immutability expectations - status labels are inconsistent</p>
+<p>\<em>\</em>Creates:\<em>\</em> BLOCKING audit ambiguity - which version is actually current?</p>
+<p>\<em>\</em>Acceptable if documented?\<em>\</em> NO - this is a fundamental integrity failure</p>
+<hr>
+<p>\<em>\</em>Additional Observations:\<em>\</em></p>
+<p>\- v0.2.0 says "Interactive Demo: LOCAL ONLY" (no hosted demo)</p>
+<p>\- But /versions/ page links v0.2.0 to <code>/demo/</code> (hosted demo exists)</p>
+<p>\- v0.2.0 footer: "Site built from commit 27a94c8a5813 at 2026-01-03T15:57:04Z"</p>
+<p>\- This is a DIFFERENT build time than v0.2.1 (18:55:59Z or 19:46:25Z depending on which source)</p>
+<hr>
+<p>\## SUMMARY OF VERSION CHAOS</p>
+<table><tr><th>Version</th><th>Archive Status</th><th>/versions/ Status</th><th>Build Time</th><th>Commit</th><th>Demo</th></tr></table>
+|---------|---------------|-------------------|------------|--------|------|
+<table><tr><th>v0</th><th>SUPERSEDED BY V0.2.0</th><th>SUPERSEDED BY V0.2.1</th><th>15:57:04Z</th><th>ab8f51a</th><th>None</th></tr></table>
+<table><tr><th>v0.2.0</th><th>\<em>\</em>CURRENT\<em>\</em></th><th>SUPERSEDED BY V0.2.1</th><th>15:57:04Z</th><th>27a94c8</th><th>/demo/</th></tr></table>
+<table><tr><th>v0.2.1</th><th>\<em>\</em>CURRENT\<em>\</em></th><th>\<em>\</em>CURRENT\<em>\</em></th><th>18:55:59Z (footer) or 19:46:25Z (manifest)</th><th>27a94c8</th><th>/demo/</th></tr></table>
+<p>\<em>\</em>This is a complete version control disaster.\<em>\</em></p>
+<hr>
+<p>\## PHASE 5: CROSS-VERSION LINK TESTING</p>
+<p>Testing how links behave across version boundaries and whether redirects are consistent.</p>
+<p>\### Test: GitHub repo link</p>
+<p>The archives mention cloning from GitHub but provide no actual repository URL. Testing common patterns:</p>
+<p>\### TEST 10: GitHub Repository Link</p>
+<p>\<em>\</em>URL:\<em>\</em> <code>https://github.com/mathledger/mathledger</code> (inferred from archive instructions)</p>
+<p>\<em>\</em>Status:\<em>\</em> ❌ 404 NOT FOUND</p>
+<p>\<em>\</em>Severity:\<em>\</em> \<em>\</em>BLOCKING\<em>\</em></p>
+<p>\<em>\</em>CRITICAL FINDING: Repository Does Not Exist\<em>\</em></p>
+<p>All three archive versions (v0, v0.2.0, v0.2.1) provide verification instructions that say:</p>
+<blockquote>"Clone the repository"  </blockquote>
+<blockquote>"git clone https://github.com/helpfuldolphin/mathledger"  </blockquote>
+<blockquote>"git checkout \[commit hash]"</blockquote>
+<p>\<em>\</em>Problems:\<em>\</em></p>
+<p>1\. \<em>\</em>No actual repository URL provided\<em>\</em> - the instructions say "your-org" as a placeholder</p>
+<p>2\. \<em>\</em>Tested common pattern\<em>\</em> (<code>github.com/mathledger/mathledger</code>) - \<em>\</em>404 NOT FOUND\<em>\</em></p>
+<p>3\. \<em>\</em>This makes ALL verification instructions IMPOSSIBLE to follow\<em>\</em></p>
+<p>\<em>\</em>Audit Impact:\<em>\</em></p>
+<p>The core verification claim is:</p>
+<blockquote>"To verify this archive matches the source: Clone the repository, Checkout commit \[hash], Run build script, Compare files"</blockquote>
+<p>\<em>\</em>This is completely impossible.\<em>\</em> There is no public repository. An auditor cannot:</p>
+<p>\- Verify the archive matches the source</p>
+<p>\- Verify the commit hashes are real</p>
+<p>\- Verify the build process</p>
+<p>\- Verify the checksums</p>
+<p>\- Run local execution</p>
+<p>\<em>\</em>This destroys the entire epistemic foundation of the archive.\<em>\</em> The archive claims to be verifiable and immutable, but the source code is not accessible.</p>
+<p>\<em>\</em>Violates:\<em>\</em> Verifiability - no source code available</p>
+<p>\<em>\</em>Creates:\<em>\</em> BLOCKING audit failure - cannot verify any claims</p>
+<p>\<em>\</em>Acceptable if documented?\<em>\</em> NO - the instructions explicitly claim verification is possible</p>
+<p>\<em>\</em>Severity:\<em>\</em> \<em>\</em>BLOCKING\<em>\</em> - The entire audit is impossible without source access</p>
+<hr>
+<p>\## COMPILATION: ADVERSARIAL AUDIT REPORT</p>
+<p>Compiling all findings into final hostile audit report...</p>
+        </article>
+
+        <footer>
+            Site built from commit <code>PLACEHOLDER</code> at <code>2026-01-04T03:43:09Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

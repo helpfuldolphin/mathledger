@@ -1,0 +1,96 @@
+{
+  "success": true,
+  "error": null,
+  "captured_at": "2026-01-02T06:22:21.453006+00:00",
+  "exploration": {
+    "proposal_id": "3fdbe591-57c0-453f-8e9d-3b78dbd78bbc",
+    "draft_proposal": {
+      "proposal_id": "3fdbe591-57c0-453f-8e9d-3b78dbd78bbc",
+      "claims": [
+        {
+          "claim_text": "Claim derived from: Consider whether 2 + 2 = 4...",
+          "suggested_trust_class": "ADV",
+          "rationale": "Template partitioner - user must edit and promote"
+        }
+      ]
+    },
+    "note": "proposal_id is exploration-only and MUST NOT appear in attestation"
+  },
+  "authority": {
+    "committed_partition_id": "fb6f4c934c8c0fa48f263e2f0981cfc3b0a9524eddf5ea7e8e024ace9be61ec5",
+    "commit_response": {
+      "committed_partition_id": "fb6f4c934c8c0fa48f263e2f0981cfc3b0a9524eddf5ea7e8e024ace9be61ec5",
+      "u_t": "c948781af12e18e3c4e42d649efca40c47c352bd37786c8dd6c21c061d90a0c1",
+      "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+      "h_t": "baf3403bc719af29655e9852d1f54730722baf3860299b4ed6ba0648f250d40f",
+      "claim_count": 1
+    }
+  },
+  "verification": {
+    "response": {
+      "outcome": "ABSTAINED",
+      "committed_partition_id": "fb6f4c934c8c0fa48f263e2f0981cfc3b0a9524eddf5ea7e8e024ace9be61ec5",
+      "attestation": {
+        "u_t": "c948781af12e18e3c4e42d649efca40c47c352bd37786c8dd6c21c061d90a0c1",
+        "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+        "h_t": "baf3403bc719af29655e9852d1f54730722baf3860299b4ed6ba0648f250d40f",
+        "authority_claim_count": 0,
+        "total_claim_count": 1
+      },
+      "authority_basis": {
+        "fv_count": 0,
+        "mv_count": 0,
+        "pa_count": 0,
+        "adv_count": 1,
+        "adv_excluded": true,
+        "mechanically_verified": false,
+        "authority_bearing_accepted": false,
+        "explanation": "No authority-bearing claims. Nothing entered the reasoning stream.",
+        "mv_validation": {
+          "verified": 0,
+          "refuted": 0,
+          "abstained": 0
+        },
+        "trust_class_breakdown": {
+          "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+          "MV": "Mechanically Validated - checked by arithmetic validator",
+          "PA": "Procedurally Attested - user attestation, not mechanically verified",
+          "ADV": "Advisory - exploration only, excluded from authority stream"
+        }
+      }
+    }
+  },
+  "attestation": {
+    "u_t": "c948781af12e18e3c4e42d649efca40c47c352bd37786c8dd6c21c061d90a0c1",
+    "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+    "h_t": "baf3403bc719af29655e9852d1f54730722baf3860299b4ed6ba0648f250d40f"
+  },
+  "authority_basis": {
+    "fv_count": 0,
+    "mv_count": 0,
+    "pa_count": 0,
+    "adv_count": 1,
+    "adv_excluded": true,
+    "mechanically_verified": false,
+    "authority_bearing_accepted": false,
+    "explanation": "No authority-bearing claims. Nothing entered the reasoning stream.",
+    "mv_validation": {
+      "verified": 0,
+      "refuted": 0,
+      "abstained": 0
+    },
+    "trust_class_breakdown": {
+      "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+      "MV": "Mechanically Validated - checked by arithmetic validator",
+      "PA": "Procedurally Attested - user attestation, not mechanically verified",
+      "ADV": "Advisory - exploration only, excluded from authority stream"
+    }
+  },
+  "outcome": "ABSTAINED",
+  "analysis": {
+    "authority_claim_count": 0,
+    "total_claim_count": 1,
+    "adv_excluded_from_rt": true,
+    "outcome_explanation": "No authority-bearing claims. Nothing entered the reasoning stream."
+  }
+}
