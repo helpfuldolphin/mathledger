@@ -44,7 +44,7 @@ It does not show:
 - That the system is intelligent
 - That the system is aligned
 - That the system is safe
-- That verification works (v0 has no verifier)
+- That formal verification works (v0 has no formal verifier; Lean/Z3 is Phase II)
 
 ---
 
@@ -64,7 +64,8 @@ v0 uses "authority-bearing" to mean "accepted into reasoning stream (R_t)":
 
 v0 does NOT claim that authority-bearing means "verified":
 - PA is authority-bearing because a human attests, not because the system verified
-- In v0, no claims are mechanically verified
+- FV claims return ABSTAINED (no formal verifier in v0)
+- MV claims may return VERIFIED/REFUTED (via arithmetic validator, limited coverage)
 
 ---
 
@@ -88,7 +89,7 @@ Do not add to v0:
 - Tool execution or sandboxing
 - External API calls in demo flow
 - Persistence beyond session
-- Claims of verification when no verifier exists
+- Claims of formal verification when no formal verifier exists
 - Claims of safety, alignment, or intelligence
 
 ---
@@ -100,7 +101,7 @@ v0 is complete when:
 1. The demo runs locally with a single command
 2. The harness passes all 5 cases
 3. The UI clearly shows exploration vs authority streams
-4. The UI does not claim VERIFIED for any claim (v0 has no verifier)
+4. The UI shows VERIFIED only for MV arithmetic claims that pass validation (v0 has no formal verifier)
 5. The fixtures are stable (golden hashes do not drift)
 
 v0 is not complete when:
@@ -157,7 +158,7 @@ This scope is frozen. Changes require explicit scope unlock with rationale.
 
 ### Critical Fix
 
-- **PA terminology hazard**: PA claims no longer return `VERIFIED`. All claims in v0 return `ABSTAINED` with explicit `authority_basis` explanation.
+- **PA terminology hazard**: PA claims no longer return `VERIFIED`. PA, FV, and ADV claims return `ABSTAINED` with explicit `authority_basis` explanation. MV arithmetic claims may return `VERIFIED` or `REFUTED` via the limited-coverage arithmetic validator.
 
 ### How to Verify
 

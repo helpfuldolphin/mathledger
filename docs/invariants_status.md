@@ -22,14 +22,17 @@ This document provides a brutally honest classification of governance invariants
 | **No Silent Authority** | §4 | **A** | Impossible - `require_epoch_root()` gate mandatory for evidence pack | `authority_gate.require_epoch_root()` | Done (v0.1) |
 | **Trust-Class Monotonicity** | §6 | **A** | Impossible - `require_trust_class_monotonicity()` gate mandatory at commit | `trust_monotonicity.require_trust_class_monotonicity()` | Done (v0.1) |
 | **Abstention Preservation** | §4.1 | **A** | Impossible - `require_abstention_preservation()` gate mandatory | `abstention_preservation.require_abstention_preservation()` | Done (v0.1) |
+| **Audit Surface Version Field** | — | **A** | Impossible - manifest.json includes source reference | Build assertion verifies | Done (v0.2.0) |
 | **MV Validator Correctness** | — | B | Edge cases in arithmetic parsing; non-arithmetic claims | Logged validation_outcome | Additional validators |
 | **FV Mechanical Verification** | §1.5 | C | No Lean/Z3 verifier exists | — | Phase II |
 | **Multi-Model Consensus** | §10 | C | Single template partitioner | — | Phase II |
 | **RFL Integration** | §7-8 | C | No learning loop in v0 | — | Phase II |
+| **USLA** | §10 | C | No constitutional constraint layer | — | Phase III |
+| **TDA Mind Scanner** | §10.3 | C | No topological coherence monitoring | — | Phase III |
 
 ---
 
-## Tier A: Enforced (9 invariants)
+## Tier A: Enforced (10 invariants)
 
 These cannot be violated without cryptographic or structural failure detection.
 
@@ -94,6 +97,46 @@ These cannot be violated without cryptographic or structural failure detection.
 - **Tests**: `tests/governance/test_abstention_preservation.py` (25+ tests)
 - **Status**: ✓ Complete (v0.1)
 
+### 10. Audit Surface Version Field (PROMOTED v0.2.0)
+- **FM Reference**: — (operational invariant, not in FM)
+- **Enforcement**: `releases/releases.json` is the single source of truth for version metadata
+- **Detection**: Build assertion verifies deployed artifacts match releases.json entries
+- **Gate Location**: `tools/predeploy_gate.py` - mandatory before deployment
+- **Fail Mode**: Fail-closed (deployment blocked if mismatch detected)
+- **Tests**: `tests/governance/test_release_metadata_guard.py`
+- **Status**: ✓ Complete (v0.2.0)
+
+**What Is Enforced**:
+
+1. Every release has a canonical entry in `releases/releases.json` with:
+   - `version`: Semantic version string (e.g., "v0.2.3")
+   - `tag`: Git tag name (e.g., "v0.2.3-audit-path-freshness")
+   - `commit`: Short commit hash for verification
+   - `status`: Release lifecycle state ("active", "closed")
+
+2. Evidence pack artifacts include version reference:
+   - `releases/evidence_pack_examples.{version}.json` → `pack_version` field matches version
+   - `releases/evidence_pack_verifier_vectors.{version}.json` → `metadata.version` matches version
+
+3. Hosted demo health endpoint (`/health`) returns:
+   - `build_commit`, `build_tag` matching releases.json current_version entry
+   - `release_pin.is_stale` flag for drift detection
+
+**How Auditors Verify**:
+
+```bash
+# 1. Check releases.json current_version
+cat releases/releases.json | jq '.current_version'
+
+# 2. Verify deployed demo matches
+curl -s https://mathledger.ai/demo/health | jq '.build_tag, .build_commit'
+
+# 3. Run predeploy gate (should pass for correctly deployed system)
+uv run python tools/predeploy_gate.py --check-health
+```
+
+**Promotion Date**: 2026-01-02 (v0.2.0)
+
 ---
 
 ## Tier B: Logged but Not Hard-Gated (1 invariant)
@@ -108,9 +151,9 @@ These are detectable via replay or logs but not prevented at runtime.
 
 ---
 
-## Tier C: Aspirational (3 invariants)
+## Tier C: Aspirational (3 invariants in current release, 5 total documented)
 
-These are documented but not implemented in v0.
+These are documented but not implemented in v0. Only FV, Multi-Model, and RFL are tracked in releases.json.
 
 ### 1. FV Mechanical Verification
 - **FM Reference**: §1.5, throughout
@@ -126,6 +169,16 @@ These are documented but not implemented in v0.
 - **FM Reference**: §7-8
 - **Current State**: No learning loop
 - **Status**: Not in v0 scope
+
+### 4. USLA (Unified System Law Architecture)
+- **FM Reference**: §10, throughout
+- **Current State**: No constitutional constraint layer
+- **Status**: Phase III scope
+
+### 5. TDA Mind Scanner
+- **FM Reference**: §10.3, throughout
+- **Current State**: No topological coherence monitoring
+- **Status**: Phase III scope
 
 ---
 
@@ -313,6 +366,8 @@ def require_abstention_preservation(
 | Trust classes | 4 defined (FV, MV, PA, ADV) | 4 implemented | ✓ Aligned |
 | Dual attestation | U_t + R_t + H_t | Implemented | ✓ Aligned |
 | Abstention outcome | First-class artifact | Implemented | ✓ Aligned |
+
+For a comprehensive 20-point pressure analysis, see: [SPEC_PRESSURE_AUDIT_V0.2.x.md](SPEC_PRESSURE_AUDIT_V0.2.x.md)
 
 ---
 
