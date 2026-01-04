@@ -3,9 +3,7 @@
   "_comment": "CANONICAL source of version metadata. Build script reads this file ONLY.",
   "_updated": "2026-01-03",
   "_updated_by": "Claude B",
-
-  "current_version": "v0.2.3",
-
+  "current_version": "v0.2.4",
   "versions": {
     "v0": {
       "tag": "v0-demo-lock",
@@ -15,10 +13,26 @@
       "demo_url": null,
       "hosted_demo": false,
       "docs": [
-        {"source": "docs/V0_LOCK.md", "slug": "scope-lock", "title": "Scope Lock"},
-        {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
-        {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
-        {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"}
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        }
       ],
       "fixtures_dir": "fixtures",
       "invariants": {
@@ -52,7 +66,6 @@
         ]
       }
     },
-
     "v0.2.0": {
       "tag": "v0.2.0-demo-lock",
       "commit": "27a94c8a58139cb10349f6418336c618f528cbab",
@@ -61,10 +74,26 @@
       "demo_url": "/demo/",
       "hosted_demo": false,
       "docs": [
-        {"source": "docs/V0_LOCK.md", "slug": "scope-lock", "title": "Scope Lock"},
-        {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
-        {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
-        {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"}
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        }
       ],
       "fixtures_dir": "fixtures",
       "invariants": {
@@ -99,7 +128,6 @@
         ]
       }
     },
-
     "v0.2.1": {
       "tag": "v0.2.1-cohesion",
       "commit": "27a94c8a58139cb10349f6418336c618f528cbab",
@@ -110,13 +138,41 @@
       "demo_url": "/demo/",
       "hosted_demo": false,
       "docs": [
-        {"source": "docs/V0_LOCK.md", "slug": "scope-lock", "title": "Scope Lock"},
-        {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
-        {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
-        {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"},
-        {"source": "docs/FOR_AUDITORS.md", "slug": "for-auditors", "title": "For Auditors"},
-        {"source": "docs/external_audits/manus_site_audit_2026-01-03.md", "slug": "external_audits/manus_site_audit_2026-01-03", "title": "Cold-Start Audit (2026-01-03)"},
-        {"source": "docs/RELEASE_CLOSURE_V0.2.1.md", "slug": "release-closure-v021", "title": "Release Closure v0.2.1"}
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
+          "slug": "external_audits/manus_site_audit_2026-01-03",
+          "title": "Cold-Start Audit (2026-01-03)"
+        },
+        {
+          "source": "docs/RELEASE_CLOSURE_V0.2.1.md",
+          "slug": "release-closure-v021",
+          "title": "Release Closure v0.2.1"
+        }
       ],
       "fixtures_dir": "fixtures",
       "invariants": {
@@ -151,7 +207,6 @@
         ]
       }
     },
-
     "v0.2.2": {
       "tag": "v0.2.2-link-integrity",
       "commit": "27a94c8a58139cb10349f6418336c618f528cbab",
@@ -160,13 +215,41 @@
       "demo_url": "/demo/",
       "hosted_demo": true,
       "docs": [
-        {"source": "docs/V0_LOCK.md", "slug": "scope-lock", "title": "Scope Lock"},
-        {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
-        {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
-        {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"},
-        {"source": "docs/FOR_AUDITORS.md", "slug": "for-auditors", "title": "For Auditors"},
-        {"source": "docs/external_audits/manus_site_audit_2026-01-03.md", "slug": "external_audits/manus_site_audit_2026-01-03", "title": "Cold-Start Audit (2026-01-03)"},
-        {"source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md", "slug": "external_audits/manus_link_integrity_audit_2026-01-03", "title": "Link Integrity Audit (2026-01-03)"}
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
+          "slug": "external_audits/manus_site_audit_2026-01-03",
+          "title": "Cold-Start Audit (2026-01-03)"
+        },
+        {
+          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
+          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
+          "title": "Link Integrity Audit (2026-01-03)"
+        }
       ],
       "fixtures_dir": "fixtures",
       "invariants": {
@@ -220,23 +303,54 @@
         ]
       }
     },
-
     "v0.2.3": {
       "tag": "v0.2.3-audit-path-freshness",
       "commit": "674bcd16104f37961fe1ce9e200a5b95a9c85bb3",
       "date_locked": "2026-01-03",
-      "status": "current",
+      "status": "superseded-by-v0.2.4",
       "demo_url": "/demo/",
       "hosted_demo": true,
       "docs": [
-        {"source": "docs/V0_LOCK.md", "slug": "scope-lock", "title": "Scope Lock"},
-        {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
-        {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
-        {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"},
-        {"source": "docs/FOR_AUDITORS.md", "slug": "for-auditors", "title": "For Auditors"},
-        {"source": "docs/external_audits/manus_site_audit_2026-01-03.md", "slug": "external_audits/manus_site_audit_2026-01-03", "title": "Cold-Start Audit (2026-01-03)"},
-        {"source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md", "slug": "external_audits/manus_link_integrity_audit_2026-01-03", "title": "Link Integrity Audit (2026-01-03)"},
-        {"source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md", "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03", "title": "Hostile Audit v0.2.2 (2026-01-03)"}
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
+          "slug": "external_audits/manus_site_audit_2026-01-03",
+          "title": "Cold-Start Audit (2026-01-03)"
+        },
+        {
+          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
+          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
+          "title": "Link Integrity Audit (2026-01-03)"
+        },
+        {
+          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
+          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
+          "title": "Hostile Audit v0.2.2 (2026-01-03)"
+        }
       ],
       "fixtures_dir": "fixtures",
       "invariants": {
@@ -277,6 +391,108 @@
           "Verifier page has prominent 'Run self-test vectors' button with table output",
           "/versions/ page has status ambiguity note about pre-v0.2.2 archives",
           "Build assertions for examples.json staleness and self-test presence"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (10/1/3)",
+          "Cryptographic enforcement (H_t, R_t, U_t)",
+          "Demo functionality and verification flow",
+          "Hash contract (hashes computed identically)"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.4": {
+      "tag": "v0.2.4-verifier-syntax-fix",
+      "commit": "9bfca919d07da1a09450cdc954c288d7179d1797",
+      "date_locked": "2026-01-03",
+      "status": "current",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
+          "slug": "external_audits/manus_site_audit_2026-01-03",
+          "title": "Cold-Start Audit (2026-01-03)"
+        },
+        {
+          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
+          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
+          "title": "Link Integrity Audit (2026-01-03)"
+        },
+        {
+          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
+          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
+          "title": "Hostile Audit v0.2.2 (2026-01-03)"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 10,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "changed": [
+          "Verifier JS Unicode escape fixed (double-backslash-u)",
+          "Fixture directories have index.html pages",
+          "FOR_AUDITORS uses version-self-healing templates",
+          "Build assertion: Node.js syntax check on verifier JS",
+          "Build assertion: all fixture directories have index.html"
         ],
         "unchanged": [
           "Tier A/B/C invariant counts (10/1/3)",

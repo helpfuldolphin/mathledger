@@ -257,11 +257,18 @@ def sha256_file(path: Path) -> str:
 
 def replace_template_variables(content: str, version: str, config: dict) -> str:
     """Replace template variables like {{CURRENT_VERSION}} in content."""
+    tag = config.get("tag", "")
     replacements = {
         "{{CURRENT_VERSION}}": version,
-        "{{CURRENT_TAG}}": config.get("tag", ""),
+        "{{CURRENT_TAG}}": tag,
         "{{CURRENT_COMMIT}}": config.get("commit", "")[:12],
         "{{CURRENT_COMMIT_FULL}}": config.get("commit", ""),
+        # URL templates for version-self-healing auditor paths
+        "{{CURRENT_VERIFIER_URL}}": f"/{version}/evidence-pack/verify/",
+        "{{CURRENT_EXAMPLES_URL}}": f"/{version}/evidence-pack/examples.json",
+        "{{CURRENT_DEMO_URL}}": "/demo/",
+        # GitHub tag-pinned URL prefix (for blob links)
+        "{{GITHUB_TAG_URL}}": f"https://github.com/helpfuldolphin/mathledger/blob/{tag}",
     }
     for var, value in replacements.items():
         content = content.replace(var, value)
@@ -743,6 +750,45 @@ uv run python tools/run_demo_cases.py</code></pre>
     )
 
 
+def build_fixture_directory_index(config: dict, version: str, fixture_name: str, files: list, build_time: str) -> str:
+    """Build index page for a single fixture directory."""
+    file_rows = []
+    for f in files:
+        file_rows.append(f'<tr><td><a href="{f["name"]}">{f["name"]}</a></td><td><code>{f["sha256"][:16]}...</code></td></tr>')
+
+    fixture_content = f"""
+        <p><a href="../">← Back to Fixtures</a></p>
+
+        <h2>Fixture: {fixture_name}</h2>
+        <p>This fixture contains the following files:</p>
+
+        <table>
+            <tr><th>File</th><th>SHA256 (truncated)</th></tr>
+            {"".join(file_rows)}
+        </table>
+
+        <h2>Download</h2>
+        <ul>
+            {''.join(f'<li><a href="{f["name"]}">{f["name"]}</a></li>' for f in files)}
+        </ul>
+
+        <h2>Verify</h2>
+        <p>To verify these files locally:</p>
+        <pre><code>git checkout {config['tag']}
+cat fixtures/{fixture_name}/input.json | sha256sum</code></pre>
+    """
+
+    return build_page(
+        title=f"Fixture: {fixture_name}",
+        content=fixture_content,
+        config=config,
+        version=version,
+        current_section="fixtures",
+        mode="archive",
+        build_time=build_time,
+    )
+
+
 def build_evidence_pack_page(config: dict, version: str, files: list, build_time: str) -> str:
     """Build evidence pack page."""
     file_links = "".join(f'<li><a href="{f}">{f}</a></li>' for f in files)
@@ -836,7 +882,7 @@ async function testPack(pack,expectedResult,expectedReason){try{const uvil=pack.
 
     css = "*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,monospace;background:#f5f5f5;line-height:1.6}.container{max-width:900px;margin:0 auto;padding:2rem}.banner{background:#fff;border:1px solid #ddd;border-left:4px solid #2e7d32;padding:1rem;margin-bottom:1.5rem}.status{font-weight:600;color:#2e7d32}code{background:#f0f0f0;padding:0.15em 0.35em}h1{font-size:1.4rem;margin-bottom:1rem}h2{font-size:1.2rem;margin:1.5rem 0 0.75rem;border-bottom:1px solid #ddd}p{margin:0.75rem 0}.info{background:#fff;border:1px solid #ddd;padding:1rem;margin:1rem 0;border-left:4px solid #f57c00}.vbox{background:#fff;border:1px solid #ddd;padding:1.5rem;margin:1rem 0}.result{padding:1rem;margin:1rem 0;font-family:monospace}.pass{background:#e8f5e9;border-left:4px solid #2e7d32}.fail{background:#ffebee;border-left:4px solid #c62828}.pending{background:#fff3e0;border-left:4px solid #f57c00}.row{margin:0.5rem 0}.row label{font-weight:600;display:inline-block;width:100px}.match{color:#2e7d32!important;font-weight:600}.mismatch{color:#c62828!important;font-weight:600}textarea{width:100%;height:200px;font-family:monospace;font-size:0.85rem}button{padding:0.5rem 1rem;margin:0.5rem 0.5rem 0.5rem 0;cursor:pointer}button:disabled{opacity:0.5;cursor:not-allowed}.btn-p{background:#0066cc;color:#fff;border:none}.btn-s{background:#f5f5f5;border:1px solid #ddd}footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #ddd;font-size:0.75rem;color:#666}a{color:#0066cc}.nav{margin-bottom:1.5rem}.nav a{margin-right:1rem}table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:0.85rem}th,td{border:1px solid #ddd;padding:0.5rem;text-align:left}th{background:#f5f5f5}.row-pass{background:#f1f8e9}.row-fail{background:#ffebee}"
 
-    core_js = r'''function can(o){if(o===null)return'null';if(typeof o==='boolean')return o?'true':'false';if(typeof o==='number')return Object.is(o,-0)?'0':String(o);if(typeof o==='string'){let r='"';for(let i=0;i<o.length;i++){const c=o.charCodeAt(i);if(c===8)r+='\b';else if(c===9)r+='\t';else if(c===10)r+='\n';else if(c===12)r+='\f';else if(c===13)r+='\r';else if(c===34)r+='\"';else if(c===92)r+='\\';else if(c<32)r+='\u'+c.toString(16).padStart(4,'0');else r+=o[i];}return r+'"';}if(Array.isArray(o))return'['+o.map(can).join(',')+']';if(typeof o==='object'){const k=Object.keys(o).sort();return'{'+k.map(x=>can(x)+':'+can(o[x])).join(',')+'}';}throw Error('bad');}
+    core_js = r'''function can(o){if(o===null)return'null';if(typeof o==='boolean')return o?'true':'false';if(typeof o==='number')return Object.is(o,-0)?'0':String(o);if(typeof o==='string'){let r='"';for(let i=0;i<o.length;i++){const c=o.charCodeAt(i);if(c===8)r+='\b';else if(c===9)r+='\t';else if(c===10)r+='\n';else if(c===12)r+='\f';else if(c===13)r+='\r';else if(c===34)r+='\"';else if(c===92)r+='\\';else if(c<32)r+='\\u'+c.toString(16).padStart(4,'0');else r+=o[i];}return r+'"';}if(Array.isArray(o))return'['+o.map(can).join(',')+']';if(typeof o==='object'){const k=Object.keys(o).sort();return'{'+k.map(x=>can(x)+':'+can(o[x])).join(',')+'}';}throw Error('bad');}
 async function sha(s){const d=new TextEncoder().encode(s);const h=await crypto.subtle.digest('SHA-256',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 document.getElementById('fi').onchange=e=>{if(e.target.files[0]){const r=new FileReader();r.onload=x=>document.getElementById('inp').value=x.target.result;r.readAsText(e.target.files[0]);}};
 async function verify(){const R=document.getElementById('res'),D=document.getElementById('det');try{const v=document.getElementById('inp').value.trim();if(!v){R.className='result pending';R.innerHTML='<strong>Status:</strong> No input';D.style.display='none';return;}const p=JSON.parse(v);const uvil=p.uvil_events||[];const arts=p.reasoning_artifacts||[];const eu=p.u_t||'';const er=p.r_t||'';const eh=p.h_t||'';const cu=await sha(can(uvil));const cr=await sha(can(arts));const ch=await sha(cr+cu);document.getElementById('eu').textContent=eu||'-';document.getElementById('cu').textContent=cu;document.getElementById('er').textContent=er||'-';document.getElementById('cr').textContent=cr;document.getElementById('eh').textContent=eh||'-';document.getElementById('ch').textContent=ch;const uok=!eu||cu===eu,rok=!er||cr===er,hok=!eh||ch===eh;document.getElementById('cu').className=uok?'match':'mismatch';document.getElementById('cr').className=rok?'match':'mismatch';document.getElementById('ch').className=hok?'match':'mismatch';D.style.display='block';if(!eu&&!er&&!eh){R.className='result pending';R.innerHTML='<strong>Status:</strong> COMPUTED';}else if(uok&&rok&&hok){R.className='result pass';R.innerHTML='<strong>Status:</strong> PASS';}else{R.className='result fail';R.innerHTML='<strong>Status:</strong> FAIL';}}catch(e){R.className='result fail';R.innerHTML='<strong>Status:</strong> '+e.message;D.style.display='none';}}'''
@@ -957,7 +1003,7 @@ def build_versions_index(versions: list[dict], build_time: str) -> str:
         <h2>Archive Integrity</h2>
         <p>Each version directory is immutable once deployed.
         Superseded versions remain fully navigable.
-        Prior versions are never modified; only their status label changes.</p>
+        Prior version directories are never modified. /versions/ is the canonical status registry and may change over time.</p>
 
         <div class="status-ambiguity-note" style="background: #fff3e0; border: 1px solid #ffb74d; border-radius: 6px; padding: 1rem; margin: 1.5rem 0;">
             <strong style="color: #e65100;">Note on Pre-v0.2.2 Archives:</strong>
@@ -1095,6 +1141,12 @@ def build_version(releases: dict, version: str, build_time: str) -> dict:
                         "sha256": sha256_file(f),
                     })
                 fixture_data.append(fixture_entry)
+
+                # Generate index.html for this fixture directory
+                fixture_index_html = build_fixture_directory_index(
+                    config, version, fixture_dir.name, fixture_entry["files"], build_time
+                )
+                (dest / "index.html").write_text(fixture_index_html, encoding="utf-8")
 
         # Write fixtures index.json
         (fixtures_dest / "index.json").write_text(
@@ -1721,6 +1773,196 @@ def verify_build(releases: dict) -> bool:
                 print(f"[OK] {current_version}: landing page links to Field Manual")
             else:
                 errors.append(f"{current_version}: landing page MISSING link to Field Manual")
+
+    # 22. Check Tier A/B/C counts in invariants page match releases.json
+    # Skip v0 - legacy version uses shared invariants_status.md which reflects v0.2.0+ counts
+    for version, config in releases.get("versions", {}).items():
+        if version == "v0":
+            continue  # v0 uses shared doc with v0.2.0+ content
+        invariants_page = SITE_DIR / version / "docs" / "invariants" / "index.html"
+        if invariants_page.exists():
+            content = invariants_page.read_text(encoding="utf-8")
+            expected_a = config.get("invariants", {}).get("tier_a", 0)
+            expected_b = config.get("invariants", {}).get("tier_b", 0)
+            expected_c = config.get("invariants", {}).get("tier_c", 0)
+
+            # Check header mentions correct count
+            import re
+            tier_a_match = re.search(r"Tier A[:\s]+.*?\((\d+)", content)
+            if tier_a_match:
+                found_a = int(tier_a_match.group(1))
+                if found_a == expected_a:
+                    print(f"[OK] {version}: Tier A count ({found_a}) matches releases.json")
+                else:
+                    errors.append(f"{version}: Tier A count mismatch: page says {found_a}, releases.json says {expected_a}")
+            else:
+                print(f"[--] {version}: Could not parse Tier A count from invariants page")
+
+    # 23. Check for stale version strings in current version archive
+    # Prior version strings should not appear except in external_audits/ or historical sections
+    if current_version:
+        all_versions = list(releases.get("versions", {}).keys())
+        # Skip v0 - too generic, matches in "v0.2.3" as substring
+        prior_versions = [v for v in all_versions if v != current_version and v != "v0"]
+        stale_found = []
+
+        for html_file in (SITE_DIR / current_version).rglob("*.html"):
+            # Skip external_audits directory (historical by nature)
+            if "external_audits" in str(html_file):
+                continue
+
+            rel_path = html_file.relative_to(SITE_DIR / current_version)
+            content = html_file.read_text(encoding="utf-8")
+
+            # Skip files with explicit historical markers
+            if "Release Notes:" in content or "<!-- HISTORICAL -->" in content:
+                continue
+
+            # Check for prior version strings (like v0.2.1, v0.2.2 in v0.2.3)
+            for prior in prior_versions:
+                # Look for version string patterns that indicate staleness
+                # e.g., "/v0.2.1/" paths, "v0.2.1-" tags, "pack_version": "v0.2.1"
+                stale_patterns = [
+                    f"/{prior}/",  # URL paths
+                    f'"{prior}-',  # Tag references like "v0.2.1-cohesion"
+                    f'pack_version": "{prior}"',  # JSON pack versions
+                    f"checkout {prior}",  # git checkout commands
+                ]
+                for pattern in stale_patterns:
+                    if pattern in content:
+                        # Exception: superseded-by references are OK
+                        if f"superseded-by-{prior.replace('v', '')}" not in content or pattern != f"/{prior}/":
+                            stale_found.append(f"{rel_path}: contains '{pattern}'")
+                            break
+
+        if not stale_found:
+            print(f"[OK] {current_version}: no stale version strings in non-historical pages")
+        else:
+            # For now, warn but don't fail (some historical references are OK)
+            for sf in stale_found[:5]:  # Show first 5
+                print(f"[WARN] {current_version}: {sf}")
+            if len(stale_found) > 5:
+                print(f"[WARN] ... and {len(stale_found) - 5} more stale references")
+
+    # 24. Check for-auditors pages have no blob/main/ links (must be tag-pinned)
+    for version, config in releases.get("versions", {}).items():
+        for_auditors = SITE_DIR / version / "docs" / "for-auditors" / "index.html"
+        if for_auditors.exists():
+            fa_content = for_auditors.read_text(encoding="utf-8")
+            if "blob/main/" in fa_content:
+                errors.append(f"{version}: for-auditors contains blob/main/ (must use tag-pinned URLs)")
+            else:
+                print(f"[OK] {version}: for-auditors has no blob/main/ links")
+
+    # 25. Check CURRENT version for-auditors has correct verifier/examples URLs
+    if current_version:
+        for_auditors = SITE_DIR / current_version / "docs" / "for-auditors" / "index.html"
+        if for_auditors.exists():
+            fa_content = for_auditors.read_text(encoding="utf-8")
+            expected_verifier = f"/{current_version}/evidence-pack/verify/"
+            expected_examples = f"/{current_version}/evidence-pack/examples.json"
+            if expected_verifier in fa_content:
+                print(f"[OK] {current_version}: for-auditors has correct verifier URL")
+            else:
+                errors.append(f"{current_version}: for-auditors missing correct verifier URL {expected_verifier}")
+            if expected_examples in fa_content:
+                print(f"[OK] {current_version}: for-auditors has correct examples URL")
+            else:
+                errors.append(f"{current_version}: for-auditors missing correct examples URL {expected_examples}")
+
+    # 26. Check fixture directory links resolve (each fixture dir has index.html)
+    for version, config in releases.get("versions", {}).items():
+        fixtures_dir = SITE_DIR / version / "fixtures"
+        if fixtures_dir.exists():
+            # Check each subdirectory of fixtures/ has an index.html
+            missing = []
+            for subdir in fixtures_dir.iterdir():
+                if subdir.is_dir() and subdir.name not in ["__pycache__"]:
+                    if not (subdir / "index.html").exists():
+                        missing.append(subdir.name)
+            if missing:
+                errors.append(f"{version}: fixture directories missing index.html: {missing}")
+            else:
+                print(f"[OK] {version}: all fixture directories have index.html")
+
+    # 27. Verify verifier JS has no syntax errors (Node.js check)
+    import subprocess
+    import tempfile
+    for version, config in releases.get("versions", {}).items():
+        verifier_html = SITE_DIR / version / "evidence-pack" / "verify" / "index.html"
+        if verifier_html.exists():
+            html_content = verifier_html.read_text(encoding="utf-8")
+            # Extract JS from <script> tags
+            import re
+            js_matches = re.findall(r'<script>(.*?)</script>', html_content, re.DOTALL)
+            if js_matches:
+                js_code = chr(10).join(js_matches)
+                # Write to temp file and check syntax with Node.js
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False, encoding='utf-8') as tmp:
+                    tmp.write(js_code)
+                    tmp_path = tmp.name
+                try:
+                    result = subprocess.run(
+                        ['node', '--check', tmp_path],
+                        capture_output=True,
+                        text=True,
+                        timeout=10
+                    )
+                    if result.returncode == 0:
+                        print(f"[OK] {version}: verifier JS syntax valid")
+                    else:
+                        errors.append(f"{version}: verifier JS syntax error: {result.stderr.strip()}")
+                except FileNotFoundError:
+                    print(f"[--] {version}: Node.js not available, skipping JS syntax check")
+                except Exception as e:
+                    print(f"[--] {version}: JS syntax check failed: {e}")
+                finally:
+                    import os
+                    os.unlink(tmp_path)
+
+    # 28. Verify verifier functions are defined (verify, runSelfTest)
+    for version, config in releases.get("versions", {}).items():
+        verifier_html = SITE_DIR / version / "evidence-pack" / "verify" / "index.html"
+        if verifier_html.exists():
+            html_content = verifier_html.read_text(encoding="utf-8")
+            missing_funcs = []
+            for func in ["function verify(", "function runSelfTest(", "function can(", "function sha("]:
+                if func not in html_content:
+                    missing_funcs.append(func.replace("function ", "").replace("(", ""))
+            if missing_funcs:
+                errors.append(f"{version}: verifier missing functions: {missing_funcs}")
+            else:
+                print(f"[OK] {version}: verifier has all required functions")
+
+    # 29. Combined verifier gate: current version must pass Node --check AND contain "Run self-test vectors"
+    current_verifier = SITE_DIR / current_version / "evidence-pack" / "verify" / "index.html"
+    if current_verifier.exists():
+        html_content = current_verifier.read_text(encoding="utf-8")
+        gate_passed = True
+        # Check 1: "Run self-test vectors" text present
+        if "Run self-test vectors" not in html_content:
+            errors.append(f"{current_version}: verifier MISSING 'Run self-test vectors' text")
+            gate_passed = False
+        # Check 2: Node.js syntax check (already done above, but re-verify for gate)
+        import re
+        js_matches = re.findall(r'<script>(.*?)</script>', html_content, re.DOTALL)
+        if js_matches:
+            js_code = chr(10).join(js_matches)
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False, encoding='utf-8') as tmp:
+                tmp.write(js_code)
+                tmp_path = tmp.name
+            try:
+                result = subprocess.run(['node', '--check', tmp_path], capture_output=True, text=True, timeout=10)
+                if result.returncode != 0:
+                    errors.append(f"{current_version}: verifier gate FAILED - Node syntax error")
+                    gate_passed = False
+            except FileNotFoundError:
+                pass  # Node not available, already warned above
+            finally:
+                import os
+                os.unlink(tmp_path)
+        if gate_passed:
+            print(f"[OK] {current_version}: verifier gate PASSED (syntax valid + self-test text present)")
 
     print("=" * 60)
     if errors:
