@@ -512,8 +512,8 @@
       }
     },
     "v0.2.5": {
-      "tag": "v0.2.5-self-test-semantics",
-      "commit": "6dd6be2167b403752f9f5fb7a7069e3de2195a51",
+      "tag": "v0.2.5-self-test-clarity",
+      "commit": "pending",
       "date_locked": "2026-01-04",
       "status": "current",
       "demo_url": "/demo/",

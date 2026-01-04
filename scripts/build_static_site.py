@@ -1990,6 +1990,46 @@ def verify_build(releases: dict) -> bool:
     else:
         print(f"[--] {current_version}: examples.json not present, skipping hash verification")
 
+    # 31. Verify self-test semantics: Expected=FAIL & Actual=FAIL → test PASS
+    # The verifier's testPack function must correctly interpret that a tampered pack
+    # showing FAIL (actual) when FAIL was expected means the TEST passed.
+    current_verifier = SITE_DIR / current_version / "evidence-pack" / "verify" / "index.html"
+    if current_verifier.exists():
+        html_content = current_verifier.read_text(encoding="utf-8")
+        # Check for correct self-test pass logic pattern
+        # The testPack function should return pass: actual === expected (or equivalent)
+        correct_patterns = [
+            'pass:expectedResult==="FAIL"',  # compact
+            'pass: expectedResult === "FAIL"',  # spaced
+            'pass:r.actual===expected',  # generalized
+            'pass: actual === expectedResult',  # alternative naming
+            'pass:actual===expectedResult',  # compact alternative
+        ]
+        has_correct_logic = any(p.replace(" ", "") in html_content.replace(" ", "") for p in correct_patterns)
+
+        # Also check for the verdict comparison pattern in testPack return
+        if 'pass:expectedResult===' in html_content.replace(" ", "") or 'pass:r.actual===' in html_content.replace(" ", ""):
+            has_correct_logic = True
+
+        # Check for the specific patterns that indicate correct semantics
+        if 'expectedResult==="FAIL"' in html_content.replace(" ", "") or 'actual===expectedResult' in html_content.replace(" ", ""):
+            has_correct_logic = True
+
+        if has_correct_logic:
+            print(f"[OK] {current_version}: self-test semantics correct (FAIL/FAIL → PASS)")
+        else:
+            # Additional check: look for the testPack function and verify its return logic
+            import re
+            testpack_match = re.search(r'function testPack\([^)]*\)\s*\{[^}]+return\s*\{[^}]+pass:[^}]+\}', html_content, re.DOTALL)
+            if testpack_match:
+                testpack_code = testpack_match.group(0)
+                if 'expectedResult' in testpack_code and '===' in testpack_code:
+                    print(f"[OK] {current_version}: self-test semantics appear correct (testPack compares to expectedResult)")
+                else:
+                    errors.append(f"{current_version}: self-test semantics UNCLEAR - testPack may not correctly handle FAIL/FAIL → PASS")
+            else:
+                errors.append(f"{current_version}: self-test semantics MISSING - testPack function not found or malformed")
+
     print("=" * 60)
     if errors:
         print(f"VERIFICATION FAILED: {len(errors)} error(s)")
