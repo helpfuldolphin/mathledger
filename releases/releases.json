@@ -619,7 +619,7 @@
     },
     "v0.2.6": {
       "tag": "v0.2.6-verifier-correctness",
-      "commit": "73c95ef0b9147520a235578c748d7c316fdcc8a1",
+      "commit": "f2e9f0e302ca908aa01ce85751b9293141857b1c",
       "date_locked": "2026-01-04",
       "status": "current",
       "demo_url": "/demo/",

@@ -28,7 +28,7 @@ HTML_TEMPLATE = r'''<!DOCTYPE html>
 <div class="banner">
 <div style="font-weight:600">MathLedger - v0.2.6</div>
 <div><span class="status">LOCKED</span> <a href="/versions/" style="font-size:0.8rem;color:#666">(see /versions/)</a></div>
-<div style="font-size:0.8rem;color:#555;margin-top:0.5rem">Tag: <code>v0.2.6-verifier-correctness</code> | Commit: <code>PENDING</code></div>
+<div style="font-size:0.8rem;color:#555;margin-top:0.5rem">Tag: <code>v0.2.6-verifier-correctness</code> | Commit: <code>50f323ddd28f</code></div>
 </div>
 <nav class="nav"><a href="/v0.2.6/">Archive</a> <a href="/v0.2.6/evidence-pack/">Evidence</a> <strong>Verifier</strong> | <a href="/versions/">All</a></nav>
 <h1>Evidence Pack Verifier</h1>
