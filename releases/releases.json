@@ -3,7 +3,7 @@
   "_comment": "CANONICAL source of version metadata. Build script reads this file ONLY.",
   "_updated": "2026-01-04",
   "_updated_by": "Claude B",
-  "current_version": "v0.2.8",
+  "current_version": "v0.2.9",
   "versions": {
     "v0": {
       "tag": "v0-demo-lock",
@@ -851,7 +851,7 @@
       "tag": "v0.2.8-mv-coverage-docs",
       "commit": "ebb69ab2a997816d94742859b423266113021d4b",
       "date_locked": "2026-01-04",
-      "status": "current",
+      "status": "superseded-by-v0.2.9",
       "demo_url": "/demo/",
       "hosted_demo": true,
       "docs": [
@@ -943,6 +943,120 @@
         ],
         "unchanged": [
           "Tier A/B/C invariant counts (10/1/3)",
+          "All cryptographic enforcement",
+          "Demo code and behavior",
+          "Verifier implementation"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.9": {
+      "tag": "v0.2.9-abstention-terminal",
+      "commit": "8261a351fc4711cd407c67de239ddeb88a30a29d",
+      "date_locked": "2026-01-04",
+      "status": "current",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/MV_VALIDATOR_COVERAGE.md",
+          "slug": "mv-coverage",
+          "title": "MV Validator Coverage"
+        },
+        {
+          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
+          "slug": "external_audits/manus_site_audit_2026-01-03",
+          "title": "Cold-Start Audit (2026-01-03)"
+        },
+        {
+          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
+          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
+          "title": "Link Integrity Audit (2026-01-03)"
+        },
+        {
+          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
+          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
+          "title": "Hostile Audit v0.2.2 (2026-01-03)"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 11,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field",
+          "Abstention Terminality"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "documentation_only": true,
+        "claim_promoted": "Abstention Terminality",
+        "added": [
+          "'Abstention as a Terminal Outcome' section in explanation page",
+          "'Outcome Immutability' clause in Scope Lock",
+          "Expectation-setting for permanent ABSTAINED in FOR_AUDITORS",
+          "test_abstention_terminality.py regression guard (17 tests)"
+        ],
+        "tier_promotion": {
+          "from": "implicit",
+          "to": "Tier A",
+          "reason": "ABSTAINED is terminal for a claim identity. Once classified, outcome is immutable."
+        },
+        "unchanged": [
+          "Tier B/C invariant counts (1/3)",
           "All cryptographic enforcement",
           "Demo code and behavior",
           "Verifier implementation"

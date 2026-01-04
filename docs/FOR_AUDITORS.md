@@ -2,6 +2,8 @@
 
 This page provides a quick verification path for external auditors evaluating MathLedger's governance claims.
 
+**Expectation:** Auditors should expect that some claims will remain permanently ABSTAINED. This is correct behavior and not a failure mode.
+
 ## 5-Minute Verification Checklist
 
 Complete these steps to verify the system's core claims:

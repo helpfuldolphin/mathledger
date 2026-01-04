@@ -205,6 +205,30 @@ The system does not guess. It does not approximate. It does not hedge. When it c
 
 This stopping is correctness, not caution. A system that produces confident outputs when it lacks grounds for confidence is broken. A system that reports the limits of what it can establish is working as intended.
 
+### Abstention as a Terminal Outcome
+
+**Rule:** Once a claim artifact is classified as ABSTAINED, that outcome is final for that artifact within its claim identity and epoch.
+
+This is not a limitation. It is a design commitment. The system sacrifices:
+
+- **Late upgrade:** A claim that ABSTAINED cannot later become VERIFIED, even if a verifier is added.
+- **Institutional override:** No human attestation, policy change, or governance decision can retroactively convert ABSTAINED to VERIFIED.
+- **Optimistic closure:** The system cannot record "probably correct" or "likely valid" as a hedge.
+
+These sacrifices are intentional. They exist because:
+
+1. Replayability requires deterministic outcomes. If the same artifact could produce different outcomes under different regimes, evidence packs would be meaningless.
+2. Audit trails must be immutable. A system that allows retroactive upgrades cannot be trusted to preserve its own history.
+3. Abstention is information. It records what the system could not establish at the time of evaluation.
+
+**What this does NOT prevent:**
+
+- Submitting a new artifact with the same claim text under a different trust class
+- Creating a new claim in a later epoch with enhanced verifier coverage
+- Documenting that a previously-abstained claim is now known to be valid (externally)
+
+The original artifact remains sealed. New artifacts can be created. History is preserved.
+
 ---
 
 ## Why ADV Exists

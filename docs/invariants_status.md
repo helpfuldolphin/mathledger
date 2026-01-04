@@ -23,6 +23,7 @@ This document provides a brutally honest classification of governance invariants
 | **Trust-Class Monotonicity** | §6 | **A** | Impossible - `require_trust_class_monotonicity()` gate mandatory at commit | `trust_monotonicity.require_trust_class_monotonicity()` | Done (v0.1) |
 | **Abstention Preservation** | §4.1 | **A** | Impossible - `require_abstention_preservation()` gate mandatory | `abstention_preservation.require_abstention_preservation()` | Done (v0.1) |
 | **Audit Surface Version Field** | — | **A** | Impossible - manifest.json includes source reference | Build assertion verifies | Done (v0.2.0) |
+| **Abstention Terminality** | §4.1 | **A** | Impossible - deterministic hashing, no upgrade path exists | `test_abstention_terminality.py` | Done (v0.2.9) |
 | **MV Validator Correctness** | — | B | Edge cases in arithmetic parsing; non-arithmetic claims | Logged validation_outcome | Additional validators |
 | **FV Mechanical Verification** | §1.5 | C | No Lean/Z3 verifier exists | — | Phase II |
 | **Multi-Model Consensus** | §10 | C | Single template partitioner | — | Phase II |
@@ -32,7 +33,7 @@ This document provides a brutally honest classification of governance invariants
 
 ---
 
-## Tier A: Enforced (10 invariants)
+## Tier A: Enforced (11 invariants)
 
 These cannot be violated without cryptographic or structural failure detection.
 
@@ -136,6 +137,35 @@ uv run python tools/predeploy_gate.py --check-health
 ```
 
 **Promotion Date**: 2026-01-02 (v0.2.0)
+
+### 11. Abstention Terminality (PROMOTED v0.2.9)
+- **FM Reference**: §4.1 ("ABSTAINED is terminal for a claim identity")
+- **Enforcement**: Deterministic hashing ensures identical inputs produce identical ABSTAINED outcomes
+- **Detection**: `test_abstention_terminality.py` (17 tests) verifies outcome immutability
+- **Gate Location**: Structural - same claim content + trust class always produces same hash
+- **Fail Mode**: Fail-closed (no mechanism exists to retroactively upgrade ABSTAINED to VERIFIED)
+- **Tests**: `tests/governance/test_abstention_terminality.py`
+- **Status**: ✓ Complete (v0.2.9)
+
+**What Is Enforced**:
+
+1. Once an artifact is classified as ABSTAINED, its validation outcome is immutable within its claim identity and epoch
+2. No subsequent verification regime, human attestation, or policy change alters that outcome
+3. Resubmission of identical content under the same trust class produces ABSTAINED with identical artifact hash
+
+**Sacrifices Made**:
+
+- **Late upgrade blocked**: A claim that ABSTAINED cannot later become VERIFIED, even if a verifier is added
+- **Institutional override blocked**: No governance decision can retroactively convert ABSTAINED to VERIFIED
+- **Optimistic closure blocked**: The system cannot record "probably correct" as a hedge
+
+**What This Does NOT Prevent**:
+
+- Submitting a new artifact with the same claim text under a different trust class
+- Creating a new claim in a later epoch with enhanced verifier coverage
+- Documenting that a previously-abstained claim is now known to be valid (externally)
+
+**Promotion Date**: 2026-01-04 (v0.2.9)
 
 ---
 

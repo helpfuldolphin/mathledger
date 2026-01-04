@@ -69,6 +69,12 @@ v0 does NOT claim that authority-bearing means "verified":
 
 **Glossary note**: "verifier" in v0 means MV arithmetic validator; formal verifier means Lean/Z3 (Phase II).
 
+### Outcome Immutability
+
+Once an artifact is classified as ABSTAINED, its validation outcome is immutable within its claim identity and epoch. No subsequent verification regime, human attestation, or policy change alters that outcome.
+
+This constraint is structural, not discretionary. It cannot be overridden by governance decision.
+
 ---
 
 ## Allowed Iterations
