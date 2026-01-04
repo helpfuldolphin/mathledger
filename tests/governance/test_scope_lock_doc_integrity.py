@@ -283,3 +283,57 @@ class TestInvariantsStatusAuditSurfaceVersionSection:
             f"Tier A claims 10 invariants but section 10 not found. "
             f"Found sections: {section_numbers}"
         )
+
+
+# ---------------------------------------------------------------------------
+# REGRESSION GUARD: Forbidden False Claims
+# ---------------------------------------------------------------------------
+
+class TestForbiddenFalseClaims:
+    """
+    Single regression guard that fails if V0_LOCK.md ever again contains
+    known false claims that were fixed in external audit remediation.
+
+    These patterns are FORBIDDEN and must never reappear:
+    1. "all claims ABSTAINED" (MV can return VERIFIED/REFUTED)
+    2. "UI never shows VERIFIED" (MV arithmetic shows VERIFIED)
+    """
+
+    FORBIDDEN_PATTERNS = [
+        (
+            r"all\s+claims\s+(?:in\s+v0\s+)?return\s+abstained",
+            "all claims ABSTAINED",
+            "MV arithmetic claims return VERIFIED/REFUTED, not ABSTAINED"
+        ),
+        (
+            r"UI\s+does\s+not\s+(?:claim|show)\s+VERIFIED\s+for\s+any\s+claim",
+            "UI never shows VERIFIED",
+            "MV arithmetic claims (e.g., '2 + 2 = 4') DO show VERIFIED"
+        ),
+    ]
+
+    def test_v0_lock_contains_no_forbidden_false_claims(self):
+        """
+        REGRESSION GUARD: V0_LOCK.md must never contain these false claims.
+
+        Forbidden:
+        - "all claims ABSTAINED" (FALSE: MV returns VERIFIED/REFUTED)
+        - "UI never shows VERIFIED" (FALSE: MV arithmetic shows VERIFIED)
+
+        If this test fails, the external audit fix has regressed.
+        """
+        if not V0_LOCK_PATH.exists():
+            pytest.skip(f"V0_LOCK.md not found: {V0_LOCK_PATH}")
+
+        content = V0_LOCK_PATH.read_text(encoding="utf-8")
+
+        violations = []
+        for pattern, description, reason in self.FORBIDDEN_PATTERNS:
+            if re.search(pattern, content, re.IGNORECASE):
+                violations.append(f"  - '{description}': {reason}")
+
+        assert not violations, (
+            "V0_LOCK.md contains FORBIDDEN false claims (external audit regression):\n"
+            + "\n".join(violations)
+            + "\n\nThese claims were fixed in commit 9bfca91. Do not reintroduce them."
+        )

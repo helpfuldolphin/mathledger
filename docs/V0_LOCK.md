@@ -67,6 +67,8 @@ v0 does NOT claim that authority-bearing means "verified":
 - FV claims return ABSTAINED (no formal verifier in v0)
 - MV claims may return VERIFIED/REFUTED (via arithmetic validator, limited coverage)
 
+**Glossary note**: "verifier" in v0 means MV arithmetic validator; formal verifier means Lean/Z3 (Phase II).
+
 ---
 
 ## Allowed Iterations
