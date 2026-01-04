@@ -513,7 +513,7 @@
     },
     "v0.2.5": {
       "tag": "v0.2.5-self-test-semantics",
-      "commit": "1cf55991f2e24cf12dde1d2983cecce49eaf5247",
+      "commit": "6dd6be2167b403752f9f5fb7a7069e3de2195a51",
       "date_locked": "2026-01-04",
       "status": "current",
       "demo_url": "/demo/",
