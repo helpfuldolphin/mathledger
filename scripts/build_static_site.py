@@ -777,6 +777,18 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
             <p style="margin: 0.75rem 0 0 0; font-size: 0.85rem;">
                 Full checklist: <a href="/{version}/docs/for-auditors/">5-minute auditor verification</a>
             </p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem;">
+                Complete audit closure matrices are preserved in the <a href="{REPO_URL}/tree/{config['tag']}/docs/external_audits/">public repository</a>.
+            </p>
+        </div>
+
+        <div class="contact-section" style="background: #f5f5f5; border: 1px solid #ccc; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0 0 0.5rem 0; font-size: 0.95rem; color: #333;">Contact</h3>
+            <p style="margin: 0; font-size: 0.9rem; color: #555;">
+                <strong>Ismail Ahmad Abdullah</strong><br>
+                <a href="mailto:ismail@mathledger.ai">ismail@mathledger.ai</a> (primary)<br>
+                <a href="mailto:ismail.abdullah.23@cnu.edu">ismail.abdullah.23@cnu.edu</a> (backup)
+            </p>
         </div>
 
         <div class="ready-to-verify" id="ready-to-verify" style="background: #e3f2fd; border: 1px solid #1976d2; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
@@ -2141,6 +2153,16 @@ def verify_build(releases: dict) -> bool:
                 errors.append(f"{version}: for-auditors contains blob/main/ (must use tag-pinned URLs)")
             else:
                 print(f"[OK] {version}: for-auditors has no blob/main/ links")
+
+    # 24b. Check landing pages have no tree/main/ links (closure matrix links must be tag-pinned)
+    for version, config in releases.get("versions", {}).items():
+        landing = SITE_DIR / version / "index.html"
+        if landing.exists():
+            landing_content = landing.read_text(encoding="utf-8")
+            if "tree/main/" in landing_content or "tree/master/" in landing_content:
+                errors.append(f"{version}: landing page contains tree/main/ or tree/master/ (closure matrix links must be tag-pinned)")
+            else:
+                print(f"[OK] {version}: landing page has no tree/main/ or tree/master/ links")
 
     # 25. Check CURRENT version for-auditors has correct verifier/examples URLs
     if current_version:

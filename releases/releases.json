@@ -2,8 +2,8 @@
   "$schema": "./releases.schema.json",
   "_comment": "CANONICAL source of version metadata. Build script reads this file ONLY.",
   "_updated": "2026-01-05",
-  "_updated_by": "Claude B",
-  "current_version": "v0.2.12",
+  "_updated_by": "Claude D (Closure Auditor)",
+  "current_version": "v0.2.13",
   "versions": {
     "v0": {
       "tag": "v0-demo-lock",
@@ -164,11 +164,6 @@
           "title": "For Auditors"
         },
         {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
           "source": "docs/RELEASE_CLOSURE_V0.2.1.md",
           "slug": "release-closure-v021",
           "title": "Release Closure v0.2.1"
@@ -239,16 +234,6 @@
           "source": "docs/FOR_AUDITORS.md",
           "slug": "for-auditors",
           "title": "For Auditors"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -335,21 +320,6 @@
           "source": "docs/FOR_AUDITORS.md",
           "slug": "for-auditors",
           "title": "For Auditors"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -437,21 +407,6 @@
           "source": "docs/FOR_AUDITORS.md",
           "slug": "for-auditors",
           "title": "For Auditors"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -543,21 +498,6 @@
           "source": "docs/FOR_AUDITORS.md",
           "slug": "for-auditors",
           "title": "For Auditors"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -652,21 +592,6 @@
           "source": "docs/FOR_AUDITORS.md",
           "slug": "for-auditors",
           "title": "For Auditors"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -765,21 +690,6 @@
           "source": "docs/FOR_AUDITORS.md",
           "slug": "for-auditors",
           "title": "For Auditors"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -884,21 +794,6 @@
           "source": "docs/MV_VALIDATOR_COVERAGE.md",
           "slug": "mv-coverage",
           "title": "MV Validator Coverage"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -991,21 +886,6 @@
           "source": "docs/MV_VALIDATOR_COVERAGE.md",
           "slug": "mv-coverage",
           "title": "MV Validator Coverage"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -1110,21 +990,6 @@
           "source": "docs/V0.2.10_SMOKE_CHECKLIST.md",
           "slug": "v0210-smoke-checklist",
           "title": "v0.2.10 Smoke Checklist"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -1231,21 +1096,6 @@
           "source": "docs/V0.2.10_SMOKE_CHECKLIST.md",
           "slug": "v0210-smoke-checklist",
           "title": "v0.2.10 Smoke Checklist"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         }
       ],
       "fixtures_dir": "fixtures",
@@ -1314,7 +1164,7 @@
       "tag": "v0.2.12-versioning-doctrine",
       "commit": "15cc70f607321a8187febe798466a5cfdc5fd20f",
       "date_locked": "2026-01-05",
-      "status": "current",
+      "status": "superseded-by-v0.2.13",
       "demo_url": "/demo/",
       "hosted_demo": true,
       "docs": [
@@ -1352,21 +1202,6 @@
           "source": "docs/V0.2.10_SMOKE_CHECKLIST.md",
           "slug": "v0210-smoke-checklist",
           "title": "v0.2.10 Smoke Checklist"
-        },
-        {
-          "source": "docs/external_audits/manus_site_audit_2026-01-03.md",
-          "slug": "external_audits/manus_site_audit_2026-01-03",
-          "title": "Cold-Start Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md",
-          "slug": "external_audits/manus_link_integrity_audit_2026-01-03",
-          "title": "Link Integrity Audit (2026-01-03)"
-        },
-        {
-          "source": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03.md",
-          "slug": "external_audits/manus_hostile_audit_v0.2.2_2026-01-03",
-          "title": "Hostile Audit v0.2.2 (2026-01-03)"
         },
         {
           "source": "docs/VERSION_NUMBER_DOCTRINE.md",
@@ -1415,6 +1250,109 @@
           "Documents version lifecycle (current \u2192 superseded)",
           "Documents tag naming convention",
           "Documents releases.json authority"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (11/1/3)",
+          "All cryptographic enforcement",
+          "Demo code and behavior",
+          "Verifier implementation"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.13": {
+      "tag": "v0.2.13-outreach-metadata",
+      "commit": "f6adede4ac923a164a85605493ad9939de587e8d",
+      "date_locked": "2026-01-05",
+      "status": "current",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/MV_VALIDATOR_COVERAGE.md",
+          "slug": "mv-coverage",
+          "title": "MV Validator Coverage"
+        },
+        {
+          "source": "docs/V0.2.10_SMOKE_CHECKLIST.md",
+          "slug": "v0210-smoke-checklist",
+          "title": "v0.2.10 Smoke Checklist"
+        },
+        {
+          "source": "docs/VERSION_NUMBER_DOCTRINE.md",
+          "slug": "version-doctrine",
+          "title": "Version Number Doctrine"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 11,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field",
+          "Abstention Terminality"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "documentation_only": true,
+        "added": [
+          "Landing page 'For Auditors' box now links to closure matrices in public repository",
+          "Contact section added to landing page with maintainer info",
+          "FOR_AUDITORS.md has 'Audit Closure Records' and 'Contact' sections",
+          "Build assertion 24b blocks tree/main or tree/master links in landing pages"
         ],
         "unchanged": [
           "Tier A/B/C invariant counts (11/1/3)",

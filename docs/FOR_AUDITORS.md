@@ -175,20 +175,33 @@ The local demo produces identical evidence packs that can be verified with the s
 
 ---
 
-## External Audits
+## Audit Closure Records
 
-Independent audits of this project are listed below.
+This project maintains authoritative closure matrices that document all BLOCKING, MAJOR, and MINOR audit findings with evidence of resolution.
 
-| Date | Auditor Role | Version Audited | Report |
-|------|--------------|-----------------|--------|
-| 2026-01-03 | External safety lead (no prior context) | v0.2.1 archive, v0.2.0 demo | [Cold-Start Audit Report](../external_audits/manus_site_audit_2026-01-03/) |
-| 2026-01-03 | Hostile link integrity auditor | v0.2.1 site | [Link Integrity Audit](../external_audits/manus_link_integrity_audit_2026-01-03/) |
-| 2026-01-03 | Hostile acquisition auditor | v0.2.2 site | [Hostile Audit v0.2.2](../external_audits/manus_hostile_audit_v0.2.2_2026-01-03/) |
+| Version | Closure Matrix |
+|---------|----------------|
+| v0.2.12 | [CLOSURE_MATRIX_v0.2.12.md](../external_audits/CLOSURE_MATRIX_v0.2.12/) |
+| v0.2.9 | [CLOSURE_MATRIX_v0.2.9.md](../external_audits/CLOSURE_MATRIX_v0.2.9/) |
+| v0.2.7 | [CLOSURE_MATRIX_v0.2.7.md](../external_audits/CLOSURE_MATRIX_v0.2.7/) |
+| v0.2.4 | [CLOSURE_MATRIX_v0.2.4.md](../external_audits/CLOSURE_MATRIX_v0.2.4/) |
+| v0.2.3 | [CLOSURE_MATRIX_v0.2.3.md](../external_audits/CLOSURE_MATRIX_v0.2.3/) |
 
-**Disclaimer:** These are independent audits. Findings may have been addressed in later versions. Audits do not constitute endorsements.
+Complete closure matrices are also available in the [public repository](https://github.com/helpfuldolphin/mathledger/tree/{{CURRENT_TAG}}/docs/external_audits/).
+
+Raw audit transcripts are preserved in the repository for completeness, but are not part of the primary evaluator path. Use closure matrices for authoritative status.
 
 ---
 
 ## Questions?
 
 For technical questions about this verification process, see the [Hostile Demo Rehearsal](../hostile-rehearsal/) document which addresses common skeptical questions with prepared answers.
+
+---
+
+## Contact
+
+**Ismail Ahmad Abdullah**
+
+- [ismail@mathledger.ai](mailto:ismail@mathledger.ai) (primary)
+- [ismail.abdullah.23@cnu.edu](mailto:ismail.abdullah.23@cnu.edu) (backup)
