@@ -729,7 +729,9 @@ def build_version_landing(config: dict, version: str, build_time: str) -> str:
 
             <!-- Version coherence bridge -->
             <p style="margin: 0 0 0.75rem 0; font-size: 0.9rem; color: #444; font-style: italic;">
-                This archive is immutable. The hosted demo at <a href="/demo/">/demo/</a> is the live instantiation of this same version.
+                This archive is immutable. The hosted demo at <a href="/demo/">/demo/</a> runs the latest demo-capability version.
+                Documentation versions may advance independently to close claim sets, doctrine, and audit semantics.
+                <a href="/{version}/docs/version-doctrine/" style="font-size: 0.85rem;">(See: Version Number Doctrine)</a>
             </p>
             <p style="margin: 0 0 1rem 0; font-size: 0.85rem; color: #666;">
                 <a href="/{version}/docs/field-manual/">Field Manual</a> (fm.tex/pdf): obligation ledger used to drive version promotions.
@@ -1847,7 +1849,7 @@ def verify_build(releases: dict) -> bool:
         current_landing = SITE_DIR / current_version / "index.html"
         if current_landing.exists():
             landing_content = current_landing.read_text(encoding="utf-8")
-            if "This archive is immutable" in landing_content and "live instantiation" in landing_content:
+            if "This archive is immutable" in landing_content and "demo-capability version" in landing_content:
                 print(f"[OK] {current_version}: Version coherence bridge text present")
             else:
                 errors.append(f"{current_version}: Version coherence bridge text MISSING")

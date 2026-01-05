@@ -10,28 +10,28 @@
     "tier_b": 1,
     "tier_c": 3
   },
-  "build_time": "2026-01-05T00:51:52Z",
-  "build_commit": "15cc70f607321a8187febe798466a5cfdc5fd20f",
+  "build_time": "2026-01-05T01:48:10Z",
+  "build_commit": "922c93801b013caf3859617a167a7640a76fd7a4",
   "source": "releases/releases.json",
   "files": [
     {
       "path": "docs/explanation/index.html",
-      "sha256": "7a10dc362bf77bedacd1d9003436a82cdbcb807b8e8e4f9d43669ac5bb61697f",
+      "sha256": "dc9388a6d2594e3df2acb10de4e9cf69af9f514679ebc9551e63bf5be18e121e",
       "size": 28516
     },
     {
       "path": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03/index.html",
-      "sha256": "efb67b1adf36eb54afc0144a5548d47a2269b6210be7171704308eaf5653c346",
+      "sha256": "0af83774cd59233f22a6f6cddd1bf677937e0c916f41b96c6d86a930350d1c0a",
       "size": 27499
     },
     {
       "path": "docs/external_audits/manus_link_integrity_audit_2026-01-03/index.html",
-      "sha256": "dc944c225bfab83cc4ca15fff42f8ab2e95ac1e69f83e6be4094454b313a054a",
+      "sha256": "d9972d71c82e87d8c53f1fb38c607b6ca700542be2923b79c3d711cc454e9a8a",
       "size": 30936
     },
     {
       "path": "docs/external_audits/manus_site_audit_2026-01-03/index.html",
-      "sha256": "0466a111e70d43c5eafc33fb795bae6a34735241fff3cf84f94e909ae2d3097c",
+      "sha256": "b01d8e62f2e8be3e3a8fcfad7c579134cebb0fc1116967a7df99574fbd9c0772",
       "size": 43373
     },
     {
@@ -46,42 +46,42 @@
     },
     {
       "path": "docs/field-manual/index.html",
-      "sha256": "fc76a098c2da730c09e6b25921b9efc60c9234b254d666b7e59f0ac5e0a517be",
+      "sha256": "73a9b9f1e1fcba3c7ce7e912e67278bd400b7b83738bda920dd2105ab432bdf0",
       "size": 8394
     },
     {
       "path": "docs/for-auditors/index.html",
-      "sha256": "d22822647c1a01f39f4ecffd744b550218bee31344517871ace91a5b64c1ca53",
-      "size": 16327
+      "sha256": "53c840ce50a255fceae6b992c1e44544b57d2d4eab9aaac593fd2b0298add57c",
+      "size": 16850
     },
     {
       "path": "docs/hostile-rehearsal/index.html",
-      "sha256": "afc3fbf97f9df6fc73bf366fc283ea45c3d876767f7bc3824740c4a5ebc98228",
+      "sha256": "f18fed77d7510c0002a152c0bc04cf1eb8384db29e42fe2fc10b6982a4aa8b8b",
       "size": 26181
     },
     {
       "path": "docs/invariants/index.html",
-      "sha256": "7b099ff57b7a84df05d46ad9966bc7028515c12b5a8ea86f7d568e21fecd3bc9",
+      "sha256": "214d4fe42727e87db0bb92c4d65250e549cdd7215684260090e2bcf1a1d75b40",
       "size": 28593
     },
     {
       "path": "docs/mv-coverage/index.html",
-      "sha256": "13b1970416c2c6851f90d1dceb416707dbac4961217f3ce5c677e4791072e5e3",
+      "sha256": "50ec1a98449b5afa58010e7e6c1a0ab77e1cc95bd1c61f1942aa684a611262f5",
       "size": 15435
     },
     {
       "path": "docs/scope-lock/index.html",
-      "sha256": "0f2921f89e5ed4162a695d040bb27c9045c4bca51c1473f4b0b570747dc9865a",
+      "sha256": "4a0e0c2517284a1b37df4065b21bb3a2b0b47ed2c192e2336efac61af593a65c",
       "size": 21157
     },
     {
       "path": "docs/v0210-smoke-checklist/index.html",
-      "sha256": "cf0df225d1e3236cf89c0e65762049fb250981ced001ac08a436e6f1ffdf6c3d",
+      "sha256": "6cdba86885c19de37adab2f486157ec9ef7c25b69823f29d91d0530326317365",
       "size": 13287
     },
     {
       "path": "docs/version-doctrine/index.html",
-      "sha256": "1eb63c52bd543de2a14b715f6f43a25186d0731905875dcd4ab1a1a0e5b88cc7",
+      "sha256": "3a9d2e633a87d0b9a2d57e9d0419c54b0761fa1d1fca5f09b7394b3a6da09a50",
       "size": 9402
     },
     {
@@ -91,7 +91,7 @@
     },
     {
       "path": "evidence-pack/index.html",
-      "sha256": "d27baa72a686c3b93bf0b681fd7a87409e007c75ba6310ee748cbec2c4d557af",
+      "sha256": "c0726042bb3856d4eb2d997df0016ed9de122814631c399d366403db9ce022ac",
       "size": 8891
     },
     {
@@ -106,7 +106,7 @@
     },
     {
       "path": "fixtures/adv_only/index.html",
-      "sha256": "e4ba7afd449ec6b5a2913cc564decf33bcf3a3a7223cb7ed7c7f6110729e9ed1",
+      "sha256": "39dc346e93a3e2cfa0bd20b2cbb863d8fbf7b4e65c52ca35bea500f88538e066",
       "size": 7124
     },
     {
@@ -121,7 +121,7 @@
     },
     {
       "path": "fixtures/index.html",
-      "sha256": "e833eb3862aec908c2ee24eeb31dc3c3656db0385096fd39a1e04170116ff83a",
+      "sha256": "af9582e4d89174f653c9740fd9f54c84580ef0a2efa8ee5464724341c7be1635",
       "size": 7605
     },
     {
@@ -131,7 +131,7 @@
     },
     {
       "path": "fixtures/mixed_mv_adv/index.html",
-      "sha256": "e9023e0b16dbaa068ffd237dfafc5ff62b45b6880f70f9c281cec908721a0b61",
+      "sha256": "46379bcaaec489d5f483d19ca157edcc0393709524e09de3de21896c60ee7bc1",
       "size": 7140
     },
     {
@@ -146,7 +146,7 @@
     },
     {
       "path": "fixtures/mv_arithmetic_refuted/index.html",
-      "sha256": "4c481b79cf84dc4d5754feec112cbbd4d8ec70ab5233a720fb2d553fd61d4d60",
+      "sha256": "ceefd539809d8d1dcfa4435f993a5f4a0f4e073def83c05d252195b0799e8d10",
       "size": 7176
     },
     {
@@ -161,7 +161,7 @@
     },
     {
       "path": "fixtures/mv_arithmetic_verified/index.html",
-      "sha256": "5626be3275ab4a303dcb3e79eb1d47b5c6f1a45f627d8161ca44d76d09c14506",
+      "sha256": "215e6755940d375af1c9fb6e370d19491c0e241a0814cdd596d826b6eb13a5a5",
       "size": 7180
     },
     {
@@ -176,7 +176,7 @@
     },
     {
       "path": "fixtures/mv_only/index.html",
-      "sha256": "501e24a59cd0db4215f74df5d41ed1936077f6713afc7825b1baa09661b1c421",
+      "sha256": "8d4cd4f2a7a7451d337731049c382d7140639dd008a9695ff071812550cd7372",
       "size": 7120
     },
     {
@@ -191,7 +191,7 @@
     },
     {
       "path": "fixtures/pa_only/index.html",
-      "sha256": "9a587198cf7a5c1d1ba76ef330ae267d50c1d6f049ba9d616b32083035e85a93",
+      "sha256": "3af400f2ae13a2799227d4387e5ea3d83980eceb54b1e4ee850cdb2c24f29cf9",
       "size": 7120
     },
     {
@@ -206,7 +206,7 @@
     },
     {
       "path": "fixtures/same_claim_as_adv/index.html",
-      "sha256": "9034bae3fd44b7d0114bbee33d355dec60ebf116b60fb9b9d192fe4fc387b611",
+      "sha256": "7121f7eeb1541049c181ab958d21b76a56096e56214a0797b42bbca2a8ec0d6d",
       "size": 7160
     },
     {
@@ -221,7 +221,7 @@
     },
     {
       "path": "fixtures/same_claim_as_pa/index.html",
-      "sha256": "86e273648e5a4d8a7892151b7f67c3ec8a379b5203a6cda43844afc294bb050b",
+      "sha256": "7130664e9cfd5cfb02400b571befe9ed4c5eb3d0092a2ca1a30f1d7995ea2214",
       "size": 7156
     },
     {
@@ -236,7 +236,7 @@
     },
     {
       "path": "fixtures/underdetermined_navier_stokes/index.html",
-      "sha256": "2bd3108089617c403ccbd1c8ea3d7e676463146fa41fef3107c3706742f9b33d",
+      "sha256": "cf377462fd854cb6c21a64a10d6f36ba01d9457cfe55dbc520d519a917e04911",
       "size": 7208
     },
     {
@@ -251,13 +251,13 @@
     },
     {
       "path": "index.html",
-      "sha256": "bd3020fd8e41336b5408f8b846d210e4e840d6dc196eb607ab5af11cfa9ff0f5",
-      "size": 16855
+      "sha256": "2133c86f3a657dfae6f2ee5e90d7784c2b81ce285adeaaa51da8045cfc590cd0",
+      "size": 17088
     },
     {
       "path": "manifest.json",
-      "sha256": "61f183aa5da13cfe2dd8527544b7ee01e9938dbaf02e8868c3a0c57598388d80",
-      "size": 8728
+      "sha256": "0a3d823edb1bd07fcb1fe057186fe72d97e1f31bb85bf5473afc6ff82e8b974b",
+      "size": 8908
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 This page provides a quick verification path for external auditors evaluating MathLedger's governance claims.
 
-**Version Coherence Note:** The hosted demo runs the latest *demo-capability* version (currently v0.2.10). Documentation versions may advance independently. This is intentional: documentation releases do not require demo redeployment. Version coherence is determined by `/versions/`, not by demo parity.
+**Version Coherence Note:** The hosted demo runs the latest *demo-capability* version (currently v0.2.10). Documentation versions may advance independently. This is intentional: documentation releases do not require demo redeployment. Version coherence is determined by `/versions/`, not by demo parity. See: [Version Number Doctrine](../version-doctrine/).
 
 **Expectation:** Auditors should expect that some claims will remain permanently ABSTAINED. This is correct behavior and not a failure mode.
 
