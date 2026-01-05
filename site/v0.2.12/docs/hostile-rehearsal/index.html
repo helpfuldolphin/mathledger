@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hostile Demo Rehearsal — MathLedger v0.2.12</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0.2.12</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0.2.12-versioning-doctrine</code> |
+            Commit: <code>TO_BE_FILLED</code> |
+            Locked: 2026-01-05
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 11</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0.2.12/">Archive</a> <a href="/v0.2.12/docs/scope-lock/">Scope</a> <a href="/v0.2.12/docs/explanation/">Explanation</a> <a href="/v0.2.12/docs/invariants/">Invariants</a> <a href="/v0.2.12/docs/field-manual/">Field Manual</a> <a href="/v0.2.12/fixtures/">Fixtures</a> <a href="/v0.2.12/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>Hostile Demo Rehearsal <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>Hostile Demo Rehearsal Kit</h1>
+<strong>Version</strong>: v0.1 (MV arithmetic validator added)
+<strong>Audience</strong>: Safety leads, preparedness teams, external auditors
+<strong>Purpose</strong>: Defend the demo honestly under adversarial questioning
+<hr>
+<h2>Framing (Read First)</h2>
+<p>This demo shows <strong>governance substrate</strong>, not capability. The correct frame is:</p>
+<blockquote>"We built the boundary enforcement layer. We're showing you that boundary, not what happens inside it."</blockquote>
+<p>If asked "what can this do?", redirect to "what does this <em>refuse</em> to do?"</p>
+<hr>
+<h2>10 Hostile Questions</h2>
+<h3>Q1: "Why does everything say ABSTAINED? Is this broken?"</h3>
+<strong>(a) What they're really testing:</strong>
+Whether you'll overclaim. They want to see if you panic and say "it works, just trust us."
+<strong>(b) UI click-path:</strong>
+<ol><li>Select "pa_only" scenario from dropdown</li><li>Click "Run Full Flow"</li><li>Observe outcome shows <code>ABSTAINED</code></li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"ABSTAINED is the correct output. v0 has no mechanical verifier, so the system refuses to claim correctness—that's the honest behavior we're demonstrating."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"It's verified" (false)</li><li>"The verifier isn't ready yet" (implies it would work)</li><li>"ABSTAINED means pending" (it means cannot determine)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<ul><li>Authority Basis panel: <code>mechanically_verified: false</code></li><li>Explanation text: "PA claims are authority-bearing but not mechanically verified"</li></ul>
+<hr>
+<h3>Q2: "What's the point if nothing gets verified?"</h3>
+<strong>(a) What they're really testing:</strong>
+Whether you understand the difference between governance and capability.
+<strong>(b) UI click-path:</strong>
+<ol><li>Run "mixed_mv_adv" scenario</li><li>Point to split panels: Exploration (left) vs Authority (right)</li><li>Show ADV claim marked "EXCLUDED" in red</li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"The point is showing that unverified claims are <em>blocked</em> from entering the authority stream. The boundary enforcement works even without a verifier behind it."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"We'll add real verification later" (shifts goalposts)</li><li>"This proves the system is safe" (never claim safety)</li><li>"Trust the hashes" (hashes prove structure, not truth)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<ul><li>ADV claim badge: red "EXCLUDED"</li><li>Authority stream: shows only MV claim</li><li><code>authority_claim_count: 1</code> vs <code>total_claim_count: 2</code></li></ul>
+<hr>
+<h3>Q3: "How do I know ADV claims are actually excluded from R_t?"</h3>
+<strong>(a) What they're really testing:</strong>
+Whether exclusion is real or cosmetic.
+<strong>(b) UI click-path:</strong>
+<ol><li>Run "adv_only" scenario</li><li>Observe R_t hash is computed</li><li>Check <code>authority_claim_count: 0</code></li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"Run the adv_only case. The authority stream shows zero claims entered R_t. The R_t hash exists but commits to an empty authority set—that's the correct behavior."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"ADV is just hidden" (it's architecturally excluded)</li><li>"We filter it in the UI" (filtering happens in <code>governance/uvil.py:build_reasoning_artifact_payload</code>)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<ul><li>Authority Basis: <code>adv_count: 2</code>, <code>authority_claim_count: 0</code></li><li>R_t is still computed (proves empty set is committed, not skipped)</li></ul>
+<hr>
+<h3>Q4: "What stops someone from marking everything as FV?"</h3>
+<strong>(a) What they're really testing:</strong>
+Whether trust class assignment is governance or just labels.
+<strong>(b) UI click-path:</strong>
+<ol><li>Select "mv_only" scenario</li><li>Note: claims are user-assigned, not system-assigned</li><li>Point to Authority Basis: <code>mechanically_verified: false</code></li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"Nothing stops them in v0—that's honest. But the Authority Basis explicitly shows <code>mechanically_verified: false</code>, so claiming FV doesn't make it verified. The audit trail preserves what the user claimed vs what the system confirmed."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"The system validates trust classes" (v0 doesn't)</li><li>"FV means it's formally verified" (in v0, FV is an aspiration, not a fact)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<ul><li><code>mechanically_verified: false</code> in every v0 response</li><li>Outcome is always ABSTAINED regardless of trust class</li></ul>
+<hr>
+<h3>Q5: "Is this just security theater with extra hashes?"</h3>
+<strong>(a) What they're really testing:</strong>
+Whether the hashes mean anything or are decorative.
+<strong>(b) UI click-path:</strong>
+<ol><li>Run any scenario twice with same inputs</li><li>Compare <code>committed_partition_id</code> values</li><li>Show they're identical (content-derived, not random)</li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"The hashes are content-derived, not random. Same inputs produce identical <code>committed_partition_id</code>. You can replay this tomorrow and get the same hash—that's the determinism property."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"The hashes prove correctness" (they prove structure/immutability)</li><li>"It's cryptographically secure" (SHA256 is, but that's not the claim)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<ul><li>Run <code>uv run python tools/run_demo_cases.py</code> twice</li><li><code>committed_partition_id</code> values match between runs</li><li>Fixtures in <code>fixtures/*/output.json</code> are stable</li></ul>
+<hr>
+<h3>Q6: "What does PA actually prove?"</h3>
+<strong>(a) What they're really testing:</strong>
+Whether you'll conflate human attestation with mechanical verification.
+<strong>(b) UI click-path:</strong>
+<ol><li>Run "pa_only" scenario</li><li>Read Authority Basis explanation</li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"PA proves a human attested to something. It does not prove the claim is true. The system records the attestation in U_t and includes it in R_t, but marks <code>mechanically_verified: false</code>."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"PA is as good as verified" (it isn't)</li><li>"The user takes responsibility" (that's not a technical property)</li><li>"Procedural attestation is a kind of proof" (it's a commitment, not a proof)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<ul><li>Authority Basis: <code>pa_count: 1</code>, <code>mechanically_verified: false</code></li><li>Explanation: "PA claims are authority-bearing but not mechanically verified"</li></ul>
+<hr>
+<h3>Q7: "What's the difference between DraftProposal and CommittedPartitionSnapshot?"</h3>
+<strong>(a) What they're really testing:</strong>
+Whether the exploration/authority boundary is real.
+<strong>(b) UI click-path:</strong>
+<ol><li>Run any scenario</li><li>Point to Exploration panel: shows <code>proposal_id</code></li><li>Point to Authority panel: shows <code>committed_partition_id</code></li><li>Note: proposal_id appears in exploration only</li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"DraftProposal has a random ID and never enters hash-committed paths. CommittedPartitionSnapshot has a content-derived ID and is the sole input to attestation. The boundary is architectural, not cosmetic."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"They're basically the same" (they're architecturally different)</li><li>"We clean up the draft later" (drafts never enter authority)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<ul><li>Exploration panel note: "proposal_id is exploration-only and MUST NOT appear in attestation"</li><li><code>/run_verification</code> endpoint rejects raw <code>proposal_id</code> (see <code>backend/api/uvil.py:113-123</code>)</li></ul>
+<hr>
+<h3>Q8: "What happens if I try to double-commit?"</h3>
+<strong>(a) What they're really testing:</strong>
+Whether immutability is enforced.
+<strong>(b) UI click-path:</strong>
+<ol><li>Start demo server</li><li>Use curl or Postman to call <code>/uvil/commit_uvil</code> twice with same <code>proposal_id</code></li><li>Second call returns 409 Conflict</li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"Second commit returns HTTP 409 Conflict. Each proposal can only be committed once—this is enforced in <code>backend/api/uvil.py</code> via <code>_committed_proposal_ids</code> set."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"You can update a committed partition" (you cannot)</li><li>"Just create a new proposal" (true, but deflects the question)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<pre><code class="language-bash"># First commit succeeds
+curl -X POST http://localhost:8000/uvil/commit_uvil -H "Content-Type: application/json" \
+  -d '{"proposal_id":"<id>","edited_claims":[...]}'
+<h1>→ 200 OK</h1>
+<h1>Second commit fails</h1>
+curl -X POST http://localhost:8000/uvil/commit_uvil -H "Content-Type: application/json" \
+  -d '{"proposal_id":"<id>","edited_claims":[...]}'
+<h1>→ 409 Conflict: "Proposal already committed"</h1>
+</code></pre>
+<hr>
+<h3>Q9: "Why does THIS claim verify but not that one?"</h3>
+<strong>(a) What they're really testing:</strong>
+Whether verification is real or arbitrary. This is the key question once MV arithmetic validation exists.
+<strong>(b) UI click-path:</strong>
+<ol><li>Run "mv_arithmetic_verified" scenario: claim is "2 + 2 = 4" marked MV</li><li>Observe outcome: <code>VERIFIED</code></li><li>Run "same_claim_as_pa" scenario: claim is "2 + 2 = 4" marked PA</li><li>Observe outcome: <code>ABSTAINED</code></li><li>Run "mv_arithmetic_refuted" scenario: claim is "2 + 2 = 5" marked MV</li><li>Observe outcome: <code>REFUTED</code></li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"VERIFIED only occurs when: (1) the claim is marked MV, AND (2) the arithmetic validator can parse and confirm it. Same text marked PA doesn't go through the validator—that's the trust class distinction. <code>2 + 2 = 5</code> marked MV returns REFUTED because the validator ran and found it false."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"The system knows math" (it knows one pattern: <code>a op b = c</code>)</li><li>"MV claims are verified" (only if the validator can parse them)</li><li>"This proves the system is intelligent" (it's a regex + arithmetic)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<ul><li>mv_arithmetic_verified: <code>outcome: VERIFIED</code>, <code>mechanically_verified: true</code></li><li>same_claim_as_pa: <code>outcome: ABSTAINED</code>, <code>mechanically_verified: false</code></li><li>mv_arithmetic_refuted: <code>outcome: REFUTED</code>, <code>mechanically_verified: true</code></li><li>Authority Basis shows <code>mv_validation: { verified: 1, refuted: 0, abstained: 0 }</code></li></ul>
+<strong>(f) Key insight:</strong>
+The trust class determines <em>which validator runs</em>. The validator determines the outcome. PA bypasses all validators. MV goes through the arithmetic validator. FV would go through a formal proof checker (not implemented). The governance layer routes; the verifier layer decides.
+<hr>
+<h3>Q10: "Prove this isn't just security theater with fancy hashes."</h3>
+<strong>(a) What they're really testing:</strong>
+Whether the hashes are decorative or functional. This is the "show me or shut up" question.
+<strong>(b) UI click-path:</strong>
+<ol><li>Run any MV verified scenario (e.g., mv_arithmetic_verified)</li><li>After verification, scroll to "Audit Verification" section</li><li>Click "Download Evidence Pack" → saves JSON file</li><li>Click "Replay & Verify" → shows PASS</li><li>Open the downloaded JSON, change one character in <code>reasoning_artifacts[0].claim_id</code></li><li>Use curl to POST the tampered pack to <code>/uvil/replay_verify</code></li><li>Observe: FAIL with diff showing which hash diverged</li></ol>
+<strong>(c) Answer (1-2 sentences):</strong>
+"Download the evidence pack. Tamper with any field. Run replay verification. It fails and shows you exactly which hash diverged. That's not theater—that's tamper detection."
+<strong>(d) What NOT to say:</strong>
+<ul><li>"Trust the hashes" (show them, don't assert them)</li><li>"The cryptography is sound" (irrelevant—the demo is about structure)</li><li>"We use SHA256" (implementation detail, not the point)</li></ul>
+<strong>(e) On-screen evidence:</strong>
+<pre><code class="language-bash"># Download evidence pack
+curl http://localhost:8000/uvil/evidence_pack/<committed_id> > pack.json
+<h1>Tamper with it (change one character)</h1>
+<h1>Then replay:</h1>
+curl -X POST http://localhost:8000/uvil/replay_verify \
+  -H "Content-Type: application/json" \
+  -d @pack.json
+<h1>→ {"result": "FAIL", "diff": {...}}</h1>
+</code></pre>
+<strong>(f) Key insight:</strong>
+The evidence pack is self-contained. No external API calls. No network access. Anyone with the pack can:
+<ol><li>Recompute U_t from uvil_events</li><li>Recompute R_t from reasoning_artifacts</li><li>Recompute H_t = SHA256(R_t || U_t)</li><li>Compare to recorded values</li></ol>
+If all match: PASS. If any differ: FAIL with diff. There is no way to tamper without detection. This is the audit instrument.
+<hr>
+<h2>10-Minute Live Run Script</h2>
+<strong>Setup</strong> (before demo):
+<pre><code class="language-bash">cd C:/dev/mathledger
+uv run python demo/app.py
+<h1>Open http://localhost:8000 in browser</h1>
+</code></pre>
+<strong>Minute 0-1: Frame</strong>
+<blockquote>"This is a governance demo. It shows boundary enforcement and routing. Most claims return ABSTAINED. One type—MV with simple arithmetic—actually verifies. That's intentional: we show the full spectrum."</blockquote>
+<strong>Minute 1-3: Exploration vs Authority</strong>
+<ol><li>Select "mixed_mv_adv" from dropdown</li><li>Click "Run Full Flow"</li><li>Point to split panels</li><li>"Left panel is exploration—random IDs, speculative. Right panel is authority—content-derived IDs, immutable."</li><li>"Notice the ADV claim is marked EXCLUDED in red. It never entered R_t."</li></ol>
+<strong>Minute 3-5: ADV Exclusion Proof</strong>
+<ol><li>Select "adv_only" scenario</li><li>Click "Run Full Flow"</li><li>"Both claims are ADV. Authority stream shows zero claims entered. R_t still exists—it commits to the empty set."</li><li>Point to <code>authority_claim_count: 0</code></li></ol>
+<strong>Minute 5-7: PA Honesty</strong>
+<ol><li>Select "pa_only" scenario</li><li>Click "Run Full Flow"</li><li>"PA is authority-bearing—it enters R_t. But look at the Authority Basis: <code>mechanically_verified: false</code>."</li><li>"The system accepts the human's attestation but refuses to claim it verified anything."</li></ol>
+<strong>Minute 7-8: MV Verification (The Key Demo)</strong>
+<ol><li>Select "mv_arithmetic_verified" scenario</li><li>Click "Run Full Flow"</li><li>"This claim is <code>2 + 2 = 4</code> marked MV. Outcome: VERIFIED."</li><li>Select "same_claim_as_pa" scenario</li><li>"Same text, but marked PA. Outcome: ABSTAINED."</li><li>"Trust class determines routing. MV goes to validator. PA bypasses it."</li><li>Select "mv_arithmetic_refuted"</li><li>"<code>2 + 2 = 5</code> marked MV. Outcome: REFUTED. The validator ran and found it false."</li></ol>
+<strong>Minute 8-9: Determinism</strong>
+<ol><li>Open terminal</li><li><code>uv run python tools/run_demo_cases.py</code></li><li>"All 9 cases pass. Same inputs, same hashes."</li><li>"You can run this tomorrow and get identical results."</li></ol>
+<strong>Minute 9-10: Close</strong>
+<blockquote>"This demo shows four things: (1) boundaries between exploration and authority are real, (2) ADV never enters the authority stream, (3) the system stops when it can't verify, (4) when verification exists (MV arithmetic), it runs and returns VERIFIED or REFUTED. That's the full governance stack."</blockquote>
+<hr>
+<h2>60-Second Cold Outreach Version</h2>
+<blockquote>"30 seconds to show you one thing: run <code>2 + 2 = 4</code> as MV—it returns VERIFIED. Run <code>2 + 2 = 5</code> as MV—it returns REFUTED. Run <code>2 + 2 = 4</code> as PA—it returns ABSTAINED.</blockquote>
+<blockquote>> Same claim text, different trust class, different outcome. That's governance routing: the trust class determines which validator runs. MV goes to arithmetic. PA bypasses validators. ADV never enters the authority stream at all.</blockquote>
+<blockquote>> This isn't a capability demo. It's a demo of boundary enforcement. The system verifies what it can, refuses to claim what it can't, and excludes what it shouldn't.</blockquote>
+<blockquote>> If you want to see what 'honest verification infrastructure' looks like, this is it."</blockquote>
+<hr>
+<h2>Quick Reference Card</h2>
+<table><tr><th>Question</th><th>One-liner</th></tr>
+<tr><td>Why ABSTAINED?</td><td>No verifier for that trust class; refusing to claim is honest</td></tr>
+<tr><td>What's the point?</td><td>Boundary enforcement works even without verification</td></tr>
+<tr><td>ADV excluded?</td><td>Yes—<code>authority_claim_count</code> shows it, R_t commits to empty set</td></tr>
+<tr><td>Mark everything FV?</td><td>Allowed, but <code>mechanically_verified: false</code> without FV verifier</td></tr>
+<tr><td>Security theater?</td><td>Download, tamper, replay → FAIL. That's tamper detection, not theater.</td></tr>
+<tr><td>PA proves what?</td><td>Human attestation recorded, not truth confirmed</td></tr>
+<tr><td>Draft vs Committed?</td><td>Random ID (exploration) vs content-derived ID (authority)</td></tr>
+<tr><td>Double commit?</td><td>409 Conflict—immutability enforced</td></tr>
+<tr><td>Why THIS verifies?</td><td>MV + parseable arithmetic → validator runs → VERIFIED/REFUTED</td></tr>
+<tr><td>Prove it's not theater?</td><td>Evidence pack + replay verify: tamper → FAIL with diff</td></tr></table>
+<hr>
+<h2>Artifacts to Have Open</h2>
+<ol><li>Browser: <code>http://localhost:8000</code></li><li>Terminal 1: demo server running</li><li>Terminal 2: ready for <code>uv run python tools/run_demo_cases.py</code></li><li>Terminal 3: ready for curl commands (Q10 evidence pack tamper test)</li><li>Code reference: <code>backend/api/uvil.py</code> (for Q7, Q8, Q10 if pressed)</li><li>Code reference: <code>governance/mv_validator.py</code> (for Q9 if pressed)</li><li>Fixtures: <code>fixtures/mv_arithmetic_verified/output.json</code> (for Q9 comparison)</li><li>Downloaded evidence pack JSON (for Q10 tamper demo)</li></ol>
+<hr>
+<h2>Red Lines (Never Say These)</h2>
+<table><tr><th>Claim</th><th>Why it's wrong</th></tr>
+<tr><td>"It works"</td><td>Only arithmetic MV claims verify; everything else abstains</td></tr>
+<tr><td>"It's safe"</td><td>Demo doesn't prove safety</td></tr>
+<tr><td>"Trust the system"</td><td>System proves structure, not truth</td></tr>
+<tr><td>"This is aligned"</td><td>No alignment claim is made</td></tr>
+<tr><td>"The verifier will fix it"</td><td>Future capability isn't demonstrated</td></tr>
+<tr><td>"PA means verified"</td><td>PA means attested</td></tr>
+<tr><td>"ADV is just deprioritized"</td><td>ADV is architecturally excluded</td></tr>
+<tr><td>"The system knows math"</td><td>It knows one pattern: <code>a op b = c</code></td></tr>
+<tr><td>"MV always verifies"</td><td>Only parseable arithmetic; unparseable MV → ABSTAINED</td></tr></table>
+<hr>
+<strong>SAVE TO REPO: YES</strong>
+<strong>Path</strong>: <code>docs/HOSTILE_DEMO_REHEARSAL.md</code>
+        </article>
+
+        <footer>
+            Site built from commit <code>TO_BE_FILLED</code> at <code>2026-01-05T00:49:34Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

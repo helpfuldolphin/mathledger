@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold-Start Audit (2026-01-03) — MathLedger v0.2.12</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0.2.12</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0.2.12-versioning-doctrine</code> |
+            Commit: <code>TO_BE_FILLED</code> |
+            Locked: 2026-01-05
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 11</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0.2.12/">Archive</a> <a href="/v0.2.12/docs/scope-lock/">Scope</a> <a href="/v0.2.12/docs/explanation/">Explanation</a> <a href="/v0.2.12/docs/invariants/">Invariants</a> <a href="/v0.2.12/docs/field-manual/">Field Manual</a> <a href="/v0.2.12/fixtures/">Fixtures</a> <a href="/v0.2.12/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>Cold-Start Audit (2026-01-03) <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>MathLedger Cold-Start Audit Report</h1>
+<strong>Date:</strong> January 3, 2026  
+<strong>Auditor Perspective:</strong> External safety lead/auditor/potential acquirer with no prior context
+<hr>
+<h2>Part 1 — First Contact (10–15 seconds)</h2>
+<h3>What I See Above the Fold</h3>
+<strong>Headings:</strong>
+<ul><li>"MathLedger — Version v0.2.1"</li><li>"Version v0.2.1 Archive" with "ARCHIVE" badge</li><li>"Hosted Interactive Demo"</li></ul>
+<strong>Status Banner:</strong>
+<ul><li>Green-highlighted box at top showing "Status: CURRENT"</li><li>Tag: v0.2.1-cohesion | Commit: 27a94c8a5813 | Locked: 2026-01-03</li></ul>
+<strong>Tier Information:</strong>
+<ul><li>"Tier A (enforced): 10"</li><li>"Tier B (logged): 1"</li><li>"Tier C (aspirational): 3"</li></ul>
+<strong>Warnings/Non-Claims (prominently displayed in red/warning text):</strong>
+"What this version cannot enforce:"
+<ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+<strong>Calls to Action:</strong>
+<ul><li>Navigation tabs: Scope, Explanation, Invariants, Fixtures, Evidence, All Versions</li><li>Large green button: "Open Interactive Demo"</li><li>Link: "5-minute auditor checklist" (described as "New to MathLedger? Start with...")</li></ul>
+<strong>Additional Visual Elements:</strong>
+<ul><li>Statement: "Interactive demo is hosted; archive remains immutable."</li><li>Statement: "This is the archive for MathLedger version v0.2.1. All artifacts below are static, verifiable, and immutable."</li></ul>
+<h3>After ~10 Seconds: What I Believe This Project Is</h3>
+<strong>What I believe this project is:</strong>
+MathLedger appears to be a <strong>versioned epistemic archive system</strong> that demonstrates some form of mathematical or logical claim verification with explicit enforcement tiers. It presents itself as an immutable, verifiable artifact with a hosted interactive demo. The emphasis on "what this version cannot enforce" and the tier system (A/B/C) suggests it's a rigorous demonstration of claim verification with explicit limitations.
+<strong>What I believe it is explicitly NOT:</strong>
+<ul><li>NOT a production-ready verification system (given the prominent warnings about missing Lean/Z3 verifier, no multi-model consensus, no learning loop)</li><li>NOT claiming to verify all mathematical edge cases (explicitly calls out overflow and float precision gaps)</li><li>NOT a general-purpose AI demo (the language is unusually technical and limitation-focused)</li><li>NOT making implicit promises (the "What this version cannot enforce" section is more prominent than typical feature lists)</li></ul>
+<strong>Key Quoted Phrases:</strong>
+<ul><li>"What this version cannot enforce" (unusual negative framing)</li><li>"static, verifiable, and immutable"</li><li>"Tier A (enforced): 10 / Tier B (logged): 1 / Tier C (aspirational): 3"</li><li>"archive remains immutable"</li></ul>
+<hr>
+<h2>Part 2 — Archive Understanding</h2>
+<h3>Scope Lock Exploration</h3>
+<strong>What v0 Demonstrates:</strong>
+The Scope Lock document states that "v0 is a governance demo" that demonstrates:
+<ol><li>UVIL (User-Verified Input Loop): Human binding mechanism for authority</li><li>Trust Classes: FV, MV, PA (authority-bearing) vs ADV (exploration-only)</li><li>Dual Attestation Roots: U_t (UI), R_t (reasoning), H_t (composite)</li><li>Determinism: Same inputs produce same outputs, replayable</li><li>Exploration/Authority Boundary: DraftProposal never enters hash-committed paths</li></ol>
+<strong>What v0 Does NOT Demonstrate (explicit exclusions):</strong>
+<ul><li>RFL learning loop: No curriculum, no policy, no uplift</li><li>Multi-model arena: Single template partitioner, no LiteLLM, no model competition</li><li>Agent tools: No code execution, no sandbox, no E2B</li><li>Real verifier: No Lean, no Z3, no mechanical proof checking</li><li>Production auth: No user accounts, no API keys, no rate limiting</li><li>Persistence: In-memory only, restart-loss accepted</li><li>Long-running agents: Synchronous request/response only</li></ul>
+<strong>Critical Statement:</strong>
+"v0 is a governance substrate demo, not a capability demo."
+<p>The document explicitly states what v0 IS and what it does NOT show:
+<ul><li>It shows: The boundary between exploration and authority is real, testable, and replayable; the system stops when it cannot verify</li><li>It does NOT show: "That the system is intelligent / That the system is aligned / That the system is safe / That verification works (v0 has no verifier)"</li></ul>
+<strong>Terminology:</strong>
+Three outcome values are defined:
+<ul><li>VERIFIED: MV claim parsed AND arithmetic confirmed (e.g., "2 + 2 = 4")</li><li>REFUTED: MV claim parsed AND arithmetic failed (e.g., "2 + 2 = 5")</li><li>ABSTAINED: Cannot mechanically verify (PA, FV, unparseable MV, ADV-only)</li></ul>
+<strong>Lock Statement:</strong>
+The document includes explicit "Allowed Iterations" vs "Forbidden Iterations" and a formal lock statement dated 2026-01-02.</p>
+<hr>
+<h3>Explanation Page Exploration</h3>
+<strong>Core Mechanism:</strong>
+The Explanation document describes how the demo separates exploration from authority:
+<ul><li><strong>Exploration phase:</strong> System generates a DraftProposal with random identifier; nothing is committed; editing is free</li><li><strong>Authority phase:</strong> When user clicks "Commit," system creates CommittedPartitionSnapshot with content-derived identifier (hash); claims become immutable</li></ul>
+<strong>Key Design Principle:</strong>
+"exploration identifiers never appear in committed data" - this is described as "not an implementation detail. It is the design."
+<strong>Three Outcomes:</strong>
+<ul><li>VERIFIED: machine-checkable proof that claim holds</li><li>REFUTED: machine-checkable proof that claim does not hold</li><li>ABSTAINED: system did not find either (described as "not a failure" but "the correct output")</li></ul>
+<strong>Critical Quote:</strong>
+"This stopping is correctness, not caution. A system that produces confident outputs when it lacks grounds for confidence is broken."
+<strong>ADV (Advisory) Trust Class:</strong>
+ADV content is "explicitly inert" - it does not enter the reasoning root (R_t), does not contribute to attestation, is recorded but has no authority. The document states: "This is not humility theater... It is making a structural distinction: suggestions exist, but they are not claims."
+<strong>Hash System:</strong>
+<ul><li>U_t: UI Merkle root (commits to human actions)</li><li>R_t: Reasoning Merkle root (commits to system's established claims)</li><li>H_t: Composite root (binds U_t and R_t together)</li></ul>
+<strong>Evidence Pack:</strong>
+Self-contained JSON file enabling independent verification through replay. Document explicitly states what replay does NOT prove: "Replay verification proves structural integrity, not truth... It proves nothing about what that trail represents."
+<strong>Explicit Non-Claims Section:</strong>
+The document has a section titled "What This Demo Refuses to Claim" stating the demo does NOT claim:
+<ul><li>System is aligned with human values</li><li>System is intelligent</li><li>System is safe</li><li>System will behave well in novel situations</li></ul>
+It claims only: "the system's governance is legible."
+<hr>
+<h3>Invariants Page Exploration</h3>
+<strong>Document Description:</strong>
+"This document provides a brutally honest classification of governance invariants."
+<strong>Tier Classification System:</strong>
+<ul><li><strong>Tier A:</strong> Cryptographically or structurally enforced. Violation is impossible without detection. (10 invariants)</li><li><strong>Tier B:</strong> Logged and replay-visible. Violation is detectable but not prevented. (1 invariant)</li><li><strong>Tier C:</strong> Documented but not enforced in v0. Aspirational. (3 invariants)</li></ul>
+<strong>Tier A Invariants (10 total):</strong>
+<ol><li>Canonicalization Determinism</li><li>H_t = SHA256(R_t || U_t)</li><li>ADV Excluded from R_t</li><li>Content-Derived IDs</li><li>Replay Uses Same Code Paths</li><li>Double-Commit Returns 409</li><li>No Silent Authority</li><li>Trust-Class Monotonicity</li><li>Abstention Preservation</li><li>Audit Surface Version Field</li></ol>
+<strong>Tier B (1 invariant):</strong>
+<ul><li>MV Validator Correctness (edge cases) - logged but not hard-gated</li></ul>
+<strong>Tier C (3 invariants - aspirational, not in v0):</strong>
+<ol><li>FV Mechanical Verification (no Lean/Z3 verifier)</li><li>Multi-Model Consensus (single template partitioner)</li><li>RFL Integration (no learning loop)</li></ol>
+<strong>Notable Feature:</strong>
+The invariants table includes columns for "How It Can Be Violated Today" and "Current Detection" - showing explicit acknowledgment of limitations and attack surfaces.
+<hr>
+<h3>Fixtures Page Exploration</h3>
+<strong>Description:</strong>
+Regression test fixtures for version v0.2.1. Each fixture contains input and expected output JSON files.
+<strong>9 Test Fixtures:</strong>
+<ol><li>adv_only</li><li>mixed_mv_adv</li><li>mv_arithmetic_refuted</li><li>mv_arithmetic_verified</li><li>mv_only</li><li>pa_only</li><li>same_claim_as_adv</li><li>same_claim_as_pa</li><li>underdetermined_navier_stokes</li></ol>
+<strong>Verification:</strong>
+<ul><li>Checksum verification available via index.json with SHA256 checksums</li><li>Regression harness can be run locally with: <code>uv run python tools/run_demo_cases.py</code></li></ul>
+<strong>Observation:</strong>
+The fixture names are descriptive and cover different trust class scenarios (ADV, MV, PA) and outcomes (verified, refuted). The "underdetermined_navier_stokes" fixture suggests testing with complex mathematical claims that cannot be verified.
+<hr>
+<h3>Evidence Pack Page Exploration</h3>
+<strong>Purpose:</strong>
+"The evidence pack enables independent replay verification. An auditor can recompute attestation hashes without running the demo."
+<strong>What Replay Verification Proves:</strong>
+<ul><li>The recorded hashes match what the inputs produce</li><li>The attestation trail has not been tampered with</li><li>Determinism: same inputs produce same outputs</li></ul>
+<strong>What Replay Verification Does NOT Prove:</strong>
+<ul><li>That the claims are true</li><li>That the verification was sound</li><li>That the system behaved safely</li></ul>
+<strong>Replay Instructions:</strong>
+Concrete command-line instructions provided for running replay verification locally.
+<hr>
+<h3>Part 2 Summary: What MathLedger Claims and Refuses to Claim</h3>
+<strong>What MathLedger Claims:</strong>
+<ol><li>It is a <strong>governance substrate demo</strong>, not a capability demo</li><li>It demonstrates a structural boundary between exploration and authority that is cryptographically enforced</li><li>It provides deterministic, replayable attestations with content-derived identifiers</li><li>It has 10 Tier A invariants that are cryptographically or structurally enforced</li><li>The system's governance is <strong>legible</strong> - you can see what the human committed and what the system established</li><li>Replay verification proves structural integrity (that the audit trail is intact)</li></ol>
+<strong>What MathLedger Refuses to Claim:</strong>
+<ol><li>That the system is intelligent, aligned, or safe</li><li>That verification works (v0 has no verifier - all FV claims return ABSTAINED)</li><li>That it demonstrates capability (explicitly: "not a capability demo")</li><li>That replay verification proves truth or soundness (only structural integrity)</li><li>That it generalizes to production or handles all edge cases</li><li>That it has multi-model consensus, learning loops, or real mechanical verification</li></ol>
+<strong>What is Unusually Explicit or Disciplined:</strong>
+<p>The most striking feature is the <strong>prominence of non-claims and limitations</strong>. The homepage displays "What this version cannot enforce" in red warning text before any feature descriptions. Every major document includes explicit sections on what is NOT claimed or NOT proven. The Invariants document is titled "brutally honest classification" and includes a column for "How It Can Be Violated Today." The Evidence Pack page explicitly states what replay does NOT prove. This negative framing is far more prominent than in typical AI demos, which usually emphasize capabilities.</p>
+<p>The <strong>tier system</strong> (A/B/C) provides unusual transparency about enforcement levels - most systems would claim everything is "secure" without distinguishing between cryptographically enforced, logged-but-not-prevented, and aspirational invariants.</p>
+<p>The <strong>terminology discipline</strong> is rigorous: ABSTAINED is treated as a "first-class outcome" rather than a failure, and the system explicitly refuses to return VERIFIED when it cannot mechanically verify.</p>
+<strong>What Feels Confusing or Underspecified:</strong>
+<ol><li><strong>Target audience ambiguity:</strong> The site assumes significant technical sophistication (terms like "Merkle root," "RFC 8785-style canonicalization," "content-derived IDs") without clear onboarding for different audience levels.</li></ol>
+<ol><li><strong>"Governance demo" framing:</strong> While the site repeatedly states this is a "governance substrate demo," it's not immediately clear what problem this solves or why governance without capability matters. The value proposition requires significant inference.</li></ol>
+<ol><li><strong>Missing context for "FM":</strong> The Invariants page references "FM Section" repeatedly (§1.5, §4, etc.) but doesn't explain what FM is or link to it.</li></ol>
+<ol><li><strong>UVIL acronym:</strong> "User-Verified Input Loop" is mentioned but not explained in depth on the homepage - requires clicking through to understand.</li></ol>
+<ol><li><strong>Transition to demo:</strong> While the green "Open Interactive Demo" button is visible, there's no clear narrative bridge explaining "now that you understand the governance claims, here's how to see them in action."</li></ol>
+<strong>Where I Had to "Work" to Understand:</strong>
+<ol><li>Understanding the distinction between "authority-bearing" and "exploration-only" required reading multiple documents</li><li>Grasping why a demo with no real verifier is valuable took time - the point is governance infrastructure, not verification capability</li><li>The relationship between the archive (static documentation) and the demo (interactive) wasn't immediately clear</li><li>Understanding what "epistemic archive" means in practice</li><li>Connecting the tier system to actual enforcement mechanisms required reading code examples</li></ol>
+<hr>
+<h2>Part 3 — Transition to the Demo</h2>
+<h3>How the Site Points to the Interactive Demo</h3>
+<strong>Link Visibility:</strong>
+The link is <strong>obvious</strong>. There is a large green button labeled "Open Interactive Demo" prominently displayed in a light green box titled "Hosted Interactive Demo" near the top of the archive page. The button uses high contrast (dark green on light green background) and is the only call-to-action button on the page.
+<strong>Framing:</strong>
+The framing is <strong>clear but minimal</strong>. The box states: "Interactive demo is hosted; archive remains immutable." This establishes the relationship between the two artifacts (demo is live, archive is static) but doesn't explain what the demo will show or why you should use it.
+<p>Below the button, there's a secondary link: "New to MathLedger? Start with the 5-minute auditor checklist" - this provides an alternative entry point for newcomers.</p>
+<strong>Continuation vs. Separate Thing:</strong>
+It feels like <strong>intentionally separated but related artifacts</strong>. The framing "Interactive demo is hosted; archive remains immutable" explicitly distinguishes them. The archive is presented as the authoritative, immutable documentation, while the demo is positioned as a separate hosted application. This separation feels deliberate - the archive documents what the demo does, and the demo demonstrates what the archive describes.
+<h3>Transition Feel</h3>
+<p>The transition feels <strong>intentionally gated</strong> rather than seamless. The archive requires you to understand the governance claims (Scope Lock, Explanation, Invariants) before you interact with the demo. There's no narrative flow like "Now let's see this in action!" - instead, the demo is presented as a parallel artifact that you can access when ready.</p>
+<p>The transition is <strong>not confusing</strong> - the button is clear and the relationship is stated. However, it is <strong>somewhat technical</strong> in that it assumes you understand what "hosted" vs "immutable archive" means and why that distinction matters.</p>
+<hr>
+<h2>Part 4 — Interactive Demo Evaluation</h2>
+<h3>Initial Demo Interface Observations</h3>
+<strong>Header Banner:</strong>
+Black banner at top: "GOVERNANCE DEMO (not capability)" with version info: v0.2.0 | v0.2.0-demo-lock | 27a94c8a5813
+<strong>Framing Text (above the fold):</strong>
+Three key statements displayed prominently:
+<ol><li>"The system does not decide what is true. It decides what is justified under a declared verification route."</li><li>"This demo will stop more often than you expect. It reports what it cannot verify."</li><li>"If you are looking for a system that always has an answer, this demo is not it." (in italics)</li></ol>
+<strong>Demo Section:</strong>
+<ul><li>Title: "Same Claim, Different Authority"</li><li>Button: "Run 90-Second Proof" (white button with red background)</li><li>Scenario dropdown with 6 options:</li></ul>  - MV Only (Mechanically Validated)
+  - Mixed MV + ADV
+  - PA Only (User Attestation)
+  - ADV Only (Exploration)
+  - Underdetermined (Open Problem)
+  - Custom Input
+<strong>Two-Stream Display:</strong>
+<ul><li>Left panel: "EXPLORATION STREAM (NOT AUTHORITY)" - currently shows "Select a scenario or enter custom input."</li><li>Right panel: "AUTHORITY STREAM (BOUND)" - currently shows "Nothing committed yet. Authority stream is empty."</li></ul>
+<strong>Documentation Sidebar:</strong>
+Links to 5 documents including Scope Lock, How the Demo Explains Itself, Invariants Status
+<strong>Quick Reference:</strong>
+<ul><li>FV: Formal proof (ABSTAINED in v0)</li><li>MV: Mechanical validation (arithmetic only)</li><li>PA: User attestation (ABSTAINED)</li><li>ADV: Advisory (excluded from R_t)</li></ul>
+<hr>
+<h3>"Same Claim, Different Authority" Demo Observations</h3>
+<strong>Timing:</strong>
+The demo completed in approximately <strong>5-8 seconds</strong> (not 90 seconds as the button name suggests). The animation showed results appearing sequentially with brief pauses between each item.
+<strong>Animation Sequence:</strong>
+<ol><li>Button changed to "Running..." state</li><li>Four claims appeared sequentially in a dark box:</li></ol>   - Item 1: ADV (Advisory) - "2 + 2 = 4" → ABSTAINED (appeared first)
+   - Item 2: PA (Attested) - "2 + 2 = 4" → ABSTAINED (appeared after ~2 seconds)
+   - Item 3: MV (Validated) - "2 + 2 = 4" → VERIFIED (appeared after ~4 seconds)
+   - Item 4: MV (False) - "3 * 3 = 8" → REFUTED (appeared after ~6 seconds)
+<ol><li>Button changed to "Run Again" when complete</li></ol>
+<strong>Visual Clarity:</strong>
+The demo is <strong>visually clear</strong>. Each item shows:
+<ul><li>Trust class label (ADV, PA, MV)</li><li>Claim text in quotes</li><li>Arrow separator</li><li>Outcome in colored text (ABSTAINED in orange, VERIFIED in green, REFUTED in red)</li><li>Explanation text below (e.g., "Excluded from authority stream", "Arithmetic validator confirmed")</li></ul>
+<strong>Color Coding:</strong>
+<ul><li>ABSTAINED: Orange text</li><li>VERIFIED: Green text</li><li>REFUTED: Red text</li></ul>
+<strong>Summary Statement:</strong>
+Below the four items, a summary appears: "Same claim text, different trust class → different outcome. Same trust class, different truth → VERIFIED vs REFUTED."
+<strong>Understandability Without Reading Docs:</strong>
+The outcomes are <strong>partially understandable</strong> without documentation:
+<ul><li>The color coding (green = good, red = bad, orange = neutral/uncertain) is intuitive</li><li>The explanation text for each outcome provides context</li><li>The summary statement clarifies the point being demonstrated</li><li>However, understanding WHY ADV is excluded or WHY PA returns ABSTAINED requires reading the documentation</li></ul>
+<strong>Errors Observed:</strong>
+None. The demo ran smoothly without errors.
+<strong>Delays:</strong>
+No unexpected delays. The animation was smooth and sequential.
+<strong>Unexpected Behavior:</strong>
+The button name "Run 90-Second Proof" is misleading - the demo takes only 5-8 seconds, not 90 seconds. This creates an expectation mismatch.
+<strong>"What does this prove?" Expandable:</strong>
+There is an expandable section titled "What does this prove?" below the demo results. The expandable appears to be present but I could not confirm if it opened when clicked (it may require a second click or may be collapsed by default).
+<hr>
+<h3>Additional Demo Interface Observations</h3>
+<strong>Two-Stream Display:</strong>
+The demo interface clearly separates:
+<ul><li><strong>EXPLORATION STREAM (NOT AUTHORITY):</strong> Left panel showing "Select a scenario or enter custom input."</li><li><strong>AUTHORITY STREAM (BOUND):</strong> Right panel showing "Nothing committed yet. Authority stream is empty."</li></ul>
+This visual separation reinforces the governance boundary described in the documentation.
+<strong>Scenario Dropdown:</strong>
+Six predefined scenarios available:
+<ol><li>MV Only (Mechanically Validated)</li><li>Mixed MV + ADV</li><li>PA Only (User Attestation)</li><li>ADV Only (Exploration)</li><li>Underdetermined (Open Problem)</li><li>Custom Input</li></ol>
+The scenario selector appears to be the entry point for the full interactive demo flow (as opposed to the "90-Second Proof" which is a standalone demonstration).
+<strong>Overall Demo Assessment:</strong>
+<ul><li><strong>Animation timing:</strong> ~5-8 seconds (not 90 seconds as button name suggests)</li><li><strong>Visual clarity:</strong> High - color coding, clear labels, explanation text</li><li><strong>Understandability:</strong> Moderate - basic outcomes are clear, but deeper understanding of WHY requires documentation</li><li><strong>Errors:</strong> None observed</li><li><strong>Delays:</strong> None observed</li><li><strong>Unexpected behavior:</strong> Button name "Run 90-Second Proof" is misleading about timing</li></ul>
+<hr>
+<h2>Part 5 — Coherence Check</h2>
+<h3>Do mathledger.ai (archive) and mathledger.ai/demo Feel Like One Coherent System?</h3>
+<strong>Answer: One coherent epistemic system.</strong>
+<p>The archive and demo feel like <strong>intentionally separated but tightly coupled artifacts</strong> that form a coherent whole. They are not "stitched together" - they appear designed from the start to work as a documentation-demonstration pair.</p>
+<strong>Evidence of Coherence:</strong>
+<ol><li><strong>Consistent Terminology:</strong></li></ol>   - Trust classes (FV, MV, PA, ADV) are defined identically in both
+   - Outcomes (VERIFIED, REFUTED, ABSTAINED) match exactly
+   - "Governance substrate demo, not capability demo" appears in both
+   - The tier system (A/B/C) is referenced consistently
+<ol><li><strong>Matching Non-Claims:</strong></li></ol>   - Archive states: "No Lean/Z3 verifier: FV claims always return ABSTAINED"
+   - Demo Quick Reference states: "FV: Formal proof (ABSTAINED in v0)"
+   - Archive states: "MV arithmetic validator only"
+   - Demo footer states: "MV arithmetic validator only"
+<ol><li><strong>Demo Behavior Matches Archive's Non-Claims:</strong></li></ol>   - The demo shows PA returning ABSTAINED with explanation "Authority-bearing but no validator" - exactly as the archive predicts
+   - The demo shows ADV being "Excluded from authority stream" - exactly as the Explanation document describes
+   - The demo shows MV arithmetic validation working for "2+2=4" and "3*3=8" - matching the archive's scope of "arithmetic only"
+<ol><li><strong>Cross-Linking:</strong></li></ol>   - The demo includes a documentation sidebar linking to the same documents available in the archive
+   - The archive prominently features the "Open Interactive Demo" button
+   - Both reference the same version numbers and commit hashes
+<ol><li><strong>Shared Framing:</strong></li></ol>   - Both emphasize limitations over capabilities
+   - Both use the phrase "governance substrate"
+   - Both explicitly state what the system does NOT do
+<strong>Minor Inconsistencies:</strong>
+<ol><li><strong>Version number discrepancy:</strong> The demo shows "v0.2.0" while the archive shows "v0.2.1" - this suggests the demo may not have been updated to the latest archive version, though both reference similar commit hashes.</li></ol>
+<ol><li><strong>"90-Second Proof" naming:</strong> The button name doesn't match the actual timing (~5-8 seconds), which could indicate the demo was updated but the button label wasn't changed, or the name refers to something other than wall-clock time.</li></ol>
+<strong>Verdict:</strong>
+The archive and demo form <strong>one coherent epistemic system</strong>. The demo is a live instantiation of what the archive documents. The terminology is consistent, the behavior matches the documented limitations, and the non-claims in the archive are validated by the demo's actual behavior. The separation between them (immutable archive vs. hosted demo) is itself part of the coherent design - the archive documents what the demo does, and the demo proves the archive's claims are testable.
+<hr>
+<h2>Part 6 — Acquirer / Safety Lead Lens</h2>
+<h3>What Feels Unusually Rigorous or Novel?</h3>
+<strong>1. Negative Capability Framing</strong>
+The prominence of non-claims and limitations is unprecedented in AI demos. Most systems lead with capabilities; MathLedger leads with "What this version cannot enforce" in red warning text on the homepage. This inverted framing is a genuine novelty in the field.
+<strong>2. Tiered Enforcement Transparency</strong>
+The Tier A/B/C classification system provides unusual granularity about what is actually enforced versus aspirational. The "How It Can Be Violated Today" column in the Invariants table is something I have never seen in production systems, let alone demos. This level of attack surface transparency is typically reserved for internal security documentation.
+<strong>3. Abstention as First-Class Outcome</strong>
+Treating ABSTAINED as a legitimate, non-failure outcome - and structurally enforcing that it cannot be silently converted to a claim - is a rigorous design choice. Most AI systems are incentivized to always produce an answer; MathLedger's architecture makes "I don't know" a core feature.
+<strong>4. Exploration/Authority Boundary Enforcement</strong>
+The structural separation between DraftProposal (with random IDs) and CommittedPartitionSnapshot (with content-derived IDs) is more than documentation - it's enforced in the code with ValueError exceptions. The claim that "exploration identifiers never appear in committed data" is verifiable.
+<strong>5. Replay Verification with Explicit Non-Claims</strong>
+The evidence pack system provides cryptographic replay verification while explicitly stating it proves "structural integrity, not truth." This distinction between "the audit trail is intact" and "the claims are correct" is philosophically sophisticated and rarely articulated this clearly.
+<strong>6. Immutable Versioned Archives</strong>
+The epistemic archive concept - where each version is locked with commit hashes, checksums, and explicit scope locks - creates a verifiable historical record. The "Date Locked" timestamps and "This is an epistemic archive. Content is immutable once published" footer establish accountability.
+<strong>7. Governance Without Capability</strong>
+The framing as a "governance substrate demo, not capability demo" is conceptually novel. Most AI safety work focuses on making capable systems safe; MathLedger demonstrates governance infrastructure before adding capability. This is architecturally backwards from typical AI development, and that's the point.
+<h3>What Feels Unfinished, Underspecified, or Missing?</h3>
+<strong>1. No Failed Verification Examples</strong>
+The site shows VERIFIED, REFUTED, and ABSTAINED outcomes, but doesn't demonstrate what happens when verification infrastructure itself fails (e.g., validator crashes, hash computation errors, Byzantine failures). A "failure modes" page would strengthen credibility.
+<strong>2. Threat Model Absence</strong>
+There is no explicit threat model. Who is the adversary? What attacks is the system designed to resist? What attacks is it explicitly NOT designed to resist? The Invariants page shows "How It Can Be Violated Today" but doesn't frame this as adversarial threat modeling.
+<strong>3. Missing "For Auditors" Entry Point Clarity</strong>
+While there's a "5-minute auditor checklist" link, it's not prominent enough. An auditor landing on the homepage would need to infer that this is the right starting point. A clearer "If you're auditing this system, start here" banner would help.
+<strong>4. No Comparison to Existing Standards</strong>
+The site doesn't position MathLedger relative to existing audit standards (SOC 2, ISO 27001), AI governance frameworks (NIST AI RMF), or formal verification approaches (Coq, Isabelle). This makes it harder to assess whether MathLedger is complementary, competitive, or orthogonal to existing approaches.
+<strong>5. Scalability and Performance Claims Absent</strong>
+There are no claims about performance, throughput, or scalability. Can this handle 1000 claims? 1 million? Is there a performance model? While this is consistent with "governance substrate only," it leaves open questions about production viability.
+<strong>6. Multi-Party Scenarios Underexplored</strong>
+The demo shows single-user flows. What happens when multiple parties commit conflicting claims? How are disputes resolved? The UVIL (User-Verified Input Loop) suggests human-in-the-loop, but multi-stakeholder scenarios aren't demonstrated.
+<strong>7. Integration Guidance Missing</strong>
+There's no "How to Integrate MathLedger" guide. If I wanted to use this in my organization, what would that look like? Is it a library, a service, a protocol? The local execution instructions exist but aren't framed as integration guidance.
+<strong>8. Economic and Incentive Model Absent</strong>
+There's no discussion of incentives. Why would users commit claims? Why would validators participate? In production, governance systems need incentive alignment, but this is not addressed (which is fine for v0, but should be acknowledged as future work).
+<h3>What Would I Want to See Next? (Concrete Requests)</h3>
+<strong>1. A Live Example of a Failed Verification</strong>
+Show a case where the verification infrastructure itself fails (not just ABSTAINED, but an actual system error). Demonstrate how the system handles and reports infrastructure failures. Include this in the fixtures with expected error states.
+<strong>2. A Threat Model Page</strong>
+Create a document titled "Threat Model and Attack Surface" that explicitly lists:
+<ul><li>Adversaries the system is designed to resist (e.g., malicious validators, data tampering)</li><li>Adversaries the system is NOT designed to resist (e.g., compromised hardware, social engineering)</li><li>Attack vectors and mitigations for each Tier A invariant</li><li>Explicitly out-of-scope threats</li></ul>
+<strong>3. A "For Auditors" Landing Page</strong>
+Create a dedicated entry point at <code>/for-auditors</code> that provides:
+<ul><li>30-second summary of what to audit</li><li>Links to the 5 most critical documents in priority order</li><li>Checklist of verification steps with estimated time for each</li><li>Expected outputs for each verification step</li><li>Contact information for questions</li></ul>
+<strong>4. A "Comparison to Existing Approaches" Document</strong>
+Add a page that positions MathLedger relative to:
+<ul><li>Traditional audit frameworks (SOC 2, ISO 27001)</li><li>AI governance frameworks (NIST AI RMF, EU AI Act)</li><li>Formal verification systems (Lean, Coq, Z3)</li><li>Blockchain/distributed ledger approaches</li></ul>Explain what MathLedger does that these don't, and what these do that MathLedger doesn't.
+<strong>5. A "Failure Modes and Limitations" Page</strong>
+Create a comprehensive document listing:
+<ul><li>Known failure modes (with examples)</li><li>Edge cases not covered by current validators</li><li>Scalability limits (if any)</li><li>Performance characteristics (latency, throughput)</li><li>Degradation behavior under load or attack</li></ul>
+<strong>6. Evidence Pack Tamper Detection Demo</strong>
+Add an interactive demo that:
+<ul><li>Shows a valid evidence pack with PASS verification</li><li>Allows the user to modify a field</li><li>Re-runs verification and shows FAIL with specific diff</li></ul>This would make the tamper detection claim tangible.
+<strong>7. Multi-Stakeholder Scenario</strong>
+Add a fixture or demo showing:
+<ul><li>Two users committing conflicting claims about the same fact</li><li>How the system records both without choosing a winner</li><li>How the attestation structure preserves both perspectives</li></ul>This would demonstrate governance in contested scenarios.
+<strong>8. Integration Example</strong>
+Provide a concrete example of integrating MathLedger into an existing system:
+<ul><li>Sample code for a Python application</li><li>API documentation (if applicable)</li><li>Deployment guide</li><li>Monitoring and observability recommendations</li></ul>
+<hr>
+<h2>Part 7 — Verdict</h2>
+<h3>Core Value Proposition (One Sentence)</h3>
+<p>MathLedger provides a cryptographically enforced governance substrate that separates AI system exploration from authority-bearing claims, making the boundary between "what the system suggested" and "what was committed as justified" structurally verifiable and replayable, with abstention as a first-class outcome when verification cannot be established.</p>
+<h3>Single Biggest Improvement for Credibility (One Sentence)</h3>
+<p>Add a prominent threat model page that explicitly names the adversaries the system is designed to resist and those it is not, with concrete attack scenarios and corresponding Tier A invariant protections, because the current documentation demonstrates unusual rigor in showing limitations but stops short of framing those limitations as adversarial threat modeling, which is what auditors and acquirers need to assess whether the governance substrate is fit for their threat environment.</p>
+<hr>
+<h2>Summary of Key Findings</h2>
+<strong>Strengths:</strong>
+<ul><li>Unprecedented transparency about limitations and non-claims</li><li>Rigorous tier system (A/B/C) with explicit enforcement levels</li><li>Structural enforcement of exploration/authority boundary</li><li>Abstention treated as first-class outcome, not failure</li><li>Immutable versioned archives with cryptographic verification</li><li>Terminology consistency between documentation and demo</li><li>Evidence pack replay verification with explicit scope</li></ul>
+<strong>Weaknesses:</strong>
+<ul><li>No explicit threat model or adversary framing</li><li>Missing failed verification examples (infrastructure failures, not just ABSTAINED)</li><li>Target audience ambiguity (assumes high technical sophistication)</li><li>"90-Second Proof" button name misleading (actually ~5-8 seconds)</li><li>No comparison to existing audit/governance frameworks</li><li>Integration guidance absent</li><li>Multi-stakeholder scenarios underexplored</li></ul>
+<strong>Overall Assessment:</strong>
+MathLedger represents a genuinely novel approach to AI governance by prioritizing legibility and structural enforcement over capability. The negative framing (leading with limitations) and tiered transparency (A/B/C invariants) are unprecedented in AI demos. The system is coherent across archive and demo, with terminology and behavior matching documented claims. However, the value proposition requires significant inference - it's not immediately clear why governance without capability matters or who the target user is. The addition of a threat model and "For Auditors" entry point would significantly increase credibility and usability for the stated audience (safety leads, auditors, acquirers).
+<hr>
+        </article>
+
+        <footer>
+            Site built from commit <code>TO_BE_FILLED</code> at <code>2026-01-05T00:49:34Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>
