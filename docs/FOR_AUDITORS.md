@@ -2,6 +2,8 @@
 
 This page provides a quick verification path for external auditors evaluating MathLedger's governance claims.
 
+**Version Coherence Note:** The hosted demo runs the latest *demo-capability* version (currently v0.2.10). Documentation versions may advance independently. This is intentional: documentation releases do not require demo redeployment. Version coherence is determined by `/versions/`, not by demo parity.
+
 **Expectation:** Auditors should expect that some claims will remain permanently ABSTAINED. This is correct behavior and not a failure mode.
 
 ## 5-Minute Verification Checklist
@@ -12,7 +14,7 @@ Complete these steps to verify the system's core claims:
 
 1. Navigate to [/demo/](/demo/)
 2. Confirm the demo loads without errors
-3. Verify the version banner shows `{{CURRENT_TAG}}`
+3. Verify the demo banner shows the latest demo-capability version (currently `v0.2.10-demo-reliability`). The demo may lag behind the CURRENT documentation version; this is intentional.
 
 ### Step 2: Run the Boundary Demo (90 seconds)
 

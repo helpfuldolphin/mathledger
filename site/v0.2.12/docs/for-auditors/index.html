@@ -135,7 +135,7 @@ footer code { font-size: 0.7rem; }
         <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
         <div class="meta">
             Tag: <code>v0.2.12-versioning-doctrine</code> |
-            Commit: <code>TO_BE_FILLED</code> |
+            Commit: <code>15cc70f60732</code> |
             Locked: 2026-01-05
         </div>
     </div>
@@ -159,11 +159,12 @@ footer code { font-size: 0.7rem; }
             <h1>For Auditors <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
             <h1>For Auditors: 5-Minute Verification Checklist</h1>
 <p>This page provides a quick verification path for external auditors evaluating MathLedger's governance claims.</p>
+<strong>Version Coherence Note:</strong> The hosted demo runs the latest <em>demo-capability</em> version (currently v0.2.10). Documentation versions may advance independently. This is intentional: documentation releases do not require demo redeployment. Version coherence is determined by <code>/versions/</code>, not by demo parity.
 <strong>Expectation:</strong> Auditors should expect that some claims will remain permanently ABSTAINED. This is correct behavior and not a failure mode.
 <h2>5-Minute Verification Checklist</h2>
 <p>Complete these steps to verify the system's core claims:</p>
 <h3>Step 1: Open the Hosted Demo (30 seconds)</h3>
-<ol><li>Navigate to <a href="/demo/">/demo/</a></li><li>Confirm the demo loads without errors</li><li>Verify the version banner shows <code>v0.2.12-versioning-doctrine</code></li></ol>
+<ol><li>Navigate to <a href="/demo/">/demo/</a></li><li>Confirm the demo loads without errors</li><li>Verify the demo banner shows the latest demo-capability version (currently <code>v0.2.10-demo-reliability</code>). The demo may lag behind the CURRENT documentation version; this is intentional.</li></ol>
 <h3>Step 2: Run the Boundary Demo (90 seconds)</h3>
 <ol><li>In the demo, click <strong>"Boundary Demo: Same Claim, Different Authority"</strong></li><li>Observe the 4-step sequence:</li></ol>   - Step 1: Claim "2+2=4" as <strong>MV</strong> (Mechanically Verified) → VERIFIED
    - Step 2: Same claim "2+2=4" as <strong>PA</strong> (Professional Authority) → ABSTAINED
@@ -253,7 +254,7 @@ uv run python demo/app.py
         </article>
 
         <footer>
-            Site built from commit <code>TO_BE_FILLED</code> at <code>2026-01-05T00:49:34Z</code><br>
+            Site built from commit <code>15cc70f607321a8187febe798466a5cfdc5fd20f</code> at <code>2026-01-05T01:31:53Z</code><br>
             This is an epistemic archive. Content is immutable once published.
         </footer>
     </div>
