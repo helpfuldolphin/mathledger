@@ -4,6 +4,155 @@ This document accompanies the front-facing demo. It explains what the demo enfor
 
 ---
 
+## How Claims Are Introduced, Tested, and Closed
+
+MathLedger evolves through discrete claim promotion cycles.
+
+This demo represents the current result of such a cycle.
+
+The system does not attempt to implement every idea in its design materials at once. Instead, it advances by introducing narrow claims, subjecting them to hostile review, and closing them only when contradictions are exhausted.
+
+This process is deliberate.
+
+### Two Kinds of Pressure
+
+MathLedger development operates under two fundamentally different forms of pressure:
+
+#### Phase II — Internal Constraint Pressure (Design Grief)
+
+The Field Manual (fm.tex / fm.pdf) is not a roadmap. It is a pressure map.
+
+It encodes mutually incompatible obligations:
+- invariants that demand different data structures,
+- governance rules that conflict with liveness,
+- auditability constraints that fight scalability,
+- formal verification assumptions that contradict learning dynamics.
+
+Phase II pressure does not come from implementation difficulty. It comes from collision.
+
+Pressure activates only when a specific obligation is selected for implementation. At that moment, incompatibilities must be confronted, tradeoffs acknowledged, and losses accepted.
+
+This is design grief.
+
+#### Phase I — External Adversarial Pressure (Truth Discovery)
+
+Once a claim is chosen, it is:
+- made executable,
+- published,
+- and subjected to hostile external review.
+
+Auditors are encouraged to:
+- break assumptions,
+- find contradictions,
+- and attempt replay or misuse.
+
+A claim survives Phase I only if hostile review can no longer produce blocking failures.
+
+This is truth discovery.
+
+### The Claim Promotion Cycle
+
+MathLedger does not progress linearly. It advances through claim promotion cycles, each with three stages:
+
+**A. Internal Design (Phase II)**
+- Select one obligation from the Field Manual
+- Confront incompatibilities
+- Decide what must be sacrificed
+- Produce a specific, narrow claim
+
+**B. External Hostility (Phase I)**
+- Publish the claim
+- Subject it to adversarial audit
+- Close contradictions or retreat
+
+**C. Closure**
+- The claim is either enforced, scoped, deferred, or abandoned
+- Regression guards are added
+- The system stabilizes
+
+Then the cycle repeats.
+
+This alternating structure is intentional. It prevents premature generalization and preserves epistemic honesty.
+
+### Promotion Readiness Checklist
+
+A change is not eligible to be treated as a promoted claim unless it passes this checklist. This prevents Phase II (ideas) from bleeding into Phase I (public claims) prematurely.
+
+**1) Claim definition is narrow and falsifiable**
+- The change corresponds to one concrete claim, stated in one sentence.
+- It is possible to say what it would mean for that claim to be false.
+
+**2) Claim is classified before implementation**
+
+The claim is labeled as one of:
+- **Enforced (Tier A)**: violation becomes mechanically unavoidable to detect
+- **Visible (Tier B)**: violation becomes replay-visible but not blocked
+- **Documented (Tier C)**: explicitly aspirational / deferred
+
+If it is Tier C, it must be presented as deferred—not implied.
+
+**3) No hidden scope expansion**
+
+The change does not silently introduce:
+- new trust semantics,
+- new cryptographic contracts,
+- new "correctness" implications,
+- or new threat model assumptions
+
+unless these are explicitly stated.
+
+**4) Closure artifacts exist**
+
+At least one of the following must exist before release:
+- a regression test that fails on reintroduction,
+- a build assertion that prevents drift,
+- or a hostile audit script check that would catch it.
+
+**5) Public audit path remains executable**
+- A cold evaluator can follow /docs/for-auditors/ without guessing URLs.
+- The verifier self-test remains runnable and interpretable.
+
+**6) Release discipline is satisfied**
+- The release is versioned, tagged, and pinned.
+- /versions/ and /demo/ reflect the same CURRENT version.
+- If anything is "out of sync," it must be visibly declared.
+
+If any checklist item fails, the correct outcome is:
+- defer the claim,
+- narrow the claim,
+- or refuse the change.
+
+This is how monotone credibility is maintained.
+
+### What This Means for Evaluators
+
+You may notice:
+- explicit ABSTAINED outcomes,
+- missing features,
+- conservative behavior,
+- or references to design materials not yet implemented.
+
+This is intentional.
+
+The system prefers refusal with explanation over unjustified output. Only claims that have survived hostile review are enforced.
+
+### What This Process Does NOT Claim
+
+This process:
+- does not claim the system is complete,
+- does not claim all obligations are compatible,
+- does not guarantee correctness beyond stated enforcement,
+- and does not rewrite history when mistakes are found.
+
+Instead:
+- every critique is preserved,
+- every fix is versioned,
+- and every closed claim remains inspectable.
+
+**In short:** MathLedger improves monotonically not by adding features, but by closing claims under pressure.
+
+---
+
 ## What the Demo Is Actually Doing
 
 The demo separates exploration from authority.
@@ -22,21 +171,78 @@ Exploration is intentionally unconstrained because suggestions are not claims. A
 
 The demo produces three possible outcomes: `VERIFIED`, `REFUTED`, or `ABSTAINED`.
 
-`VERIFIED` means the system found a machine-checkable proof that the claim holds.
+`VERIFIED` means the claim was validated by the MV arithmetic validator. This is a limited-coverage procedural check, not a formal proof. See "Validator Coverage" below.
 
-`REFUTED` means the system found a machine-checkable proof that the claim does not hold.
+`REFUTED` means the claim was checked by the MV arithmetic validator and found to be false. Again, this is a procedural check with limited coverage.
 
 `ABSTAINED` means the system did not find either. This is not a failure. This is the correct output when the system cannot establish the claim.
+
+### Validator Coverage (MV Arithmetic Validator)
+
+The MV validator in v0 has **limited coverage**:
+
+| Covered | Not Covered |
+|---------|-------------|
+| Integer arithmetic: `a op b = c` where op is +, -, *, / | Floating-point precision |
+| Single equality assertions | Chained expressions (a + b + c) |
+| Deterministic evaluation | Overflow behavior (uses Python semantics) |
+| | Division by zero (returns ABSTAINED) |
+| | Symbolic reasoning |
+| | Any non-arithmetic claims |
+
+For the complete formal specification, see [MV Validator Coverage](../mv-coverage/).
+
+**What this means:**
+- `2 + 2 = 4` → VERIFIED (covered)
+- `2 + 2 = 5` → REFUTED (covered)
+- `sqrt(2) is irrational` → ABSTAINED (not covered: not arithmetic equality)
+- `1e308 + 1e308 = inf` → ABSTAINED (not covered: float precision)
+- `10 / 0 = undefined` → ABSTAINED (not covered: division by zero)
+
+Claims outside validator coverage yield ABSTAINED, not VERIFIED or REFUTED.
 
 The system does not guess. It does not approximate. It does not hedge. When it cannot verify or refute, it stops and says so.
 
 This stopping is correctness, not caution. A system that produces confident outputs when it lacks grounds for confidence is broken. A system that reports the limits of what it can establish is working as intended.
+
+### Abstention as a Terminal Outcome
+
+**Rule:** Once a claim artifact is classified as ABSTAINED, that outcome is final for that artifact within its claim identity and epoch.
+
+This is not a limitation. It is a design commitment. The system sacrifices:
+
+- **Late upgrade:** A claim that ABSTAINED cannot later become VERIFIED, even if a verifier is added.
+- **Institutional override:** No human attestation, policy change, or governance decision can retroactively convert ABSTAINED to VERIFIED.
+- **Optimistic closure:** The system cannot record "probably correct" or "likely valid" as a hedge.
+
+These sacrifices are intentional. They exist because:
+
+1. Replayability requires deterministic outcomes. If the same artifact could produce different outcomes under different regimes, evidence packs would be meaningless.
+2. Audit trails must be immutable. A system that allows retroactive upgrades cannot be trusted to preserve its own history.
+3. Abstention is information. It records what the system could not establish at the time of evaluation.
+
+**What this does NOT prevent:**
+
+- Submitting a new artifact with the same claim text under a different trust class
+- Creating a new claim in a later epoch with enhanced verifier coverage
+- Documenting that a previously-abstained claim is now known to be valid (externally)
+
+The original artifact remains sealed. New artifacts can be created. History is preserved.
 
 ---
 
 ## Why ADV Exists
 
 Claims in the demo have trust classes. Three of them (FV, MV, PA) are authority-bearing and can enter the reasoning attestation. One of them (ADV) cannot.
+
+### Trust Class Reference (matches UI)
+
+| Class | UI Description | v0 Behavior |
+|-------|---------------|-------------|
+| **FV** | Formal proof | ABSTAINED (no prover; Lean/Z3 is Phase II) |
+| **MV** | Mechanical validation | VERIFIED/REFUTED/ABSTAINED (arithmetic only) |
+| **PA** | User attestation | ABSTAINED (authority noted, not mechanically verified) |
+| **ADV** | Advisory | EXCLUDED FROM R_t (exploration only) |
 
 ADV stands for Advisory. It means: this is a suggestion, not a claim.
 

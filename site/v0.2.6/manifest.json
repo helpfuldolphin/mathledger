@@ -1,0 +1,243 @@
+{
+  "version": "v0.2.6",
+  "tag": "v0.2.6-verifier-correctness",
+  "commit": "73c95ef0b9147520a235578c748d7c316fdcc8a1",
+  "date_locked": "2026-01-04",
+  "status": "current",
+  "demo_url": "/demo/",
+  "invariants": {
+    "tier_a": 10,
+    "tier_b": 1,
+    "tier_c": 3
+  },
+  "build_time": "2026-01-04T04:00:15Z",
+  "build_commit": "73c95ef0b9147520a235578c748d7c316fdcc8a1",
+  "source": "releases/releases.json",
+  "files": [
+    {
+      "path": "docs/explanation/index.html",
+      "sha256": "fd7f315a38605560a2f95fa99d2415ece94d2d81a673cde52cfa94f64d11661c",
+      "size": 21041
+    },
+    {
+      "path": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03/index.html",
+      "sha256": "8e70f1385bc4633f83c5b8282a6004d4917210a713538f3a53337482a622bce4",
+      "size": 27490
+    },
+    {
+      "path": "docs/external_audits/manus_link_integrity_audit_2026-01-03/index.html",
+      "sha256": "ede8f2a622dcc489a6eb004d931b0490fb3980ba6b53b777dc9fe55f17526e18",
+      "size": 30927
+    },
+    {
+      "path": "docs/external_audits/manus_site_audit_2026-01-03/index.html",
+      "sha256": "ebe067d83563b54a73f5e125a329b14383783db46833ce7c947b2e3157d23fcd",
+      "size": 43364
+    },
+    {
+      "path": "docs/field-manual/fm.pdf",
+      "sha256": "efbdd44ae0a5e52b6a513146a457a169eb701e80f450fdc07b29f369ef951f84",
+      "size": 1167507
+    },
+    {
+      "path": "docs/field-manual/fm.tex",
+      "sha256": "dc5f701c5f3cb12df931afed0845b5d376ba2a73d24f2df0800e33b02767476b",
+      "size": 441945
+    },
+    {
+      "path": "docs/field-manual/index.html",
+      "sha256": "d4bb59f7587c49dababf709e5383fa50836bee76148c90b25fe173574f966e5c",
+      "size": 8386
+    },
+    {
+      "path": "docs/for-auditors/index.html",
+      "sha256": "518db7823fd5ff1916a1d393bad229de50afb44a4371fbad413faede4b08e575",
+      "size": 16781
+    },
+    {
+      "path": "docs/hostile-rehearsal/index.html",
+      "sha256": "eacfb495617a421e65b8b954ad76a60e8c7cd79b3a185c27be3cd592b68dc371",
+      "size": 26172
+    },
+    {
+      "path": "docs/invariants/index.html",
+      "sha256": "e78a4f80d5f0b6848a554959a856807170d11592c758391c6569c0e2434780e4",
+      "size": 26398
+    },
+    {
+      "path": "docs/scope-lock/index.html",
+      "sha256": "f16d4009dd5996ff0789b842a077aed0e17508aca73bfa8766f4d296cbf3ca7c",
+      "size": 20794
+    },
+    {
+      "path": "evidence-pack/examples.json",
+      "sha256": "0abd4d3cceffdb38fe4e4b193cc6af44e748195779463b453526ed5db02e045e",
+      "size": 8588
+    },
+    {
+      "path": "evidence-pack/index.html",
+      "sha256": "e3be3d2766484dd22e761aa0c1e810fa9d7124bb2214be4e8e33422204551646",
+      "size": 8880
+    },
+    {
+      "path": "evidence-pack/input.json",
+      "sha256": "9e9f8a5e34991012c0c48921d50ec94ca4102c8931077d6ffa8b2514937077d1",
+      "size": 603
+    },
+    {
+      "path": "evidence-pack/verify/index.html",
+      "sha256": "e74ebefdd6dcafb3188a44a11996960a635dd989e4ad0f8f941fb63d95db2e44",
+      "size": 9475
+    },
+    {
+      "path": "fixtures/adv_only/index.html",
+      "sha256": "a6c9d8bf5b9bea23029c22c99c19af5cb4709c2c108daa9351a64da24c81bd4f",
+      "size": 7116
+    },
+    {
+      "path": "fixtures/adv_only/input.json",
+      "sha256": "df12c64abe9971fcbfd2b70944b75db79a6a2e8fbb76979ab8d7dec69a220e5e",
+      "size": 655
+    },
+    {
+      "path": "fixtures/adv_only/output.json",
+      "sha256": "dd8b5bc4cb0e42c56c7c347ddff248de832b8f815af076e904c947df45e3f2f7",
+      "size": 3801
+    },
+    {
+      "path": "fixtures/index.html",
+      "sha256": "9d22a84376250d8a4789a63d45887c30cdd5d0e30555c3e1d9de79f58a4b5a0c",
+      "size": 7596
+    },
+    {
+      "path": "fixtures/index.json",
+      "sha256": "4f7568d638aecd84e3757ce4cee3e4a27042e95d1accc0b16b2c362ff8814723",
+      "size": 3329
+    },
+    {
+      "path": "fixtures/mixed_mv_adv/index.html",
+      "sha256": "f8c94818452d263d521e65e1971bb648a4297c0b72d5f123aaa319c3d92b3ecb",
+      "size": 7132
+    },
+    {
+      "path": "fixtures/mixed_mv_adv/input.json",
+      "sha256": "5e61de9d026714a97e0c81db138ba16fb09e74ea46806519d96a501689c41264",
+      "size": 655
+    },
+    {
+      "path": "fixtures/mixed_mv_adv/output.json",
+      "sha256": "d423a4f4a153a8193af866fe3f71aa9b25ddc6975a8351f18575da818ddc909f",
+      "size": 3794
+    },
+    {
+      "path": "fixtures/mv_arithmetic_refuted/index.html",
+      "sha256": "98fb7fea59fccd7a8e9000f22296fad4feb4711508759b88cbb899fe01430a57",
+      "size": 7168
+    },
+    {
+      "path": "fixtures/mv_arithmetic_refuted/input.json",
+      "sha256": "8b796669b4f837fbf09ce09ceaca73a7ce7cce18071ac44fefcce6a2c9dee6dc",
+      "size": 447
+    },
+    {
+      "path": "fixtures/mv_arithmetic_refuted/output.json",
+      "sha256": "bfb702efbf1cf8f6e71e48a773c13558638cf745cdbe4c6303c3ee74b712fa99",
+      "size": 3802
+    },
+    {
+      "path": "fixtures/mv_arithmetic_verified/index.html",
+      "sha256": "123e1befeeebcc73b99c637a7df4e39d56f278294124cd9304955322da2b21df",
+      "size": 7172
+    },
+    {
+      "path": "fixtures/mv_arithmetic_verified/input.json",
+      "sha256": "4af1aa1854b8930bbab77656abb5c4c55076b2fe52b984aeae247e2b5bed8969",
+      "size": 476
+    },
+    {
+      "path": "fixtures/mv_arithmetic_verified/output.json",
+      "sha256": "4e4bb56c4c24b78e2f0202f7776f7267f368eeaf56dd026f6f2a90e52da9eb75",
+      "size": 3831
+    },
+    {
+      "path": "fixtures/mv_only/index.html",
+      "sha256": "26c4e28cf673c6ef89796d02a26352667b74e4ae0b8c138541169e274b69dc26",
+      "size": 7112
+    },
+    {
+      "path": "fixtures/mv_only/input.json",
+      "sha256": "2837d1a3407f0d0072e123b43c51841238bae4db0800de81998e749ea12d6f8a",
+      "size": 515
+    },
+    {
+      "path": "fixtures/mv_only/output.json",
+      "sha256": "8e206dd18c63782eebaa2323c08c1b59f73f8cde036b99ceb59d5efa97513ba6",
+      "size": 3802
+    },
+    {
+      "path": "fixtures/pa_only/index.html",
+      "sha256": "20219e90454d2bcf6dbe6afde7560ea3045360747631f947e1b8d4caa08b05aa",
+      "size": 7112
+    },
+    {
+      "path": "fixtures/pa_only/input.json",
+      "sha256": "c5d568cf67ad81732867426c2ee8be853f8d3675a9efd80c6356f08110984af7",
+      "size": 540
+    },
+    {
+      "path": "fixtures/pa_only/output.json",
+      "sha256": "b0312a0f9ea39cb03290f72dda94c01f1da292a3403a8c995bfefb89482bbe20",
+      "size": 3939
+    },
+    {
+      "path": "fixtures/same_claim_as_adv/index.html",
+      "sha256": "94290bd4f7e738ff5fa9e62986c2ebc5821281292483b124c40c4a2655d39ab7",
+      "size": 7152
+    },
+    {
+      "path": "fixtures/same_claim_as_adv/input.json",
+      "sha256": "f581c44947e3b0511125bbe03072c1e32e46bb1281dc68c43b0e39cb4fb5807e",
+      "size": 477
+    },
+    {
+      "path": "fixtures/same_claim_as_adv/output.json",
+      "sha256": "708f819adf3779b6f6ac3de735c834d362f58e6e3add3fb09e89aad6d08ec97d",
+      "size": 3798
+    },
+    {
+      "path": "fixtures/same_claim_as_pa/index.html",
+      "sha256": "4db5b4b906c9e6d9b09ca2aa87782f14a8005509b03acc51ac5f3c36811d00e5",
+      "size": 7148
+    },
+    {
+      "path": "fixtures/same_claim_as_pa/input.json",
+      "sha256": "b758ad14da2ae20666148e35ae1eed93886f3c406ee67cbc3017ca31b03499e6",
+      "size": 478
+    },
+    {
+      "path": "fixtures/same_claim_as_pa/output.json",
+      "sha256": "ceb4a962d2ae0439062cdfbacf20ce68bbced64de090304ae50c749bf885ebe7",
+      "size": 3916
+    },
+    {
+      "path": "fixtures/underdetermined_navier_stokes/index.html",
+      "sha256": "ade8dc7212d5f22682bf0935598e6fa47cd9b3256ee80ba45934bf7a9143d9ff",
+      "size": 7200
+    },
+    {
+      "path": "fixtures/underdetermined_navier_stokes/input.json",
+      "sha256": "ddd8c3c8c27af087617587b8af87e35caf95ae03c58bc5fa2ea1b522873ab952",
+      "size": 971
+    },
+    {
+      "path": "fixtures/underdetermined_navier_stokes/output.json",
+      "sha256": "630c28100c81b5a124cb5c8acc5bfe518a432185ac1dc1d384a7709afff1770b",
+      "size": 3835
+    },
+    {
+      "path": "index.html",
+      "sha256": "041dbc66368f6cc8001e66121e158a9586b875b75f108682b08fc16ced5baace",
+      "size": 17464
+    }
+  ]
+}

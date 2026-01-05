@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invariants Status — MathLedger v0</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0-demo-lock</code> |
+            Commit: <code>ab8f51ab389a</code> |
+            Locked: 2026-01-02
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 9</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active in v0</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0/">Archive</a> <a href="/v0/docs/scope-lock/">Scope</a> <a href="/v0/docs/explanation/">Explanation</a> <strong>Invariants</strong> <a href="/v0/docs/field-manual/">Field Manual</a> <a href="/v0/fixtures/">Fixtures</a> <a href="/v0/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>Invariants Status <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>Invariants Status: FM vs. v0 Implementation</h1>
+<p>This document provides a brutally honest classification of governance invariants.</p>
+<strong>Tier Classification:</strong>
+<ul><li><strong>Tier A</strong>: Cryptographically or structurally enforced. Violation is impossible without detection.</li><li><strong>Tier B</strong>: Logged and replay-visible. Violation is detectable but not prevented.</li><li><strong>Tier C</strong>: Documented but not enforced in v0. Aspirational.</li></ul>
+<hr>
+<h2>Invariants Table</h2>
+<table><tr><th>Invariant</th><th>FM Section</th><th>Tier</th><th>How It Can Be Violated Today</th><th>Current Detection</th><th>Planned Enforcement</th></tr>
+<tr><td><strong>Canonicalization Determinism</strong></td><td>§1.5</td><td>A</td><td>Impossible without golden test failure</td><td><code>test_golden_evidence_pack.py</code></td><td>Done</td></tr>
+<tr><td><strong>H_t = SHA256(R_t \</td><td>\</td><td>U_t)</strong></td><td>§1.5</td><td>A</td><td>Impossible - structural code constraint</td><td><code>compute_composite_root()</code></td><td>Done</td></tr>
+<tr><td><strong>ADV Excluded from R_t</strong></td><td>§1.5</td><td>A</td><td>Impossible - <code>build_reasoning_artifact_payload</code> raises ValueError</td><td>Structural rejection</td><td>Done</td></tr>
+<tr><td><strong>Content-Derived IDs</strong></td><td>§1.5</td><td>A</td><td>Impossible - <code>derive_committed_id()</code> uses SHA256</td><td>Code structure</td><td>Done</td></tr>
+<tr><td><strong>Replay Uses Same Code Paths</strong></td><td>—</td><td>A</td><td>Impossible - same imports in <code>replay_verify</code></td><td>Structural</td><td>Done</td></tr>
+<tr><td><strong>Double-Commit Returns 409</strong></td><td>—</td><td>A</td><td>Impossible - <code>_committed_proposal_ids</code> set check</td><td>API enforcement</td><td>Done</td></tr>
+<tr><td><strong>No Silent Authority</strong></td><td>§4</td><td><strong>A</strong></td><td>Impossible - <code>require_epoch_root()</code> gate mandatory for evidence pack</td><td><code>authority_gate.require_epoch_root()</code></td><td>Done (v0.1)</td></tr>
+<tr><td><strong>Trust-Class Monotonicity</strong></td><td>§6</td><td><strong>A</strong></td><td>Impossible - <code>require_trust_class_monotonicity()</code> gate mandatory at commit</td><td><code>trust_monotonicity.require_trust_class_monotonicity()</code></td><td>Done (v0.1)</td></tr>
+<tr><td><strong>Abstention Preservation</strong></td><td>§4.1</td><td><strong>A</strong></td><td>Impossible - <code>require_abstention_preservation()</code> gate mandatory</td><td><code>abstention_preservation.require_abstention_preservation()</code></td><td>Done (v0.1)</td></tr>
+<tr><td><strong>Audit Surface Version Field</strong></td><td>—</td><td><strong>A</strong></td><td>Impossible - manifest.json includes source reference</td><td>Build assertion verifies</td><td>Done (v0.2.0)</td></tr>
+<tr><td><strong>MV Validator Correctness</strong></td><td>—</td><td>B</td><td>Edge cases in arithmetic parsing; non-arithmetic claims</td><td>Logged validation_outcome</td><td>Additional validators</td></tr>
+<tr><td><strong>FV Mechanical Verification</strong></td><td>§1.5</td><td>C</td><td>No Lean/Z3 verifier exists</td><td>—</td><td>Phase II</td></tr>
+<tr><td><strong>Multi-Model Consensus</strong></td><td>§10</td><td>C</td><td>Single template partitioner</td><td>—</td><td>Phase II</td></tr>
+<tr><td><strong>RFL Integration</strong></td><td>§7-8</td><td>C</td><td>No learning loop in v0</td><td>—</td><td>Phase II</td></tr>
+<tr><td><strong>USLA</strong></td><td>§10</td><td>C</td><td>No constitutional constraint layer</td><td>—</td><td>Phase III</td></tr>
+<tr><td><strong>TDA Mind Scanner</strong></td><td>§10.3</td><td>C</td><td>No topological coherence monitoring</td><td>—</td><td>Phase III</td></tr></table>
+<hr>
+<h2>Tier A: Enforced (10 invariants)</h2>
+<p>These cannot be violated without cryptographic or structural failure detection.</p>
+<h3>1. Canonicalization Determinism</h3>
+<ul><li><strong>FM Reference</strong>: §1.5 ("Canonical identity is sacred")</li><li><strong>Enforcement</strong>: Golden hash test (<code>test_golden_evidence_pack.py</code>)</li><li><strong>Detection</strong>: CI fails if <code>GOLDEN_U_T</code>, <code>GOLDEN_R_T</code>, <code>GOLDEN_H_T</code> drift</li><li><strong>Status</strong>: ✓ Complete</li></ul>
+<h3>2. H_t Computation</h3>
+<ul><li><strong>FM Reference</strong>: §1.5 ("$H_t = \text{Hash}(\texttt{EPOCH:} \| R_t \| U_t)$")</li><li><strong>Enforcement</strong>: <code>compute_composite_root(r_t, u_t)</code> in <code>attestation/dual_root.py</code></li><li><strong>Detection</strong>: Structural - only one code path exists</li><li><strong>Status</strong>: ✓ Complete</li></ul>
+<h3>3. ADV Excluded from R_t</h3>
+<ul><li><strong>FM Reference</strong>: §1.5, §4 ("forbidden to promote into authority-bearing state")</li><li><strong>Enforcement</strong>: <code>build_reasoning_artifact_payload()</code> raises <code>ValueError</code> for ADV</li><li><strong>Detection</strong>: Structural rejection + replay verification</li><li><strong>Status</strong>: ✓ Complete</li></ul>
+<h3>4. Content-Derived IDs</h3>
+<ul><li><strong>FM Reference</strong>: §1.5 ("canonical normalization and hashing")</li><li><strong>Enforcement</strong>: <code>derive_committed_id()</code> computes SHA256 of canonical JSON</li><li><strong>Detection</strong>: Any ID change means content changed</li><li><strong>Status</strong>: ✓ Complete</li></ul>
+<h3>5. Replay Uses Same Code Paths</h3>
+<ul><li><strong>Enforcement</strong>: <code>replay_verify</code> imports <code>compute_ui_root</code>, <code>compute_reasoning_root</code>, <code>compute_composite_root</code></li><li><strong>Detection</strong>: No duplicated canonicalization logic</li><li><strong>Status</strong>: ✓ Complete</li></ul>
+<h3>6. No Silent Authority (PROMOTED v0.1)</h3>
+<ul><li><strong>FM Reference</strong>: §4 ("Nothing that influences durable learning authority may occur silently")</li><li><strong>Enforcement</strong>: <code>governance/authority_gate.py:require_epoch_root()</code></li><li><strong>Detection</strong>: <code>SilentAuthorityViolation</code> exception on any gate failure</li><li><strong>Gate Location</strong>: <code>backend/api/uvil.py:get_evidence_pack()</code> - mandatory before producing canonical evidence pack</li><li><strong>Fail Mode</strong>: Fail-closed (HTTP 422, no evidence pack produced)</li><li><strong>Tests</strong>: <code>tests/governance/test_no_silent_authority.py</code> (17 tests)</li><li><strong>Status</strong>: ✓ Complete (v0.1)</li></ul>
+<h3>7. Double-Commit Returns 409</h3>
+<ul><li><strong>Enforcement</strong>: <code>_committed_proposal_ids</code> set check in <code>commit_uvil()</code></li><li><strong>Detection</strong>: HTTP 409 response on duplicate commit attempt</li><li><strong>Status</strong>: ✓ Complete</li></ul>
+<h3>8. Trust-Class Monotonicity (PROMOTED v0.1)</h3>
+<ul><li><strong>FM Reference</strong>: §6 ("Once a claim is committed, its trust class is immutable")</li><li><strong>Enforcement</strong>: <code>governance/trust_monotonicity.py:require_trust_class_monotonicity()</code></li><li><strong>Detection</strong>: <code>TrustClassMonotonicityViolation</code> exception on any trust-class change attempt</li><li><strong>Gate Location</strong>: <code>backend/api/uvil.py:commit_uvil()</code> - mandatory before committing claims</li><li><strong>Fail Mode</strong>: Fail-closed (HTTP 422, commit rejected)</li><li><strong>Tests</strong>: <code>tests/governance/test_trust_class_monotonicity.py</code> (22 tests)</li><li><strong>Status</strong>: ✓ Complete (v0.1)</li></ul>
+<h3>9. Abstention Preservation (PROMOTED v0.1)</h3>
+<ul><li><strong>FM Reference</strong>: §4.1 ("abstention is a typed outcome... first-class ledger artifact")</li><li><strong>Enforcement</strong>: <code>governance/abstention_preservation.py:require_abstention_preservation()</code></li><li><strong>Detection</strong>: <code>AbstentionPreservationViolation</code> exception on missing/null/invalid outcome</li><li><strong>Gate Location</strong>: Before R_t computation - mandatory for all reasoning artifacts</li><li><strong>Fail Mode</strong>: Fail-closed (no evidence pack without valid outcomes)</li><li><strong>Tests</strong>: <code>tests/governance/test_abstention_preservation.py</code> (25+ tests)</li><li><strong>Status</strong>: ✓ Complete (v0.1)</li></ul>
+<h3>10. Audit Surface Version Field (PROMOTED v0.2.0)</h3>
+<ul><li><strong>FM Reference</strong>: — (operational invariant, not in FM)</li><li><strong>Enforcement</strong>: <code>releases/releases.json</code> is the single source of truth for version metadata</li><li><strong>Detection</strong>: Build assertion verifies deployed artifacts match releases.json entries</li><li><strong>Gate Location</strong>: <code>tools/predeploy_gate.py</code> - mandatory before deployment</li><li><strong>Fail Mode</strong>: Fail-closed (deployment blocked if mismatch detected)</li><li><strong>Tests</strong>: <code>tests/governance/test_release_metadata_guard.py</code></li><li><strong>Status</strong>: ✓ Complete (v0.2.0)</li></ul>
+<strong>What Is Enforced</strong>:
+<ol><li>Every release has a canonical entry in <code>releases/releases.json</code> with:</li></ol>   - <code>version</code>: Semantic version string (e.g., "v0.2.3")
+   - <code>tag</code>: Git tag name (e.g., "v0.2.3-audit-path-freshness")
+   - <code>commit</code>: Short commit hash for verification
+   - <code>status</code>: Release lifecycle state ("active", "closed")
+<ol><li>Evidence pack artifacts include version reference:</li></ol>   - <code>releases/evidence_pack_examples.{version}.json</code> → <code>pack_version</code> field matches version
+   - <code>releases/evidence_pack_verifier_vectors.{version}.json</code> → <code>metadata.version</code> matches version
+<ol><li>Hosted demo health endpoint (<code>/health</code>) returns:</li></ol>   - <code>build_commit</code>, <code>build_tag</code> matching releases.json current_version entry
+   - <code>release_pin.is_stale</code> flag for drift detection
+<strong>How Auditors Verify</strong>:
+<pre><code class="language-bash"># 1. Check releases.json current_version
+cat releases/releases.json | jq '.current_version'
+<h1>2. Verify deployed demo matches</h1>
+curl -s https://mathledger.ai/demo/health | jq '.build_tag, .build_commit'
+<h1>3. Run predeploy gate (should pass for correctly deployed system)</h1>
+uv run python tools/predeploy_gate.py --check-health
+</code></pre>
+<strong>Promotion Date</strong>: 2026-01-02 (v0.2.0)
+<hr>
+<h2>Tier B: Logged but Not Hard-Gated (1 invariant)</h2>
+<p>These are detectable via replay or logs but not prevented at runtime.</p>
+<h3>1. MV Validator Correctness</h3>
+<ul><li><strong>Current State</strong>: Arithmetic validator handles <code>a op b = c</code> pattern</li><li><strong>Violation Path</strong>: Edge cases (overflow, division by zero, floating point)</li><li><strong>Detection</strong>: Logged validation_outcome with parsed values</li><li><strong>Planned Enforcement</strong>: Additional validators, edge case handling</li></ul>
+<hr>
+<h2>Tier C: Aspirational (3 invariants in current release, 5 total documented)</h2>
+<p>These are documented but not implemented in v0. Only FV, Multi-Model, and RFL are tracked in releases.json.</p>
+<h3>1. FV Mechanical Verification</h3>
+<ul><li><strong>FM Reference</strong>: §1.5, throughout</li><li><strong>Current State</strong>: FV trust class exists; no Lean/Z3 verifier</li><li><strong>Status</strong>: All FV claims return ABSTAINED</li></ul>
+<h3>2. Multi-Model Consensus</h3>
+<ul><li><strong>FM Reference</strong>: §10 (uncharted surface area)</li><li><strong>Current State</strong>: Single template partitioner</li><li><strong>Status</strong>: Not in v0 scope</li></ul>
+<h3>3. RFL Integration</h3>
+<ul><li><strong>FM Reference</strong>: §7-8</li><li><strong>Current State</strong>: No learning loop</li><li><strong>Status</strong>: Not in v0 scope</li></ul>
+<h3>4. USLA (Unified System Law Architecture)</h3>
+<ul><li><strong>FM Reference</strong>: §10, throughout</li><li><strong>Current State</strong>: No constitutional constraint layer</li><li><strong>Status</strong>: Phase III scope</li></ul>
+<h3>5. TDA Mind Scanner</h3>
+<ul><li><strong>FM Reference</strong>: §10.3, throughout</li><li><strong>Current State</strong>: No topological coherence monitoring</li><li><strong>Status</strong>: Phase III scope</li></ul>
+<hr>
+<h2>Promotion Complete: No Silent Authority → Tier A (v0.1)</h2>
+<strong>Invariant</strong>: No Silent Authority (FM §4)
+<strong>Previous State</strong>: Tier B (logged, not hard-gated)
+<strong>Current State</strong>: Tier A (structurally enforced)
+<strong>Implementation (v0.1)</strong>:
+<pre><code class="language-python"># governance/authority_gate.py
+<p>def require_epoch_root(request: AuthorityUpdateRequest) -> str:
+    """
+    Verify epoch root before allowing authority-bearing output.</p>
+<p>FAIL-CLOSED: Any validation failure raises SilentAuthorityViolation.
+    """
+    if request.uvil_events is None:
+        raise SilentAuthorityViolation("uvil_events is None")
+    if request.reasoning_artifacts is None:
+        raise SilentAuthorityViolation("reasoning_artifacts is None")</p>
+<p>computed_u_t = compute_ui_root(request.uvil_events)
+    computed_r_t = compute_reasoning_root(request.reasoning_artifacts)
+    computed_h_t = compute_composite_root(computed_r_t, computed_u_t)</p>
+<p>if request.claimed_h_t and computed_h_t != request.claimed_h_t:
+        raise SilentAuthorityViolation("H_t mismatch - tampering detected")</p>
+<p>return computed_h_t
+</code></pre></p>
+<strong>Enforcement Location</strong>:
+<ul><li><code>backend/api/uvil.py:get_evidence_pack()</code> - mandatory gate before producing canonical evidence pack</li><li><code>governance/authority_gate.py:create_gated_evidence_pack_data()</code> - helper that enforces gate</li></ul>
+<strong>What Is Gated (v0.1 "Durable Influence")</strong>:
+<ol><li>Producing evidence packs (canonical attestation output)</li><li>Any data marked <code>authority_gate_passed: True</code></li></ol>
+<strong>Tests</strong>:
+<ul><li><code>tests/governance/test_no_silent_authority.py</code> (17 tests)</li><li>Cases: missing inputs, tampered artifacts, tampered events, happy path, bypass prevention</li></ul>
+<strong>Promotion Date</strong>: 2026-01-02
+<hr>
+<h2>Promotion Complete: Trust-Class Monotonicity → Tier A (v0.1)</h2>
+<strong>Invariant</strong>: Trust-Class Monotonicity (FM §6)
+<strong>Previous State</strong>: Tier B (logged, humans could over-assign)
+<strong>Current State</strong>: Tier A (structurally enforced)
+<strong>Implementation (v0.1)</strong>:
+<pre><code class="language-python"># governance/trust_monotonicity.py
+<p>def require_trust_class_monotonicity(
+    claims: List[Dict[str, Any]],
+    committed_partition_id: str,
+    record_violation: bool = True,
+) -> None:
+    """
+    Verify trust-class monotonicity for a batch of claims.</p>
+<p>FAIL-CLOSED: First violation raises TrustClassMonotonicityViolation.
+    """
+    for claim in claims:
+        verify_trust_class_immutable(
+            claim_id=claim["claim_id"],
+            claim_text=claim["claim_text"],
+            trust_class=claim["trust_class"],
+            rationale=claim.get("rationale", ""),
+            committed_partition_id=committed_partition_id,
+            record_violation=record_violation,
+        )
+</code></pre></p>
+<strong>Enforcement Location</strong>:
+<ul><li><code>backend/api/uvil.py:commit_uvil()</code> - mandatory gate before committing claims</li><li><code>governance/trust_monotonicity.py:verify_trust_class_immutable()</code> - single claim verification</li></ul>
+<strong>What Is Gated (v0.1)</strong>:
+<ol><li>Any attempt to commit a claim_id with a different trust class than originally committed</li><li>Any content tampering (claim_text mismatch for same claim_id)</li></ol>
+<strong>Error Response</strong> (HTTP 422):
+<pre><code class="language-json">{
+  "error_code": "TRUST_CLASS_MONOTONICITY_VIOLATION",
+  "message": "Trust-class monotonicity FAILED: Cannot change trust class...",
+  "committed_partition_id": "...",
+  "claim_id": "sha256:...",
+  "attempted_change": {"from": "MV", "to": "FV"}
+}
+</code></pre>
+<strong>Tests</strong>:
+<ul><li><code>tests/governance/test_trust_class_monotonicity.py</code> (22 tests)</li><li>Cases: upgrades blocked, downgrades blocked, valid new artifacts, structured error, audit log, no contamination</li></ul>
+<strong>Promotion Date</strong>: 2026-01-02
+<hr>
+<h2>Promotion Complete: Abstention Preservation → Tier A (v0.1)</h2>
+<strong>Invariant</strong>: Abstention Preservation (FM §4.1)
+<strong>Previous State</strong>: Tier B (logged, downstream could ignore)
+<strong>Current State</strong>: Tier A (structurally enforced)
+<strong>Implementation (v0.1)</strong>:
+<pre><code class="language-python"># governance/abstention_preservation.py
+<p>def require_abstention_preservation(
+    reasoning_artifacts: List[Dict[str, Any]],
+    record_violation: bool = True,
+) -> None:
+    """
+    Verify abstention preservation for a batch of reasoning artifacts.</p>
+<p>FAIL-CLOSED: First violation raises AbstentionPreservationViolation.
+    """
+    for idx, artifact in enumerate(reasoning_artifacts):
+        verify_outcome_present(artifact, artifact_index=idx, record_violation=record_violation)
+</code></pre></p>
+<strong>Enforcement Location</strong>:
+<ul><li>Before R_t computation - mandatory for all reasoning artifacts</li><li><code>governance/abstention_preservation.py:verify_outcome_present()</code> - single artifact verification</li></ul>
+<strong>What Is Gated (v0.1)</strong>:
+<ol><li>Missing <code>validation_outcome</code> field → violation</li><li>Null/None <code>validation_outcome</code> → violation</li><li>Invalid outcome value (not VERIFIED/REFUTED/ABSTAINED) → violation</li><li>Aggregation without explicit ABSTAINED handling → violation</li></ol>
+<strong>Error Response</strong> (HTTP 422):
+<pre><code class="language-json">{
+  "error_code": "ABSTENTION_PRESERVATION_VIOLATION",
+  "message": "Abstention preservation FAILED: validation_outcome is null...",
+  "artifact_index": 2,
+  "claim_id": "sha256:...",
+  "violation_type": "NULL_VALUE",
+  "details": {"received_value": null}
+}
+</code></pre>
+<strong>Tests</strong>:
+<ul><li><code>tests/governance/test_abstention_preservation.py</code> (25+ tests)</li><li>Cases: missing outcome, null outcome, invalid outcome, valid outcomes, aggregation, coercion detection</li></ul>
+<strong>Promotion Date</strong>: 2026-01-02
+<hr>
+<h2>Tracked Issues: FM vs. Repo Discrepancies</h2>
+<table><tr><th>Issue</th><th>FM Claim</th><th>Repo State</th><th>Resolution</th></tr>
+<tr><td>H_t formula</td><td><code>Hash("EPOCH:"</td><td></td><td>R_t</td><td></td><td>U_t)</code></td><td><code>SHA256(R_t</td><td></td><td>U_t)</code></td><td>Domain prefix differs; documented as v0 simplification</td></tr>
+<tr><td>Trust classes</td><td>4 defined (FV, MV, PA, ADV)</td><td>4 implemented</td><td>✓ Aligned</td></tr>
+<tr><td>Dual attestation</td><td>U_t + R_t + H_t</td><td>Implemented</td><td>✓ Aligned</td></tr>
+<tr><td>Abstention outcome</td><td>First-class artifact</td><td>Implemented</td><td>✓ Aligned</td></tr></table>
+For a comprehensive 20-point pressure analysis, see: <a href="SPEC_PRESSURE_AUDIT_V0.2.x.md">SPEC_PRESSURE_AUDIT_V0.2.x.md</a>
+<hr>
+<h2>Governance Note</h2>
+<p>This document increases credibility by being honest about what is enforced vs. aspirational.</p>
+<ul><li><strong>Tier A</strong>: Show these. They are cryptographic proof.</li><li><strong>Tier B</strong>: Acknowledge these. They are logged but not gated.</li><li><strong>Tier C</strong>: Do not claim these work. They are Phase II.</li></ul>
+<strong>Date</strong>: 2026-01-02
+<strong>Author</strong>: Claude A (v0 Evidence Pack Closure Pass)
+        </article>
+
+        <footer>
+            Site built from commit <code>ab8f51ab389aed7b3412cb987fc70d0d4f2bbe0b</code> at <code>2026-01-04T05:29:48Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

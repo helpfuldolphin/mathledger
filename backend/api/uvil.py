@@ -81,6 +81,24 @@ class DraftClaimResponse(BaseModel):
     rationale: str = ""
 
 
+class DraftPayload(BaseModel):
+    """
+    Self-sufficient draft payload for commit.
+
+    This payload contains all data needed for commit_uvil to work
+    WITHOUT requiring proposal_id lookup from in-memory state.
+
+    v0.2.10: Introduced to fix demo reliability issues caused by
+    server restart/multi-instance scenarios where proposal_id
+    cache misses occurred.
+    """
+
+    problem_statement: str
+    claims: List[DraftClaimResponse]
+    # proposal_id is included for display/logging but NOT required for commit
+    proposal_id: str
+
+
 class ProposePartitionRequest(BaseModel):
     """Request to generate a partition proposal."""
 
@@ -92,6 +110,8 @@ class ProposePartitionResponse(BaseModel):
 
     proposal_id: str
     claims: List[DraftClaimResponse]
+    # v0.2.10: Include full draft_payload for self-sufficient commit
+    draft_payload: DraftPayload
 
 
 class EditedClaimRequest(BaseModel):
@@ -113,11 +133,25 @@ class EditedClaimRequest(BaseModel):
 
 
 class CommitUVILRequest(BaseModel):
-    """Request to commit UVIL edits."""
+    """Request to commit UVIL edits.
 
-    proposal_id: str = Field(..., description="MUST exist in draft store")
+    v0.2.10: draft_payload makes commit self-sufficient.
+    If draft_payload is provided, proposal_id lookup is skipped.
+    This fixes demo reliability issues with server restart/multi-instance.
+    """
+
+    # proposal_id is optional if draft_payload is provided
+    proposal_id: Optional[str] = Field(
+        default=None,
+        description="Optional if draft_payload provided. For backward compatibility."
+    )
     edited_claims: List[EditedClaimRequest]
     user_fingerprint: str = Field(default="anonymous", max_length=64)
+    # v0.2.10: Self-sufficient payload - no server-side state needed
+    draft_payload: Optional[DraftPayload] = Field(
+        default=None,
+        description="Self-sufficient payload from propose_partition. If provided, proposal_id lookup is skipped."
+    )
 
 
 class CommitUVILResponse(BaseModel):
@@ -243,11 +277,14 @@ async def propose_partition(req: ProposePartitionRequest) -> ProposePartitionRes
     Returns DraftProposal with random proposal_id.
     CRITICAL: proposal_id NEVER enters hash-committed paths.
 
+    v0.2.10: Now includes draft_payload for self-sufficient commit.
+
     Args:
         req: Request containing problem statement
 
     Returns:
-        Proposal with random ID and draft claims (all ADV by default)
+        Proposal with random ID, draft claims (all ADV by default),
+        and draft_payload for self-sufficient commit
     """
     global _epoch_counter
 
@@ -257,7 +294,7 @@ async def propose_partition(req: ProposePartitionRequest) -> ProposePartitionRes
     # Generate claims via template partitioner (all default to ADV)
     draft_claims = _template_partition(req.problem_statement)
 
-    # Create and store draft proposal
+    # Create and store draft proposal (still kept for backward compatibility)
     proposal = DraftProposal(
         proposal_id=proposal_id,
         claims=draft_claims,
@@ -265,17 +302,28 @@ async def propose_partition(req: ProposePartitionRequest) -> ProposePartitionRes
     )
     _draft_proposals[proposal_id] = proposal
 
+    # Build claim responses
+    claim_responses = [
+        DraftClaimResponse(
+            claim_text=c.claim_text,
+            suggested_trust_class=c.suggested_trust_class.value,
+            rationale=c.rationale,
+        )
+        for c in draft_claims
+    ]
+
+    # v0.2.10: Build self-sufficient draft_payload
+    draft_payload = DraftPayload(
+        problem_statement=req.problem_statement,
+        claims=claim_responses,
+        proposal_id=proposal_id,
+    )
+
     # Convert to response
     return ProposePartitionResponse(
         proposal_id=proposal_id,
-        claims=[
-            DraftClaimResponse(
-                claim_text=c.claim_text,
-                suggested_trust_class=c.suggested_trust_class.value,
-                rationale=c.rationale,
-            )
-            for c in draft_claims
-        ],
+        claims=claim_responses,
+        draft_payload=draft_payload,
     )
 
 
@@ -285,41 +333,66 @@ async def commit_uvil(req: CommitUVILRequest) -> CommitUVILResponse:
     Commit UVIL edits to create immutable snapshot.
 
     CRITICAL:
-    - REQUIRES proposal_id to exist in _draft_proposals
-    - Returns 409 if proposal_id already committed
     - Creates CommittedPartitionSnapshot with content-derived ID
     - Records UVIL_Event
     - Computes (U_t, R_t, H_t)
 
+    v0.2.10: Self-sufficient mode:
+    - If draft_payload is provided, proposal_id lookup is skipped
+    - This fixes reliability issues with server restart/multi-instance
+
     Args:
-        req: Request containing proposal_id and edited claims
+        req: Request containing edited claims and either proposal_id or draft_payload
 
     Returns:
         Committed partition ID and attestation
 
     Raises:
-        HTTPException 404: If proposal_id not found
+        HTTPException 400: If neither proposal_id nor draft_payload provided
+        HTTPException 404: If proposal_id not found (only when draft_payload not provided)
         HTTPException 409: If proposal_id already committed
     """
     global _epoch_counter
 
-    # 1. Validate proposal_id exists
-    if req.proposal_id not in _draft_proposals:
+    # v0.2.10: Determine proposal_id - from draft_payload or direct
+    proposal_id = None
+    if req.draft_payload is not None:
+        # Self-sufficient mode: use draft_payload, no lookup needed
+        proposal_id = req.draft_payload.proposal_id
+    elif req.proposal_id is not None:
+        # Legacy mode: lookup from in-memory state
+        proposal_id = req.proposal_id
+        if proposal_id not in _draft_proposals:
+            # System-responsible error message (not user-blaming)
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error_code": "PROPOSAL_STATE_LOST",
+                    "message": "Server lost proposal state. This is a demo reliability issue, not a user error. "
+                    "Please refresh and retry.",
+                    "proposal_id": proposal_id,
+                    "recovery_hint": "The server may have restarted. Refresh the page and start over.",
+                },
+            )
+    else:
+        # Neither provided
         raise HTTPException(
-            status_code=404,
-            detail=f"Proposal not found: {req.proposal_id}. "
-            "Must call /propose_partition first.",
+            status_code=400,
+            detail={
+                "error_code": "MISSING_PROPOSAL_DATA",
+                "message": "Either proposal_id or draft_payload must be provided.",
+            },
         )
 
-    # 2. Check double-commit
-    if req.proposal_id in _committed_proposal_ids:
+    # 2. Check double-commit (using proposal_id as idempotency key)
+    if proposal_id in _committed_proposal_ids:
         raise HTTPException(
             status_code=409,
             detail={
                 "error_code": "DOUBLE_COMMIT",
-                "message": f"Proposal already committed: {req.proposal_id}. "
+                "message": f"Proposal already committed: {proposal_id}. "
                 "Each proposal can only be committed once.",
-                "proposal_id": req.proposal_id,
+                "proposal_id": proposal_id,
             },
         )
 
@@ -407,7 +480,7 @@ async def commit_uvil(req: CommitUVILRequest) -> CommitUVILResponse:
     u_t, r_t, h_t = compute_full_attestation([uvil_event], [])
 
     # 7. Mark proposal_id as committed
-    _committed_proposal_ids.add(req.proposal_id)
+    _committed_proposal_ids.add(proposal_id)
 
     # 7.5 Register claims in monotonicity registry (after successful commit)
     finalize_claim_registration(

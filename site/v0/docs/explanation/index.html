@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How the Demo Explains Itself — MathLedger v0</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0-demo-lock</code> |
+            Commit: <code>ab8f51ab389a</code> |
+            Locked: 2026-01-02
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 9</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active in v0</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0/">Archive</a> <a href="/v0/docs/scope-lock/">Scope</a> <strong>Explanation</strong> <a href="/v0/docs/invariants/">Invariants</a> <a href="/v0/docs/field-manual/">Field Manual</a> <a href="/v0/fixtures/">Fixtures</a> <a href="/v0/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>How the Demo Explains Itself <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>How the MathLedger Demo Explains Itself</h1>
+<p>This document accompanies the front-facing demo. It explains what the demo enforces, what it refuses to do, and why those refusals are the point.</p>
+<hr>
+<h2>What the Demo Is Actually Doing</h2>
+<p>The demo separates exploration from authority.</p>
+<strong>Exploration phase</strong>: When you enter a problem, the system generates a <code>DraftProposal</code>. This is a set of candidate claims with suggested trust classes. The proposal has a random identifier. Nothing in this phase is committed. You can edit freely. The system makes suggestions. None of it matters yet.
+<strong>Authority phase</strong>: When you click "Commit," the system creates a <code>CommittedPartitionSnapshot</code>. This has a content-derived identifier (a hash of what you committed). The claims become immutable. The system records a <code>UVIL_Event</code> documenting your action. Only now do the claims enter the attestation structure.
+<p>The boundary is explicit: exploration identifiers never appear in committed data. The random <code>proposal_id</code> from the draft phase is not present in any hash-committed payload. This is not an implementation detail. It is the design.</p>
+<p>Exploration is intentionally unconstrained because suggestions are not claims. Authority is explicitly bound because claims have consequences.</p>
+<hr>
+<h2>Why the System Stops</h2>
+<p>The demo produces three possible outcomes: <code>VERIFIED</code>, <code>REFUTED</code>, or <code>ABSTAINED</code>.</p>
+<code>VERIFIED</code> means the claim was validated by the MV arithmetic validator. This is a limited-coverage procedural check, not a formal proof. See "Validator Coverage" below.
+<code>REFUTED</code> means the claim was checked by the MV arithmetic validator and found to be false. Again, this is a procedural check with limited coverage.
+<code>ABSTAINED</code> means the system did not find either. This is not a failure. This is the correct output when the system cannot establish the claim.
+<h3>Validator Coverage (MV Arithmetic Validator)</h3>
+<p>The MV validator in v0 has <strong>limited coverage</strong>:</p>
+<table><tr><th>Covered</th><th>Not Covered</th></tr>
+<tr><td>Integer arithmetic: <code>a op b = c</code> where op is +, -, *, /</td><td>Floating-point precision</td></tr>
+<tr><td>Single equality assertions</td><td>Chained expressions (a + b + c)</td></tr>
+<tr><td>Deterministic evaluation</td><td>Overflow behavior (uses Python semantics)</td></tr>
+<tr><td></td><td>Division by zero (returns ABSTAINED)</td></tr>
+<tr><td></td><td>Symbolic reasoning</td></tr>
+<tr><td></td><td>Any non-arithmetic claims</td></tr></table>
+<strong>What this means:</strong>
+<ul><li><code>2 + 2 = 4</code> → VERIFIED (covered)</li><li><code>2 + 2 = 5</code> → REFUTED (covered)</li><li><code>sqrt(2) is irrational</code> → ABSTAINED (not covered: not arithmetic equality)</li><li><code>1e308 + 1e308 = inf</code> → ABSTAINED (not covered: float precision)</li><li><code>10 / 0 = undefined</code> → ABSTAINED (not covered: division by zero)</li></ul>
+Claims outside validator coverage yield ABSTAINED, not VERIFIED or REFUTED.
+<p>The system does not guess. It does not approximate. It does not hedge. When it cannot verify or refute, it stops and says so.</p>
+<p>This stopping is correctness, not caution. A system that produces confident outputs when it lacks grounds for confidence is broken. A system that reports the limits of what it can establish is working as intended.</p>
+<hr>
+<h2>Why ADV Exists</h2>
+<p>Claims in the demo have trust classes. Three of them (FV, MV, PA) are authority-bearing and can enter the reasoning attestation. One of them (ADV) cannot.</p>
+<h3>Trust Class Reference (matches UI)</h3>
+<table><tr><th>Class</th><th>UI Description</th><th>v0 Behavior</th></tr>
+<tr><td><strong>FV</strong></td><td>Formal proof</td><td>ABSTAINED (no prover; Lean/Z3 is Phase II)</td></tr>
+<tr><td><strong>MV</strong></td><td>Mechanical validation</td><td>VERIFIED/REFUTED/ABSTAINED (arithmetic only)</td></tr>
+<tr><td><strong>PA</strong></td><td>User attestation</td><td>ABSTAINED (authority noted, not mechanically verified)</td></tr>
+<tr><td><strong>ADV</strong></td><td>Advisory</td><td>EXCLUDED FROM R_t (exploration only)</td></tr></table>
+ADV stands for Advisory. It means: this is a suggestion, not a claim.
+<p>The system is allowed to produce ADV content. It can speculate. It can offer best guesses. It can generate plausible-sounding statements. All of this is permitted in the exploration phase.</p>
+<p>But ADV content is explicitly inert. It does not enter the reasoning root (R_t). It does not contribute to the attestation. It is recorded, but it has no authority.</p>
+<p>This is not humility theater. The system is not pretending to be modest. It is making a structural distinction: suggestions exist, but they are not claims. The demo enforces this distinction at the data model level. ADV content cannot leak into authority-bearing paths because the code rejects it.</p>
+<hr>
+<h2>What the Hashes Mean</h2>
+<p>The demo produces three values: U_t, R_t, and H_t.</p>
+<strong>U_t</strong> is the UI Merkle root. It commits to everything the human did: which claims they committed, which edits they made, which actions they took. If the human's actions change, U_t changes.
+<strong>R_t</strong> is the Reasoning Merkle root. It commits to everything the system established: which claims were verified, which proofs were produced, which artifacts support those claims. If the system's reasoning changes, R_t changes.
+<strong>H_t</strong> is the composite root. It binds U_t and R_t together. It represents the full state of what happened: human actions and system reasoning, tied to each other.
+<p>These values are deterministic. Given the same inputs, the system produces the same hashes. If you run the demo twice with identical actions, you get identical values.</p>
+<p>This enables two properties:</p>
+<ol><li><strong>Replayability</strong>: Anyone with the inputs can verify the outputs.</li><li><strong>Non-silent drift</strong>: If the system's behavior changes, the hashes change. There is no way for the system to produce different outputs while claiming nothing changed.</li></ol>
+You do not need to understand cryptography to use these values. You need to understand one thing: if the hash is the same, the content is the same. If the content changed, the hash changed.
+<hr>
+<h2>Evidence Pack + Replay Verification</h2>
+<p>The demo provides audit-grade closure through evidence packs.</p>
+<strong>What is an evidence pack?</strong>
+<p>An evidence pack is a self-contained JSON file containing:
+<ul><li>The committed partition snapshot (all claims and their trust classes)</li><li>UVIL events (what the human did)</li><li>Reasoning artifacts (what the system established)</li><li>The attestation hashes (U_t, R_t, H_t)</li><li>The formula note explaining how H_t is computed</li><li>Replay instructions for independent verification</li></ul>
+<strong>Why evidence packs matter:</strong></p>
+<p>Evidence packs enable independent verification. An auditor with the evidence pack can:
+<ol><li>Recompute U_t from the UVIL events</li><li>Recompute R_t from the reasoning artifacts</li><li>Recompute H_t = SHA256(R_t || U_t)</li><li>Compare the computed values to the recorded values</li></ol>
+If all three match, the attestation is verified. If any differ, something changed.</p>
+<strong>No external calls required:</strong>
+<p>Replay verification is fully local. The evidence pack contains everything needed. No API calls, no network access, no external dependencies. The computation is deterministic and reproducible.</p>
+<strong>Tamper detection:</strong>
+<p>If anyone modifies the evidence pack—changing a claim, altering a trust class, editing an artifact—the replay verification fails. The hashes will not match. There is no way to tamper with the evidence without detection.</p>
+<strong>How to use:</strong>
+<ol><li>After verification, click "Download Evidence Pack" to save the JSON file</li><li>Click "Replay & Verify" to recompute and compare hashes locally</li><li>A PASS result confirms the attestation is intact</li><li>A FAIL result shows which hashes diverged</li></ol>
+This is the audit trail. Same inputs, same hashes, same evidence. Every time.
+<strong>What replay does NOT prove:</strong>
+<p>Replay verification proves structural integrity, not truth. A PASS result means: the recorded hashes match what the inputs produce. It does not mean: the claims are correct, the verification was sound, or the system behaved safely. The evidence pack proves the audit trail is intact. It proves nothing about what that trail represents.</p>
+<hr>
+<h2>What This Demo Refuses to Claim</h2>
+<p>This demo does not claim the system is aligned with human values.</p>
+<p>This demo does not claim the system is intelligent.</p>
+<p>This demo does not claim the system is safe.</p>
+<p>This demo does not claim the system will behave well in novel situations.</p>
+<p>This demo claims one thing: the system's governance is legible. You can see what the human committed. You can see what the system established. You can see where the boundary is. You can verify that the boundary was not crossed.</p>
+<p>That is all. Governance and epistemic legibility. Nothing else.</p>
+<hr>
+<h2>How to Read the Demo as Evidence</h2>
+<strong>Justified conclusions:</strong>
+<ul><li>The system separates exploration from authority at the data model level.</li><li>The system produces deterministic attestations for committed content.</li><li>The system refuses to include ADV content in authority-bearing paths.</li><li>The system stops and reports ABSTAINED when it cannot verify or refute.</li><li>The human's actions and the system's reasoning are recorded in separate, verifiable structures.</li></ul>
+<strong>Explicitly not justified:</strong>
+<ul><li>The system will behave correctly in all cases.</li><li>The system's verification is complete or sound in any formal sense.</li><li>The system's abstention is always appropriate.</li><li>The governance structure prevents all possible failures.</li><li>The demo generalizes to production systems.</li></ul>
+The demo is evidence that a specific set of invariants are enforced in a specific implementation. It is not evidence of anything beyond that.
+<hr>
+<h2>If This Feels Restrictive, That Is the Point</h2>
+<p>The demo does less than you might expect. It stops when it could guess. It refuses to promote ADV content. It separates phases that could be merged. It records hashes that could be omitted.</p>
+<p>These restrictions are not limitations to be overcome. They are the design.</p>
+<p>A system that does more than it can justify is not more capable. It is less trustworthy. A system that clearly reports its boundaries is not weaker. It is legible.</p>
+<p>The demo is shaped this way because the alternative—a system that blurs the line between suggestion and claim, between exploration and authority, between what it knows and what it guesses—is worse. Not harder to build. Worse.</p>
+<p>This demo is boring. That is also the point.</p>
+<hr>
+<h2>Where the Demo Explains Itself in the UI</h2>
+<p>As of v0.2.0, the demo includes integrated self-explanation that appears directly in the interface. This is not decorative. These explanations are structurally enforced via regression tests.</p>
+<h3>UI Self-Explanation Integration Points</h3>
+<table><tr><th>Location</th><th>What It Explains</th><th>Key Copy</th></tr>
+<tr><td>Framing Box (top)</td><td>What the system does NOT do</td><td>"The system does not decide what is true. It decides what is justified under a declared verification route."</td></tr>
+<tr><td>Framing Expandable</td><td>What "justified" means</td><td>"A claim is justified when it passes through attestation with a declared trust class."</td></tr>
+<tr><td>Trust Class Selector</td><td>What each trust class means</td><td>Tooltips explain FV, MV, PA, ADV</td></tr>
+<tr><td>Trust Class Note</td><td>Trust class determines route, not correctness</td><td>"Trust class determines verification route, not correctness."</td></tr>
+<tr><td>Transition Note</td><td>What changes at commit</td><td>"The random proposal_id is discarded. The committed_id is derived from claim content."</td></tr>
+<tr><td>Outcome Display</td><td>What each outcome means</td><td>VERIFIED/REFUTED/ABSTAINED explanations</td></tr>
+<tr><td>ABSTAINED Explanation</td><td>Why ABSTAINED is first-class</td><td>"ABSTAINED is recorded in R_t. It is a first-class outcome, not a missing value."</td></tr>
+<tr><td>ADV Badge</td><td>Why ADV is excluded</td><td>"ADV claims are exploration-only. They do not enter R_t."</td></tr>
+<tr><td>Hash Labels</td><td>What U_t, R_t, H_t commit to</td><td>Tooltips on each hash label</td></tr>
+<tr><td>Evidence Pack Details</td><td>What the pack contains</td><td>Expandable explanation of contents</td></tr>
+<tr><td>Boundary Demo</td><td>What the demo proves</td><td>"Same claim text, different trust class → different outcome."</td></tr></table>
+<h3>UI Doc Sources</h3>
+<p>Auditors reviewing the demo UI should reference:</p>
+<ol><li><strong>DEMO_SELF_EXPLANATION_UI_PLAN.md</strong> - Full specification of all 9 integration points</li><li><strong>demo/app.py:UI_COPY</strong> - Canonical copy strings (line ~83)</li><li><strong>tests/governance/test_ui_copy_drift.py</strong> - Regression tests for copy integrity</li><li><strong>tools/run_demo_cases.py --ui-tests</strong> - Runtime self-explanation verification</li></ol>
+<h3>Enforcement</h3>
+<p>Self-explanation content is enforced through:</p>
+<ol><li><strong>UI_COPY dictionary</strong>: All explanation strings are canonical and versioned</li><li><strong>Copy drift tests</strong>: <code>test_ui_copy_drift.py</code> verifies required phrases are present</li><li><strong>Regression harness</strong>: <code>run_demo_cases.py --ui-tests</code> checks endpoint availability</li><li><strong>No capability claims</strong>: Tests verify absence of "safe", "aligned", "intelligent"</li></ol>
+<h3>What the UI Copy Does NOT Say</h3>
+<p>The UI self-explanation follows strict constraints:</p>
+<ul><li>Does NOT say "the system believes" (anthropomorphizing)</li><li>Does NOT say "verified correct" (overclaiming validator capability)</li><li>Does NOT say "safe" or "aligned" (capability claims)</li><li>Does NOT use emojis or exclamation marks (false enthusiasm)</li><li>Does NOT promise future capabilities (scope creep)</li></ul>
+The copy style is deliberately flat. It explains what happens, not what it means for safety or alignment.
+        </article>
+
+        <footer>
+            Site built from commit <code>ab8f51ab389aed7b3412cb987fc70d0d4f2bbe0b</code> at <code>2026-01-04T05:29:48Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

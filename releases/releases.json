@@ -1,11 +1,9 @@
 {
   "$schema": "./releases.schema.json",
   "_comment": "CANONICAL source of version metadata. Build script reads this file ONLY.",
-  "_updated": "2026-01-03",
-  "_updated_by": "Claude B",
-
-  "current_version": "v0.2.2",
-
+  "_updated": "2026-01-05",
+  "_updated_by": "Claude D (Closure Auditor)",
+  "current_version": "v0.2.13",
   "versions": {
     "v0": {
       "tag": "v0-demo-lock",
@@ -15,10 +13,26 @@
       "demo_url": null,
       "hosted_demo": false,
       "docs": [
-        {"source": "docs/V0_LOCK.md", "slug": "scope-lock", "title": "Scope Lock"},
-        {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
-        {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
-        {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"}
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        }
       ],
       "fixtures_dir": "fixtures",
       "invariants": {
@@ -52,7 +66,6 @@
         ]
       }
     },
-
     "v0.2.0": {
       "tag": "v0.2.0-demo-lock",
       "commit": "27a94c8a58139cb10349f6418336c618f528cbab",
@@ -61,10 +74,26 @@
       "demo_url": "/demo/",
       "hosted_demo": false,
       "docs": [
-        {"source": "docs/V0_LOCK.md", "slug": "scope-lock", "title": "Scope Lock"},
-        {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
-        {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
-        {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"}
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        }
       ],
       "fixtures_dir": "fixtures",
       "invariants": {
@@ -99,7 +128,6 @@
         ]
       }
     },
-
     "v0.2.1": {
       "tag": "v0.2.1-cohesion",
       "commit": "27a94c8a58139cb10349f6418336c618f528cbab",
@@ -110,13 +138,36 @@
       "demo_url": "/demo/",
       "hosted_demo": false,
       "docs": [
-        {"source": "docs/V0_LOCK.md", "slug": "scope-lock", "title": "Scope Lock"},
-        {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
-        {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
-        {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"},
-        {"source": "docs/FOR_AUDITORS.md", "slug": "for-auditors", "title": "For Auditors"},
-        {"source": "docs/external_audits/manus_site_audit_2026-01-03.md", "slug": "external_audits/manus_site_audit_2026-01-03", "title": "Cold-Start Audit (2026-01-03)"},
-        {"source": "docs/RELEASE_CLOSURE_V0.2.1.md", "slug": "release-closure-v021", "title": "Release Closure v0.2.1"}
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/RELEASE_CLOSURE_V0.2.1.md",
+          "slug": "release-closure-v021",
+          "title": "Release Closure v0.2.1"
+        }
       ],
       "fixtures_dir": "fixtures",
       "invariants": {
@@ -151,22 +202,39 @@
         ]
       }
     },
-
     "v0.2.2": {
       "tag": "v0.2.2-link-integrity",
       "commit": "27a94c8a58139cb10349f6418336c618f528cbab",
       "date_locked": "2026-01-03",
-      "status": "current",
+      "status": "superseded-by-v0.2.3",
       "demo_url": "/demo/",
       "hosted_demo": true,
       "docs": [
-        {"source": "docs/V0_LOCK.md", "slug": "scope-lock", "title": "Scope Lock"},
-        {"source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md", "slug": "explanation", "title": "How the Demo Explains Itself"},
-        {"source": "docs/HOSTILE_DEMO_REHEARSAL.md", "slug": "hostile-rehearsal", "title": "Hostile Demo Rehearsal"},
-        {"source": "docs/invariants_status.md", "slug": "invariants", "title": "Invariants Status"},
-        {"source": "docs/FOR_AUDITORS.md", "slug": "for-auditors", "title": "For Auditors"},
-        {"source": "docs/external_audits/manus_site_audit_2026-01-03.md", "slug": "external_audits/manus_site_audit_2026-01-03", "title": "Cold-Start Audit (2026-01-03)"},
-        {"source": "docs/external_audits/manus_link_integrity_audit_2026-01-03.md", "slug": "external_audits/manus_link_integrity_audit_2026-01-03", "title": "Link Integrity Audit (2026-01-03)"}
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        }
       ],
       "fixtures_dir": "fixtures",
       "invariants": {
@@ -212,6 +280,1085 @@
           "Tier A/B/C invariant counts (10/1/3)",
           "Cryptographic enforcement (H_t, R_t, U_t)",
           "Demo functionality and verification flow"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.3": {
+      "tag": "v0.2.3-audit-path-freshness",
+      "commit": "674bcd16104f37961fe1ce9e200a5b95a9c85bb3",
+      "date_locked": "2026-01-03",
+      "status": "superseded-by-v0.2.4",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 10,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "changed": [
+          "FOR_AUDITORS.md uses template variables ({{CURRENT_VERSION}}, {{CURRENT_TAG}})",
+          "examples.json pack_version updated to v0.2.3",
+          "Verifier page has prominent 'Run self-test vectors' button with table output",
+          "/versions/ page has status ambiguity note about pre-v0.2.2 archives",
+          "Build assertions for examples.json staleness and self-test presence"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (10/1/3)",
+          "Cryptographic enforcement (H_t, R_t, U_t)",
+          "Demo functionality and verification flow",
+          "Hash contract (hashes computed identically)"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.4": {
+      "tag": "v0.2.4-verifier-merkle-parity",
+      "commit": "f58ff661e9b163c7babaa23d0df49d6f956cb6f7",
+      "date_locked": "2026-01-03",
+      "status": "superseded-by-v0.2.5",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 10,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "changed": [
+          "JS verifier now uses Merkle tree with domain separation (Python parity)",
+          "Added domain constants: DOMAIN_UI_LEAF, DOMAIN_REASONING_LEAF, DOMAIN_LEAF, DOMAIN_NODE",
+          "Added merkleRoot(), computeUiRoot(), computeReasoningRoot() functions",
+          "examples.json regenerated with correct Merkle-based hashes",
+          "Added golden alignment test: test_verifier_golden_alignment.py (11 tests)",
+          "Added Python replay regression test: test_evidence_pack_python_replay.py (8 tests)"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (10/1/3)",
+          "Python attestation code (attestation/dual_root.py)",
+          "Demo functionality and verification flow"
+        ],
+        "fixed": [
+          "valid_boundary_demo self-test now returns PASS (was FAIL due to u_t_mismatch)",
+          "JS verifier computes identical U_t/R_t/H_t as Python replay_verify"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.5": {
+      "tag": "v0.2.5-self-test-clarity",
+      "commit": "20b5811e207ca5dcc2c266146f916b0b57fac3e9",
+      "date_locked": "2026-01-04",
+      "status": "superseded-by-v0.2.6",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 10,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "changed": [
+          "Added ACE (Adversarial Closure Engineering) section to explanation page",
+          "ACE section documents hostile audit process and links to audit artifacts",
+          "Clarifies 'hostile' means skeptical with respect to claims, not adversarial toward people",
+          "Each version links directly to audits and fixes that shaped it"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (10/1/3)",
+          "Cryptographic algorithms (Merkle, domain separation)",
+          "Hash computation functions (JS verifier parity with Python)",
+          "Demo functionality and verification flow",
+          "Self-test semantics (3 vectors: 1 PASS, 2 FAIL)"
+        ],
+        "added": [
+          "How This Demo Survives Hostile Review section in explanation page",
+          "Links to all external audit documents from explanation page"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.6": {
+      "tag": "v0.2.6-verifier-correctness",
+      "commit": "62799ae82a62574b7a239e59bcd88403a6138f7d",
+      "date_locked": "2026-01-04",
+      "status": "superseded-by-v0.2.7",
+      "known_bugs": [
+        "CRITICAL: Deployed verifier lacked domain separation, causing u_t_mismatch on valid packs"
+      ],
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 10,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "changed": [
+          "JS verifier now byte-for-byte identical to Python replay verification",
+          "Added domain-separated Merkle tree construction (DOMAIN_REASONING_LEAF=0xA0, DOMAIN_UI_LEAF=0xA1)",
+          "Merkle tree uses DOMAIN_LEAF=0x00 and DOMAIN_NODE=0x01 for leaf/node hashing",
+          "computeUt() hashes each event with DOMAIN_UI_LEAF then builds Merkle root",
+          "computeRt() hashes each artifact with DOMAIN_REASONING_LEAF then builds Merkle root",
+          "computeHt() = SHA256(R_t || U_t) with ASCII encoding"
+        ],
+        "fixed": [
+          "valid_boundary_demo self-test now returns PASS (was computing wrong U_t/R_t due to missing domain separation)",
+          "Self-test semantics preserved: FAIL/FAIL -> test PASSES, PASS/PASS -> test PASSES"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (10/1/3)",
+          "Python attestation code (attestation/dual_root.py)",
+          "Demo functionality and verification flow"
+        ],
+        "golden_values": {
+          "valid_boundary_demo": {
+            "u_t": "0d1b61da395bb759b4558e1329e9ea561450e66d66421f88b540f7e828c0cd2d",
+            "r_t": "fc252c380d1af2afaa4f17a52a8692156f2edcd6336ee4a3278a23a10eda4899",
+            "h_t": "fc326bbaad3518e4de63a3d81f68dc2030ff47bdb80532081e4b0c0c2a8f2fd4"
+          }
+        },
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.7": {
+      "tag": "v0.2.7-verifier-parity",
+      "commit": "5d01b4b1446ee323b10ff43c79a9b49589d68061",
+      "date_locked": "2026-01-04",
+      "status": "superseded-by-v0.2.8",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 10,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "breaking_fix": true,
+        "breaking_fix_reason": "v0.2.6 was deployed with stale verifier lacking domain separation. v0.2.7 is the first version where the LIVE verifier computes correct hashes.",
+        "changed": [
+          "Regenerated verifier from generate_v027_verifier.py with correct domain separation",
+          "Added GENERATED_FROM_COMMIT marker in verifier HTML for staleness detection",
+          "Added tools/verify_verifier_freshness.py build assertion",
+          "Added stage-wise trace scripts for crypto parity debugging"
+        ],
+        "fixed": [
+          "CRITICAL: valid_boundary_demo self-test now returns PASS (was failing with u_t_mismatch)",
+          "JS verifier now correctly computes U_t, R_t, H_t matching Python"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (10/1/3)",
+          "Python attestation code (attestation/dual_root.py)",
+          "Hash contract (identical to what v0.2.6 SHOULD have been)",
+          "Demo functionality and verification flow"
+        ],
+        "golden_values": {
+          "valid_boundary_demo": {
+            "u_t": "0d1b61da395bb759b4558e1329e9ea561450e66d66421f88b540f7e828c0cd2d",
+            "r_t": "fc252c380d1af2afaa4f17a52a8692156f2edcd6336ee4a3278a23a10eda4899",
+            "h_t": "fc326bbaad3518e4de63a3d81f68dc2030ff47bdb80532081e4b0c0c2a8f2fd4"
+          }
+        },
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.8": {
+      "tag": "v0.2.8-mv-coverage-docs",
+      "commit": "ebb69ab2a997816d94742859b423266113021d4b",
+      "date_locked": "2026-01-04",
+      "status": "superseded-by-v0.2.9",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/MV_VALIDATOR_COVERAGE.md",
+          "slug": "mv-coverage",
+          "title": "MV Validator Coverage"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 10,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "documentation_only": true,
+        "added": [
+          "New 'How Claims Are Introduced, Tested, and Closed' section in explanation page",
+          "Promotion Readiness Checklist documenting claim lifecycle",
+          "Phase I/II pressure model documentation",
+          "MV_VALIDATOR_COVERAGE.md linked from explanation page"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (10/1/3)",
+          "All cryptographic enforcement",
+          "Demo code and behavior",
+          "Verifier implementation"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.9": {
+      "tag": "v0.2.9-abstention-terminal",
+      "commit": "f01d43b14c57899ebeb8a774d3a83f5314314d49",
+      "date_locked": "2026-01-04",
+      "status": "superseded-by-v0.2.10",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/MV_VALIDATOR_COVERAGE.md",
+          "slug": "mv-coverage",
+          "title": "MV Validator Coverage"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 11,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field",
+          "Abstention Terminality"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "documentation_only": true,
+        "claim_promoted": "Abstention Terminality",
+        "added": [
+          "'Abstention as a Terminal Outcome' section in explanation page",
+          "'Outcome Immutability' clause in Scope Lock",
+          "Expectation-setting for permanent ABSTAINED in FOR_AUDITORS",
+          "test_abstention_terminality.py regression guard (17 tests)"
+        ],
+        "tier_promotion": {
+          "from": "implicit",
+          "to": "Tier A",
+          "reason": "ABSTAINED is terminal for a claim identity. Once classified, outcome is immutable."
+        },
+        "unchanged": [
+          "Tier B/C invariant counts (1/3)",
+          "All cryptographic enforcement",
+          "Demo code and behavior",
+          "Verifier implementation"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.10": {
+      "tag": "v0.2.10-demo-reliability",
+      "commit": "55d12f49dc4402f2995459707e3275221ec24ff5",
+      "date_locked": "2026-01-04",
+      "status": "superseded-by-v0.2.11",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/MV_VALIDATOR_COVERAGE.md",
+          "slug": "mv-coverage",
+          "title": "MV Validator Coverage"
+        },
+        {
+          "source": "docs/V0.2.10_SMOKE_CHECKLIST.md",
+          "slug": "v0210-smoke-checklist",
+          "title": "v0.2.10 Smoke Checklist"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 11,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field",
+          "Abstention Terminality"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "infrastructure_fix": true,
+        "problem_solved": "Demo reliability failure due to proposal_id cache miss after server restart or multi-instance routing",
+        "added": [
+          "DraftPayload model for self-sufficient commit",
+          "draft_payload field in ProposePartitionResponse",
+          "draft_payload parameter in CommitUVILRequest",
+          "System-responsible error messages (PROPOSAL_STATE_LOST)",
+          "tests/demo/test_demo_reliability.py (7 regression tests)",
+          "docs/V0.2.10_SMOKE_CHECKLIST.md"
+        ],
+        "fixed": [
+          "commit_uvil no longer depends on server-side _draft_proposals cache",
+          "Error message now says 'demo reliability issue' not 'Must call /propose_partition first'",
+          "Boundary demo completes reliably across server restarts"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (11/1/3)",
+          "All cryptographic enforcement (U_t, R_t, H_t)",
+          "Verifier implementation",
+          "Double-commit protection (idempotency via proposal_id in draft_payload)"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.11": {
+      "tag": "v0.2.11-verifier-parity",
+      "commit": "f6f142f3801e0f05c066db204c9a840f7729533a",
+      "date_locked": "2026-01-05",
+      "status": "superseded-by-v0.2.12",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/MV_VALIDATOR_COVERAGE.md",
+          "slug": "mv-coverage",
+          "title": "MV Validator Coverage"
+        },
+        {
+          "source": "docs/V0.2.10_SMOKE_CHECKLIST.md",
+          "slug": "v0210-smoke-checklist",
+          "title": "v0.2.10 Smoke Checklist"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 11,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field",
+          "Abstention Terminality"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "infrastructure_fix": true,
+        "problem_solved": "Gate 3 verifier failure - JS verifier was using simple SHA instead of Merkle + domain separation",
+        "fixed": [
+          "JS verifier now computes U_t/R_t/H_t using SAME algorithm as Python attestation",
+          "Domain constants: DOMAIN_REASONING_LEAF=0xA0, DOMAIN_UI_LEAF=0xA1",
+          "Merkle tree with DOMAIN_LEAF=0x00 and DOMAIN_NODE=0x01",
+          "examples.json regenerated from Python canonical pipeline",
+          "Self-test now returns PASS for valid_boundary_demo"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (11/1/3)",
+          "Python attestation code (attestation/dual_root.py)",
+          "Demo functionality and verification flow"
+        ],
+        "golden_values": {
+          "valid_boundary_demo": {
+            "u_t": "0d1b61da395bb759b4558e1329e9ea561450e66d66421f88b540f7e828c0cd2d",
+            "r_t": "fc252c380d1af2afaa4f17a52a8692156f2edcd6336ee4a3278a23a10eda4899",
+            "h_t": "fc326bbaad3518e4de63a3d81f68dc2030ff47bdb80532081e4b0c0c2a8f2fd4"
+          }
+        },
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.12": {
+      "tag": "v0.2.12-versioning-doctrine",
+      "commit": "15cc70f607321a8187febe798466a5cfdc5fd20f",
+      "date_locked": "2026-01-05",
+      "status": "superseded-by-v0.2.13",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/MV_VALIDATOR_COVERAGE.md",
+          "slug": "mv-coverage",
+          "title": "MV Validator Coverage"
+        },
+        {
+          "source": "docs/V0.2.10_SMOKE_CHECKLIST.md",
+          "slug": "v0210-smoke-checklist",
+          "title": "v0.2.10 Smoke Checklist"
+        },
+        {
+          "source": "docs/VERSION_NUMBER_DOCTRINE.md",
+          "slug": "version-doctrine",
+          "title": "Version Number Doctrine"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 11,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field",
+          "Abstention Terminality"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "documentation_only": true,
+        "added": [
+          "VERSION_NUMBER_DOCTRINE.md: Formal versioning scheme documentation",
+          "Explains v{major}.{minor}.{patch} format",
+          "Documents version lifecycle (current \u2192 superseded)",
+          "Documents tag naming convention",
+          "Documents releases.json authority"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (11/1/3)",
+          "All cryptographic enforcement",
+          "Demo code and behavior",
+          "Verifier implementation"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.13": {
+      "tag": "v0.2.13-outreach-metadata",
+      "commit": "f6adede4ac923a164a85605493ad9939de587e8d",
+      "date_locked": "2026-01-05",
+      "status": "current",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/MV_VALIDATOR_COVERAGE.md",
+          "slug": "mv-coverage",
+          "title": "MV Validator Coverage"
+        },
+        {
+          "source": "docs/V0.2.10_SMOKE_CHECKLIST.md",
+          "slug": "v0210-smoke-checklist",
+          "title": "v0.2.10 Smoke Checklist"
+        },
+        {
+          "source": "docs/VERSION_NUMBER_DOCTRINE.md",
+          "slug": "version-doctrine",
+          "title": "Version Number Doctrine"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 11,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field",
+          "Abstention Terminality"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "documentation_only": true,
+        "added": [
+          "Landing page 'For Auditors' box now links to closure matrices in public repository",
+          "Contact section added to landing page with maintainer info",
+          "FOR_AUDITORS.md has 'Audit Closure Records' and 'Contact' sections",
+          "Build assertion 24b blocks tree/main or tree/master links in landing pages"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (11/1/3)",
+          "All cryptographic enforcement",
+          "Demo code and behavior",
+          "Verifier implementation"
         ],
         "still_not_enforced": [
           "FV Mechanical Verification (no Lean/Z3)",

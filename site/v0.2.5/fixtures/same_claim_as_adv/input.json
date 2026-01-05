@@ -1,0 +1,17 @@
+{
+  "case_name": "same_claim_as_adv",
+  "description": "Same arithmetic claim as ADV - excluded from authority entirely",
+  "task_text": "Consider whether 2 + 2 = 4",
+  "claims": [
+    {
+      "claim_text": "2 + 2 = 4",
+      "trust_class": "ADV",
+      "rationale": "Advisory only - exploring the claim"
+    }
+  ],
+  "actor_id": "demo_harness",
+  "seed": 42,
+  "expected_authority_count": 0,
+  "expected_adv_excluded": true,
+  "expected_outcome": "ABSTAINED"
+}

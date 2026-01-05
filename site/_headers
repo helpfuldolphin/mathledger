@@ -1,0 +1,53 @@
+# Versioned content: immutable (1 year cache)
+/v0/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.0/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.1/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.2/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.3/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.4/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.5/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.6/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.7/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.8/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.9/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.10/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.11/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.12/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/v0.2.13/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Root: short cache (redirect target may change)
+/
+  Cache-Control: public, max-age=300
+
+# Version index: medium cache
+/versions/*
+  Cache-Control: public, max-age=3600

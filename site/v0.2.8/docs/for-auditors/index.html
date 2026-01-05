@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For Auditors — MathLedger v0.2.8</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0.2.8</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0.2.8-mv-coverage-docs</code> |
+            Commit: <code>ebb69ab2a997</code> |
+            Locked: 2026-01-04
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 10</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0.2.8/">Archive</a> <a href="/v0.2.8/docs/scope-lock/">Scope</a> <a href="/v0.2.8/docs/explanation/">Explanation</a> <a href="/v0.2.8/docs/invariants/">Invariants</a> <a href="/v0.2.8/docs/field-manual/">Field Manual</a> <a href="/v0.2.8/fixtures/">Fixtures</a> <a href="/v0.2.8/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>For Auditors <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>For Auditors: 5-Minute Verification Checklist</h1>
+<p>This page provides a quick verification path for external auditors evaluating MathLedger's governance claims.</p>
+<h2>5-Minute Verification Checklist</h2>
+<p>Complete these steps to verify the system's core claims:</p>
+<h3>Step 1: Open the Hosted Demo (30 seconds)</h3>
+<ol><li>Navigate to <a href="/demo/">/demo/</a></li><li>Confirm the demo loads without errors</li><li>Verify the version banner shows <code>v0.2.8-mv-coverage-docs</code></li></ol>
+<h3>Step 2: Run the Boundary Demo (90 seconds)</h3>
+<ol><li>In the demo, click <strong>"Boundary Demo: Same Claim, Different Authority"</strong></li><li>Observe the 4-step sequence:</li></ol>   - Step 1: Claim "2+2=4" as <strong>MV</strong> (Mechanically Verified) → VERIFIED
+   - Step 2: Same claim "2+2=4" as <strong>PA</strong> (Professional Authority) → ABSTAINED
+   - Step 3: Same claim "2+2=4" as <strong>ADV</strong> (Advisory) → ABSTAINED
+   - Step 4: Claim "2+2=5" as <strong>MV</strong> → REFUTED
+<ol><li><strong>Key insight:</strong> Same mathematical truth, different outcomes based on trust class declaration</li></ol>
+<h3>Step 3: Download Evidence Pack (30 seconds)</h3>
+<ol><li>After running the boundary demo, click <strong>"Download Evidence Pack"</strong></li><li>Save the JSON file locally</li><li>Note: This file contains cryptographic commitments to all demo operations</li></ol>
+<h3>Step 4: Verify with Auditor Tool (60 seconds)</h3>
+<ol><li>Open the <a href="/v0.2.8/evidence-pack/verify/">Evidence Pack Verifier</a></li><li>Upload the evidence pack JSON you downloaded</li><li>Click <strong>"Verify"</strong></li><li>Confirm status shows <strong>PASS</strong></li><li>Observe the hash verification: U_t, R_t, and H_t all match</li></ol>
+<h3>Step 5: Tamper Test (60 seconds)</h3>
+<ol><li>Open the downloaded evidence pack in a text editor</li><li>Change any character in the <code>reasoning_artifacts</code> section</li><li>Re-upload to the verifier</li><li>Click <strong>"Verify"</strong></li><li>Confirm status shows <strong>FAIL</strong> with hash mismatch</li></ol>
+<strong>If all 5 steps complete as described, the core verification loop is functioning correctly.</strong>
+<hr>
+<h2>Ready-to-Verify Examples (No Demo Required)</h2>
+<p>If the demo is unavailable or you want to verify without running it, use these pre-generated examples:</p>
+<h3>Download Examples</h3>
+<p>The file <a href="/v0.2.8/evidence-pack/examples.json"><code>/v0.2.8/evidence-pack/examples.json</code></a> contains:</p>
+<table><tr><th>Example</th><th>Expected Result</th><th>Purpose</th></tr>
+<tr><td><code>valid_boundary_demo</code></td><td>PASS</td><td>Shows a correctly-formed evidence pack from a boundary demo</td></tr>
+<tr><td><code>tampered_ht_mismatch</code></td><td>FAIL (h_t mismatch)</td><td>Demonstrates detection of tampered H_t field</td></tr>
+<tr><td><code>tampered_rt_mismatch</code></td><td>FAIL (r_t mismatch)</td><td>Demonstrates detection of tampered reasoning artifacts</td></tr></table>
+<h3>Verification Steps</h3>
+<ol><li>Download <a href="/v0.2.8/evidence-pack/examples.json"><code>examples.json</code></a></li><li>Copy the content of <code>examples.valid_boundary_demo.pack</code> to a new file</li><li>Open the <a href="/v0.2.8/evidence-pack/verify/">Evidence Pack Verifier</a></li><li>Upload the pack JSON</li><li>Click <strong>Verify</strong> and observe <strong>PASS</strong></li><li>Repeat with <code>tampered_ht_mismatch.pack</code> and observe <strong>FAIL</strong></li></ol>
+<strong>Or use the verifier's built-in self-test:</strong> Click "Run self-test vectors" on the verifier page to see all examples tested automatically.
+<h3>Why This Matters</h3>
+<p>These examples prove:
+<ul><li>The verification algorithm is deterministic (same input always produces same hash)</li><li>Tamper detection works (any modification is detected)</li><li>No demo required (auditors can verify offline using the same code)</li></ul>
+<hr></p>
+<h2>What This Version Claims</h2>
+<p>This version (v0.2.8) demonstrates:</p>
+<ul><li><strong>Deterministic canonicalization</strong> of reasoning artifacts (RFC 8785-style)</li><li><strong>Cryptographic binding</strong> via H_t = SHA256(R_t || U_t)</li><li><strong>Trust class separation</strong> where ADV claims are excluded from R_t</li><li><strong>Replay verification</strong> using the same code paths as live execution</li><li><strong>Self-auditing capability</strong> via the evidence pack verifier</li></ul>
+See <a href="../invariants/">Invariants Status</a> for the complete Tier A/B/C breakdown.
+<hr>
+<h2>What This Version Does NOT Claim</h2>
+<strong>Explicit non-claims:</strong>
+<ol><li><strong>No formal verification</strong> — FV (Formally Verified) claims always return ABSTAINED. There is no Lean/Z3/Coq integration.</li></ol>
+<ol><li><strong>No multi-model consensus</strong> — Only one partitioner template is active. The "multi-model arena" is not operational.</li></ol>
+<ol><li><strong>No learning loop</strong> — RFL (Reinforcement from Ledger) is not active. The system does not learn from past decisions.</li></ol>
+<ol><li><strong>No production hardening</strong> — This is a demonstration, not a production system. Do not use for real financial or legal decisions.</li></ol>
+<ol><li><strong>No guaranteed uptime</strong> — The hosted demo may be unavailable. Local execution is always possible.</li></ol>
+<hr>
+<h2>Key Documentation Links</h2>
+<table><tr><th>Document</th><th>Description</th></tr>
+<tr><td><a href="../scope-lock/">Scope Lock</a></td><td>What this version does and does not demonstrate</td></tr>
+<tr><td><a href="../invariants/">Invariants</a></td><td>Tier A/B/C enforcement status with explicit counts</td></tr>
+<tr><td><a href="../field-manual/">Field Manual</a></td><td>Obligation ledger driving version promotions</td></tr>
+<tr><td><a href="../hostile-rehearsal/">Hostile Demo Rehearsal</a></td><td>Pre-prepared answers to skeptical questions</td></tr>
+<tr><td><a href="../explanation/">How the Demo Explains Itself</a></td><td>UI self-explanation integration points</td></tr></table>
+<hr>
+<h2>Field Manual (Why It Exists)</h2>
+<p>The <a href="../field-manual/">Field Manual</a> (fm.tex/pdf) is an internal constraint artifact, not marketing documentation.</p>
+<strong>It is not rewritten yet; it is used to surface obligations and gaps.</strong>
+<p>How auditors should use it:
+<ul><li><strong>Cross-reference claims</strong> — If a feature is claimed, check FM for caveats</li><li><strong>Look for "TODO" and "OBLIGATION"</strong> — Explicit acknowledgments of gaps</li><li><strong>Compare versions</strong> — FM changes show what was addressed between releases</li><li><strong>Trust gaps over features</strong> — The gaps we document are more honest than features we claim</li></ul>
+Download: <a href="../field-manual/fm.pdf">fm.pdf</a> | <a href="../field-manual/fm.tex">fm.tex</a></p>
+<hr>
+<h2>Local Verification (Alternative Path)</h2>
+<p>If the hosted demo is unavailable, verify locally:</p>
+<pre><code class="language-bash">git clone https://github.com/helpfuldolphin/mathledger
+cd mathledger
+git checkout v0.2.8-mv-coverage-docs
+uv run python demo/app.py
+<h1>Open http://localhost:8000</h1>
+</code></pre>
+<p>The local demo produces identical evidence packs that can be verified with the same auditor tool.</p>
+<hr>
+<h2>External Audits</h2>
+<p>Independent audits of this project are listed below.</p>
+<table><tr><th>Date</th><th>Auditor Role</th><th>Version Audited</th><th>Report</th></tr>
+<tr><td>2026-01-03</td><td>External safety lead (no prior context)</td><td>v0.2.1 archive, v0.2.0 demo</td><td><a href="../external_audits/manus_site_audit_2026-01-03/">Cold-Start Audit Report</a></td></tr>
+<tr><td>2026-01-03</td><td>Hostile link integrity auditor</td><td>v0.2.1 site</td><td><a href="../external_audits/manus_link_integrity_audit_2026-01-03/">Link Integrity Audit</a></td></tr>
+<tr><td>2026-01-03</td><td>Hostile acquisition auditor</td><td>v0.2.2 site</td><td><a href="../external_audits/manus_hostile_audit_v0.2.2_2026-01-03/">Hostile Audit v0.2.2</a></td></tr></table>
+<strong>Disclaimer:</strong> These are independent audits. Findings may have been addressed in later versions. Audits do not constitute endorsements.
+<hr>
+<h2>Questions?</h2>
+<p>For technical questions about this verification process, see the <a href="../hostile-rehearsal/">Hostile Demo Rehearsal</a> document which addresses common skeptical questions with prepared answers.</p>
+        </article>
+
+        <footer>
+            Site built from commit <code>ebb69ab2a997816d94742859b423266113021d4b</code> at <code>2026-01-04T17:43:29Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

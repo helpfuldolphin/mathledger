@@ -1,0 +1,16 @@
+{
+  "case_name": "golden_evidence_pack",
+  "description": "Golden test vector for evidence pack hash verification - DO NOT MODIFY without explicit approval",
+  "governance_note": "Any change to these hashes indicates canonicalization drift or code change. Updating requires audit approval.",
+  "task_text": "Golden hash test: 1 + 1 = 2",
+  "claims": [
+    {
+      "claim_text": "1 + 1 = 2",
+      "trust_class": "MV",
+      "rationale": "Golden test vector - simple arithmetic"
+    }
+  ],
+  "actor_id": "golden_test_harness",
+  "user_fingerprint": "golden_test_user",
+  "expected_outcome": "VERIFIED"
+}

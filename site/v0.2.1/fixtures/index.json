@@ -1,0 +1,122 @@
+{
+  "version": "v0.2.1",
+  "fixtures": [
+    {
+      "name": "adv_only",
+      "files": [
+        {
+          "name": "input.json",
+          "sha256": "df12c64abe9971fcbfd2b70944b75db79a6a2e8fbb76979ab8d7dec69a220e5e"
+        },
+        {
+          "name": "output.json",
+          "sha256": "dd8b5bc4cb0e42c56c7c347ddff248de832b8f815af076e904c947df45e3f2f7"
+        }
+      ]
+    },
+    {
+      "name": "mixed_mv_adv",
+      "files": [
+        {
+          "name": "input.json",
+          "sha256": "5e61de9d026714a97e0c81db138ba16fb09e74ea46806519d96a501689c41264"
+        },
+        {
+          "name": "output.json",
+          "sha256": "d423a4f4a153a8193af866fe3f71aa9b25ddc6975a8351f18575da818ddc909f"
+        }
+      ]
+    },
+    {
+      "name": "mv_arithmetic_refuted",
+      "files": [
+        {
+          "name": "input.json",
+          "sha256": "8b796669b4f837fbf09ce09ceaca73a7ce7cce18071ac44fefcce6a2c9dee6dc"
+        },
+        {
+          "name": "output.json",
+          "sha256": "bfb702efbf1cf8f6e71e48a773c13558638cf745cdbe4c6303c3ee74b712fa99"
+        }
+      ]
+    },
+    {
+      "name": "mv_arithmetic_verified",
+      "files": [
+        {
+          "name": "input.json",
+          "sha256": "4af1aa1854b8930bbab77656abb5c4c55076b2fe52b984aeae247e2b5bed8969"
+        },
+        {
+          "name": "output.json",
+          "sha256": "4e4bb56c4c24b78e2f0202f7776f7267f368eeaf56dd026f6f2a90e52da9eb75"
+        }
+      ]
+    },
+    {
+      "name": "mv_only",
+      "files": [
+        {
+          "name": "input.json",
+          "sha256": "2837d1a3407f0d0072e123b43c51841238bae4db0800de81998e749ea12d6f8a"
+        },
+        {
+          "name": "output.json",
+          "sha256": "8e206dd18c63782eebaa2323c08c1b59f73f8cde036b99ceb59d5efa97513ba6"
+        }
+      ]
+    },
+    {
+      "name": "pa_only",
+      "files": [
+        {
+          "name": "input.json",
+          "sha256": "c5d568cf67ad81732867426c2ee8be853f8d3675a9efd80c6356f08110984af7"
+        },
+        {
+          "name": "output.json",
+          "sha256": "b0312a0f9ea39cb03290f72dda94c01f1da292a3403a8c995bfefb89482bbe20"
+        }
+      ]
+    },
+    {
+      "name": "same_claim_as_adv",
+      "files": [
+        {
+          "name": "input.json",
+          "sha256": "f581c44947e3b0511125bbe03072c1e32e46bb1281dc68c43b0e39cb4fb5807e"
+        },
+        {
+          "name": "output.json",
+          "sha256": "708f819adf3779b6f6ac3de735c834d362f58e6e3add3fb09e89aad6d08ec97d"
+        }
+      ]
+    },
+    {
+      "name": "same_claim_as_pa",
+      "files": [
+        {
+          "name": "input.json",
+          "sha256": "b758ad14da2ae20666148e35ae1eed93886f3c406ee67cbc3017ca31b03499e6"
+        },
+        {
+          "name": "output.json",
+          "sha256": "ceb4a962d2ae0439062cdfbacf20ce68bbced64de090304ae50c749bf885ebe7"
+        }
+      ]
+    },
+    {
+      "name": "underdetermined_navier_stokes",
+      "files": [
+        {
+          "name": "input.json",
+          "sha256": "ddd8c3c8c27af087617587b8af87e35caf95ae03c58bc5fa2ea1b522873ab952"
+        },
+        {
+          "name": "output.json",
+          "sha256": "630c28100c81b5a124cb5c8acc5bfe518a432185ac1dc1d384a7709afff1770b"
+        }
+      ]
+    }
+  ]
+}

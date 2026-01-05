@@ -1,0 +1,96 @@
+{
+  "success": true,
+  "error": null,
+  "captured_at": "2026-01-02T06:22:21.430941+00:00",
+  "exploration": {
+    "proposal_id": "fe6d51d3-7e50-4823-8a27-7f389a374561",
+    "draft_proposal": {
+      "proposal_id": "fe6d51d3-7e50-4823-8a27-7f389a374561",
+      "claims": [
+        {
+          "claim_text": "Claim derived from: Prove existence and smoothness of Navier-Stokes solutions in 3D...",
+          "suggested_trust_class": "ADV",
+          "rationale": "Template partitioner - user must edit and promote"
+        }
+      ]
+    },
+    "note": "proposal_id is exploration-only and MUST NOT appear in attestation"
+  },
+  "authority": {
+    "committed_partition_id": "c6b5759edcef4f3d293e324b1e2a82f19e365136fd9a8cb9b122c4165634d7d9",
+    "commit_response": {
+      "committed_partition_id": "c6b5759edcef4f3d293e324b1e2a82f19e365136fd9a8cb9b122c4165634d7d9",
+      "u_t": "888e27a30ba1da268a3b277e2f891a5d1416672218e6a1ef51bba2df695d95ac",
+      "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+      "h_t": "2af7e886a6f06403f87e9536f48916dad446f16db337c71381af99d655122b93",
+      "claim_count": 3
+    }
+  },
+  "verification": {
+    "response": {
+      "outcome": "ABSTAINED",
+      "committed_partition_id": "c6b5759edcef4f3d293e324b1e2a82f19e365136fd9a8cb9b122c4165634d7d9",
+      "attestation": {
+        "u_t": "888e27a30ba1da268a3b277e2f891a5d1416672218e6a1ef51bba2df695d95ac",
+        "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+        "h_t": "2af7e886a6f06403f87e9536f48916dad446f16db337c71381af99d655122b93",
+        "authority_claim_count": 0,
+        "total_claim_count": 3
+      },
+      "authority_basis": {
+        "fv_count": 0,
+        "mv_count": 0,
+        "pa_count": 0,
+        "adv_count": 3,
+        "adv_excluded": true,
+        "mechanically_verified": false,
+        "authority_bearing_accepted": false,
+        "explanation": "No authority-bearing claims. Nothing entered the reasoning stream.",
+        "mv_validation": {
+          "verified": 0,
+          "refuted": 0,
+          "abstained": 0
+        },
+        "trust_class_breakdown": {
+          "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+          "MV": "Mechanically Validated - checked by arithmetic validator",
+          "PA": "Procedurally Attested - user attestation, not mechanically verified",
+          "ADV": "Advisory - exploration only, excluded from authority stream"
+        }
+      }
+    }
+  },
+  "attestation": {
+    "u_t": "888e27a30ba1da268a3b277e2f891a5d1416672218e6a1ef51bba2df695d95ac",
+    "r_t": "83fb2fd0185a813712a6a9d9a9bed272b2c56b4b1e39fa8da9a90cbe0b6250ff",
+    "h_t": "2af7e886a6f06403f87e9536f48916dad446f16db337c71381af99d655122b93"
+  },
+  "authority_basis": {
+    "fv_count": 0,
+    "mv_count": 0,
+    "pa_count": 0,
+    "adv_count": 3,
+    "adv_excluded": true,
+    "mechanically_verified": false,
+    "authority_bearing_accepted": false,
+    "explanation": "No authority-bearing claims. Nothing entered the reasoning stream.",
+    "mv_validation": {
+      "verified": 0,
+      "refuted": 0,
+      "abstained": 0
+    },
+    "trust_class_breakdown": {
+      "FV": "Formally Verified - requires machine-checkable proof (v0: not implemented)",
+      "MV": "Mechanically Validated - checked by arithmetic validator",
+      "PA": "Procedurally Attested - user attestation, not mechanically verified",
+      "ADV": "Advisory - exploration only, excluded from authority stream"
+    }
+  },
+  "outcome": "ABSTAINED",
+  "analysis": {
+    "authority_claim_count": 0,
+    "total_claim_count": 3,
+    "adv_excluded_from_rt": true,
+    "outcome_explanation": "No authority-bearing claims. Nothing entered the reasoning stream."
+  }
+}

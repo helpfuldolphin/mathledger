@@ -1175,6 +1175,7 @@ def get_html_content() -> str:
         };
 
         let currentProposalId = null;
+        let currentDraftPayload = null;  // v0.2.10: Self-sufficient payload
         let currentCommittedId = null;
         let editedClaims = [];
         let currentScenario = null;
@@ -1222,6 +1223,8 @@ def get_html_content() -> str:
 
                 const data = await response.json();
                 currentProposalId = data.proposal_id;
+                // v0.2.10: Store draft_payload for self-sufficient commit
+                currentDraftPayload = data.draft_payload;
 
                 // Use scenario claims instead of generated ones
                 editedClaims = scenario.claims.map(c => ({...c}));
@@ -1257,6 +1260,8 @@ def get_html_content() -> str:
 
                 const data = await response.json();
                 currentProposalId = data.proposal_id;
+                // v0.2.10: Store draft_payload for self-sufficient commit
+                currentDraftPayload = data.draft_payload;
                 editedClaims = data.claims.map(c => ({
                     claim_text: c.claim_text,
                     trust_class: c.suggested_trust_class,
@@ -1308,28 +1313,40 @@ def get_html_content() -> str:
         }
 
         async function commitUVIL() {
-            if (!currentProposalId || editedClaims.length === 0) return;
+            if ((!currentProposalId && !currentDraftPayload) || editedClaims.length === 0) return;
 
             document.getElementById('btn-commit').disabled = true;
             setStatus('Committing...');
 
             try {
+                // v0.2.10: Send draft_payload for self-sufficient commit
+                const requestBody = {
+                    edited_claims: editedClaims,
+                    user_fingerprint: 'demo_user'
+                };
+                // Prefer draft_payload (self-sufficient), fall back to proposal_id
+                if (currentDraftPayload) {
+                    requestBody.draft_payload = currentDraftPayload;
+                } else {
+                    requestBody.proposal_id = currentProposalId;
+                }
+
                 const response = await fetch(`${API_BASE}/uvil/commit_uvil`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        proposal_id: currentProposalId,
-                        edited_claims: editedClaims,
-                        user_fingerprint: 'demo_user'
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 if (!response.ok) {
                     const err = await response.json();
                     // Integration Point 9: Use error templates
-                    const errorCode = err.error_code || '';
+                    const errorCode = err.detail?.error_code || err.error_code || '';
                     const template = ERROR_TEMPLATES[errorCode];
-                    throw new Error(template || err.detail || 'Commit failed');
+                    // v0.2.10: System-responsible error handling
+                    if (errorCode === 'PROPOSAL_STATE_LOST') {
+                        throw new Error('Server lost proposal state. This is a demo reliability bug. Refresh and retry.');
+                    }
+                    throw new Error(template || err.detail?.message || err.detail || 'Commit failed');
                 }
 
                 const data = await response.json();
@@ -1437,6 +1454,7 @@ def get_html_content() -> str:
 
         function reset() {
             currentProposalId = null;
+            currentDraftPayload = null;  // v0.2.10
             currentCommittedId = null;
             editedClaims = [];
             currentScenario = null;
@@ -1616,10 +1634,14 @@ def get_html_content() -> str:
         }
 
         // Boundary Demo - orchestrated sequence
+        // v0.2.10: Uses draft_payload for self-sufficient commits, adds retry on error
+        let boundaryDemoHadError = false;
+
         async function runBoundaryDemo() {
             const btn = document.getElementById('btn-boundary-demo');
             btn.disabled = true;
             btn.textContent = 'Running...';
+            boundaryDemoHadError = false;
 
             const results = document.getElementById('boundary-results');
             results.classList.remove('hidden');
@@ -1659,14 +1681,15 @@ def get_html_content() -> str:
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ problem_statement: step.task })
                     });
+                    if (!proposeRes.ok) throw new Error('Propose failed');
                     const proposeData = await proposeRes.json();
 
-                    // Commit
+                    // v0.2.10: Commit using draft_payload (self-sufficient)
                     const commitRes = await fetch(`${API_BASE}/uvil/commit_uvil`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            proposal_id: proposeData.proposal_id,
+                            draft_payload: proposeData.draft_payload,
                             edited_claims: [{
                                 claim_text: step.claim,
                                 trust_class: step.trustClass,
@@ -1675,6 +1698,7 @@ def get_html_content() -> str:
                             user_fingerprint: 'boundary_demo'
                         })
                     });
+                    if (!commitRes.ok) throw new Error('Commit failed');
                     const commitData = await commitRes.json();
 
                     // Verify
@@ -1683,6 +1707,7 @@ def get_html_content() -> str:
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ committed_partition_id: commitData.committed_partition_id })
                     });
+                    if (!verifyRes.ok) throw new Error('Verify failed');
                     const verifyData = await verifyRes.json();
 
                     // Display result
@@ -1707,20 +1732,36 @@ def get_html_content() -> str:
                     stepEl.classList.add('done');
 
                 } catch (e) {
-                    document.getElementById(step.outcomeId).textContent = 'ERROR';
+                    // v0.2.10: System-responsible error display
+                    const outcomeEl = document.getElementById(step.outcomeId);
+                    outcomeEl.textContent = 'ERROR';
+                    outcomeEl.className = 'step-outcome';
+                    outcomeEl.style.color = '#c62828';
+                    const reasonEl = document.getElementById(step.reasonId);
+                    reasonEl.textContent = 'Server error. Click Retry below.';
+                    reasonEl.style.color = '#c62828';
                     stepEl.classList.remove('active');
+                    boundaryDemoHadError = true;
                 }
 
                 // Pause for dramatic effect
                 await new Promise(r => setTimeout(r, 800));
             }
 
-            // Show conclusion
+            // Show conclusion or error message
             await new Promise(r => setTimeout(r, 500));
-            document.getElementById('boundary-conclusion').classList.add('visible');
+            const conclusion = document.getElementById('boundary-conclusion');
+            if (boundaryDemoHadError) {
+                conclusion.innerHTML = `
+                    <p style="color:#c62828;"><strong>Demo encountered an error.</strong></p>
+                    <p style="color:#888; font-size:0.85rem;">This is a demo reliability issue, not a user error. The server may have lost state.</p>
+                    <button onclick="runBoundaryDemo()" style="margin-top:0.75rem; background:#fff; color:#c62828; border:1px solid #c62828; padding:0.5rem 1rem; cursor:pointer;">Retry Boundary Demo</button>
+                `;
+            }
+            conclusion.classList.add('visible');
 
             btn.disabled = false;
-            btn.textContent = 'Run Again (≈8s)';
+            btn.textContent = boundaryDemoHadError ? 'Retry (≈8s)' : 'Run Again (≈8s)';
         }
 
         // =====================================================================
@@ -1738,6 +1779,7 @@ def get_html_content() -> str:
         }
 
         // Test 1: Double Commit Attempt
+        // v0.2.10: Uses draft_payload for commits
         async function testDoubleCommit() {
             const btn = document.getElementById('btn-double-commit');
             btn.disabled = true;
@@ -1757,19 +1799,19 @@ def get_html_content() -> str:
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        proposal_id: proposeData.proposal_id,
+                        draft_payload: proposeData.draft_payload,
                         edited_claims: [{ claim_text: '1 + 1 = 2', trust_class: 'MV', rationale: 'test' }],
                         user_fingerprint: 'rejection_test'
                     })
                 });
                 await firstCommit.json();
 
-                // Second commit with SAME proposal_id (should fail)
+                // Second commit with SAME draft_payload (should fail)
                 const secondCommit = await fetch(`${API_BASE}/uvil/commit_uvil`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        proposal_id: proposeData.proposal_id,
+                        draft_payload: proposeData.draft_payload,
                         edited_claims: [{ claim_text: '2 + 2 = 4', trust_class: 'MV', rationale: 'test' }],
                         user_fingerprint: 'rejection_test'
                     })
@@ -1791,6 +1833,7 @@ def get_html_content() -> str:
         }
 
         // Test 2: Trust-Class Monotonicity Violation
+        // v0.2.10: Uses draft_payload for commits
         async function testMonotonicity() {
             const btn = document.getElementById('btn-monotonicity');
             btn.disabled = true;
@@ -1810,7 +1853,7 @@ def get_html_content() -> str:
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        proposal_id: proposeData.proposal_id,
+                        draft_payload: proposeData.draft_payload,
                         edited_claims: [{ claim_text: '5 + 5 = 10', trust_class: 'MV', rationale: 'test' }],
                         user_fingerprint: 'rejection_test'
                     })
@@ -1844,6 +1887,7 @@ def get_html_content() -> str:
         }
 
         // Test 3: Silent Authority Violation (evidence pack with tampered hash)
+        // v0.2.10: Uses draft_payload for commits
         async function testSilentAuthority() {
             const btn = document.getElementById('btn-silent-authority');
             btn.disabled = true;
@@ -1863,7 +1907,7 @@ def get_html_content() -> str:
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        proposal_id: proposeData.proposal_id,
+                        draft_payload: proposeData.draft_payload,
                         edited_claims: [{ claim_text: '7 + 7 = 14', trust_class: 'MV', rationale: 'test' }],
                         user_fingerprint: 'rejection_test'
                     })

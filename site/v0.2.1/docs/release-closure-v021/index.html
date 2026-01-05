@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Release Closure v0.2.1 — MathLedger v0.2.1</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0.2.1</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0.2.1-cohesion</code> |
+            Commit: <code>27a94c8a5813</code> |
+            Locked: 2026-01-03
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 10</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0.2.1/">Archive</a> <a href="/v0.2.1/docs/scope-lock/">Scope</a> <a href="/v0.2.1/docs/explanation/">Explanation</a> <a href="/v0.2.1/docs/invariants/">Invariants</a> <a href="/v0.2.1/docs/field-manual/">Field Manual</a> <a href="/v0.2.1/fixtures/">Fixtures</a> <a href="/v0.2.1/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>Release Closure v0.2.1 <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>Release Closure: v0.2.1</h1>
+<strong>Document Type</strong>: Formal Release Closure
+<strong>Version</strong>: v0.2.1
+<strong>Tag</strong>: v0.2.1-cohesion
+<strong>Commit</strong>: 27a94c8a58139cb10349f6418336c618f528cbab
+<strong>Date Locked</strong>: 2026-01-03
+<strong>Closure Date</strong>: 2026-01-03
+<hr>
+<h2>Purpose</h2>
+<p>This document formally closes v0.2.1 after external audit review. It records which findings were addressed, which are deferred, and establishes that no further changes will be made to v0.2.1 artifacts.</p>
+<hr>
+<h2>External Audits Reviewed</h2>
+<table><tr><th>Audit</th><th>Date</th><th>Source</th><th>Scope</th></tr>
+<tr><td>Cold-Start Site Audit</td><td>2026-01-03</td><td><code>docs/external_audits/manus_site_audit_2026-01-03.md</code></td><td>Full site + demo evaluation from external auditor perspective</td></tr></table>
+<hr>
+<h2>Findings Summary</h2>
+<h3>Critical Findings (Addressed in v0.2.1)</h3>
+<table><tr><th>#</th><th>Finding</th><th>Severity</th><th>Addressed?</th><th>Evidence</th></tr>
+<tr><td>1</td><td><strong>Version discrepancy</strong> - Demo showed v0.2.0 while archive showed v0.2.1</td><td>HIGH</td><td>YES</td><td>Anti-drift gate added (<code>tools/check_hosted_demo_matches_release.py</code>), release pin validation in <code>/health</code> endpoint</td></tr>
+<tr><td>2</td><td><strong>"90-Second Proof" misleading</strong> - Button name didn't match actual timing (~5-8s)</td><td>MEDIUM</td><td>YES</td><td>Renamed to "Run Boundary Demo (approx 8s)" with clarification note</td></tr>
+<tr><td>3</td><td><strong>"For Auditors" entry point missing</strong></td><td>MEDIUM</td><td>YES</td><td>Created <code>docs/FOR_AUDITORS.md</code> with 5-minute checklist</td></tr>
+<tr><td>4</td><td><strong>Evidence pack tamper detection demo needed</strong></td><td>MEDIUM</td><td>YES</td><td>Created <code>releases/evidence_pack_examples.v0.2.1.json</code> with PASS/FAIL examples</td></tr></table>
+<h3>Non-Critical Findings (Deferred to Future Versions)</h3>
+<table><tr><th>#</th><th>Finding</th><th>Severity</th><th>Deferred To</th><th>Rationale</th></tr>
+<tr><td>5</td><td><strong>No explicit threat model</strong></td><td>LOW</td><td>v0.3.x</td><td>Requires adversary analysis; beyond v0 governance-only scope</td></tr>
+<tr><td>6</td><td><strong>No failed verification examples</strong> (infrastructure failures)</td><td>LOW</td><td>v0.3.x</td><td>v0 demonstrates governance, not failure modes</td></tr>
+<tr><td>7</td><td><strong>No comparison to existing standards</strong> (SOC 2, NIST AI RMF)</td><td>LOW</td><td>v0.3.x</td><td>Positioning document is marketing, not governance</td></tr>
+<tr><td>8</td><td><strong>Scalability/performance claims absent</strong></td><td>LOW</td><td>v0.3.x</td><td>v0 is capability-agnostic by design</td></tr>
+<tr><td>9</td><td><strong>Multi-stakeholder scenarios underexplored</strong></td><td>LOW</td><td>v0.3.x</td><td>Requires dispute resolution design</td></tr>
+<tr><td>10</td><td><strong>Integration guidance missing</strong></td><td>LOW</td><td>v0.3.x</td><td>Requires stable API; v0 is demo-only</td></tr>
+<tr><td>11</td><td><strong>Economic/incentive model absent</strong></td><td>LOW</td><td>v1.x</td><td>Production concern, not v0 scope</td></tr></table>
+<hr>
+<h2>Strengths Validated by Audit</h2>
+<p>The external audit validated the following as genuinely novel or rigorous:</p>
+<ol><li><strong>Negative Capability Framing</strong> - "What this version cannot enforce" prominence</li><li><strong>Tiered Enforcement Transparency</strong> - A/B/C classification with explicit violation modes</li><li><strong>Abstention as First-Class Outcome</strong> - ABSTAINED is not failure</li><li><strong>Exploration/Authority Boundary Enforcement</strong> - DraftProposal never enters committed data</li><li><strong>Replay Verification with Explicit Non-Claims</strong> - Proves structural integrity, not truth</li><li><strong>Immutable Versioned Archives</strong> - Commit hashes, checksums, lock dates</li><li><strong>Governance Without Capability</strong> - Substrate before capability</li></ol>
+<hr>
+<h2>Artifacts Included in v0.2.1</h2>
+<table><tr><th>Artifact</th><th>Path</th><th>Purpose</th></tr>
+<tr><td>Demo</td><td><code>demo/app.py</code></td><td>Hosted interactive demo</td></tr>
+<tr><td>API</td><td><code>backend/api/uvil.py</code></td><td>UVIL endpoints</td></tr>
+<tr><td>Governance</td><td><code>governance/</code></td><td>Trust classes, validators, authority gate</td></tr>
+<tr><td>Fixtures</td><td><code>fixtures/</code></td><td>9 regression test cases</td></tr>
+<tr><td>Evidence Pack Examples</td><td><code>releases/evidence_pack_examples.v0.2.1.json</code></td><td>Pre-computed PASS/FAIL packs</td></tr>
+<tr><td>Static Archive</td><td><code>site/v0.2.1/</code></td><td>Immutable HTML archive</td></tr>
+<tr><td>Auditor Guide</td><td><code>docs/FOR_AUDITORS.md</code></td><td>5-minute verification checklist</td></tr>
+<tr><td>Anti-Drift Gate</td><td><code>tools/check_hosted_demo_matches_release.py</code></td><td>CI-grade version check</td></tr></table>
+<hr>
+<h2>Invariant Status at Closure</h2>
+<table><tr><th>Tier</th><th>Count</th><th>Description</th></tr>
+<tr><td>A</td><td>10</td><td>Cryptographically or structurally enforced</td></tr>
+<tr><td>B</td><td>1</td><td>Logged and replay-visible</td></tr>
+<tr><td>C</td><td>3</td><td>Documented but not enforced</td></tr></table>
+<strong>Tier A Invariants (10)</strong>:
+<ol><li>Canonicalization Determinism (RFC 8785-style)</li><li>H_t = SHA256(R_t || U_t)</li><li>ADV Excluded from R_t</li><li>Content-Derived IDs</li><li>Replay Uses Same Code Paths</li><li>Double-Commit Returns 409</li><li>No Silent Authority</li><li>Trust-Class Monotonicity</li><li>Abstention Preservation</li><li>Audit Surface Version Field</li></ol>
+<hr>
+<h2>Closure Statement</h2>
+<strong>No further changes will be made to v0.2.1 artifacts.</strong>
+<p>This closure applies to:
+<ul><li>All files in <code>site/v0.2.1/</code></li><li>All fixtures in <code>fixtures/</code> at tag v0.2.1-cohesion</li><li>The <code>releases/evidence_pack_examples.v0.2.1.json</code> file</li><li>All documentation referenced in <code>releases/releases.json</code> for v0.2.1</li></ul>
+Any changes required will be released as v0.2.2 or later.</p>
+<hr>
+<h2>Known Interface Failures Addressed in v0.2.2 (Planned)</h2>
+<p>The following interface-layer failures were identified by hostile audit (<code>manus_link_integrity_audit_2026-01-03.md</code>) after v0.2.1 closure. These are <strong>documentation/navigation/metadata bugs</strong>, not cryptographic or semantic failures.</p>
+<table><tr><th>ID</th><th>Failure</th><th>Classification</th><th>v0.2.2 Fix</th></tr>
+<tr><td>A</td><td>Demo shows different version than archive claims</td><td>ARCH + DOC</td><td>Document shared demo architecture; add LIVE badge</td></tr>
+<tr><td>B</td><td>Auditor checklist steps 3-5 impossible to complete</td><td>DOC + NAV</td><td>Rewrite checklist; add verifier links to demo</td></tr>
+<tr><td>C</td><td>Footer shows content commit, manifest shows build commit</td><td>BUILD + DOC</td><td>Document dual-commit semantics; update footer format</td></tr>
+<tr><td>D</td><td>Repository URL is placeholder, not real</td><td>DOC</td><td>Replace all <code>your-org</code> with <code>helpfuldolphin/mathledger</code></td></tr>
+<tr><td>E</td><td>v0.2.0 archive shows "CURRENT" but is superseded</td><td>BUILD + ARCH</td><td>Remove status field from archives; use "Locked:" only</td></tr></table>
+<strong>What v0.2.2 does NOT change:</strong>
+<ul><li>Hashing contracts (<code>compute_composite_root</code>, <code>compute_ui_root</code>, <code>compute_reasoning_root</code>)</li><li>Evidence pack format or schema</li><li>Verifier semantics</li><li>Test vectors or golden hashes</li><li>Any Tier A invariant</li></ul>
+See: <code>docs/V0.2.2_SCOPE.md</code> for formal scope constraints.
+<hr>
+<h2>Verification</h2>
+<p>To verify this closure:</p>
+<pre><code class="language-bash"># 1. Check tag exists
+git tag -l "v0.2.1-cohesion"
+<h1>2. Verify commit matches</h1>
+git log -1 --format='%H' v0.2.1-cohesion
+<h1>Expected: 27a94c8a58139cb10349f6418336c618f528cbab</h1>
+<h1>3. Run anti-drift gate</h1>
+uv run python tools/check_hosted_demo_matches_release.py
+<h1>Expected: PASS</h1>
+<h1>4. Verify evidence pack examples</h1>
+uv run pytest tests/governance/test_evidence_pack_examples.py -v
+<h1>Expected: 16 passed</h1>
+</code></pre>
+<hr>
+<h2>Sign-Off</h2>
+<table><tr><th>Role</th><th>Date</th><th>Status</th></tr>
+<tr><td>External Audit Review</td><td>2026-01-03</td><td>COMPLETE</td></tr>
+<tr><td>Findings Triage</td><td>2026-01-03</td><td>COMPLETE</td></tr>
+<tr><td>Closure Documentation</td><td>2026-01-03</td><td>COMPLETE</td></tr></table>
+<strong>Closed by</strong>: Claude A
+<strong>Closure date</strong>: 2026-01-03
+<hr>
+<em>This document is part of the formal release process for MathLedger. It establishes an immutable record of what was reviewed, what was addressed, and what the version claims at the time of closure.</em>
+        </article>
+
+        <footer>
+            Site built from commit <code>27a94c8a58139cb10349f6418336c618f528cbab</code> at <code>2026-01-04T05:29:48Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

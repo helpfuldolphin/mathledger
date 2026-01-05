@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v0.2.10 Smoke Checklist — MathLedger v0.2.12</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    line-height: 1.6;
+    font-size: 15px;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Version banner — appears on every page */
+.version-banner {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-left: 4px solid var(--status-color, #757575);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+.version-banner .title { font-weight: 600; font-size: 1rem; }
+.version-banner .status { font-weight: 600; color: var(--status-color, #757575); }
+.version-banner code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.85em; }
+.version-banner .meta { margin-top: 0.5rem; font-size: 0.8rem; color: #555; }
+
+/* Invariant snapshot — appears on every page */
+.invariant-snapshot {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+.invariant-snapshot .counts {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.invariant-snapshot .tier-a { color: #2e7d32; }
+.invariant-snapshot .tier-b { color: #f57c00; }
+.invariant-snapshot .tier-c { color: #757575; }
+.invariant-snapshot .cannot-enforce {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    color: #666;
+}
+.invariant-snapshot .cannot-enforce strong { color: #c62828; }
+
+/* Navigation */
+.nav { margin-bottom: 1.5rem; font-size: 0.9rem; }
+.nav a { margin-right: 1rem; color: #0066cc; text-decoration: none; }
+.nav a:hover { text-decoration: underline; }
+.nav .sep { color: #999; margin: 0 0.25rem; }
+
+/* Mode indicator — archive vs demo */
+.mode-indicator {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+    margin-left: 0.5rem;
+}
+.mode-archive { background: #e3f2fd; color: #1565c0; }
+.mode-demo { background: #fff3e0; color: #e65100; }
+.mode-local { background: #fce4ec; color: #c62828; }
+.mode-hosted { background: #e8f5e9; color: #2e7d32; }
+
+/* Demo button */
+.demo-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: #2e7d32;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+}
+.demo-button:hover { background: #1b5e20; }
+.demo-available { border-left-color: #2e7d32; }
+
+/* Content styles */
+h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+h3 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+p { margin: 0.75rem 0; }
+ul, ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+li { margin: 0.25rem 0; }
+code { background: #f0f0f0; padding: 0.15em 0.35em; font-size: 0.9em; }
+pre { background: #1a1a1a; color: #f0f0f0; padding: 1rem; overflow-x: auto; margin: 1rem 0; border-radius: 4px; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: 0.9rem; }
+th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+th { background: #f5f5f5; }
+blockquote { border-left: 3px solid #ddd; padding-left: 1rem; margin: 1rem 0; color: #555; }
+hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+a { color: #0066cc; }
+
+/* Info boxes */
+.info-box {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.info-box.warning { border-left: 4px solid #f57c00; }
+.info-box.local-only { border-left: 4px solid #c62828; background: #fff8f8; }
+
+/* Footer */
+footer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #ddd;
+    font-size: 0.75rem;
+    color: #666;
+}
+footer code { font-size: 0.7rem; }
+</style>
+</head>
+<body>
+    <div class="container">
+        
+    <div class="version-banner" style="--status-color: #1565c0;">
+        <div class="title">MathLedger — Version v0.2.12</div>
+        <div><span class="status">Status: LOCKED</span><a href="/versions/" style="font-size: 0.8rem; color: #666; margin-left: 0.5rem;">(see /versions/ for current status)</a></div>
+        <div class="meta">
+            Tag: <code>v0.2.12-versioning-doctrine</code> |
+            Commit: <code>15cc70f60732</code> |
+            Locked: 2026-01-05
+        </div>
+    </div>
+    
+        
+    <div class="invariant-snapshot">
+        <div class="counts">
+            <span class="tier-a">Tier A (enforced): 11</span>
+            <span class="tier-b">Tier B (logged): 1</span>
+            <span class="tier-c">Tier C (aspirational): 3</span>
+        </div>
+        <div class="cannot-enforce">
+            <strong>What this version cannot enforce:</strong>
+            <ul><li>No Lean/Z3 verifier: FV claims always return ABSTAINED</li><li>Single template partitioner: no multi-model consensus</li><li>No learning loop: RFL not active</li><li>MV edge cases: overflow, float precision not fully covered</li></ul>
+        </div>
+    </div>
+    
+        <nav class="nav"><a href="/v0.2.12/">Archive</a> <a href="/v0.2.12/docs/scope-lock/">Scope</a> <a href="/v0.2.12/docs/explanation/">Explanation</a> <a href="/v0.2.12/docs/invariants/">Invariants</a> <a href="/v0.2.12/docs/field-manual/">Field Manual</a> <a href="/v0.2.12/fixtures/">Fixtures</a> <a href="/v0.2.12/evidence-pack/">Evidence</a> | <a href="/versions/">All Versions</a></nav>
+
+        <article>
+            <h1>v0.2.10 Smoke Checklist <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
+            <h1>v0.2.10 Demo Reliability Smoke Checklist</h1>
+<strong>Tag:</strong> <code>v0.2.10-demo-reliability</code>
+<strong>Date:</strong> 2026-01-04
+<strong>Scope:</strong> Infrastructure fix only - no cryptographic contract changes
+<h2>Problem Solved</h2>
+<p>Demo reliability failure where <code>commit_uvil</code> returns 404 after server restart due to <code>proposal_id</code> cache miss. The fix makes commit self-sufficient via <code>draft_payload</code>.</p>
+<h2>Pre-Deploy Verification</h2>
+<p>Run regression tests locally:
+<pre><code class="language-powershell">uv run pytest tests/demo/test_demo_reliability.py -v
+</code></pre></p>
+<p>Expected: 7 tests pass</p>
+<table><tr><th>Test</th><th>Description</th></tr>
+<tr><td><code>test_commit_with_draft_payload_succeeds</code></td><td>Core fix: commit works with draft_payload</td></tr>
+<tr><td><code>test_commit_works_after_cache_clear</code></td><td>Commit succeeds even when proposal cache is cleared</td></tr>
+<tr><td><code>test_commit_without_draft_payload_fails_after_cache_clear</code></td><td>Legacy mode fails gracefully with system-responsible error</td></tr>
+<tr><td><code>test_boundary_demo_full_sequence</code></td><td>Full boundary demo sequence (ADV/PA/MV) completes</td></tr>
+<tr><td><code>test_proposal_state_lost_error_is_system_responsible</code></td><td>Error message does not blame user</td></tr>
+<tr><td><code>test_missing_proposal_data_error</code></td><td>Missing data returns 400 with clear error</td></tr>
+<tr><td><code>test_double_commit_rejected_with_draft_payload</code></td><td>Idempotency preserved via proposal_id in draft_payload</td></tr></table>
+<h2>Deploy-by-Tag Doctrine Checklist</h2>
+<p>Before deploying, verify ALL conditions:</p>
+<pre><code class="language-powershell"># 1. Verify clean working tree
+git -C C:/dev/mathledger status --short
+<h1>Expected: No uncommitted changes (or only untracked files)</h1>
+<h1>2. Verify tag exists on origin</h1>
+git -C C:/dev/mathledger fetch --tags
+git -C C:/dev/mathledger tag -l "v0.2.10-demo-reliability"
+<h1>Expected: Tag listed</h1>
+<h1>3. Verify HEAD matches tag</h1>
+git -C C:/dev/mathledger describe --exact-match HEAD
+<h1>Expected: v0.2.10-demo-reliability</h1>
+<h1>4. Verify releases.json matches</h1>
+uv run python -c "import json; r=json.load(open('releases/releases.json')); print(r['current_version'], r['versions']['v0.2.10']['tag'])"
+<h1>Expected: v0.2.10 v0.2.10-demo-reliability</h1>
+</code></pre>
+<h2>Post-Deploy Smoke Tests (Live URLs)</h2>
+<p>After deployment, verify the fix works on production:</p>
+<h3>1. Health Check</h3>
+<pre><code class="language-powershell">curl.exe https://mathledger.ai/demo/health
+</code></pre>
+Expected: <code>{"status":"healthy","version":"v0.2.10",...}</code>
+<h3>2. Boundary Demo Sequence (Manual)</h3>
+<ol><li>Navigate to: https://mathledger.ai/demo/</li><li>Click "Run Boundary Demo"</li><li>Verify: All 4 steps complete without ERROR</li></ol>   - ADV claim: ABSTAINED
+   - PA claim: ABSTAINED
+   - MV true claim: VERIFIED
+   - MV false claim: REFUTED
+<h3>3. Propose-Commit Cycle (API)</h3>
+<pre><code class="language-powershell"># Propose
+$propose = Invoke-RestMethod -Uri "https://mathledger.ai/demo/uvil/propose_partition" -Method Post -ContentType "application/json" -Body '{"problem_statement":"Smoke test"}'
+$propose.draft_payload  # Should exist
+<h1>Commit using draft_payload (the fix)</h1>
+$body = @{
+    draft_payload = $propose.draft_payload
+    edited_claims = @(@{claim_text="1+1=2"; trust_class="MV"; rationale="test"})
+} | ConvertTo-Json -Depth 5
+Invoke-RestMethod -Uri "https://mathledger.ai/demo/uvil/commit_uvil" -Method Post -ContentType "application/json" -Body $body
+<h1>Expected: Returns committed_partition_id, u_t, r_t, h_t</h1>
+</code></pre>
+<h3>4. Error Message Verification</h3>
+<pre><code class="language-powershell"># Commit with fake proposal_id (should fail gracefully)
+$body = '{"proposal_id":"00000000-0000-0000-0000-000000000000","edited_claims":[{"claim_text":"x","trust_class":"MV","rationale":""}]}'
+try {
+    Invoke-RestMethod -Uri "https://mathledger.ai/demo/uvil/commit_uvil" -Method Post -ContentType "application/json" -Body $body
+} catch {
+    $_.ErrorDetails.Message  # Should contain "demo reliability issue" NOT "Must call /propose_partition first"
+}
+</code></pre>
+<h2>Tag and Deploy Instructions</h2>
+<h3>Step 1: Create Annotated Tag</h3>
+<pre><code class="language-powershell">git -C C:/dev/mathledger tag -a v0.2.10-demo-reliability -m "$(cat <<'EOF'
+MathLedger v0.2.10 (Demo Reliability Fix)
+<p>Fixes intermittent 404 errors in hosted demo caused by proposal_id
+cache miss after server restart or multi-instance routing.</p>
+<p>Solution: Self-sufficient commit via draft_payload.
+<ul><li>propose_partition now returns full draft_payload</li><li>commit_uvil accepts draft_payload directly (no server-side lookup)</li><li>Error messages are system-responsible, not user-blaming</li></ul>
+No changes to:
+<ul><li>Cryptographic contracts (U_t, R_t, H_t)</li><li>Invariant tiers</li><li>Verifier semantics</li></ul>
+Tests: 7 new regression tests in tests/demo/test_demo_reliability.py
+EOF
+)"
+</code></pre></p>
+<h3>Step 2: Push Tag</h3>
+<pre><code class="language-powershell">git -C C:/dev/mathledger push origin v0.2.10-demo-reliability
+</code></pre>
+<h3>Step 3: Deploy to Fly.io</h3>
+<pre><code class="language-powershell"># Checkout the exact tag
+git -C C:/dev/mathledger checkout v0.2.10-demo-reliability
+<h1>Deploy</h1>
+fly deploy -a mathledger-demo --dockerfile Dockerfile
+</code></pre>
+<h3>Step 4: Verify Deployment</h3>
+Run Post-Deploy Smoke Tests above.
+<h3>Step 5: Update Cloudflare Worker (if needed)</h3>
+The Worker routes <code>/demo/*</code> to Fly.io origin. No Worker changes needed for v0.2.10.
+<h2>Rollback Instructions</h2>
+<p>If smoke tests fail:
+<pre><code class="language-powershell"># Rollback to previous version
+git -C C:/dev/mathledger checkout v0.2.9-abstention-terminality
+fly deploy -a mathledger-demo --dockerfile Dockerfile
+</code></pre></p>
+<h2>Invariants Preserved</h2>
+<ul><li><strong>T1:</strong> proposal_id never enters hash-committed payloads (unchanged)</li><li><strong>T2:</strong> ADV claims excluded from R_t (unchanged)</li><li><strong>T6:</strong> Abstention outcomes preserved (unchanged)</li><li><strong>Cryptographic contracts:</strong> U_t, R_t, H_t computation unchanged</li></ul>
+<h2>Files Changed</h2>
+<table><tr><th>File</th><th>Change</th></tr>
+<tr><td><code>backend/api/uvil.py</code></td><td>Added DraftPayload model, updated ProposePartitionResponse, modified commit_uvil</td></tr>
+<tr><td><code>demo/app.py</code></td><td>Frontend JS stores and sends draft_payload</td></tr>
+<tr><td><code>tests/demo/test_demo_reliability.py</code></td><td>7 new regression tests</td></tr>
+<tr><td><code>releases/releases.json</code></td><td>v0.2.10 entry added</td></tr></table>
+        </article>
+
+        <footer>
+            Site built from commit <code>15cc70f607321a8187febe798466a5cfdc5fd20f</code> at <code>2026-01-05T01:48:10Z</code><br>
+            This is an epistemic archive. Content is immutable once published.
+        </footer>
+    </div>
+</body>
+</html>

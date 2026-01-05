@@ -1,0 +1,17 @@
+{
+  "case_name": "mv_arithmetic_verified",
+  "description": "MV with valid arithmetic - demonstrates real verification",
+  "task_text": "Verify that 2 + 2 = 4",
+  "claims": [
+    {
+      "claim_text": "2 + 2 = 4",
+      "trust_class": "MV",
+      "rationale": "Simple arithmetic - mechanically checkable"
+    }
+  ],
+  "actor_id": "demo_harness",
+  "seed": 42,
+  "expected_authority_count": 1,
+  "expected_adv_excluded": true,
+  "expected_outcome": "VERIFIED"
+}

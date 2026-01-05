@@ -1,0 +1,258 @@
+{
+  "version": "v0.2.11",
+  "tag": "v0.2.11-verifier-parity",
+  "commit": "f6f142f3801e0f05c066db204c9a840f7729533a",
+  "date_locked": "2026-01-05",
+  "status": "current",
+  "demo_url": "/demo/",
+  "invariants": {
+    "tier_a": 11,
+    "tier_b": 1,
+    "tier_c": 3
+  },
+  "build_time": "2026-01-05T00:45:32Z",
+  "build_commit": "f6f142f3801e0f05c066db204c9a840f7729533a",
+  "source": "releases/releases.json",
+  "files": [
+    {
+      "path": "docs/explanation/index.html",
+      "sha256": "382577f1a557413b0b85f289793752a9d04835e2d2ed921e167d7a2349575b2d",
+      "size": 28512
+    },
+    {
+      "path": "docs/external_audits/manus_hostile_audit_v0.2.2_2026-01-03/index.html",
+      "sha256": "544157eac4fc21492fcca66db8e63aa77798895060482e3c5f3191b938af3ae3",
+      "size": 27495
+    },
+    {
+      "path": "docs/external_audits/manus_link_integrity_audit_2026-01-03/index.html",
+      "sha256": "fb20ed4496668a964173035b5bfb2f523c4b6a5195c5ec1e67fb2468bb70e3a2",
+      "size": 30932
+    },
+    {
+      "path": "docs/external_audits/manus_site_audit_2026-01-03/index.html",
+      "sha256": "b1663852517721b3417ca5b8af4aa5defe73446bc12f0d766644bb8a8949ac09",
+      "size": 43369
+    },
+    {
+      "path": "docs/field-manual/fm.pdf",
+      "sha256": "efbdd44ae0a5e52b6a513146a457a169eb701e80f450fdc07b29f369ef951f84",
+      "size": 1167507
+    },
+    {
+      "path": "docs/field-manual/fm.tex",
+      "sha256": "dc5f701c5f3cb12df931afed0845b5d376ba2a73d24f2df0800e33b02767476b",
+      "size": 441945
+    },
+    {
+      "path": "docs/field-manual/index.html",
+      "sha256": "7712c41831f62bdefa99312e35fe242d9e420efbf09d2f180972e13abcb0e108",
+      "size": 8390
+    },
+    {
+      "path": "docs/for-auditors/index.html",
+      "sha256": "d1abdd55cfb68398290ed7e4d2e2540fafb4df24a881a657d86e1b9a9d6d501f",
+      "size": 16315
+    },
+    {
+      "path": "docs/hostile-rehearsal/index.html",
+      "sha256": "688f1ac42102f111c09ba7b8a86ff2780e21b93c87e00429041a608fedad5007",
+      "size": 26177
+    },
+    {
+      "path": "docs/invariants/index.html",
+      "sha256": "3f3563c86a4ccc9af5eb1994d5986b90b836a2447bb436aed0575c2be1e1eb18",
+      "size": 28589
+    },
+    {
+      "path": "docs/mv-coverage/index.html",
+      "sha256": "2baa8a92ede8a3d1e18c3f336624b077c70458df3248d16e9db13def5804b03f",
+      "size": 15431
+    },
+    {
+      "path": "docs/scope-lock/index.html",
+      "sha256": "78f5033ce8e9df00a884093e8732c4440a07d2666f2ebeda088afa747fe3ec99",
+      "size": 21153
+    },
+    {
+      "path": "docs/v0210-smoke-checklist/index.html",
+      "sha256": "5d55966b91ce164684fde12b85d2f7f60c859d04d7d17e7ad556a40922834a38",
+      "size": 13283
+    },
+    {
+      "path": "evidence-pack/examples.json",
+      "sha256": "66e9ba810fe2bf8c6c30a7807704d02fc1b0a3c4e33250ac29d27d794f0e210e",
+      "size": 8595
+    },
+    {
+      "path": "evidence-pack/index.html",
+      "sha256": "5ce2efb604ecba80d24862a2ae4f27104633b2586986c57a039b8fc10c916710",
+      "size": 8883
+    },
+    {
+      "path": "evidence-pack/input.json",
+      "sha256": "9e9f8a5e34991012c0c48921d50ec94ca4102c8931077d6ffa8b2514937077d1",
+      "size": 603
+    },
+    {
+      "path": "evidence-pack/verify/index.html",
+      "sha256": "caf8c1016479240f9b655b7abba2af6f945d043efd8096cf367452e5d23c1a2c",
+      "size": 11834
+    },
+    {
+      "path": "fixtures/adv_only/index.html",
+      "sha256": "14a0b58e9b661773e2748560b42a487290e5c301b809798c171ef0fbac0c86db",
+      "size": 7116
+    },
+    {
+      "path": "fixtures/adv_only/input.json",
+      "sha256": "df12c64abe9971fcbfd2b70944b75db79a6a2e8fbb76979ab8d7dec69a220e5e",
+      "size": 655
+    },
+    {
+      "path": "fixtures/adv_only/output.json",
+      "sha256": "dd8b5bc4cb0e42c56c7c347ddff248de832b8f815af076e904c947df45e3f2f7",
+      "size": 3801
+    },
+    {
+      "path": "fixtures/index.html",
+      "sha256": "e9ed7887235b72f9205cf137a5d0081a069c3959755ec75ce0a3077e438d1856",
+      "size": 7597
+    },
+    {
+      "path": "fixtures/index.json",
+      "sha256": "b08d26985c01455c258ff5cdf86ae858499776bfbf5abc8df778d31e43eec71c",
+      "size": 3330
+    },
+    {
+      "path": "fixtures/mixed_mv_adv/index.html",
+      "sha256": "4fc27b9a6a3a12d4bed16a2ef6d75663764ac4d9c627c01b275b2d2c55e270ba",
+      "size": 7132
+    },
+    {
+      "path": "fixtures/mixed_mv_adv/input.json",
+      "sha256": "5e61de9d026714a97e0c81db138ba16fb09e74ea46806519d96a501689c41264",
+      "size": 655
+    },
+    {
+      "path": "fixtures/mixed_mv_adv/output.json",
+      "sha256": "d423a4f4a153a8193af866fe3f71aa9b25ddc6975a8351f18575da818ddc909f",
+      "size": 3794
+    },
+    {
+      "path": "fixtures/mv_arithmetic_refuted/index.html",
+      "sha256": "7a20d8e269a52fd8d2f1a022852153821d0b715595aa2f40646d74e591e22b2b",
+      "size": 7168
+    },
+    {
+      "path": "fixtures/mv_arithmetic_refuted/input.json",
+      "sha256": "8b796669b4f837fbf09ce09ceaca73a7ce7cce18071ac44fefcce6a2c9dee6dc",
+      "size": 447
+    },
+    {
+      "path": "fixtures/mv_arithmetic_refuted/output.json",
+      "sha256": "bfb702efbf1cf8f6e71e48a773c13558638cf745cdbe4c6303c3ee74b712fa99",
+      "size": 3802
+    },
+    {
+      "path": "fixtures/mv_arithmetic_verified/index.html",
+      "sha256": "d192fbf08cee3e782da255127820e763613ef3fbfea9bef9f69bc7342c090829",
+      "size": 7172
+    },
+    {
+      "path": "fixtures/mv_arithmetic_verified/input.json",
+      "sha256": "4af1aa1854b8930bbab77656abb5c4c55076b2fe52b984aeae247e2b5bed8969",
+      "size": 476
+    },
+    {
+      "path": "fixtures/mv_arithmetic_verified/output.json",
+      "sha256": "4e4bb56c4c24b78e2f0202f7776f7267f368eeaf56dd026f6f2a90e52da9eb75",
+      "size": 3831
+    },
+    {
+      "path": "fixtures/mv_only/index.html",
+      "sha256": "9feb82523cc67b1daff314bff58b6a0f2bbf09fe49e63e7e1311a2eb08016435",
+      "size": 7112
+    },
+    {
+      "path": "fixtures/mv_only/input.json",
+      "sha256": "2837d1a3407f0d0072e123b43c51841238bae4db0800de81998e749ea12d6f8a",
+      "size": 515
+    },
+    {
+      "path": "fixtures/mv_only/output.json",
+      "sha256": "8e206dd18c63782eebaa2323c08c1b59f73f8cde036b99ceb59d5efa97513ba6",
+      "size": 3802
+    },
+    {
+      "path": "fixtures/pa_only/index.html",
+      "sha256": "7f5ec42ca49efb09de6e293f3fa3b52214c53740e92e80600403c30af040da33",
+      "size": 7112
+    },
+    {
+      "path": "fixtures/pa_only/input.json",
+      "sha256": "c5d568cf67ad81732867426c2ee8be853f8d3675a9efd80c6356f08110984af7",
+      "size": 540
+    },
+    {
+      "path": "fixtures/pa_only/output.json",
+      "sha256": "b0312a0f9ea39cb03290f72dda94c01f1da292a3403a8c995bfefb89482bbe20",
+      "size": 3939
+    },
+    {
+      "path": "fixtures/same_claim_as_adv/index.html",
+      "sha256": "098a6741767e47ce4bdd63ae1c91ced4adbffb80304cdb427f829033a21bec2a",
+      "size": 7152
+    },
+    {
+      "path": "fixtures/same_claim_as_adv/input.json",
+      "sha256": "f581c44947e3b0511125bbe03072c1e32e46bb1281dc68c43b0e39cb4fb5807e",
+      "size": 477
+    },
+    {
+      "path": "fixtures/same_claim_as_adv/output.json",
+      "sha256": "708f819adf3779b6f6ac3de735c834d362f58e6e3add3fb09e89aad6d08ec97d",
+      "size": 3798
+    },
+    {
+      "path": "fixtures/same_claim_as_pa/index.html",
+      "sha256": "9eecd1a46ec8ab723df9a85d32ac19170adf6cc64155fdae167900a9173fc3f7",
+      "size": 7148
+    },
+    {
+      "path": "fixtures/same_claim_as_pa/input.json",
+      "sha256": "b758ad14da2ae20666148e35ae1eed93886f3c406ee67cbc3017ca31b03499e6",
+      "size": 478
+    },
+    {
+      "path": "fixtures/same_claim_as_pa/output.json",
+      "sha256": "ceb4a962d2ae0439062cdfbacf20ce68bbced64de090304ae50c749bf885ebe7",
+      "size": 3916
+    },
+    {
+      "path": "fixtures/underdetermined_navier_stokes/index.html",
+      "sha256": "87a405bbacb905a308954626a74d7468b490add8b223a0b4a7785c8095176630",
+      "size": 7200
+    },
+    {
+      "path": "fixtures/underdetermined_navier_stokes/input.json",
+      "sha256": "ddd8c3c8c27af087617587b8af87e35caf95ae03c58bc5fa2ea1b522873ab952",
+      "size": 971
+    },
+    {
+      "path": "fixtures/underdetermined_navier_stokes/output.json",
+      "sha256": "630c28100c81b5a124cb5c8acc5bfe518a432185ac1dc1d384a7709afff1770b",
+      "size": 3835
+    },
+    {
+      "path": "index.html",
+      "sha256": "573f8695ab6438df2425c73a80b9d19f30661b5bacde3cf9df395b0d367d88e0",
+      "size": 16854
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "ba79acd75e997da36ba9a9695463176c14218d8362169dd77f2eb4e343b904d2",
+      "size": 8733
+    }
+  ]
+}

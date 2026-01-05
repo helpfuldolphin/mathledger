@@ -1,0 +1,17 @@
+{
+  "case_name": "mv_arithmetic_refuted",
+  "description": "MV with invalid arithmetic - demonstrates refutation",
+  "task_text": "Verify that 2 + 2 = 5",
+  "claims": [
+    {
+      "claim_text": "2 + 2 = 5",
+      "trust_class": "MV",
+      "rationale": "Incorrect arithmetic"
+    }
+  ],
+  "actor_id": "demo_harness",
+  "seed": 42,
+  "expected_authority_count": 1,
+  "expected_adv_excluded": true,
+  "expected_outcome": "REFUTED"
+}
