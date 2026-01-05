@@ -1,0 +1,17 @@
+{
+  "case_name": "same_claim_as_pa",
+  "description": "Same arithmetic claim as PA - demonstrates trust class matters",
+  "task_text": "Attest that 2 + 2 = 4",
+  "claims": [
+    {
+      "claim_text": "2 + 2 = 4",
+      "trust_class": "PA",
+      "rationale": "User attestation - not mechanically verified"
+    }
+  ],
+  "actor_id": "demo_harness",
+  "seed": 42,
+  "expected_authority_count": 1,
+  "expected_adv_excluded": true,
+  "expected_outcome": "ABSTAINED"
+}

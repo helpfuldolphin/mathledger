@@ -1,8 +1,23 @@
 {
-  "current_version": "v0.2.10",
-  "current_tag": "v0.2.10-demo-reliability",
-  "current_commit": "TBD",
+  "current_version": "v0.2.11",
+  "current_tag": "v0.2.11-verifier-parity",
+  "current_commit": "TO_BE_FI",
   "versions": [
+    "v0",
+    "v0.2.0",
+    "v0.2.1",
+    "v0.2.2",
+    "v0.2.3",
+    "v0.2.4",
+    "v0.2.5",
+    "v0.2.6",
+    "v0.2.7",
+    "v0.2.8",
+    "v0.2.9",
+    "v0.2.10",
+    "v0.2.11"
+  ],
+  "superseded": [
     "v0",
     "v0.2.0",
     "v0.2.1",
@@ -16,18 +31,5 @@
     "v0.2.9",
     "v0.2.10"
   ],
-  "superseded": [
-    "v0",
-    "v0.2.0",
-    "v0.2.1",
-    "v0.2.2",
-    "v0.2.3",
-    "v0.2.4",
-    "v0.2.5",
-    "v0.2.6",
-    "v0.2.7",
-    "v0.2.8",
-    "v0.2.9"
-  ],
-  "generated_at": "2026-01-04T22:50:00Z"
+  "generated_at": "2026-01-05T00:42:29Z"
 }

@@ -46,6 +46,17 @@ class BuildError(Exception):
     pass
 
 
+def parse_version(v: str) -> tuple[int, ...]:
+    """Parse version string into numeric tuple for correct sorting.
+
+    "v0.2.10" -> (0, 2, 10)
+    "v0" -> (0,)
+
+    This ensures v0.2.10 sorts AFTER v0.2.9, not between v0.2.1 and v0.2.2.
+    """
+    return tuple(int(x) for x in v.lstrip("v").split("."))
+
+
 def load_releases() -> dict[str, Any]:
     """Load release metadata from canonical releases.json file."""
     if not RELEASES_FILE.exists():
@@ -1052,17 +1063,59 @@ def build_verifier_page(config: dict, version: str, has_examples: bool) -> str:
 </table>
 </div>'''
 
-    selftest_js = '''
-async function runSelfTest(){const btn=document.getElementById("selftest-btn");const status=document.getElementById("selftest-status");const table=document.getElementById("selftest-table");const tbody=document.getElementById("selftest-body");btn.disabled=true;status.style.display="block";status.textContent="Loading examples.json...";status.className="";tbody.innerHTML="";table.style.display="none";try{const resp=await fetch("../examples.json");if(!resp.ok)throw new Error("examples.json not found at ../examples.json");const data=await resp.json();status.textContent="Running tests...";const results=[];const examples=data.examples||{};for(const[name,ex]of Object.entries(examples)){const pack=ex.pack;const expected=ex.expected_verdict||ex.expected_result||"PASS";const reason=ex.expected_reason||null;const r=await testPack(pack,expected,reason);results.push({name:name,expected:expected,actual:r.actual,pass:r.pass,reason:r.reason});}let allPass=true;for(const r of results){const tr=document.createElement("tr");tr.className=r.pass?"row-pass":"row-fail";const cls=r.pass?"match":"mismatch";const txt=r.pass?"PASS":"FAIL";tr.innerHTML="<td>"+esc(r.name)+"</td><td>"+esc(r.expected)+"</td><td>"+esc(r.actual)+"</td><td class=\\""+cls+"\\">"+txt+"</td><td>"+esc(r.reason||"-")+"</td>";tbody.appendChild(tr);if(!r.pass)allPass=false;}table.style.display="table";status.className=allPass?"match":"mismatch";status.textContent=allPass?"SELF-TEST PASSED ("+results.length+" vectors)":"SELF-TEST FAILED";}catch(e){status.className="mismatch";status.textContent="Error: "+e.message;}btn.disabled=false;}
+    selftest_js = r'''
+async function runSelfTest(){const btn=document.getElementById("selftest-btn");const status=document.getElementById("selftest-status");const table=document.getElementById("selftest-table");const tbody=document.getElementById("selftest-body");btn.disabled=true;status.style.display="block";status.textContent="Loading examples.json...";status.className="";tbody.innerHTML="";table.style.display="none";try{const resp=await fetch("../examples.json");if(!resp.ok)throw new Error("examples.json not found");const data=await resp.json();status.textContent="Running tests...";const results=[];const examples=data.examples||{};for(const[name,ex]of Object.entries(examples)){const pack=ex.pack;const expected=ex.expected_verdict||"PASS";const r=await testPack(pack,expected);results.push({name:name,expected:expected,actual:r.actual,pass:r.pass,reason:r.reason});}let allPass=true;for(const r of results){const tr=document.createElement("tr");tr.className=r.pass?"row-pass":"row-fail";const cls=r.pass?"match":"mismatch";const txt=r.pass?"PASS":"FAIL";tr.innerHTML="<td>"+esc(r.name)+"</td><td>"+esc(r.expected)+"</td><td>"+esc(r.actual)+"</td><td class=\""+cls+"\">"+txt+"</td><td>"+esc(r.reason||"-")+"</td>";tbody.appendChild(tr);if(!r.pass)allPass=false;}table.style.display="table";status.className=allPass?"match":"mismatch";status.textContent=allPass?"SELF-TEST PASSED ("+results.length+" vectors)":"SELF-TEST FAILED";}catch(e){status.className="mismatch";status.textContent="Error: "+e.message;}btn.disabled=false;}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-async function testPack(pack,expectedResult,expectedReason){try{const uvil=pack.uvil_events||[];const arts=pack.reasoning_artifacts||[];const declaredU=pack.u_t||"";const declaredR=pack.r_t||"";const declaredH=pack.h_t||"";for(const a of arts){if(!("validation_outcome"in a))return{actual:"FAIL",pass:expectedResult==="FAIL",reason:"missing_required_field"};}const computedU=await sha(can(uvil));const computedR=await sha(can(arts));const computedH=await sha(computedR+computedU);if(computedU!==declaredU)return{actual:"FAIL",pass:expectedResult==="FAIL",reason:"u_t_mismatch"};if(computedR!==declaredR)return{actual:"FAIL",pass:expectedResult==="FAIL",reason:"r_t_mismatch"};if(computedH!==declaredH)return{actual:"FAIL",pass:expectedResult==="FAIL",reason:"h_t_mismatch"};return{actual:"PASS",pass:expectedResult==="PASS",reason:null};}catch(e){return{actual:"FAIL",pass:expectedResult==="FAIL",reason:e.message};}}'''
+
+// testPack - SEMANTICS: FAIL/FAIL -> test PASSES, PASS/PASS -> test PASSES
+async function testPack(pack,expectedResult){try{const uvil=pack.uvil_events||[];const arts=pack.reasoning_artifacts||[];const declaredU=pack.u_t||"";const declaredR=pack.r_t||"";const declaredH=pack.h_t||"";for(const a of arts){if(!("validation_outcome"in a))return{actual:"FAIL",pass:expectedResult==="FAIL",reason:"missing_required_field"};}const computedU=await computeUt(uvil);const computedR=await computeRt(arts);const computedH=await computeHt(computedR,computedU);if(computedU!==declaredU)return{actual:"FAIL",pass:expectedResult==="FAIL",reason:"u_t_mismatch"};if(computedR!==declaredR)return{actual:"FAIL",pass:expectedResult==="FAIL",reason:"r_t_mismatch"};if(computedH!==declaredH)return{actual:"FAIL",pass:expectedResult==="FAIL",reason:"h_t_mismatch"};return{actual:"PASS",pass:expectedResult==="PASS",reason:null};}catch(e){return{actual:"FAIL",pass:expectedResult==="FAIL",reason:e.message};}}'''
 
     css = "*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,monospace;background:#f5f5f5;line-height:1.6}.container{max-width:900px;margin:0 auto;padding:2rem}.banner{background:#fff;border:1px solid #ddd;border-left:4px solid #2e7d32;padding:1rem;margin-bottom:1.5rem}.status{font-weight:600;color:#2e7d32}code{background:#f0f0f0;padding:0.15em 0.35em}h1{font-size:1.4rem;margin-bottom:1rem}h2{font-size:1.2rem;margin:1.5rem 0 0.75rem;border-bottom:1px solid #ddd}p{margin:0.75rem 0}.info{background:#fff;border:1px solid #ddd;padding:1rem;margin:1rem 0;border-left:4px solid #f57c00}.vbox{background:#fff;border:1px solid #ddd;padding:1.5rem;margin:1rem 0}.result{padding:1rem;margin:1rem 0;font-family:monospace}.pass{background:#e8f5e9;border-left:4px solid #2e7d32}.fail{background:#ffebee;border-left:4px solid #c62828}.pending{background:#fff3e0;border-left:4px solid #f57c00}.row{margin:0.5rem 0}.row label{font-weight:600;display:inline-block;width:100px}.match{color:#2e7d32!important;font-weight:600}.mismatch{color:#c62828!important;font-weight:600}textarea{width:100%;height:200px;font-family:monospace;font-size:0.85rem}button{padding:0.5rem 1rem;margin:0.5rem 0.5rem 0.5rem 0;cursor:pointer}button:disabled{opacity:0.5;cursor:not-allowed}.btn-p{background:#0066cc;color:#fff;border:none}.btn-s{background:#f5f5f5;border:1px solid #ddd}footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #ddd;font-size:0.75rem;color:#666}a{color:#0066cc}.nav{margin-bottom:1.5rem}.nav a{margin-right:1rem}table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:0.85rem}th,td{border:1px solid #ddd;padding:0.5rem;text-align:left}th{background:#f5f5f5}.row-pass{background:#f1f8e9}.row-fail{background:#ffebee}"
 
-    core_js = r'''function can(o){if(o===null)return'null';if(typeof o==='boolean')return o?'true':'false';if(typeof o==='number')return Object.is(o,-0)?'0':String(o);if(typeof o==='string'){let r='"';for(let i=0;i<o.length;i++){const c=o.charCodeAt(i);if(c===8)r+='\b';else if(c===9)r+='\t';else if(c===10)r+='\n';else if(c===12)r+='\f';else if(c===13)r+='\r';else if(c===34)r+='\"';else if(c===92)r+='\\';else if(c<32)r+='\\u'+c.toString(16).padStart(4,'0');else r+=o[i];}return r+'"';}if(Array.isArray(o))return'['+o.map(can).join(',')+']';if(typeof o==='object'){const k=Object.keys(o).sort();return'{'+k.map(x=>can(x)+':'+can(o[x])).join(',')+'}';}throw Error('bad');}
+    core_js = r'''// Domain separation constants (must match Python attestation/dual_root.py)
+const DOMAIN_REASONING_LEAF=new Uint8Array([0xA0,...new TextEncoder().encode('reasoning-leaf')]);
+const DOMAIN_UI_LEAF=new Uint8Array([0xA1,...new TextEncoder().encode('ui-leaf')]);
+const DOMAIN_LEAF=new Uint8Array([0x00]);
+const DOMAIN_NODE=new Uint8Array([0x01]);
+
+// RFC 8785 JSON canonicalization
+function can(o){if(o===null)return'null';if(typeof o==='boolean')return o?'true':'false';if(typeof o==='number')return Object.is(o,-0)?'0':String(o);if(typeof o==='string'){let r='"';for(let i=0;i<o.length;i++){const c=o.charCodeAt(i);if(c===8)r+='\\b';else if(c===9)r+='\\t';else if(c===10)r+='\\n';else if(c===12)r+='\\f';else if(c===13)r+='\\r';else if(c===34)r+='\\"';else if(c===92)r+='\\\\';else if(c<32)r+='\\u'+c.toString(16).padStart(4,'0');else r+=o[i];}return r+'"';}if(Array.isArray(o))return'['+o.map(can).join(',')+']';if(typeof o==='object'){const k=Object.keys(o).sort();return'{'+k.map(x=>can(x)+':'+can(o[x])).join(',')+'}';}throw Error('bad');}
+
+// SHA256 without domain (for composite root H_t)
 async function sha(s){const d=new TextEncoder().encode(s);const h=await crypto.subtle.digest('SHA-256',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+
+// SHA256 with domain prefix (returns hex string)
+async function shaD(data,domain){const db=typeof data==='string'?new TextEncoder().encode(data):data;const c=new Uint8Array(domain.length+db.length);c.set(domain);c.set(db,domain.length);const h=await crypto.subtle.digest('SHA-256',c);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+
+// SHA256 with domain prefix (returns bytes)
+async function shaDBytes(data,domain){const db=typeof data==='string'?new TextEncoder().encode(data):data;const c=new Uint8Array(domain.length+db.length);c.set(domain);c.set(db,domain.length);const h=await crypto.subtle.digest('SHA-256',c);return new Uint8Array(h);}
+
+// Merkle root with domain separation (matches Python substrate/crypto/hashing.py)
+async function merkleRoot(leafHashes){
+if(leafHashes.length===0)return shaD('',DOMAIN_LEAF);
+const sorted=[...leafHashes].sort();
+let nodes=[];for(const lh of sorted){nodes.push(await shaDBytes(lh,DOMAIN_LEAF));}
+while(nodes.length>1){
+if(nodes.length%2===1)nodes.push(nodes[nodes.length-1]);
+const next=[];
+for(let i=0;i<nodes.length;i+=2){
+const combined=new Uint8Array(64);combined.set(nodes[i]);combined.set(nodes[i+1],32);
+next.push(await shaDBytes(combined,DOMAIN_NODE));}
+nodes=next;}
+return Array.from(nodes[0]).map(b=>b.toString(16).padStart(2,'0')).join('');}
+
+// Compute U_t from uvil_events (Merkle root with DOMAIN_UI_LEAF)
+async function computeUt(events){const lh=[];for(const e of events){lh.push(await shaD(can(e),DOMAIN_UI_LEAF));}return merkleRoot(lh);}
+
+// Compute R_t from reasoning_artifacts (Merkle root with DOMAIN_REASONING_LEAF)
+async function computeRt(artifacts){const lh=[];for(const a of artifacts){lh.push(await shaD(can(a),DOMAIN_REASONING_LEAF));}return merkleRoot(lh);}
+
+// Compute H_t = SHA256(R_t || U_t) - ASCII concatenation
+async function computeHt(rt,ut){return sha(rt+ut);}
+
 document.getElementById('fi').onchange=e=>{if(e.target.files[0]){const r=new FileReader();r.onload=x=>document.getElementById('inp').value=x.target.result;r.readAsText(e.target.files[0]);}};
-async function verify(){const R=document.getElementById('res'),D=document.getElementById('det');try{const v=document.getElementById('inp').value.trim();if(!v){R.className='result pending';R.innerHTML='<strong>Status:</strong> No input';D.style.display='none';return;}const p=JSON.parse(v);const uvil=p.uvil_events||[];const arts=p.reasoning_artifacts||[];const eu=p.u_t||'';const er=p.r_t||'';const eh=p.h_t||'';const cu=await sha(can(uvil));const cr=await sha(can(arts));const ch=await sha(cr+cu);document.getElementById('eu').textContent=eu||'-';document.getElementById('cu').textContent=cu;document.getElementById('er').textContent=er||'-';document.getElementById('cr').textContent=cr;document.getElementById('eh').textContent=eh||'-';document.getElementById('ch').textContent=ch;const uok=!eu||cu===eu,rok=!er||cr===er,hok=!eh||ch===eh;document.getElementById('cu').className=uok?'match':'mismatch';document.getElementById('cr').className=rok?'match':'mismatch';document.getElementById('ch').className=hok?'match':'mismatch';D.style.display='block';if(!eu&&!er&&!eh){R.className='result pending';R.innerHTML='<strong>Status:</strong> COMPUTED';}else if(uok&&rok&&hok){R.className='result pass';R.innerHTML='<strong>Status:</strong> PASS';}else{R.className='result fail';R.innerHTML='<strong>Status:</strong> FAIL';}}catch(e){R.className='result fail';R.innerHTML='<strong>Status:</strong> '+e.message;D.style.display='none';}}'''
+
+async function verify(){const R=document.getElementById('res'),D=document.getElementById('det');try{const v=document.getElementById('inp').value.trim();if(!v){R.className='result pending';R.innerHTML='<strong>Status:</strong> No input';D.style.display='none';return;}const p=JSON.parse(v);const uvil=p.uvil_events||[];const arts=p.reasoning_artifacts||[];const eu=p.u_t||'';const er=p.r_t||'';const eh=p.h_t||'';const cu=await computeUt(uvil);const cr=await computeRt(arts);const ch=await computeHt(cr,cu);document.getElementById('eu').textContent=eu||'-';document.getElementById('cu').textContent=cu;document.getElementById('er').textContent=er||'-';document.getElementById('cr').textContent=cr;document.getElementById('eh').textContent=eh||'-';document.getElementById('ch').textContent=ch;const uok=!eu||cu===eu,rok=!er||cr===er,hok=!eh||ch===eh;document.getElementById('cu').className=uok?'match':'mismatch';document.getElementById('cr').className=rok?'match':'mismatch';document.getElementById('ch').className=hok?'match':'mismatch';D.style.display='block';if(!eu&&!er&&!eh){R.className='result pending';R.innerHTML='<strong>Status:</strong> COMPUTED';}else if(uok&&rok&&hok){R.className='result pass';R.innerHTML='<strong>Status:</strong> PASS';}else{R.className='result fail';R.innerHTML='<strong>Status:</strong> FAIL';}}catch(e){R.className='result fail';R.innerHTML='<strong>Status:</strong> '+e.message;D.style.display='none';}}'''
 
     examples_link = '<a href="../examples.json">Test Vectors (examples.json)</a>'
 
@@ -1491,7 +1544,7 @@ def build_root_files(releases: dict, build_time: str) -> None:
     versions_dir.mkdir(parents=True, exist_ok=True)
 
     version_list = []
-    for v, config in sorted(versions.items()):
+    for v, config in sorted(versions.items(), key=lambda x: parse_version(x[0])):
         version_list.append({
             "version": v,
             "status": config["status"],
@@ -1503,6 +1556,19 @@ def build_root_files(releases: dict, build_time: str) -> None:
     versions_html = build_versions_index(version_list, build_time)
     (versions_dir / "index.html").write_text(versions_html, encoding="utf-8")
     print("  Created versions/index.html")
+
+    # /versions/status.json (machine-readable registry)
+    current_config = versions.get(current_version, {})
+    status_data = {
+        "current_version": current_version,
+        "current_tag": current_config.get("tag", ""),
+        "current_commit": current_config.get("commit", "")[:8] if current_config.get("commit") else "",
+        "versions": sorted(versions.keys(), key=parse_version),
+        "superseded": sorted([v for v, cfg in versions.items() if cfg.get("status", "").startswith("superseded")], key=parse_version),
+        "generated_at": build_time,
+    }
+    (versions_dir / "status.json").write_text(json.dumps(status_data, indent=2) + chr(10), encoding="utf-8")
+    print(f"  Created versions/status.json (current: {current_version})")
 
 
 def verify_build(releases: dict) -> bool:
