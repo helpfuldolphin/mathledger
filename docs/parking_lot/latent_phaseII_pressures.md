@@ -8,3 +8,48 @@ Internal awareness log. Not public. Not escalation.
 
 Abstention terminality resolved cleanly under hostile audit.
 Future collisions likely with institutional completeness expectations.
+
+---
+
+## 2026-01-06 — Statistical Admissibility vs Constitutive Admissibility
+
+**Pressing level:** Medium
+
+**Context:**
+Increasing industry reliance on distributional policy evaluation (e.g., MAP-AI) creates pressure to equate probabilistic acceptability with admissible authority.
+
+**Collision:**
+MAP-AI represents a growing industry pressure to treat probabilistic acceptability as governance. MathLedger must explicitly guard against this collapse.
+
+**Position:**
+MathLedger must remain fail-closed against purely statistical admissibility. Probabilistic acceptability is not constitutive authority.
+
+---
+
+## 2026-01-06 — Causal Faithfulness Audits
+
+**Pressing level:** Low (conceptual, no deterministic judge exists)
+
+**Context:**
+Causal faithfulness audits for explanation traces (Ariadne-style do-interventions) — keep as advisory until a deterministic judge exists.
+
+**Reference:**
+See `ariadne_faithfulness_pressure.md` for full pressure analysis.
+
+---
+
+## 2026-01-06 — Verification-Value Paradox
+
+**Pressing level:** Medium-High (affects value proposition in professional domains)
+
+**Context:**
+Net value N = EG − V. In high-duty domains (law, medicine, finance), verification cost V is non-negotiable and broad in scope. If MathLedger does not reduce V via MV routes, efficiency gains are neutralized.
+
+**Collision:**
+Phase II must prioritize MV-route expansion and replayable evidence packs. ADV/PA routes do not reduce V; they document that verification was not performed mechanically.
+
+**Position:**
+Reduce verification cost V via additional MV verifiers and replayable evidence packs; else net value collapses in high-duty domains.
+
+**Reference:**
+See `verification_value_paradox_pressure.md` for full analysis.
