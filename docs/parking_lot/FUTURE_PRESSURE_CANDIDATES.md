@@ -85,3 +85,21 @@ See `verification_value_paradox_pressure.md` for full analysis.
 
 **Status:**
 Awareness only. Phase II pressure.
+
+---
+
+### Skills-Enabled Agent Benchmarks (e.g., SkillsBench)
+
+**Context:**
+Increasing agent task success on real-world workflows (docs, git, data pipelines) raises the risk of unverified outputs being treated as authoritative.
+
+**Relevance:**
+Task success ≠ claim admissibility. As agents reliably complete multi-step tasks, enterprise users may conflate "it worked" with "it's verified." This strengthens the need for a post-capability governance layer.
+
+**Potential collision:**
+- High benchmark scores encourage deployment without governance
+- Artifacts produced by successful tasks inherit no trust class
+- "Task completed" is not an authority signal
+
+**Status:**
+Awareness only. Strengthens Phase II MV-route expansion pressure.

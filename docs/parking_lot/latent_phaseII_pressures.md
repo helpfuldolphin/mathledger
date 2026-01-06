@@ -53,3 +53,20 @@ Reduce verification cost V via additional MV verifiers and replayable evidence p
 
 **Reference:**
 See `verification_value_paradox_pressure.md` for full analysis.
+
+---
+
+## 2026-01-06 — Post-Task Governance for Skill-Composed Artifacts
+
+**Pressing level:** Medium (grows with agent capability benchmarks)
+
+**Context:**
+As agents complete multi-skill tasks successfully (SkillsBench-style benchmarks), governance must distinguish "task success" from "claim admissibility," especially for enterprise/legal artifacts.
+
+**Collision:**
+- Task completion is a capability metric, not a trust signal
+- Artifacts produced by successful agent runs inherit no trust class by default
+- Enterprise users may treat "agent completed task" as implicit authority
+
+**Position:**
+Phase II must define how skill-composed artifacts acquire trust class. Default: ADV (advisory) until explicit MV verification route exists for artifact type.
