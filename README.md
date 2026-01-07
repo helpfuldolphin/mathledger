@@ -4,7 +4,7 @@ Governance substrate for verifiable learning: deterministic replay, dual attesta
 
 [![Live Demo](https://img.shields.io/badge/demo-mathledger.ai-blue)](https://mathledger.ai/demo)
 [![arXiv](https://img.shields.io/badge/arXiv-2601.00816-b31b1b.svg)](https://arxiv.org/abs/2601.00816)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 ---
 
@@ -185,4 +185,4 @@ Full documentation index: [`docs/README.md`](docs/README.md)
 
 ## License
 
-MIT
+Apache-2.0
