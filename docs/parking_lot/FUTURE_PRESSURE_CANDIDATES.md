@@ -103,3 +103,25 @@ Task success ≠ claim admissibility. As agents reliably complete multi-step tas
 
 **Status:**
 Awareness only. Strengthens Phase II MV-route expansion pressure.
+
+---
+
+### OpenForesight / OpenForecaster (Forecasting as Training Target)
+
+**Context:**
+Forecasting systems trained on calibration (not just accuracy) demonstrate that well-calibrated probabilistic outputs are achievable. Key innovation: offline corpus with leakage discipline (retrieval cutoff ≤1 month before resolution).
+
+**Relevance:**
+Pressures MathLedger to define how probabilistic claims acquire trust class. Calibration generalization claims require:
+- Corpus versioning and hash pinning
+- Retrieval cutoff enforcement
+- Resolution source specification
+- Replay bundles for probabilistic claims
+
+**Classification:** PA / ADV (procedural attestation candidate; observer-only until route defined)
+
+**Reference:**
+See `openforesight_forecasting_pressure.md` for full analysis.
+
+**Status:**
+Awareness only. Phase II pressure for probabilistic claim routing.

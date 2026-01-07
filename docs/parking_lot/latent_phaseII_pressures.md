@@ -70,3 +70,28 @@ As agents complete multi-skill tasks successfully (SkillsBench-style benchmarks)
 
 **Position:**
 Phase II must define how skill-composed artifacts acquire trust class. Default: ADV (advisory) until explicit MV verification route exists for artifact type.
+
+---
+
+## 2026-01-07 — Probabilistic Claims and Forecasting
+
+**Pressing level:** Medium (grows with enterprise demand for uncertainty quantification)
+
+**Context:**
+Forecasting and calibrated uncertainty outputs (OpenForesight-style) create pressure for a standard PA route for probabilistic claims. Users will demand that calibration become a governance artifact, not just an accuracy metric.
+
+**Collision:**
+- MathLedger currently handles binary outcomes; probabilistic claims require new route semantics
+- Calibration without replay bundles is unverifiable
+- Leakage control (retrieval cutoffs, corpus versioning) becomes a reproducibility constraint
+
+**Position:**
+Phase II needs a standard PA route for probabilistic outputs with:
+- Explicit confidence semantics (0.0–1.0)
+- Resolution source and criteria pinning
+- Temporal cutoff enforcement (leakage prevention)
+- Replay bundles for probabilistic claims
+
+**Reference:**
+See `openforesight_forecasting_pressure.md` for full analysis.
+See `evaluation_contract_checklist.md` for gating requirements.
