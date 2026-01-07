@@ -37,11 +37,23 @@ curl -s https://mathledger.ai/demo/health | jq '{version, tag}'
 wrangler pages project list
 ```
 
+## Git Branch Authority
+
+| Item | Value |
+|------|-------|
+| Canonical git branch | `master` |
+| Cloudflare production branch label | `acquisition-main` (legacy) |
+
+**Note:** The Cloudflare Pages "production branch" setting is currently labeled `acquisition-main`. This is cosmetic only and does not affect deployed content or authority. The git branch `acquisition-main` no longer exists; all work is on `master`.
+
+If the label needs to match, a manual Cloudflare dashboard update is required. The wrangler CLI cannot change the production branch setting.
+
 ## Deployment Workflow
 
 1. Build static site: `uv run python scripts/build_static_site.py`
-2. Deploy to Pages: `wrangler pages deploy site --project-name=mathledger-ai --branch=production`
+2. Deploy to Pages: `wrangler pages deploy site --project-name=mathledger-ai --branch=acquisition-main`
 3. Deploy demo to Fly.io: `fly deploy`
 
 ---
 *Document created: 2026-01-07 | Authority cleanup for v0.2.14*
+*Updated: 2026-01-07 | Git branch unification complete*
