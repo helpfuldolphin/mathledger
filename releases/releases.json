@@ -1,9 +1,9 @@
 {
   "$schema": "./releases.schema.json",
   "_comment": "CANONICAL source of version metadata. Build script reads this file ONLY.",
-  "_updated": "2026-01-05",
-  "_updated_by": "Claude D (Closure Auditor)",
-  "current_version": "v0.2.13",
+  "_updated": "2026-01-07",
+  "_updated_by": "Claude A (v0.2.14 release)",
+  "current_version": "v0.2.14",
   "versions": {
     "v0": {
       "tag": "v0-demo-lock",
@@ -1268,7 +1268,7 @@
       "tag": "v0.2.13-outreach-metadata",
       "commit": "f6adede4ac923a164a85605493ad9939de587e8d",
       "date_locked": "2026-01-05",
-      "status": "current",
+      "status": "superseded-by-v0.2.14",
       "demo_url": "/demo/",
       "hosted_demo": true,
       "docs": [
@@ -1358,6 +1358,115 @@
           "Tier A/B/C invariant counts (11/1/3)",
           "All cryptographic enforcement",
           "Demo code and behavior",
+          "Verifier implementation"
+        ],
+        "still_not_enforced": [
+          "FV Mechanical Verification (no Lean/Z3)",
+          "Multi-Model Consensus (single partitioner)",
+          "RFL Integration (no learning loop)"
+        ]
+      }
+    },
+    "v0.2.14": {
+      "tag": "v0.2.14-governance-explanation",
+      "commit": "06e7ea3319bd0d99aa044ac790553e14f05ed15e",
+      "date_locked": "2026-01-07",
+      "status": "current",
+      "demo_url": "/demo/",
+      "hosted_demo": true,
+      "docs": [
+        {
+          "source": "docs/V0_LOCK.md",
+          "slug": "scope-lock",
+          "title": "Scope Lock"
+        },
+        {
+          "source": "docs/HOW_THE_DEMO_EXPLAINS_ITSELF.md",
+          "slug": "explanation",
+          "title": "How the Demo Explains Itself"
+        },
+        {
+          "source": "docs/HOSTILE_DEMO_REHEARSAL.md",
+          "slug": "hostile-rehearsal",
+          "title": "Hostile Demo Rehearsal"
+        },
+        {
+          "source": "docs/invariants_status.md",
+          "slug": "invariants",
+          "title": "Invariants Status"
+        },
+        {
+          "source": "docs/FOR_AUDITORS.md",
+          "slug": "for-auditors",
+          "title": "For Auditors"
+        },
+        {
+          "source": "docs/MV_VALIDATOR_COVERAGE.md",
+          "slug": "mv-coverage",
+          "title": "MV Validator Coverage"
+        },
+        {
+          "source": "docs/V0.2.10_SMOKE_CHECKLIST.md",
+          "slug": "v0210-smoke-checklist",
+          "title": "v0.2.10 Smoke Checklist"
+        },
+        {
+          "source": "docs/VERSION_NUMBER_DOCTRINE.md",
+          "slug": "version-doctrine",
+          "title": "Version Number Doctrine"
+        }
+      ],
+      "fixtures_dir": "fixtures",
+      "invariants": {
+        "tier_a": 11,
+        "tier_b": 1,
+        "tier_c": 3,
+        "tier_a_list": [
+          "Canonicalization Determinism (RFC 8785-style)",
+          "H_t = SHA256(R_t || U_t)",
+          "ADV Excluded from R_t",
+          "Content-Derived IDs",
+          "Replay Uses Same Code Paths",
+          "Double-Commit Returns 409",
+          "No Silent Authority",
+          "Trust-Class Monotonicity",
+          "Abstention Preservation",
+          "Audit Surface Version Field",
+          "Abstention Terminality"
+        ],
+        "tier_b_list": [
+          "MV Validator Correctness (edge cases)"
+        ],
+        "tier_c_list": [
+          "FV Mechanical Verification",
+          "Multi-Model Consensus",
+          "RFL Integration"
+        ],
+        "cannot_enforce": [
+          "No Lean/Z3 verifier: FV claims always return ABSTAINED",
+          "Single template partitioner: no multi-model consensus",
+          "No learning loop: RFL not active",
+          "MV edge cases: overflow, float precision not fully covered"
+        ]
+      },
+      "delta": {
+        "documentation_only": false,
+        "added": [
+          "Two-Lane Architecture explanation (Lane A: Authority, Lane B: Exploratory)",
+          "ACE (Admissible Claim Engine) methodology documentation",
+          "Epistemic Invariants section in explanation page",
+          "External Verifier Checklist for auditors",
+          "Governance Model link prominent in demo UI",
+          "Deploy provenance stamp visible at bottom of demo",
+          "docs/README.md navigation index"
+        ],
+        "fixed": [
+          "License badge: MIT -> Apache-2.0 (matching LICENSE file)",
+          "Hardcoded version in governance link now dynamic"
+        ],
+        "unchanged": [
+          "Tier A/B/C invariant counts (11/1/3)",
+          "All cryptographic enforcement",
           "Verifier implementation"
         ],
         "still_not_enforced": [
