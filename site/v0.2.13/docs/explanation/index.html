@@ -158,6 +158,12 @@ footer code { font-size: 0.7rem; }
         <article>
             <h1>How the Demo Explains Itself <span class="mode-indicator mode-archive">ARCHIVE</span></h1>
             <h1>How the MathLedger Demo Explains Itself</h1>
+
+<div class="info-box" style="border-left: 4px solid #1565c0; margin-bottom: 1.5rem;">
+<strong>Status: LOCKED (v0.2.13)</strong><br>
+<strong>Non-Claims:</strong> This demo does not demonstrate intelligence, alignment, forecasting accuracy, or agent performance. It demonstrates governance invariants only.
+</div>
+
 <p>This document accompanies the front-facing demo. It explains what the demo enforces, what it refuses to do, and why those refusals are the point.</p>
 <hr>
 <h2>How Claims Are Introduced, Tested, and Closed</h2>
@@ -351,10 +357,155 @@ The demo is evidence that a specific set of invariants are enforced in a specifi
 <p>The UI self-explanation follows strict constraints:</p>
 <ul><li>Does NOT say "the system believes" (anthropomorphizing)</li><li>Does NOT say "verified correct" (overclaiming validator capability)</li><li>Does NOT say "safe" or "aligned" (capability claims)</li><li>Does NOT use emojis or exclamation marks (false enthusiasm)</li><li>Does NOT promise future capabilities (scope creep)</li></ul>
 The copy style is deliberately flat. It explains what happens, not what it means for safety or alignment.
+
+<hr>
+<h2>Two-Lane Architecture</h2>
+<p>MathLedger operates on a two-lane architecture that separates certified authority from exploratory reasoning.</p>
+
+<h3>Lane A: MathLedger Core (Authority Lane)</h3>
+<p>Lane A is the certification authority. It contains:</p>
+<ul>
+<li>Committed claim artifacts with immutable identifiers</li>
+<li>Attestation hashes (U_t, R_t, H_t)</li>
+<li>Verification outcomes (VERIFIED, REFUTED, ABSTAINED)</li>
+<li>Evidence packs with replay instructions</li>
+</ul>
+<p>Lane A content is deterministic, versioned, and cryptographically bound. Once a claim enters Lane A, its identifier and outcome are sealed.</p>
+
+<h3>Lane B: Exploratory / Agent Audit (Discovery Lane)</h3>
+<p>Lane B is the exploration space. It is a <strong>design pattern and planned product lane</strong>, not a fully shipped capability.</p>
+<p><strong>Currently implemented:</strong></p>
+<ul>
+<li>Draft proposals with random identifiers</li>
+<li>Suggested trust class assignments</li>
+<li>ADV (Advisory) claims</li>
+<li>Limited sandbox artifacts and advisory notes</li>
+</ul>
+<p><strong>Planned (not yet shipped):</strong></p>
+<ul>
+<li>Agent Audit Kit for systematic exploration</li>
+<li>Structured hypothesis testing pipelines</li>
+<li>Multi-agent coordination artifacts</li>
+</ul>
+<p>Lane B content is mutable and non-authoritative. It serves as a staging area for human-agent interaction before commitment.</p>
+
+<h3>Architectural Invariant: Unidirectional Flow</h3>
+<p><strong>Lane B never directly writes to Lane A.</strong></p>
+<p>The only mechanism for Lane B content to influence Lane A is through explicit human commitment via the UVIL (User-Verified Input Loop). At commitment:</p>
+<ol>
+<li>The random proposal identifier is discarded</li>
+<li>A new content-derived identifier is computed</li>
+<li>The exploratory artifact is transformed into an authority-bearing artifact</li>
+</ol>
+<p>This is analogous to the relationship between a wind tunnel and a certification authority in aerospace engineering. The wind tunnel (Lane B) generates data and tests hypotheses. The certification authority (Lane A) records what has been established.</p>
+
+<hr>
+<h2>ACE Methodology + Ordered-Pairs</h2>
+<p>MathLedger evaluates claims through the <strong>ACE (Admissible Claim Engine)</strong> using ordered-pair structures.</p>
+<p>The ACE operates in three phases:</p>
+<ul>
+<li><strong>A — Admissibility</strong>: Is the claim eligible for authority?</li>
+<li><strong>C — Commitment</strong>: Has the claim been explicitly committed by a human?</li>
+<li><strong>E — Evaluation</strong>: What did the declared verification route produce?</li>
+</ul>
+
+<h3>Ordered-Pair Structure: (Claim Artifact, Verification Route)</h3>
+<p>Every authority-bearing claim in MathLedger is represented as an ordered pair:</p>
+<pre><code>(Claim Artifact, Verification Route)</code></pre>
+<p>Where:</p>
+<ul>
+<li><strong>Claim Artifact</strong>: The specific textual or formal content being asserted</li>
+<li><strong>Verification Route</strong>: The declared method by which the claim will be evaluated (FV, MV, PA)</li>
+</ul>
+<p>The same claim artifact evaluated under different verification routes produces different claim identities. The pair is the unit of authority, not the claim text alone.</p>
+
+<h3>Claim Identity Computation</h3>
+<p>The claim_id commits to all identity-bearing components:</p>
+<pre><code>claim_id = Hash(domain || normalized_claim || verification_route_id || schema_version)</code></pre>
+<p>The verification route is part of identity to prevent <strong>retroactive route laundering</strong> — an attack where an adversary could claim a different verification path was used after observing the outcome.</p>
+
+<hr>
+<h2>Epistemic Invariants</h2>
+<p>The following invariants govern authority, abstention, and replay in MathLedger.</p>
+
+<h3>Terminal Abstention</h3>
+<p><strong>Definition:</strong> Once a claim artifact is classified as ABSTAINED, that outcome is final for that <code>claim_id</code> within its verification route and epoch.</p>
+<p><strong>Scope:</strong> ABSTAINED is terminal for that specific <code>claim_id</code>. The same claim <em>text</em> may be re-asserted later, but only as a <strong>new <code>claim_id</code></strong> by:</p>
+<ul>
+<li>Changing the verification route, or</li>
+<li>Submitting in a new epoch, or</li>
+<li>Using a new schema version</li>
+</ul>
+<p>This produces a new auditable object with its own outcome. The original ABSTAINED artifact remains sealed and visible.</p>
+
+<h3>ADV Class Quarantine</h3>
+<p><strong>Definition:</strong> Claims assigned the ADV (Advisory) trust class are structurally excluded from R_t (the reasoning attestation root).</p>
+<p><strong>Structural enforcement:</strong> ADV artifacts may appear in:</p>
+<ul>
+<li>The evidence bundle (for transparency)</li>
+<li>The UI root U_t (as user interaction records)</li>
+</ul>
+<p>But ADV artifacts <strong>must not</strong> contribute to R_t, and therefore cannot affect H_t via the R_t path. ADV claims cannot become authority-bearing through any code path.</p>
+
+<h3>Monotonic Epistemic Time</h3>
+<p><strong>Definition:</strong> Verification outcomes cannot be retroactively upgraded. Time flows forward through epochs; no mechanism exists for backward revision.</p>
+<p><strong>Implication:</strong> A claim that was ABSTAINED in epoch T cannot be marked VERIFIED in epoch T retrospectively. New verification requires a new claim in epoch T+1 (which produces a new claim_id).</p>
+
+<h3>Bidirectional Accountability</h3>
+<p><strong>Definition:</strong> Human actions and system reasoning are bound via hash commitment. U_t commits to what the human did; R_t commits to what the system established; H_t binds both.</p>
+<p><strong>Enforcement:</strong> Evidence packs include both UVIL events (human) and reasoning artifacts (system). Replay verification recomputes all three hashes. Any tampering on either side is detectable.</p>
+
+<hr>
+<h2>External Verifier Checklist</h2>
+<p>For external reviewers verifying the demo independently:</p>
+<h3>Step 1: Run the drop-in demo</h3>
+<pre><code>uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output/</code></pre>
+<h3>Step 2: Run verification</h3>
+<pre><code>cd demo_output && python verify.py</code></pre>
+<h3>Step 3: Expected output</h3>
+<pre><code>[PASS] Composite root verified: H_t == SHA256(R_t || U_t)</code></pre>
+<h3>Step 4: Artifacts produced</h3>
+<p>Confirm the following files exist in <code>demo_output/</code>:</p>
+<ul>
+<li><code>verify.py</code> — Self-contained verifier</li>
+<li><code>evidence_pack.json</code> — Complete audit artifact</li>
+<li><code>manifest.json</code> — Execution metadata</li>
+<li><code>u_t.txt</code> — UI Merkle root</li>
+<li><code>r_t.txt</code> — Reasoning Merkle root</li>
+<li><code>h_t.txt</code> — Composite root</li>
+</ul>
+
+<hr>
+<h2>Related Work / Canonical Reference</h2>
+<p>This demo implements a subset of the governance substrate described in the following paper:</p>
+<p><strong>MathLedger: A Verifiable Learning Substrate with Ledger-Attested Feedback</strong></p>
+<ul>
+<li><strong>arXiv:</strong> <a href="https://arxiv.org/abs/2601.00816">https://arxiv.org/abs/2601.00816</a></li>
+<li><strong>DOI:</strong> <a href="https://doi.org/10.48550/arXiv.2601.00816">https://doi.org/10.48550/arXiv.2601.00816</a></li>
+<li><strong>Subjects:</strong> cs.AI, cs.CR, cs.LG</li>
+</ul>
+<p>The paper provides the authoritative specification for the two-lane architecture, ACE methodology, and epistemic invariants. This demo implements a subset of that specification; no capability or convergence claims are made.</p>
+
+<hr>
+<h2>What This Section Does and Does Not Claim</h2>
+<p><strong>This section claims:</strong></p>
+<ul>
+<li>The two-lane architecture separates exploration from authority at the data model level</li>
+<li>The ACE methodology requires explicit route declaration before authority</li>
+<li>The epistemic invariants are enforced in the current implementation</li>
+<li>The demo is intentionally minimal to prevent authority inflation</li>
+</ul>
+<p><strong>This section does NOT claim:</strong></p>
+<ul>
+<li>Lane B (Agent Audit) is fully shipped as a product</li>
+<li>The system will behave correctly in all cases</li>
+<li>The invariants are complete or cover all failure modes</li>
+<li>The demo generalizes to production systems</li>
+</ul>
         </article>
 
         <footer>
-            Site built from commit <code>f6adede4ac923a164a85605493ad9939de587e8d</code> at <code>2026-01-05T14:44:02Z</code><br>
+            Site built from commit <code>f6adede4ac923a164a85605493ad9939de587e8d</code> at <code>2026-01-05T16:02:54Z</code><br>
             This is an epistemic archive. Content is immutable once published.
         </footer>
     </div>
