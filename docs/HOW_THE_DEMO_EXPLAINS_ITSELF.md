@@ -1,6 +1,10 @@
 # How the MathLedger Demo Explains Itself
 
+**Status: LOCKED (v0.2.13)**
+
 This document accompanies the front-facing demo. It explains what the demo enforces, what it refuses to do, and why those refusals are the point.
+
+**Non-Claims**: This demo does not demonstrate intelligence, alignment, forecasting accuracy, or agent performance. It demonstrates governance invariants only.
 
 ---
 
@@ -423,3 +427,308 @@ The UI self-explanation follows strict constraints:
 - Does NOT promise future capabilities (scope creep)
 
 The copy style is deliberately flat. It explains what happens, not what it means for safety or alignment.
+
+---
+
+## Two-Lane Architecture
+
+**Status: LOCKED for v0.2.13**
+
+MathLedger operates on a two-lane architecture that separates certified authority from exploratory reasoning.
+
+### Lane A: MathLedger Core (Authority Lane)
+
+Lane A is the certification authority. It contains:
+- Committed claim artifacts with immutable identifiers
+- Attestation hashes (U_t, R_t, H_t)
+- Verification outcomes (VERIFIED, REFUTED, ABSTAINED)
+- Evidence packs with replay instructions
+
+Lane A content is deterministic, versioned, and cryptographically bound. Once a claim enters Lane A, its identifier and outcome are sealed.
+
+### Lane B: Exploratory / Agent Audit (Discovery Lane)
+
+Lane B is the exploration space. It is a **design pattern and planned product lane**, not a fully shipped capability.
+
+**Currently implemented:**
+- Draft proposals with random identifiers
+- Suggested trust class assignments
+- ADV (Advisory) claims
+- Limited sandbox artifacts and advisory notes
+
+**Planned (not yet shipped):**
+- Agent Audit Kit for systematic exploration
+- Structured hypothesis testing pipelines
+- Multi-agent coordination artifacts
+
+Lane B content is mutable and non-authoritative. It serves as a staging area for human-agent interaction before commitment.
+
+### Architectural Invariant: Unidirectional Flow
+
+**Lane B never directly writes to Lane A.**
+
+The only mechanism for Lane B content to influence Lane A is through explicit human commitment via the UVIL (User-Verified Input Loop). At commitment:
+1. The random proposal identifier is discarded
+2. A new content-derived identifier is computed
+3. The exploratory artifact is transformed into an authority-bearing artifact
+
+This is analogous to the relationship between a wind tunnel and a certification authority in aerospace engineering. The wind tunnel (Lane B) generates data and tests hypotheses. The certification authority (Lane A) records what has been established. Test data does not automatically become certification. Certification requires explicit act, documented transition, and sealed record.
+
+---
+
+## ACE Methodology + Ordered-Pairs
+
+MathLedger evaluates claims through the **ACE (Admissible Claim Engine)** using ordered-pair structures.
+
+The ACE operates in three phases:
+- **A — Admissibility**: Is the claim eligible for authority?
+- **C — Commitment**: Has the claim been explicitly committed by a human?
+- **E — Evaluation**: What did the declared verification route produce?
+
+### Ordered-Pair Structure: (Claim Artifact, Verification Route)
+
+Every authority-bearing claim in MathLedger is represented as an ordered pair:
+
+```
+(Claim Artifact, Verification Route)
+```
+
+Where:
+- **Claim Artifact**: The specific textual or formal content being asserted
+- **Verification Route**: The declared method by which the claim will be evaluated (FV, MV, PA)
+
+The same claim artifact evaluated under different verification routes produces different claim identities. The pair is the unit of authority, not the claim text alone.
+
+### Claim Identity Computation
+
+The claim_id commits to all identity-bearing components:
+
+```
+claim_id = Hash(domain || normalized_claim || verification_route_id || schema_version)
+```
+
+The verification route is part of identity to prevent **retroactive route laundering** — an attack where an adversary could claim a different verification path was used after observing the outcome.
+
+### ACE Phase Details
+
+**Admissibility (A)**: A claim is admissible if and only if it declares a verification route. ADV (Advisory) claims explicitly declare "no route" and are therefore inadmissible for authority. They are recorded but excluded from R_t.
+
+**Commitment (C)**: A claim becomes authority-bearing only at explicit human commitment. Before commitment, it exists in the exploratory lane. After commitment, it receives a content-derived identifier and enters the attestation structure.
+
+**Evaluation (E)**: The declared verification route determines how the claim is evaluated:
+- FV: Formal proof required (ABSTAINED in v0; no prover implemented)
+- MV: Mechanical validation (arithmetic only in v0)
+- PA: Procedural attestation (human attests; ABSTAINED for mechanical verification)
+
+### Why No Claim Becomes Authoritative Without a Declared Route
+
+This constraint prevents silent authority inflation. Without explicit route declaration:
+- The system cannot know how to evaluate the claim
+- Auditors cannot verify the evaluation was appropriate
+- Retroactive route assignment would enable outcome manipulation
+
+The ordered-pair structure makes verification route a first-class component of claim identity, not a post-hoc annotation.
+
+---
+
+## Epistemic Invariants
+
+The following invariants govern authority, abstention, and replay in MathLedger.
+
+### Terminal Abstention
+
+**Definition**: Once a claim artifact is classified as ABSTAINED, that outcome is final for that `claim_id` within its verification route and epoch.
+
+**Scope**: ABSTAINED is terminal for that specific `claim_id` (which includes the route and schema version). The same claim *text* may be re-asserted later, but only as a **new `claim_id`** by:
+- Changing the verification route, or
+- Submitting in a new epoch, or
+- Using a new schema version
+
+This produces a new auditable object with its own outcome. The original ABSTAINED artifact remains sealed and visible.
+
+**What this preserves**: No retroactive upgrade. The system cannot silently improve historical outcomes. If verifier coverage expands, new claims benefit; old claims do not change.
+
+**What this does NOT prevent**:
+- Re-asserting the same claim text under a different route (new claim_id)
+- Creating new claims in later epochs with enhanced coverage
+- External documentation that a previously-abstained claim is now known to be valid
+
+### ADV Class Quarantine
+
+**Definition**: Claims assigned the ADV (Advisory) trust class are structurally excluded from R_t (the reasoning attestation root).
+
+**Structural enforcement**: ADV artifacts may appear in:
+- The evidence bundle (for transparency)
+- The UI root U_t (as user interaction records)
+
+But ADV artifacts **must not** contribute to R_t, and therefore cannot affect H_t via the R_t path. ADV claims cannot become authority-bearing through any code path.
+
+**Enforcement**: The R_t computation explicitly filters out ADV claims. This is not a policy decision; it is a data model constraint enforced by the attestation code.
+
+### Monotonic Epistemic Time
+
+**Definition**: Verification outcomes cannot be retroactively upgraded. Time flows forward through epochs; no mechanism exists for backward revision.
+
+**Implication**: A claim that was ABSTAINED in epoch T cannot be marked VERIFIED in epoch T retrospectively. New verification requires a new claim in epoch T+1 (which produces a new claim_id).
+
+**Constraint**: This prevents historical revision attacks where an adversary could claim earlier validation of content that was not established at the time.
+
+### Invariant Conflict Preservation (Design Grief)
+
+**Definition**: When implementing a system obligation creates conflict with another obligation, both the choice and the sacrifice are documented.
+
+**Implication**: MathLedger does not silently resolve design tensions. When invariants conflict, the resolution is explicit: which invariant was prioritized, which was deferred, and why. This is called "design grief."
+
+**Purpose**: Preserves intellectual honesty about system limitations. Prevents false claims of comprehensive coverage. Documents the actual tradeoff space.
+
+### Bidirectional Accountability
+
+**Definition**: Human actions and system reasoning are bound via hash commitment. U_t commits to what the human did; R_t commits to what the system established; H_t binds both.
+
+**Implication**: Neither party can unilaterally modify the record. If the human's actions change, U_t changes. If the system's reasoning changes, R_t changes. If either changes, H_t changes.
+
+**Enforcement**: Evidence packs include both UVIL events (human) and reasoning artifacts (system). Replay verification recomputes all three hashes. Any tampering on either side is detectable.
+
+---
+
+## Demo Scope Justification
+
+### Why the Demo Is Intentionally Minimal
+
+This demo demonstrates governance substrate, not capability. It is designed to be boring.
+
+**What the demo shows:**
+- Separation of exploration from authority
+- Trust class routing
+- Deterministic attestation
+- Replay verification
+- Explicit abstention
+
+**What the demo does not show:**
+- Formal proof verification (no Lean/Z3 integration)
+- Comprehensive mechanical validation (arithmetic only)
+- Production-scale throughput
+- Novel reasoning capabilities
+
+This is intentional. The demo exists to prove that governance invariants can be enforced, not that the system is capable.
+
+### Prevention of Authority Inflation
+
+Authority inflation occurs when a system's claimed capabilities exceed its actual verification coverage. This demo prevents authority inflation through:
+
+1. **Explicit validator coverage**: The MV validator handles `a op b = c` patterns only. All other patterns yield ABSTAINED.
+2. **No implicit promotion**: ADV content cannot silently become authority-bearing.
+3. **Terminal abstention**: Claims that cannot be verified remain permanently marked as such (for that claim_id).
+4. **Forbidden claims list**: The demo includes regression tests that detect capability overclaims.
+
+### Auditability Over Impressiveness
+
+The demo prioritizes auditability over impressiveness:
+
+- Every outcome is deterministic and reproducible
+- Every attestation is independently verifiable
+- Every boundary is explicit and documented
+- Every refusal is explained
+
+A demo that impresses evaluators with capability while obscuring its verification basis is worse than a demo that clearly reports what it can and cannot establish. This demo chooses legibility over performance.
+
+### What This Scope Implies for Evaluators
+
+If you are evaluating this demo for:
+- **Capability**: You will be disappointed. The demo does very little.
+- **Auditability**: You should be able to verify every claim the demo makes about itself.
+- **Governance**: You should be able to trace every authority-bearing artifact to its commitment point and verification route.
+
+The demo is evidence that a specific governance architecture is implementable. It is not evidence of alignment, safety, or intelligence. It makes no such claims.
+
+---
+
+## External Verifier Checklist
+
+For external reviewers verifying the demo independently:
+
+### Step 1: Run the drop-in demo
+
+```bash
+uv run python scripts/run_dropin_demo.py --seed 42 --output demo_output/
+```
+
+### Step 2: Run verification
+
+```bash
+cd demo_output && python verify.py
+```
+
+### Step 3: Expected output
+
+```
+[PASS] Composite root verified: H_t == SHA256(R_t || U_t)
+```
+
+### Step 4: Artifacts produced
+
+Confirm the following files exist in `demo_output/`:
+- `verify.py` — Self-contained verifier
+- `evidence_pack.json` — Complete audit artifact
+- `manifest.json` — Execution metadata
+- `u_t.txt` — UI Merkle root
+- `r_t.txt` — Reasoning Merkle root
+- `h_t.txt` — Composite root
+
+### Step 5: Verify claim outcomes
+
+In the evidence pack, confirm:
+- Claim outcomes include VERIFIED, REFUTED, and/or ABSTAINED as appropriate
+- ADV claims (if any) are present in the bundle but excluded from R_t computation
+- All authority-bearing claims have a declared verification route
+
+### Step 6: Replay with different seed
+
+```bash
+uv run python scripts/run_dropin_demo.py --seed 43 --output demo_output_43/
+cd demo_output_43 && python verify.py
+```
+
+Confirm: different seed produces different hashes, but verification still passes.
+
+---
+
+## Related Work / Canonical Reference
+
+This demo implements a subset of the governance substrate described in the following paper:
+
+**MathLedger: A Verifiable Learning Substrate with Ledger-Attested Feedback**
+
+- **arXiv**: [https://arxiv.org/abs/2601.00816](https://arxiv.org/abs/2601.00816)
+- **DOI**: [https://doi.org/10.48550/arXiv.2601.00816](https://doi.org/10.48550/arXiv.2601.00816)
+- **Subjects**: cs.AI, cs.CR, cs.LG
+
+The paper provides the authoritative specification for the two-lane architecture, ACE methodology, and epistemic invariants. This demo implements a subset of that specification; no capability or convergence claims are made.
+
+```bibtex
+@misc{mathledger2025,
+  title={MathLedger: A Verifiable Learning Substrate with Ledger-Attested Feedback},
+  author={MathLedger Contributors},
+  year={2025},
+  eprint={2601.00816},
+  archivePrefix={arXiv},
+  primaryClass={cs.AI},
+  url={https://arxiv.org/abs/2601.00816}
+}
+```
+
+---
+
+## What This Section Does and Does Not Claim
+
+**This section claims:**
+- The two-lane architecture separates exploration from authority at the data model level
+- The ACE methodology requires explicit route declaration before authority
+- The epistemic invariants are enforced in the current implementation
+- The demo is intentionally minimal to prevent authority inflation
+
+**This section does NOT claim:**
+- Lane B (Agent Audit) is fully shipped as a product
+- The system will behave correctly in all cases
+- The invariants are complete or cover all failure modes
+- The demo generalizes to production systems
