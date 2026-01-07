@@ -813,6 +813,18 @@ def get_html_content() -> str:
                 </details>
             </div>
 
+            <!-- Governance Explanation Link -->
+            <div class="governance-link" style="margin: 1rem 0; padding: 0.75rem 1rem; background: #f5f5f5; border: 1px solid #ddd; border-left: 4px solid #1565c0; font-size: 0.9rem;">
+                <strong>Governance Model:</strong>
+                <a href="/v""" + DEMO_VERSION + """/docs/explanation/" style="color: #1565c0; margin-left: 0.5rem;">How This Demo Explains Itself</a>
+                <span style="color: #666; margin-left: 0.5rem;">|</span>
+                <span style="color: #666; margin-left: 0.5rem; font-size: 0.8rem;">Two-Lane Architecture + ACE Methodology + Epistemic Invariants</span>
+                <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #666;">
+                    <strong>Status: LOCKED (v0.2.13)</strong> |
+                    <a href="https://arxiv.org/abs/2601.00816" target="_blank" style="color: #666;">arXiv:2601.00816</a>
+                </div>
+            </div>
+
             <!-- Boundary Demo with Integration Point 7: expandable breakdown -->
             <div class="boundary-demo" id="boundary-demo-section">
                 <div class="boundary-header">

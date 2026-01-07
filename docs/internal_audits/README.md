@@ -1,25 +1,36 @@
-# Raw Audit Artifacts
+# Internal Audit Artifacts
 
-This folder contains raw audit transcripts, intermediate FAILs, and debugging artifacts preserved for completeness.
+This folder contains operator response documents and investigation notes that support the external audit trail.
 
 **Authoritative audit conclusions are recorded in `docs/external_audits/CLOSURE_MATRIX_*.md`.**
 
 ## Contents
 
-- Gate 2 (Manus Cold-Start) raw audits and transient FAILs
-- Gate 3 (Claude Chrome Runtime) raw audits and transient FAILs
-- Response documents and investigation notes
-- Epistemic coherence audits and hostile audit transcripts
+- Response documents (`*_response.md`) explaining how audit findings were addressed
+- Investigation notes and operator diagnostics
+
+## Classification Rule
+
+Per the [Audit Artifact Taxonomy](../AUDIT_TAXONOMY.md):
+
+- **Internal audits**: Operator artifacts, response documents, scratch work
+- **External audits**: Formal Gate 2/Gate 3 audits, hostile audits, closure matrices
+
+Response documents belong here because they are operator artifacts explaining remediation, not formal external audits themselves.
 
 ## Usage
 
-These files exist to support closure matrices, not replace them. They are:
+These files:
 
-- **Preserved**: Full audit history maintained in the public repository
-- **Immutable**: Contents not modified after creation
-- **Referenceable**: Can be cited by closure matrices
-- **Non-primary**: Not linked from the evaluator path or website navigation
+- **Support** closure matrices with remediation context
+- **Are preserved** in the public repository for completeness
+- **Are not** part of the primary evaluator path
+- **Are not** authoritative (closure matrices are authoritative)
 
 ## Evaluator Guidance
 
-Evaluators should use closure matrices (`CLOSURE_MATRIX_*.md`) for authoritative status. Raw transcripts here provide full provenance but contain transient failures, debug notes, and process artifacts that do not reflect final closed state.
+Evaluators should reference `docs/external_audits/` for:
+- Formal Gate 2 and Gate 3 audits (both PASS and FAIL)
+- Closure matrices (authoritative summaries)
+
+Response documents here provide remediation context but do not override closure matrix status.
