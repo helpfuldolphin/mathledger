@@ -820,7 +820,7 @@ def get_html_content() -> str:
                 <span style="color: #666; margin-left: 0.5rem;">|</span>
                 <span style="color: #666; margin-left: 0.5rem; font-size: 0.8rem;">Two-Lane Architecture + ACE Methodology + Epistemic Invariants</span>
                 <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #666;">
-                    <strong>Status: LOCKED (v0.2.13)</strong> |
+                    <strong>Status: LOCKED (v""" + DEMO_VERSION + """)</strong> |
                     <a href="https://arxiv.org/abs/2601.00816" target="_blank" style="color: #666;">arXiv:2601.00816</a>
                 </div>
             </div>
@@ -1061,6 +1061,19 @@ def get_html_content() -> str:
 
             <div class="footer">
                 v""" + DEMO_VERSION + """ (""" + DEMO_TAG + """) | Governance substrate only | MV arithmetic validator only | <a href="/docs/view/V0_LOCK.md">Scope Lock</a>
+            </div>
+            <!-- Deploy Provenance Stamp - visible for auditors -->
+            <div class="deploy-provenance" style="background:#0d1117; color:#8b949e; padding:0.5rem 1rem; margin-top:0.5rem; font-size:0.7rem; font-family:'Consolas','Monaco','Courier New',monospace; border-radius:4px; display:flex; justify-content:space-between; align-items:center;">
+                <span>
+                    <strong style="color:#58a6ff;">DEPLOY PROVENANCE:</strong>
+                    <span style="color:#c9d1d9;">""" + DEMO_TAG + """</span>
+                    <span style="color:#6e7681;">@</span>
+                    <a href=\"""" + REPO_URL + """/commit/""" + DEMO_COMMIT + """\" target="_blank" style="color:#58a6ff; text-decoration:none;">""" + DEMO_COMMIT + """</a>
+                </span>
+                <span style="color:#484f58;">
+                    verify: <code style="background:#21262d; padding:0 0.25rem;">/health</code> |
+                    <a href=\"""" + REPO_URL + """\" target="_blank" style="color:#58a6ff; text-decoration:none;">GitHub</a>
+                </span>
             </div>
         </div>
 
