@@ -58,6 +58,8 @@ This index routes readers to the right document for their purpose.
 
 ### Releases & Deployment
 
+**Canonical production branch: master**
+
 | Document | Purpose |
 |----------|---------|
 | [DEPLOY_BY_TAG_DOCTRINE.md](DEPLOY_BY_TAG_DOCTRINE.md) | Non-negotiable deployment rules |
