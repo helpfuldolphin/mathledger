@@ -125,3 +125,24 @@ See `openforesight_forecasting_pressure.md` for full analysis.
 
 **Status:**
 Awareness only. Phase II pressure for probabilistic claim routing.
+
+---
+
+### Forensic Agent Auditing (Lane B Evidence Substrate)
+
+**Context:**
+Enterprise agent deployments require forensic traceability for dispute resolution, compliance audits, and incident response—independent of governance verdicts.
+
+**Relevance:**
+As agents handle revenue-facing and regulated workflows, enterprises will demand hash-chained event logs, replay bundles, and tamper-evident evidence packaging. This creates pressure to clarify the boundary between forensic evidence (Lane B) and governance authority (Lane A).
+
+**Key constraint:**
+Forensic evidence does not substitute for governance. Evidence artifacts may inform human judgment but cannot produce VERIFIED / REFUTED outcomes or assign trust class.
+
+**Classification:** Lane B / Evidence-only
+
+**Reference:**
+See `agent_audit_kit_lane_b.md` for architectural separation.
+
+**Status:**
+Awareness only. Clarifies Lane A / Lane B boundary.

@@ -95,3 +95,26 @@ Phase II needs a standard PA route for probabilistic outputs with:
 **Reference:**
 See `openforesight_forecasting_pressure.md` for full analysis.
 See `evaluation_contract_checklist.md` for gating requirements.
+
+---
+
+## 2026-01-07 — Lane B → Lane A Evidence Boundary Pressure
+
+**Pressing level:** Medium-High (grows with forensic tooling maturity)
+
+**Context:**
+As forensic agent auditing tools mature (hash-chained logs, replay bundles, tamper-evident packaging), pressure will arise to treat Lane B evidence artifacts as Lane A authority inputs.
+
+**Collision:**
+- Evidence is not authority; conflating them undermines governance guarantees
+- Forensic artifacts lack trust class; admitting them silently would violate fail-closed semantics
+- Users may demand "if it's logged, it's verified"—this is false
+
+**Position:**
+MathLedger must remain fail-closed at the Lane A / Lane B boundary. Evidence artifacts may be referenced as supplementary material but may never be treated as authority-bearing inputs without:
+- An explicit admissibility contract
+- Independent verification via a defined MV or PA route
+- Version pinning and hash binding
+
+**Reference:**
+See `agent_audit_kit_lane_b.md` for architectural separation.
