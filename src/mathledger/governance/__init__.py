@@ -1,0 +1,81 @@
+"""Wave A2 governance kernel primitives."""
+
+from mathledger.governance.abstention import (
+    AbstentionPreservationViolation,
+    VALID_OUTCOMES,
+    ValidationOutcome,
+    require_abstention_preservation,
+    validate_outcome_aggregation,
+    verify_not_coerced_to_null,
+    verify_outcome_present,
+)
+from mathledger.governance.mv_validator import (
+    MVValidationResult,
+    MVValidatorOutcome,
+    validate_mv_claim,
+)
+from mathledger.governance.psych_gates import (
+    CONVERGENCE_RED_MIN,
+    CONVERGENCE_RED_MIN_CATEGORIES,
+    CONVERGENCE_YELLOW_MIN,
+    CONVERGENCE_YELLOW_MIN_CATEGORIES,
+    GOVERNANCE_DECISIONS,
+    INDICATOR_ELEVATION_THRESHOLD,
+    RISK_GREEN_MAX,
+    RISK_RED_MIN,
+    TOTAL_CPF_CATEGORIES,
+    GovernanceGateEvaluation,
+    PsychologicalGateViolation,
+    evaluate_psychological_governance,
+)
+from mathledger.governance.routing import (
+    AuthorityRoutingViolation,
+    RoutedClaims,
+    build_authority_reasoning_leaves,
+    build_authority_reasoning_payloads,
+    enforce_authority_stream_constraints,
+    route_claims_by_trust_class,
+)
+from mathledger.governance.trust_class import (
+    AUTHORITY_BEARING_TRUST_CLASSES,
+    Outcome,
+    TrustClass,
+    is_authority_bearing,
+    parse_trust_class,
+)
+
+__all__ = [
+    "TrustClass",
+    "Outcome",
+    "AUTHORITY_BEARING_TRUST_CLASSES",
+    "parse_trust_class",
+    "is_authority_bearing",
+    "AuthorityRoutingViolation",
+    "RoutedClaims",
+    "route_claims_by_trust_class",
+    "enforce_authority_stream_constraints",
+    "build_authority_reasoning_payloads",
+    "build_authority_reasoning_leaves",
+    "ValidationOutcome",
+    "VALID_OUTCOMES",
+    "AbstentionPreservationViolation",
+    "verify_outcome_present",
+    "require_abstention_preservation",
+    "validate_outcome_aggregation",
+    "verify_not_coerced_to_null",
+    "MVValidatorOutcome",
+    "MVValidationResult",
+    "validate_mv_claim",
+    "RISK_GREEN_MAX",
+    "RISK_RED_MIN",
+    "INDICATOR_ELEVATION_THRESHOLD",
+    "CONVERGENCE_RED_MIN",
+    "CONVERGENCE_RED_MIN_CATEGORIES",
+    "CONVERGENCE_YELLOW_MIN",
+    "CONVERGENCE_YELLOW_MIN_CATEGORIES",
+    "TOTAL_CPF_CATEGORIES",
+    "GOVERNANCE_DECISIONS",
+    "PsychologicalGateViolation",
+    "GovernanceGateEvaluation",
+    "evaluate_psychological_governance",
+]

@@ -1,0 +1,46 @@
+﻿{
+    "release_tag":  "v0.1.0-governance-validated",
+    "generated_at_utc":  "2026-02-23T21:24:39Z",
+    "repository_path":  "C:/dev/mathledger",
+    "git_repository_present":  false,
+    "caveat":  "No .git metadata found in workspace; this is a file-level release manifest, not a git tag.",
+    "test_status":  {
+                        "pytest_passed":  49,
+                        "scenario_suite_matched_steps":  "11/11",
+                        "scenario_suite_mismatches":  0
+                    },
+    "artifacts":  [
+                      {
+                          "path":  "README.md",
+                          "sha256":  "3a73112db49eea7451e2eeea306fd3c4fa285957bebf9f98c26bea22cbb9a30e"
+                      },
+                      {
+                          "path":  "docs/contracts/CLAIM_PROMOTION_REGISTER.md",
+                          "sha256":  "39e64f80ed5e72360b4d4b707ff24f7020fabb2acffa0fbbf56c11bed00bb14b"
+                      },
+                      {
+                          "path":  "docs/contracts/WAVE_A7R_CLAIM_PACKET.md",
+                          "sha256":  "00212887f8c65a2aa804444c89ae6e5a60e17b7aa5464097c295329e6a4c2854"
+                      },
+                      {
+                          "path":  "docs/results/scenario_suite/results.md",
+                          "sha256":  "66629c122679c88d4ee2cceb5257c224058406012cef8c6424c76994176b3744"
+                      },
+                      {
+                          "path":  "docs/results/scenario_suite/results.json",
+                          "sha256":  "aad2971a08f69ff169cc47f6a67a557dd6c19f0dc6fc8fb88f996f0487662c1e"
+                      },
+                      {
+                          "path":  "src/mathledger/integration/scenario_suite.py",
+                          "sha256":  "27c48bcee5e8636eceacccb5d6da86ef9da6c49891d8878714bf7310fd0b9ba1"
+                      },
+                      {
+                          "path":  "tests/test_wave_a7_scenario_suite.py",
+                          "sha256":  "01592b3b88d78d1451591cd46f3afd10e842b139bd6b9c0088e86549b4a47606"
+                      },
+                      {
+                          "path":  "docs/presentation/GOVERNANCE_PIPELINE_VALIDATION_CALL_BRIEF.md",
+                          "sha256":  "bedcab5d2eaf958b2cc18d89dc9d476a74b7cd3dde9c98445ef7ef561e4a5f3c"
+                      }
+                  ]
+}
