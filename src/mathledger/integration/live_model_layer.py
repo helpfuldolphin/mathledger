@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
@@ -191,6 +192,60 @@ class OpenRouterClient:
         self.app_name = str(app_name).strip()
         self.app_url = str(app_url).strip()
 
+    @staticmethod
+    def _merge_system_messages_for_provider(
+        messages: Sequence[Mapping[str, Any]],
+    ) -> list[dict[str, Any]]:
+        system_chunks: list[str] = []
+        non_system: list[dict[str, Any]] = []
+        for message in messages:
+            role = str(message.get("role", "")).strip().lower()
+            content = message.get("content")
+            if role == "system":
+                if isinstance(content, str) and content.strip():
+                    system_chunks.append(content.strip())
+                continue
+            non_system.append(dict(message))
+
+        if not system_chunks:
+            return [dict(item) for item in messages]
+
+        merged_system = "\n\n".join(system_chunks)
+        system_prefix = (
+            "[System instructions merged for provider compatibility]\n"
+            f"{merged_system}"
+        )
+        for entry in non_system:
+            if str(entry.get("role", "")).strip().lower() == "user":
+                existing = str(entry.get("content", ""))
+                entry["content"] = f"{system_prefix}\n\n{existing}".strip()
+                return non_system
+
+        return [{"role": "user", "content": system_prefix}, *non_system]
+
+    def _post_chat_payload(self, payload: Mapping[str, Any]) -> dict[str, Any]:
+        request = urllib.request.Request(
+            self.base_url,
+            data=json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": self.app_url,
+                "X-Title": self.app_name,
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
+            body = response.read().decode("utf-8")
+        try:
+            return json.loads(body)
+        except json.JSONDecodeError as exc:
+            raise LiveModelHarnessViolation(
+                "OpenRouter returned non-JSON response body.",
+                field="openrouter.response_json",
+                details={"body_prefix": body[:800]},
+            ) from exc
+
     def chat_completion(
         self,
         *,
@@ -208,47 +263,67 @@ class OpenRouterClient:
         }
         if response_format is not None:
             payload["response_format"] = dict(response_format)
-
-        request = urllib.request.Request(
-            self.base_url,
-            data=json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8"),
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": self.app_url,
-                "X-Title": self.app_name,
-            },
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
-                body = response.read().decode("utf-8")
-        except urllib.error.HTTPError as exc:
-            body = ""
+        applied_system_merge = False
+        applied_json_mode_fallback = False
+        for attempt in range(6):
             try:
-                body = exc.read().decode("utf-8", errors="replace")
-            except Exception:
+                return self._post_chat_payload(payload)
+            except urllib.error.HTTPError as exc:
                 body = ""
-            raise LiveModelHarnessViolation(
-                "OpenRouter returned HTTP error.",
-                field="openrouter.http_error",
-                details={"status": int(exc.code), "body": body[:800]},
-            ) from exc
-        except urllib.error.URLError as exc:
-            raise LiveModelHarnessViolation(
-                "OpenRouter request failed.",
-                field="openrouter.url_error",
-                details={"reason": str(getattr(exc, "reason", exc))},
-            ) from exc
+                try:
+                    body = exc.read().decode("utf-8", errors="replace")
+                except Exception:
+                    body = ""
 
-        try:
-            return json.loads(body)
-        except json.JSONDecodeError as exc:
-            raise LiveModelHarnessViolation(
-                "OpenRouter returned non-JSON response body.",
-                field="openrouter.response_json",
-                details={"body_prefix": body[:800]},
-            ) from exc
+                if int(exc.code) == 429 and attempt < 5:
+                    retry_after = 0.0
+                    try:
+                        retry_after_raw = exc.headers.get("Retry-After", "")
+                        retry_after = float(retry_after_raw) if str(retry_after_raw).strip() else 0.0
+                    except Exception:
+                        retry_after = 0.0
+                    wait_seconds = retry_after if retry_after > 0 else min(2.0 * (attempt + 1), 15.0)
+                    time.sleep(wait_seconds)
+                    continue
+
+                is_developer_instruction_error = (
+                    int(exc.code) == 400
+                    and "Developer instruction is not enabled" in body
+                    and any(str(item.get("role", "")).strip().lower() == "system" for item in payload["messages"])
+                )
+                if is_developer_instruction_error and not applied_system_merge:
+                    payload = dict(payload)
+                    payload["messages"] = self._merge_system_messages_for_provider(payload["messages"])
+                    applied_system_merge = True
+                    continue
+
+                is_json_mode_error = (
+                    int(exc.code) == 400
+                    and "JSON mode is not enabled" in body
+                    and "response_format" in payload
+                )
+                if is_json_mode_error and not applied_json_mode_fallback:
+                    payload = dict(payload)
+                    payload.pop("response_format", None)
+                    applied_json_mode_fallback = True
+                    continue
+
+                raise LiveModelHarnessViolation(
+                    "OpenRouter returned HTTP error.",
+                    field="openrouter.http_error",
+                    details={"status": int(exc.code), "body": body[:800]},
+                ) from exc
+            except urllib.error.URLError as exc:
+                raise LiveModelHarnessViolation(
+                    "OpenRouter request failed.",
+                    field="openrouter.url_error",
+                    details={"reason": str(getattr(exc, "reason", exc))},
+                ) from exc
+
+        raise LiveModelHarnessViolation(
+            "OpenRouter request failed after provider compatibility retries.",
+            field="openrouter.retry_exhausted",
+        )
 
 
 def _canonicalize_json(data: Mapping[str, Any]) -> str:

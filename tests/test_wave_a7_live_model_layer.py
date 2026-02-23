@@ -159,3 +159,18 @@ def test_openrouter_client_requires_api_key(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
     with pytest.raises(LiveModelHarnessViolation):
         OpenRouterClient(api_key="")
+
+
+def test_merge_system_messages_for_provider():
+    merged = OpenRouterClient._merge_system_messages_for_provider(
+        [
+            {"role": "system", "content": "system rule one"},
+            {"role": "system", "content": "system rule two"},
+            {"role": "user", "content": "actual user prompt"},
+        ]
+    )
+    assert len(merged) == 1
+    assert merged[0]["role"] == "user"
+    assert "system rule one" in merged[0]["content"]
+    assert "system rule two" in merged[0]["content"]
+    assert "actual user prompt" in merged[0]["content"]
