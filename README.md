@@ -12,6 +12,7 @@ Current implementation scope:
 - Wave A6: CPF adapter (deterministic CPF assessment normalization into snapshot artifacts)
 - Wave A7: experiment runner (reproducible three-lane orchestration with boundary checks)
 - Wave A7R: scenario suite (published adversarial + benign controls with auditable result tables)
+- Wave A7L: live model layer (OpenRouter prompt/response capture + CPF text scoring -> governance routing)
 
 Out of scope in this wave:
 - TDA/USLA advisory sidecar (A8+)
@@ -24,6 +25,8 @@ cd C:\dev\mathledger
 python -m pip install -e ".[dev]"
 pytest -q
 $env:PYTHONPATH='src'; python -m mathledger.integration.scenario_suite --output docs/results/scenario_suite --fail-on-mismatch
+$env:OPENROUTER_API_KEY='<your_key>'
+$env:PYTHONPATH='src'; python -m mathledger.integration.live_model_layer --model openai/gpt-4o-mini --default-scenario-limit 3 --output docs/results/live_model_suite
 ```
 
 ## Structure
@@ -34,6 +37,7 @@ $env:PYTHONPATH='src'; python -m mathledger.integration.scenario_suite --output 
 - `src/mathledger/evidence`: evidence-pack build/replay verifier primitives
 - `src/mathledger/integration`: AAK bridge, CPF adapter, and three-lane experiment runner
 - `docs/results/scenario_suite/results.md`: scenario-level governance outcome table with replay artifacts
+- `docs/results/live_model_suite/`: live-model execution artifacts (when OpenRouter key is configured)
 - `docs/presentation/GOVERNANCE_PIPELINE_VALIDATION_CALL_BRIEF.md`: call-ready narrative and caveat framing
 - `docs/releases/v0.1.0-governance-validated/`: reproducible release notes + SHA256 manifest
 - `tests/test_wave_a1_basis_core.py`: Wave A1 invariants

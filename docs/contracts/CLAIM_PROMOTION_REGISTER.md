@@ -32,6 +32,7 @@ No claim may be treated as promoted without a closure artifact.
 | A6 | ML-A6-CPF-ADAPTER | Locally Validated | B | CPF outputs normalize into deterministic context snapshots for experimentation. | Same CPF payload yields divergent normalized output. | Schema adapter tests and canonical serialization checks. |
 | A7 | ML-A7-EXPERIMENT-RUNNER | Locally Validated | B | Three-lane runner executes reproducible pipeline with explicit lane boundaries. | Runner mixes authority and advisory artifacts silently. | End-to-end reproducibility test and boundary assertions. |
 | A7R | ML-A7R-SCENARIO-SUITE | Locally Validated | B | Published adversarial and benign scenarios execute through A7 with deterministic gate outcomes and sealed evidence artifacts. | Scenario outputs diverge from expected gates or evidence artifacts are not emitted per step. | `tests/test_wave_a7_scenario_suite.py`, `docs/results/scenario_suite/results.md`, per-step `evidence_pack.json` and bridge packets. |
+| A7L | ML-A7L-LIVE-MODEL-LAYER | Locally Validated (Mock) | B | A thin live-model harness captures OpenRouter responses, classifies text into CPF indicators, and routes outputs through A7 governance with replay artifacts. | Live-layer output cannot be routed through A7 deterministically or capture logs/evidence are missing. | `src/mathledger/integration/live_model_layer.py`, `tests/test_wave_a7_live_model_layer.py` |
 | A8 | ML-A8-USLA-TDA-SIDECAR | Pending | B | USLA/TDA metrics run as advisory sidecar only and never gate authority in this phase. | Sidecar output influences Lane A verdicts. | Sidecar contract tests and no-authority assertions. |
 | A9 | ML-A9-USLA-TDA-PROMOTION | Pending | A | USLA/TDA authority gating is enabled only after hostile replay closure. | Gating enabled without closure artifacts. | Hostile audit vectors, replay closure dossier. |
 
@@ -49,4 +50,4 @@ For each wave:
 
 - Date: 2026-02-23
 - Command: `cd C:\dev\mathledger && pytest -q`
-- Result: `49 passed`
+- Result: `51 passed`

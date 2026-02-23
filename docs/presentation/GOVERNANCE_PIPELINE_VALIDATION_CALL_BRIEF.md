@@ -34,3 +34,9 @@ Current non-claim is: **"Live model responses are correctly scored into indicato
 ## Immediate Next Step (Post-Call)
 
 Implement live model scenario execution via AAK capture and CPF text-level classification on raw responses, then rerun this same suite with real model-generated indicator activations.
+
+## Current Parallel Track Status
+
+- Live model harness implemented in `src/mathledger/integration/live_model_layer.py`.
+- Mock-validated with `tests/test_wave_a7_live_model_layer.py`.
+- Real model execution is runtime-ready once `OPENROUTER_API_KEY` is provided.

@@ -1,4 +1,4 @@
-"""Integration-layer primitives for Waves A5-A7."""
+"""Integration-layer primitives for Waves A5-A7L."""
 
 from importlib import import_module
 
@@ -30,11 +30,27 @@ _SCENARIO_SUITE_EXPORTS = {
     "run_scenario_suite",
     "run_default_scenario_suite",
 }
+_LIVE_MODEL_EXPORTS = {
+    "LIVE_MODEL_SCHEMA_VERSION",
+    "OPENROUTER_CHAT_COMPLETIONS_URL",
+    "DEFAULT_OPENROUTER_MODEL",
+    "CPF_INDICATOR_DEFINITIONS",
+    "LiveModelHarnessViolation",
+    "ChatCompletionClient",
+    "OpenRouterClient",
+    "run_live_model_scenario_suite",
+    "run_default_live_model_suite",
+}
 
 
 def __getattr__(name: str):
     if name in _SCENARIO_SUITE_EXPORTS:
         module = import_module("mathledger.integration.scenario_suite")
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+    if name in _LIVE_MODEL_EXPORTS:
+        module = import_module("mathledger.integration.live_model_layer")
         value = getattr(module, name)
         globals()[name] = value
         return value
@@ -60,4 +76,13 @@ __all__ = [
     "benign_control_scenarios",
     "run_scenario_suite",
     "run_default_scenario_suite",
+    "LIVE_MODEL_SCHEMA_VERSION",
+    "OPENROUTER_CHAT_COMPLETIONS_URL",
+    "DEFAULT_OPENROUTER_MODEL",
+    "CPF_INDICATOR_DEFINITIONS",
+    "LiveModelHarnessViolation",
+    "ChatCompletionClient",
+    "OpenRouterClient",
+    "run_live_model_scenario_suite",
+    "run_default_live_model_suite",
 ]
